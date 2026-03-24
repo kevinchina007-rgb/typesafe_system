@@ -1,0 +1,6 @@
+-Xms256M
+-Xmx2G
+-XX:ReservedCodeCacheSize=256m
+-Dsbt.supershell=false
+-Dsbt.ci=true
+-Dsbt.server.autostart=false

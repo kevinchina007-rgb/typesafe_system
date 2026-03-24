@@ -1,0 +1,7 @@
+.coursier/
+.ivy2/
+.sbt-home/
+.jdks/
+target/
+modules/*/target/
+project/target/
