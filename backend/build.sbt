@@ -15,9 +15,28 @@ lazy val catsEffectDependency =
 lazy val munitDependency =
   "org.scalameta" %% "munit" % "1.0.0" % Test
 
+lazy val http4sDslDependency =
+  "org.http4s" %% "http4s-dsl" % "0.23.27"
+
+lazy val http4sEmberServerDependency =
+  "org.http4s" %% "http4s-ember-server" % "0.23.27"
+
+lazy val http4sCirceDependency =
+  "org.http4s" %% "http4s-circe" % "0.23.27"
+
+lazy val http4sServerDependency =
+  "org.http4s" %% "http4s-server" % "0.23.27"
+
+lazy val circeGenericDependency =
+  "io.circe" %% "circe-generic" % "0.14.9"
+
+lazy val circeParserDependency =
+  "io.circe" %% "circe-parser" % "0.14.9"
+
 lazy val root = (project in file("."))
   .aggregate(
     sharedKernel,
+    identityDomain,
     travelerDomain,
     orderDomain,
     apiGateway
@@ -26,16 +45,21 @@ lazy val root = (project in file("."))
     name := "travel-platform-backend",
     publish / skip := true,
     Compile / unmanagedSourceDirectories := Seq.empty,
-    Test / unmanagedSourceDirectories := Seq.empty
+    Test / unmanagedSourceDirectories := Seq.empty,
+    Compile / run := (apiGateway / Compile / run).evaluated,
+    Compile / run / mainClass := Some("com.typesafe.travel.api.Main")
   )
 
 lazy val sharedKernel = module("shared-kernel")
 
 lazy val identityDomain = module("identity-domain")
   .dependsOn(sharedKernel)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+  )
 
 lazy val travelerDomain = module("traveler-domain")
-  .dependsOn(sharedKernel)
+  .dependsOn(sharedKernel, identityDomain)
   .settings(
     libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
   )
@@ -64,11 +88,20 @@ lazy val operationsDomain = module("operations-domain")
 lazy val apiGateway = module("api-gateway")
   .dependsOn(
     sharedKernel,
+    identityDomain,
     travelerDomain,
     orderDomain
   )
   .settings(
-    libraryDependencies += catsEffectDependency,
+    libraryDependencies ++= Seq(
+      catsEffectDependency,
+      http4sDslDependency,
+      http4sEmberServerDependency,
+      http4sCirceDependency,
+      http4sServerDependency,
+      circeGenericDependency,
+      circeParserDependency
+    ),
     Compile / run / mainClass := Some("com.typesafe.travel.api.Main")
   )
 
