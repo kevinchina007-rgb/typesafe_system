@@ -6,57 +6,103 @@ import com.typesafe.travel.shared.kernel.*
 import java.time.Instant
 
 trait OrderService[F[_]]:
-  def createDraft(userId: UserId, createdAt: Instant): F[Order]
-  def addFlightItem(orderId: OrderId, snapshot: FlightBookingSnapshot, totalPrice: Money): F[Order]
-  def addHotelItem(orderId: OrderId, snapshot: HotelBookingSnapshot, totalPrice: Money): F[Order]
-  def submitOrder(orderId: OrderId): F[Order]
+  def createDraftOrder(ownerUserId: UserId, orderCurrency: Currency, createdAt: Instant): F[Order]
+  def addFlightOrderItem(orderId: OrderId, flightBookingSnapshot: FlightBookingSnapshot, bookedMoney: Money): F[Order]
+  def addHotelOrderItem(orderId: OrderId, hotelBookingSnapshot: HotelBookingSnapshot, bookedMoney: Money): F[Order]
+  def submitOrderForPayment(orderId: OrderId): F[Order]
+  def authorizeOrderPayment(orderId: OrderId, paymentAmount: Money, paymentMethod: PaymentMethod, authorizedAt: Instant): F[Order]
+  def captureAuthorizedPayment(orderId: OrderId, paymentId: PaymentId, capturedAt: Instant): F[Order]
+  def requestOrderRefund(orderId: OrderId, refundAmount: Money, refundReason: String, requestedAt: Instant): F[Order]
+  def approveRequestedRefund(orderId: OrderId, refundId: RefundId, approvedAt: Instant): F[Order]
+  def settleApprovedRefund(orderId: OrderId, refundId: RefundId, settledAt: Instant): F[Order]
 
 final class LiveOrderService[F[_]: MonadThrow](
-    repository: OrderRepository[F]
+    orderRepository: OrderRepository[F]
 ) extends OrderService[F]:
 
-  override def createDraft(userId: UserId, createdAt: Instant): F[Order] =
-    repository.nextOrderId.flatMap { orderId =>
-      repository.save(Order.draft(orderId, userId, createdAt))
+  override def createDraftOrder(ownerUserId: UserId, orderCurrency: Currency, createdAt: Instant): F[Order] =
+    orderRepository.nextOrderId.flatMap { generatedOrderId =>
+      orderRepository.saveOrder(Order.createDraftOrder(generatedOrderId, ownerUserId, orderCurrency, createdAt))
     }
 
-  override def addFlightItem(
+  override def addFlightOrderItem(
       orderId: OrderId,
-      snapshot: FlightBookingSnapshot,
-      totalPrice: Money
+      flightBookingSnapshot: FlightBookingSnapshot,
+      bookedMoney: Money
   ): F[Order] =
-    addItem(
+    addOrderLineItem(
       orderId,
-      id => FlightOrderItem(id, snapshot, totalPrice, OrderItemStatus.Reserved)
+      generatedOrderItemId => _.addFlightOrderItem(generatedOrderItemId, flightBookingSnapshot, bookedMoney)
     )
 
-  override def addHotelItem(
+  override def addHotelOrderItem(
       orderId: OrderId,
-      snapshot: HotelBookingSnapshot,
-      totalPrice: Money
+      hotelBookingSnapshot: HotelBookingSnapshot,
+      bookedMoney: Money
   ): F[Order] =
-    addItem(
+    addOrderLineItem(
       orderId,
-      id => HotelOrderItem(id, snapshot, totalPrice, OrderItemStatus.Reserved)
+      generatedOrderItemId => _.addHotelOrderItem(generatedOrderItemId, hotelBookingSnapshot, bookedMoney)
     )
 
-  override def submitOrder(orderId: OrderId): F[Order] =
+  override def submitOrderForPayment(orderId: OrderId): F[Order] =
     loadOrder(orderId)
-      .flatMap(order => MonadThrow[F].fromEither(order.submit))
-      .flatMap(repository.save)
+      .flatMap(_.submitOrderForPayment.liftTo[F])
+      .flatMap(orderRepository.saveOrder)
 
-  private def addItem(
+  override def authorizeOrderPayment(
       orderId: OrderId,
-      build: OrderItemId => OrderItem
+      paymentAmount: Money,
+      paymentMethod: PaymentMethod,
+      authorizedAt: Instant
   ): F[Order] =
     for
       order <- loadOrder(orderId)
-      itemId <- repository.nextOrderItemId
-      updated <- MonadThrow[F].fromEither(order.addItem(build(itemId)))
-      saved <- repository.save(updated)
-    yield saved
+      paymentId <- orderRepository.nextPaymentId
+      updatedOrder <- order.authorizeOrderPayment(paymentId, paymentAmount, paymentMethod, authorizedAt).liftTo[F]
+      savedOrder <- orderRepository.saveOrder(updatedOrder)
+    yield savedOrder
+
+  override def captureAuthorizedPayment(orderId: OrderId, paymentId: PaymentId, capturedAt: Instant): F[Order] =
+    loadOrder(orderId)
+      .flatMap(_.captureAuthorizedPayment(paymentId, capturedAt).liftTo[F])
+      .flatMap(orderRepository.saveOrder)
+
+  override def requestOrderRefund(
+      orderId: OrderId,
+      refundAmount: Money,
+      refundReason: String,
+      requestedAt: Instant
+  ): F[Order] =
+    for
+      order <- loadOrder(orderId)
+      refundId <- orderRepository.nextRefundId
+      updatedOrder <- order.requestOrderRefund(refundId, refundAmount, refundReason, requestedAt).liftTo[F]
+      savedOrder <- orderRepository.saveOrder(updatedOrder)
+    yield savedOrder
+
+  override def approveRequestedRefund(orderId: OrderId, refundId: RefundId, approvedAt: Instant): F[Order] =
+    loadOrder(orderId)
+      .flatMap(_.approveRequestedRefund(refundId, approvedAt).liftTo[F])
+      .flatMap(orderRepository.saveOrder)
+
+  override def settleApprovedRefund(orderId: OrderId, refundId: RefundId, settledAt: Instant): F[Order] =
+    loadOrder(orderId)
+      .flatMap(_.settleApprovedRefund(refundId, settledAt).liftTo[F])
+      .flatMap(orderRepository.saveOrder)
+
+  private def addOrderLineItem(
+      orderId: OrderId,
+      addLineItem: OrderItemId => Order => Either[OrderError, Order]
+  ): F[Order] =
+    for
+      order <- loadOrder(orderId)
+      orderItemId <- orderRepository.nextOrderItemId
+      updatedOrder <- addLineItem(orderItemId)(order).liftTo[F]
+      savedOrder <- orderRepository.saveOrder(updatedOrder)
+    yield savedOrder
 
   private def loadOrder(orderId: OrderId): F[Order] =
-    repository
-      .findById(orderId)
-      .flatMap(_.liftTo[F](OrderDomainError.OrderNotFound(orderId)))
+    orderRepository
+      .findOrderById(orderId)
+      .flatMap(_.liftTo[F](OrderError.OrderWasNotFound(orderId)))

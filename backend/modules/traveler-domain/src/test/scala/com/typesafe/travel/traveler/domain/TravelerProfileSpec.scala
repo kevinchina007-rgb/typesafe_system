@@ -1,54 +1,124 @@
 package com.typesafe.travel.traveler.domain
 
-import munit.FunSuite
+import com.typesafe.travel.identity.domain.*
 import com.typesafe.travel.shared.kernel.*
-import java.time.LocalDate
+import munit.FunSuite
+import java.time.{Instant, LocalDate}
 
 final class TravelerProfileSpec extends FunSuite:
 
-  test("draft traveler profile can be verified when it has a valid document") {
-    val profile =
-      TravelerProfile
-        .draft(
-          id = TravelerId("traveler-1"),
-          ownerUserId = UserId("user-1"),
-          fullName = PersonName("Ada Lovelace"),
-          birthDate = BirthDate(LocalDate.parse("1990-12-10")),
-          preferences = TravelerPreferences(
-            seatPreference = SeatPreference.Window,
-            mealPreference = MealPreference.Vegetarian,
-            accessibilityNotes = None
-          )
-        )
-        .addDocument(
-          IdentityDocument(
-            documentType = IdentityDocumentType.Passport,
-            documentNumber = DocumentNumber("P1234567"),
-            issuingCountry = CountryCode("CN"),
-            expiresOn = LocalDate.parse("2030-01-01")
-          )
-        )
+  type TestEither[A] = Either[Throwable, A]
 
-    val result = profile.verify(LocalDate.parse("2026-03-24"))
-
-    assertEquals(result.map(_.status), Right(TravelerProfileStatus.Verified))
-  }
-
-  test("traveler profile verification fails without documents") {
-    val profile =
-      TravelerProfile.draft(
-        id = TravelerId("traveler-2"),
-        ownerUserId = UserId("user-1"),
-        fullName = PersonName("Grace Hopper"),
-        birthDate = BirthDate(LocalDate.parse("1988-12-09")),
-        preferences = TravelerPreferences(
-          seatPreference = SeatPreference.NoPreference,
-          mealPreference = MealPreference.Standard,
-          accessibilityNotes = None
+  test("first traveler profile becomes default automatically") {
+    val travelerProfileRepository = InMemoryTravelerProfileRepository()
+    val userRepository = InMemoryUserRepository(
+      List(
+        User.registerNewUser(
+          userId = UserId("user-1"),
+          primaryEmailAddress = EmailAddress.unsafe("ada@example.com"),
+          userDisplayName = PersonName.unsafe("Ada Lovelace"),
+          userPhoneNumber = ContactNumber.unsafe("+15550000011"),
+          registeredAt = Instant.parse("2026-03-25T00:00:00Z")
         )
       )
+    )
+    val travelerProfileService = LiveTravelerProfileService[TestEither](travelerProfileRepository, userRepository)
 
-    val result = profile.verify(LocalDate.parse("2026-03-24"))
+    val createdTravelerProfile =
+      travelerProfileService.createTravelerProfile(
+        ownerUserId = UserId("user-1"),
+        travelerFullName = PersonName.unsafe("Ada Traveler"),
+        travelerDocumentType = TravelerDocumentType.Passport,
+        travelerDocumentNumber = DocumentNumber.unsafe("P1234567"),
+        travelerPhoneNumber = ContactNumber.unsafe("+15550000021"),
+        travelerBirthDate = BirthDate.unsafe(LocalDate.parse("1990-12-10")),
+        travelerPreferences = TravelerPreferences.defaultTravelerPreferences,
+        travelerEmergencyContact = None,
+        requestedDefaultTravelerProfile = false
+      )
 
-    assert(result.swap.exists(_.isInstanceOf[TravelerDomainError.MissingIdentityDocuments]))
+    assertEquals(createdTravelerProfile.map(_.isDefaultTravelerProfile), Right(true))
   }
+
+  test("archiving default traveler profile is rejected") {
+    val defaultTravelerProfile =
+      TravelerProfile.createTravelerProfile(
+        travelerId = TravelerId("traveler-1"),
+        ownerUserId = UserId("user-1"),
+        travelerFullName = PersonName.unsafe("Grace Hopper"),
+        travelerDocumentType = TravelerDocumentType.Passport,
+        travelerDocumentNumber = DocumentNumber.unsafe("P7654321"),
+        travelerPhoneNumber = ContactNumber.unsafe("+15550000022"),
+        travelerBirthDate = BirthDate.unsafe(LocalDate.parse("1988-12-09")),
+        travelerType = TravelerType.AdultTraveler,
+        travelerPreferences = TravelerPreferences.defaultTravelerPreferences,
+        travelerEmergencyContact = None,
+        isDefaultTravelerProfile = true
+      )
+
+    val archiveAttempt = defaultTravelerProfile.archiveTravelerProfile
+
+    assert(archiveAttempt.swap.exists(_.isInstanceOf[TravelerError.DefaultTravelerProfileCannotBeArchived]))
+  }
+
+  test("duplicate document number is rejected") {
+    val baseTravelerProfile =
+      TravelerProfile.createTravelerProfile(
+        travelerId = TravelerId("traveler-2"),
+        ownerUserId = UserId("user-1"),
+        travelerFullName = PersonName.unsafe("Linus Traveler"),
+        travelerDocumentType = TravelerDocumentType.Passport,
+        travelerDocumentNumber = DocumentNumber.unsafe("P7777777"),
+        travelerPhoneNumber = ContactNumber.unsafe("+15550000023"),
+        travelerBirthDate = BirthDate.unsafe(LocalDate.parse("1986-09-01")),
+        travelerType = TravelerType.AdultTraveler,
+        travelerPreferences = TravelerPreferences.defaultTravelerPreferences,
+        travelerEmergencyContact = None,
+        isDefaultTravelerProfile = false
+      )
+
+    val travelerIdentityDocument =
+      TravelerIdentityDocument.create(
+        travelerDocumentType = TravelerDocumentType.Passport,
+        travelerDocumentNumber = DocumentNumber.unsafe("P123456"),
+        issuingCountryCode = CountryCode.unsafe("CN"),
+        expirationDate = LocalDate.parse("2032-01-01")
+      )
+
+    val duplicateAttempt =
+      baseTravelerProfile
+        .addTravelerIdentityDocument(travelerIdentityDocument)
+        .flatMap(_.addTravelerIdentityDocument(travelerIdentityDocument))
+
+    assert(duplicateAttempt.swap.exists(_.isInstanceOf[TravelerError.DuplicateTravelerIdentityDocument]))
+  }
+
+  private final case class InMemoryTravelerProfileRepository(
+      storedTravelerProfiles: Map[TravelerId, TravelerProfile] = Map.empty
+  ) extends TravelerProfileRepository[TestEither]:
+    override def nextTravelerId: TestEither[TravelerId] =
+      Right(TravelerId(s"traveler-${storedTravelerProfiles.size + 1}"))
+
+    override def findTravelerProfileById(travelerId: TravelerId): TestEither[Option[TravelerProfile]] =
+      Right(storedTravelerProfiles.get(travelerId))
+
+    override def findTravelerProfilesByOwnerUserId(ownerUserId: UserId): TestEither[List[TravelerProfile]] =
+      Right(storedTravelerProfiles.values.filter(_.ownerUserId == ownerUserId).toList)
+
+    override def saveTravelerProfile(travelerProfile: TravelerProfile): TestEither[TravelerProfile] =
+      Right(travelerProfile)
+
+  private final case class InMemoryUserRepository(
+      storedUsers: List[User]
+  ) extends UserRepository[TestEither]:
+    override def nextUserId: TestEither[UserId] =
+      Right(UserId("user-generated"))
+
+    override def findByUserId(userId: UserId): TestEither[Option[User]] =
+      Right(storedUsers.find(_.userId == userId))
+
+    override def findByPrimaryEmailAddress(primaryEmailAddress: EmailAddress): TestEither[Option[User]] =
+      Right(storedUsers.find(_.primaryEmailAddress == primaryEmailAddress))
+
+    override def saveUser(user: User): TestEither[User] =
+      Right(user)

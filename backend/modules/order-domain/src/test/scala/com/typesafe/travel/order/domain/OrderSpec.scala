@@ -1,99 +1,173 @@
 package com.typesafe.travel.order.domain
 
-import munit.FunSuite
 import com.typesafe.travel.shared.kernel.*
-import java.time.{Instant, OffsetDateTime, ZoneOffset}
+import munit.FunSuite
+import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
 
 final class OrderSpec extends FunSuite:
 
-  private val createdAt = Instant.parse("2026-03-24T00:00:00Z")
+  private val orderCreatedAtInstant = Instant.parse("2026-03-25T00:00:00Z")
 
-  private val flightSnapshot = FlightBookingSnapshot(
-    airlineId = AirlineId("airline-1"),
-    flightId = FlightId("flight-1"),
-    flightNumber = FlightNumber("MU5123"),
-    schedule = FlightSchedule(
-      departureAt = OffsetDateTime.of(2026, 4, 5, 8, 0, 0, 0, ZoneOffset.UTC),
-      arrivalAt = OffsetDateTime.of(2026, 4, 5, 12, 0, 0, 0, ZoneOffset.UTC)
-    ),
-    departureAirport = AirportCode("PVG"),
-    arrivalAirport = AirportCode("NRT"),
-    cabinCode = CabinCode("ECONOMY"),
-    travelerId = TravelerId("traveler-1")
-  )
+  private val testFlightBookingSnapshot =
+    FlightBookingSnapshot(
+      airlineId = AirlineId("airline-1"),
+      flightId = FlightId("flight-1"),
+      flightNumber = FlightNumber.unsafe("MU5123"),
+      flightSchedule = FlightSchedule.unsafe(
+        departureAt = OffsetDateTime.of(2026, 4, 5, 8, 0, 0, 0, ZoneOffset.UTC),
+        arrivalAt = OffsetDateTime.of(2026, 4, 5, 12, 0, 0, 0, ZoneOffset.UTC)
+      ),
+      departureAirportCode = AirportCode.unsafe("PVG"),
+      arrivalAirportCode = AirportCode.unsafe("NRT"),
+      cabinCode = CabinCode.unsafe("ECONOMY"),
+      travelerId = TravelerId("traveler-1")
+    )
 
-  test("draft order cannot be submitted without items") {
-    val order = Order.draft(OrderId("order-1"), UserId("user-1"), createdAt)
+  private val testHotelBookingSnapshot =
+    HotelBookingSnapshot(
+      hotelId = HotelId("hotel-1"),
+      hotelName = HotelName.unsafe("Tokyo Grand Hotel"),
+      roomTypeId = RoomTypeId("room-type-1"),
+      roomTypeName = RoomTypeName.unsafe("Deluxe Twin"),
+      stayPeriod = StayPeriod.unsafe(LocalDate.parse("2026-04-05"), LocalDate.parse("2026-04-08")),
+      guestCount = Capacity.unsafe(2)
+    )
 
-    val result = order.submit
+  test("draft order rejects mixed currencies") {
+    val draftOrder =
+      Order
+        .createDraftOrder(OrderId("order-1"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
+        .addFlightOrderItem(
+          OrderItemId("item-1"),
+          testFlightBookingSnapshot,
+          Money.unsafe(BigDecimal(500), Currency.USD)
+        )
+        .toOption
+        .get
 
-    assert(result.swap.exists(_.isInstanceOf[OrderDomainError.EmptyOrder]))
+    val result =
+      draftOrder.addHotelOrderItem(
+        OrderItemId("item-2"),
+        testHotelBookingSnapshot,
+        Money.unsafe(BigDecimal(300), Currency.CNY)
+      )
+
+    assert(result.swap.exists(_.isInstanceOf[OrderError.OrderCurrencyDidNotMatch]))
   }
 
-  test("submitted order becomes confirmed after enough captured payment") {
-    val order = Order
-      .draft(OrderId("order-2"), UserId("user-1"), createdAt)
-      .addItem(
-        FlightOrderItem(
-          id = OrderItemId("item-1"),
-          snapshot = flightSnapshot,
-          totalPrice = Money(BigDecimal(1200), Currency.USD),
-          status = OrderItemStatus.Reserved
+  test("order aggregates item totals across flight and hotel items") {
+    val draftOrder =
+      Order
+        .createDraftOrder(OrderId("order-2"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
+        .addFlightOrderItem(
+          OrderItemId("item-1"),
+          testFlightBookingSnapshot,
+          Money.unsafe(BigDecimal(500), Currency.USD)
         )
-      )
-      .flatMap(_.submit)
-      .flatMap(
-        _.recordPayment(
-          Payment(
-            id = PaymentId("payment-1"),
-            amount = Money(BigDecimal(1200), Currency.USD),
-            method = PaymentMethod.Card,
-            status = PaymentStatus.Captured,
-            capturedAt = Some(createdAt.plusSeconds(600))
+        .flatMap(
+          _.addHotelOrderItem(
+            OrderItemId("item-2"),
+            testHotelBookingSnapshot,
+            Money.unsafe(BigDecimal(300), Currency.USD)
           )
         )
-      )
 
-    assertEquals(order.map(_.status), Right(OrderStatus.Confirmed))
+    assertEquals(draftOrder.map(_.totalBookedMoney.amount), Right(BigDecimal(800)))
   }
 
-  test("confirmed order becomes partially refunded after a settled refund") {
+  test("capturing enough payment confirms order and order items") {
     val confirmedOrder =
       Order
-        .draft(OrderId("order-3"), UserId("user-1"), createdAt)
-        .addItem(
-          FlightOrderItem(
-            id = OrderItemId("item-2"),
-            snapshot = flightSnapshot,
-            totalPrice = Money(BigDecimal(1200), Currency.USD),
-            status = OrderItemStatus.Reserved
-          )
+        .createDraftOrder(OrderId("order-3"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
+        .addFlightOrderItem(
+          OrderItemId("item-1"),
+          testFlightBookingSnapshot,
+          Money.unsafe(BigDecimal(800), Currency.USD)
         )
-        .flatMap(_.submit)
+        .flatMap(_.submitOrderForPayment)
         .flatMap(
-          _.recordPayment(
-            Payment(
-              id = PaymentId("payment-2"),
-              amount = Money(BigDecimal(1200), Currency.USD),
-              method = PaymentMethod.Card,
-              status = PaymentStatus.Captured,
-              capturedAt = Some(createdAt.plusSeconds(600))
-            )
+          _.authorizeOrderPayment(
+            paymentId = PaymentId("payment-1"),
+            paymentAmount = Money.unsafe(BigDecimal(800), Currency.USD),
+            paymentMethod = PaymentMethod.Card,
+            authorizedAt = orderCreatedAtInstant.plusSeconds(300)
           )
         )
+        .flatMap(_.captureAuthorizedPayment(PaymentId("payment-1"), orderCreatedAtInstant.plusSeconds(600)))
 
-    val refunded =
-      confirmedOrder.flatMap(
-        _.recordRefund(
-          Refund(
-            id = RefundId("refund-1"),
-            amount = Money(BigDecimal(200), Currency.USD),
-            reason = "schedule change",
-            status = RefundStatus.Settled,
-            requestedAt = createdAt.plusSeconds(1200)
+    assertEquals(confirmedOrder.map(_.orderStatus), Right(OrderStatus.Confirmed))
+    assertEquals(
+      confirmedOrder.map(_.orderLineItems.map(_.orderItemStatus)),
+      Right(Vector(OrderItemStatus.Confirmed))
+    )
+  }
+
+  test("refund request cannot exceed remaining refundable balance") {
+    val confirmedOrder =
+      Order
+        .createDraftOrder(OrderId("order-4"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
+        .addFlightOrderItem(
+          OrderItemId("item-1"),
+          testFlightBookingSnapshot,
+          Money.unsafe(BigDecimal(500), Currency.USD)
+        )
+        .flatMap(_.submitOrderForPayment)
+        .flatMap(
+          _.authorizeOrderPayment(
+            paymentId = PaymentId("payment-1"),
+            paymentAmount = Money.unsafe(BigDecimal(500), Currency.USD),
+            paymentMethod = PaymentMethod.Card,
+            authorizedAt = orderCreatedAtInstant.plusSeconds(300)
           )
         )
+        .flatMap(_.captureAuthorizedPayment(PaymentId("payment-1"), orderCreatedAtInstant.plusSeconds(600)))
+        .toOption
+        .get
+
+    val refundAttempt =
+      confirmedOrder.requestOrderRefund(
+        refundId = RefundId("refund-1"),
+        refundAmount = Money.unsafe(BigDecimal(700), Currency.USD),
+        refundReason = "too much requested",
+        requestedAt = orderCreatedAtInstant.plusSeconds(900)
       )
 
-    assertEquals(refunded.map(_.status), Right(OrderStatus.PartiallyRefunded))
+    assert(refundAttempt.swap.exists(_.isInstanceOf[OrderError.RefundExceededRemainingBalance]))
+  }
+
+  test("settled refund moves order to refunded when full amount is returned") {
+    val refundedOrder =
+      Order
+        .createDraftOrder(OrderId("order-5"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
+        .addFlightOrderItem(
+          OrderItemId("item-1"),
+          testFlightBookingSnapshot,
+          Money.unsafe(BigDecimal(500), Currency.USD)
+        )
+        .flatMap(_.submitOrderForPayment)
+        .flatMap(
+          _.authorizeOrderPayment(
+            paymentId = PaymentId("payment-1"),
+            paymentAmount = Money.unsafe(BigDecimal(500), Currency.USD),
+            paymentMethod = PaymentMethod.Card,
+            authorizedAt = orderCreatedAtInstant.plusSeconds(300)
+          )
+        )
+        .flatMap(_.captureAuthorizedPayment(PaymentId("payment-1"), orderCreatedAtInstant.plusSeconds(600)))
+        .flatMap(
+          _.requestOrderRefund(
+            refundId = RefundId("refund-1"),
+            refundAmount = Money.unsafe(BigDecimal(500), Currency.USD),
+            refundReason = "trip cancelled",
+            requestedAt = orderCreatedAtInstant.plusSeconds(900)
+          )
+        )
+        .flatMap(_.approveRequestedRefund(RefundId("refund-1"), orderCreatedAtInstant.plusSeconds(1200)))
+        .flatMap(_.settleApprovedRefund(RefundId("refund-1"), orderCreatedAtInstant.plusSeconds(1500)))
+
+    assertEquals(refundedOrder.map(_.orderStatus), Right(OrderStatus.Refunded))
+    assertEquals(
+      refundedOrder.map(_.orderLineItems.map(_.orderItemStatus)),
+      Right(Vector(OrderItemStatus.Refunded))
+    )
   }

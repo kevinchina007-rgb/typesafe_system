@@ -5,6 +5,8 @@ import com.typesafe.travel.shared.kernel.*
 trait OrderRepository[F[_]]:
   def nextOrderId: F[OrderId]
   def nextOrderItemId: F[OrderItemId]
-  def findById(id: OrderId): F[Option[Order]]
-  def findByUser(userId: UserId): F[List[Order]]
-  def save(order: Order): F[Order]
+  def nextPaymentId: F[PaymentId]
+  def nextRefundId: F[RefundId]
+  def findOrderById(orderId: OrderId): F[Option[Order]]
+  def findOrdersByOwnerUserId(ownerUserId: UserId): F[List[Order]]
+  def saveOrder(order: Order): F[Order]
