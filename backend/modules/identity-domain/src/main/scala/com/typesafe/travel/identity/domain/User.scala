@@ -110,6 +110,31 @@ object User:
       registeredAt = registeredAt
     )
 
+  def restorePersistedUser(
+      userId: UserId,
+      primaryEmailAddress: EmailAddress,
+      userDisplayName: PersonName,
+      userPhoneNumber: ContactNumber,
+      avatarUrl: Option[AvatarUrl],
+      userAccountStatus: UserAccountStatus,
+      membershipLevel: UserMembershipLevel,
+      loyaltyPoints: Points,
+      defaultTravelerProfileId: Option[TravelerId],
+      registeredAt: Instant
+  ): User =
+    User(
+      userId = userId,
+      primaryEmailAddress = primaryEmailAddress,
+      userDisplayName = userDisplayName,
+      userPhoneNumber = userPhoneNumber,
+      avatarUrl = avatarUrl,
+      userAccountStatus = userAccountStatus,
+      membershipLevel = membershipLevel,
+      loyaltyPoints = loyaltyPoints,
+      defaultTravelerProfileId = defaultTravelerProfileId,
+      registeredAt = registeredAt
+    )
+
 enum UserError(val message: String) extends DomainError:
   case UserWasNotFound(userId: UserId)
       extends UserError(s"User '${userId.value}' was not found")

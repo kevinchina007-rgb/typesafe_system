@@ -72,7 +72,7 @@ final class LiveTravelerProfileService[F[_]: MonadThrow](
     for
       ownerUser <- loadOwnerUser(ownerUserId)
       existingTravelerProfiles <- travelerProfileRepository.findTravelerProfilesByOwnerUserId(ownerUserId)
-      _ <- ensureTravelerDocumentNumberIsAvailable(travelerDocumentNumber, None)
+      _ <- ensureTravelerDocumentIdentityIsAvailable(travelerDocumentType, travelerDocumentNumber, None)
       travelerId <- travelerProfileRepository.nextTravelerId
       shouldBecomeDefaultTravelerProfile = requestedDefaultTravelerProfile || existingTravelerProfiles.isEmpty
       createdTravelerProfile = TravelerProfile.createTravelerProfile(
@@ -105,7 +105,11 @@ final class LiveTravelerProfileService[F[_]: MonadThrow](
   ): F[TravelerProfile] =
     loadTravelerProfile(ownerUserId, travelerId)
       .flatMap { existingTravelerProfile =>
-        ensureTravelerDocumentNumberIsAvailable(travelerDocumentNumber, Some(existingTravelerProfile.travelerId)).flatMap(_ =>
+        ensureTravelerDocumentIdentityIsAvailable(
+          travelerDocumentType,
+          travelerDocumentNumber,
+          Some(existingTravelerProfile.travelerId)
+        ).flatMap(_ =>
           existingTravelerProfile.updateTravelerProfile(
           updatedTravelerFullName = travelerFullName,
           updatedTravelerDocumentType = travelerDocumentType,
@@ -202,11 +206,13 @@ final class LiveTravelerProfileService[F[_]: MonadThrow](
       .flatMap(_.liftTo[F](TravelerError.TravelerProfileWasNotFound(travelerId)))
       .flatMap(_.ensureOwnedBy(ownerUserId).liftTo[F])
 
-  private def ensureTravelerDocumentNumberIsAvailable(
+  private def ensureTravelerDocumentIdentityIsAvailable(
+      travelerDocumentType: TravelerDocumentType,
       travelerDocumentNumber: DocumentNumber,
       currentTravelerId: Option[TravelerId]
   ): F[Unit] =
-    travelerProfileRepository.findTravelerProfilesByDocumentNumber(travelerDocumentNumber).flatMap { matchingTravelerProfiles =>
+    travelerProfileRepository.findTravelerProfilesByDocumentIdentity(travelerDocumentType, travelerDocumentNumber).flatMap {
+      matchingTravelerProfiles =>
       val conflictingTravelerProfiles = matchingTravelerProfiles.filterNot(travelerProfile =>
         currentTravelerId.contains(travelerProfile.travelerId)
       )

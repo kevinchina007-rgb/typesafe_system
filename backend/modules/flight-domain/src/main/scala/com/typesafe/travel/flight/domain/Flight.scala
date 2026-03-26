@@ -123,3 +123,28 @@ object Flight:
           createdAt = createdAt
         )
       )
+
+  def restorePersistedFlight(
+      flightId: FlightId,
+      airlineId: AirlineId,
+      flightNumber: FlightNumber,
+      departureAirport: AirportCode,
+      arrivalAirport: AirportCode,
+      flightSchedule: FlightSchedule,
+      flightStatus: FlightStatus,
+      basePrice: Money,
+      cabinInventories: Vector[CabinInventory],
+      createdAt: Instant
+  ): Flight =
+    Flight(
+      flightId = flightId,
+      airlineId = airlineId,
+      flightNumber = flightNumber,
+      departureAirport = departureAirport,
+      arrivalAirport = arrivalAirport,
+      flightSchedule = flightSchedule,
+      flightStatus = flightStatus,
+      basePrice = basePrice,
+      cabinInventories = cabinInventories,
+      createdAt = createdAt
+    )

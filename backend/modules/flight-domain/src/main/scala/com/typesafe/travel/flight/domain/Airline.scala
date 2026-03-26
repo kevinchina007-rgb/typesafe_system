@@ -36,3 +36,18 @@ object Airline:
       airlineStatus = AirlineStatus.Active,
       createdAt = createdAt
     )
+
+  def restorePersistedAirline(
+      airlineId: AirlineId,
+      airlineName: AirlineName,
+      airlineCode: AirlineCode,
+      airlineStatus: AirlineStatus,
+      createdAt: Instant
+  ): Airline =
+    Airline(
+      airlineId = airlineId,
+      airlineName = airlineName,
+      airlineCode = airlineCode,
+      airlineStatus = airlineStatus,
+      createdAt = createdAt
+    )

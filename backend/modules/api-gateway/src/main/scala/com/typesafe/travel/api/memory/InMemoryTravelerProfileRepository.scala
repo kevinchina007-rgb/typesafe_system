@@ -17,8 +17,18 @@ final class InMemoryTravelerProfileRepository[F[_]: Sync] private (
   override def findTravelerProfileById(travelerId: TravelerId): F[Option[TravelerProfile]] =
     Sync[F].delay(travelerState.get(travelerId))
 
-  override def findTravelerProfilesByDocumentNumber(travelerDocumentNumber: DocumentNumber): F[List[TravelerProfile]] =
-    Sync[F].delay(travelerState.values.filter(_.travelerDocumentNumber == travelerDocumentNumber).toList)
+  override def findTravelerProfilesByDocumentIdentity(
+      travelerDocumentType: TravelerDocumentType,
+      travelerDocumentNumber: DocumentNumber
+  ): F[List[TravelerProfile]] =
+    Sync[F].delay(
+      travelerState.values
+        .filter(travelerProfile =>
+          travelerProfile.travelerDocumentType == travelerDocumentType &&
+            travelerProfile.travelerDocumentNumber == travelerDocumentNumber
+        )
+        .toList
+    )
 
   override def findTravelerProfilesByOwnerUserId(ownerUserId: UserId): F[List[TravelerProfile]] =
     Sync[F].delay(travelerState.values.filter(_.ownerUserId == ownerUserId).toList.sortBy(_.travelerId.value))

@@ -150,8 +150,18 @@ final class TravelerProfileSpec extends FunSuite:
     override def findTravelerProfileById(travelerId: TravelerId): TestEither[Option[TravelerProfile]] =
       Right(storedTravelerProfiles.get(travelerId))
 
-    override def findTravelerProfilesByDocumentNumber(travelerDocumentNumber: DocumentNumber): TestEither[List[TravelerProfile]] =
-      Right(storedTravelerProfiles.values.filter(_.travelerDocumentNumber == travelerDocumentNumber).toList)
+    override def findTravelerProfilesByDocumentIdentity(
+        travelerDocumentType: TravelerDocumentType,
+        travelerDocumentNumber: DocumentNumber
+    ): TestEither[List[TravelerProfile]] =
+      Right(
+        storedTravelerProfiles.values
+          .filter(travelerProfile =>
+            travelerProfile.travelerDocumentType == travelerDocumentType &&
+              travelerProfile.travelerDocumentNumber == travelerDocumentNumber
+          )
+          .toList
+      )
 
     override def findTravelerProfilesByOwnerUserId(ownerUserId: UserId): TestEither[List[TravelerProfile]] =
       Right(storedTravelerProfiles.values.filter(_.ownerUserId == ownerUserId).toList)

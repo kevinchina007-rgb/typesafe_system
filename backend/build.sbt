@@ -33,13 +33,24 @@ lazy val circeGenericDependency =
 lazy val circeParserDependency =
   "io.circe" %% "circe-parser" % "0.14.9"
 
+lazy val doobieCoreDependency =
+  "org.tpolecat" %% "doobie-core" % "1.0.0-RC5"
+
+lazy val doobieHikariDependency =
+  "org.tpolecat" %% "doobie-hikari" % "1.0.0-RC5"
+
+lazy val doobieH2Dependency =
+  "org.tpolecat" %% "doobie-h2" % "1.0.0-RC5"
+
 lazy val root = (project in file("."))
   .aggregate(
     sharedKernel,
     identityDomain,
     travelerDomain,
     flightDomain,
+    hotelDomain,
     orderDomain,
+    persistenceJdbc,
     apiGateway
   )
   .settings(
@@ -47,6 +58,7 @@ lazy val root = (project in file("."))
     publish / skip := true,
     Compile / unmanagedSourceDirectories := Seq.empty,
     Test / unmanagedSourceDirectories := Seq.empty,
+    Compile / run / fork := true,
     Compile / run := (apiGateway / Compile / run).evaluated,
     Compile / run / mainClass := Some("com.typesafe.travel.api.Main")
   )
@@ -83,6 +95,20 @@ lazy val orderDomain = module("order-domain")
     libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
   )
 
+lazy val persistenceJdbc = module("persistence-jdbc")
+  .dependsOn(sharedKernel, identityDomain, travelerDomain, flightDomain, hotelDomain, orderDomain)
+  .settings(
+    libraryDependencies ++= Seq(
+      catsEffectDependency,
+      circeGenericDependency,
+      circeParserDependency,
+      doobieCoreDependency,
+      doobieHikariDependency,
+      doobieH2Dependency,
+      munitDependency
+    )
+  )
+
 lazy val contentDomain = module("content-domain")
   .dependsOn(sharedKernel, orderDomain)
 
@@ -99,7 +125,8 @@ lazy val apiGateway = module("api-gateway")
     travelerDomain,
     flightDomain,
     hotelDomain,
-    orderDomain
+    orderDomain,
+    persistenceJdbc
   )
   .settings(
     libraryDependencies ++= Seq(
@@ -112,6 +139,7 @@ lazy val apiGateway = module("api-gateway")
       circeParserDependency,
       munitDependency
     ),
+    Compile / run / fork := true,
     Compile / run / mainClass := Some("com.typesafe.travel.api.Main")
   )
 

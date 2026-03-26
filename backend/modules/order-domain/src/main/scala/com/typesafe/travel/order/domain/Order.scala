@@ -77,6 +77,14 @@ object FlightOrderItem:
   ): FlightOrderItem =
     FlightOrderItem(orderItemId, flightBookingSnapshot, bookedMoney, OrderItemStatus.Reserved)
 
+  def restorePersistedFlightOrderItem(
+      orderItemId: OrderItemId,
+      flightBookingSnapshot: FlightBookingSnapshot,
+      bookedMoney: Money,
+      orderItemStatus: OrderItemStatus
+  ): FlightOrderItem =
+    FlightOrderItem(orderItemId, flightBookingSnapshot, bookedMoney, orderItemStatus)
+
 final case class HotelOrderItem private (
     orderItemId: OrderItemId,
     hotelBookingSnapshot: HotelBookingSnapshot,
@@ -101,6 +109,14 @@ object HotelOrderItem:
   ): HotelOrderItem =
     HotelOrderItem(orderItemId, hotelBookingSnapshot, bookedMoney, OrderItemStatus.Reserved)
 
+  def restorePersistedHotelOrderItem(
+      orderItemId: OrderItemId,
+      hotelBookingSnapshot: HotelBookingSnapshot,
+      bookedMoney: Money,
+      orderItemStatus: OrderItemStatus
+  ): HotelOrderItem =
+    HotelOrderItem(orderItemId, hotelBookingSnapshot, bookedMoney, orderItemStatus)
+
 final case class Payment private (
     paymentId: PaymentId,
     paymentAmount: Money,
@@ -124,6 +140,16 @@ object Payment:
       authorizedAt: Instant
   ): Payment =
     Payment(paymentId, paymentAmount, paymentMethod, PaymentStatus.Authorized, authorizedAt, None)
+
+  def restorePersistedPayment(
+      paymentId: PaymentId,
+      paymentAmount: Money,
+      paymentMethod: PaymentMethod,
+      paymentStatus: PaymentStatus,
+      authorizedAt: Instant,
+      capturedAt: Option[Instant]
+  ): Payment =
+    Payment(paymentId, paymentAmount, paymentMethod, paymentStatus, authorizedAt, capturedAt)
 
 final case class Refund private (
     refundId: RefundId,
@@ -156,6 +182,17 @@ object Refund:
       Right(Refund(refundId, refundAmount, normalizedRefundReason, RefundStatus.Requested, requestedAt, None, None))
     else
       Left(OrderError.RefundReasonWasEmpty(refundId))
+
+  def restorePersistedRefund(
+      refundId: RefundId,
+      refundAmount: Money,
+      refundReason: String,
+      refundStatus: RefundStatus,
+      requestedAt: Instant,
+      approvedAt: Option[Instant],
+      settledAt: Option[Instant]
+  ): Refund =
+    Refund(refundId, refundAmount, refundReason, refundStatus, requestedAt, approvedAt, settledAt)
 
 final case class Order private (
     orderId: OrderId,
@@ -438,6 +475,35 @@ object Order:
       confirmedAt = None,
       completedAt = None,
       cancelledAt = None
+    )
+
+  def restorePersistedOrder(
+      orderId: OrderId,
+      ownerUserId: UserId,
+      orderStatus: OrderStatus,
+      orderCurrency: Currency,
+      orderLineItems: Vector[OrderLineItem],
+      orderPayments: Vector[Payment],
+      orderRefunds: Vector[Refund],
+      createdAt: Instant,
+      paidAt: Option[Instant],
+      confirmedAt: Option[Instant],
+      completedAt: Option[Instant],
+      cancelledAt: Option[Instant]
+  ): Order =
+    Order(
+      orderId = orderId,
+      ownerUserId = ownerUserId,
+      orderStatus = orderStatus,
+      orderCurrency = orderCurrency,
+      orderLineItems = orderLineItems,
+      orderPayments = orderPayments,
+      orderRefunds = orderRefunds,
+      createdAt = createdAt,
+      paidAt = paidAt,
+      confirmedAt = confirmedAt,
+      completedAt = completedAt,
+      cancelledAt = cancelledAt
     )
 
 enum OrderError(val message: String) extends DomainError:
