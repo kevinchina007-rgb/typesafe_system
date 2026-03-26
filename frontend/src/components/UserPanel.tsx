@@ -1,11 +1,16 @@
+import { AvatarUploader } from './AvatarUploader'
 import type { UserResponse } from '../lib/mvp-types'
+
+type AccountEntryMode = 'register' | 'login'
 
 type UserPanelProps = {
   account: UserResponse | null
+  accountEntryMode: AccountEntryMode
   isBusy: boolean
   isGuestMode: boolean
   loginEmailDraft: string
   translate: (translationKey: string) => string
+  onChangeAccountEntryMode: (accountEntryMode: AccountEntryMode) => void
   onChangeLoginEmailDraft: (email: string) => void
   onRegisterAccount: (payload: {
     email: string
@@ -13,19 +18,25 @@ type UserPanelProps = {
     phone: string
   }) => Promise<void>
   onLoginAccount: (payload: { email: string }) => Promise<void>
+  onUploadAvatar: (avatarFile: File) => Promise<void>
+  onAvatarValidationError: (message: string) => void
   onRefreshAccount: () => Promise<void>
   onLogout: () => void
 }
 
 export function UserPanel({
   account,
+  accountEntryMode,
   isBusy,
   isGuestMode,
   loginEmailDraft,
   translate,
+  onChangeAccountEntryMode,
   onChangeLoginEmailDraft,
   onRegisterAccount,
   onLoginAccount,
+  onUploadAvatar,
+  onAvatarValidationError,
   onRefreshAccount,
   onLogout,
 }: UserPanelProps) {
@@ -48,7 +59,28 @@ export function UserPanel({
         ) : null}
       </div>
 
-      <div className="page-grid">
+      {isGuestMode ? (
+        <div className="action-row">
+          <button
+            type="button"
+            className={accountEntryMode === 'register' ? '' : 'secondary-button'}
+            disabled={isBusy}
+            onClick={() => onChangeAccountEntryMode('register')}
+          >
+            {translate('account.create')}
+          </button>
+          <button
+            type="button"
+            className={accountEntryMode === 'login' ? '' : 'secondary-button'}
+            disabled={isBusy}
+            onClick={() => onChangeAccountEntryMode('login')}
+          >
+            {translate('account.login')}
+          </button>
+        </div>
+      ) : null}
+
+      {accountEntryMode === 'register' ? (
         <form
           className="stack-form panel-card"
           onSubmit={async event => {
@@ -79,7 +111,7 @@ export function UserPanel({
             {translate('account.create')}
           </button>
         </form>
-
+      ) : (
         <form
           className="stack-form panel-card"
           onSubmit={async event => {
@@ -104,45 +136,54 @@ export function UserPanel({
           </button>
           <p className="empty-state">{translate('guest.description')}</p>
         </form>
-      </div>
+      )}
 
       <div className="list-surface">
         <h3>{translate('account.profileTitle')}</h3>
         {account ? (
-          <div className="detail-grid">
-            <div>
-              <span className="detail-label">{translate('account.nickname')}</span>
-              <strong>{account.nickname}</strong>
+          <>
+            <AvatarUploader
+              account={account}
+              isBusy={isBusy}
+              translate={translate}
+              onUploadAvatar={onUploadAvatar}
+              onValidationError={onAvatarValidationError}
+            />
+            <div className="detail-grid">
+              <div>
+                <span className="detail-label">{translate('account.nickname')}</span>
+                <strong>{account.nickname}</strong>
+              </div>
+              <div>
+                <span className="detail-label">{translate('account.email')}</span>
+                <strong>{account.email}</strong>
+              </div>
+              <div>
+                <span className="detail-label">{translate('account.phone')}</span>
+                <strong>{account.phone}</strong>
+              </div>
+              <div>
+                <span className="detail-label">{translate('account.status')}</span>
+                <strong>{account.status}</strong>
+              </div>
+              <div>
+                <span className="detail-label">{translate('account.membership')}</span>
+                <strong>{account.membershipLevel}</strong>
+              </div>
+              <div>
+                <span className="detail-label">{translate('account.points')}</span>
+                <strong>{account.points}</strong>
+              </div>
+              <div>
+                <span className="detail-label">{translate('account.primaryTraveler')}</span>
+                <strong>{account.defaultTravelerProfileId ?? '-'}</strong>
+              </div>
+              <div>
+                <span className="detail-label">{translate('account.createdAt')}</span>
+                <strong>{new Date(account.createdAt).toLocaleString()}</strong>
+              </div>
             </div>
-            <div>
-              <span className="detail-label">{translate('account.email')}</span>
-              <strong>{account.email}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('account.phone')}</span>
-              <strong>{account.phone}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('account.status')}</span>
-              <strong>{account.status}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('account.membership')}</span>
-              <strong>{account.membershipLevel}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('account.points')}</span>
-              <strong>{account.points}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('account.primaryTraveler')}</span>
-              <strong>{account.defaultTravelerProfileId ?? '-'}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('account.createdAt')}</span>
-              <strong>{new Date(account.createdAt).toLocaleString()}</strong>
-            </div>
-          </div>
+          </>
         ) : (
           <p className="empty-state">{translate('guest.description')}</p>
         )}

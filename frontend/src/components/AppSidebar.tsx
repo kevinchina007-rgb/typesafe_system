@@ -1,5 +1,7 @@
 import type { AppLanguage, AppViewKey, HealthResponse, UserResponse } from '../lib/mvp-types'
 
+type AccountEntryMode = 'register' | 'login'
+
 type AppSidebarProps = {
   currentLanguage: AppLanguage
   currentViewKey: AppViewKey
@@ -7,10 +9,12 @@ type AppSidebarProps = {
   signedInUser: UserResponse | null
   onChangeLanguage: (language: AppLanguage) => void
   onSelectView: (viewKey: AppViewKey) => void
+  onOpenAccountEntryMode: (accountEntryMode: AccountEntryMode) => void
   translate: (translationKey: string) => string
 }
 
-const sidebarViews: AppViewKey[] = ['explore', 'account', 'travelers', 'bookings']
+const guestSidebarViews: AppViewKey[] = ['explore']
+const signedInSidebarViews: AppViewKey[] = ['explore', 'account', 'travelers', 'flights', 'hotels', 'bookings']
 
 export function AppSidebar({
   currentLanguage,
@@ -19,8 +23,12 @@ export function AppSidebar({
   signedInUser,
   onChangeLanguage,
   onSelectView,
+  onOpenAccountEntryMode,
   translate,
 }: AppSidebarProps) {
+  const isGuestMode = signedInUser === null
+  const sidebarViews = isGuestMode ? guestSidebarViews : signedInSidebarViews
+
   return (
     <aside className="app-sidebar">
       <div className="sidebar-topbar">
@@ -30,10 +38,7 @@ export function AppSidebar({
         </div>
         <label className="language-switcher">
           <span>{translate('language.label')}</span>
-          <select
-            value={currentLanguage}
-            onChange={event => onChangeLanguage(event.target.value as AppLanguage)}
-          >
+          <select value={currentLanguage} onChange={event => onChangeLanguage(event.target.value as AppLanguage)}>
             <option value="en">English</option>
             <option value="zh">中文</option>
           </select>
@@ -46,7 +51,21 @@ export function AppSidebar({
         <span className={`health-pill ${health?.status === 'ok' ? 'is-healthy' : ''}`}>
           {health ? `${translate('status.online')} · ${health.backendPort}` : translate('status.offline')}
         </span>
-        <p>{signedInUser ? `${signedInUser.nickname} · ${signedInUser.email}` : translate('guest.badge')}</p>
+        {signedInUser ? (
+          <p>{`${signedInUser.nickname} · ${signedInUser.email}`}</p>
+        ) : (
+          <>
+            <p>{translate('guest.badge')}</p>
+            <div className="action-cluster">
+              <button type="button" onClick={() => onOpenAccountEntryMode('register')}>
+                {translate('account.create')}
+              </button>
+              <button type="button" className="secondary-button" onClick={() => onOpenAccountEntryMode('login')}>
+                {translate('account.login')}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <nav className="sidebar-nav">

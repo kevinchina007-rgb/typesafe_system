@@ -1,10 +1,36 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import type { AppLanguage, TravelerResponse } from '../lib/mvp-types'
-import {
-  deriveTravelerTypeLabelFromBirthDate,
-  localizeDocumentType,
-} from '../lib/view-models'
+import { deriveTravelerTypeLabelFromBirthDate, localizeDocumentType } from '../lib/view-models'
+
+type TravelerFormDraft = {
+  travelerId: string | null
+  fullName: string
+  documentType: string
+  documentNumber: string
+  phone: string
+  birthDate: string
+  seatPreference: string
+  mealPreference: string
+  accessibilityRequestNotes: string
+  emergencyContactName: string
+  emergencyContactPhoneNumber: string
+  isDefaultTraveler: boolean
+}
+
+type CreateTravelerPayload = {
+  fullName: string
+  documentType: string
+  documentNumber: string
+  phone: string
+  birthDate: string
+  seatPreference: string
+  mealPreference: string
+  accessibilityRequestNotes: string | null
+  emergencyContactName: string | null
+  emergencyContactPhoneNumber: string | null
+  isDefaultTraveler: boolean
+}
 
 type TravelerPanelProps = {
   currentLanguage: AppLanguage
@@ -12,20 +38,45 @@ type TravelerPanelProps = {
   isGuestMode: boolean
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
-  onCreateTraveler: (payload: {
-    fullName: string
-    documentType: string
-    documentNumber: string
-    phone: string
-    birthDate: string
-    seatPreference: string
-    mealPreference: string
-    accessibilityRequestNotes: string | null
-    emergencyContactName: string | null
-    emergencyContactPhoneNumber: string | null
-    isDefaultTraveler: boolean
-  }) => Promise<void>
+  onCreateTraveler: (payload: CreateTravelerPayload) => Promise<void>
+  onUpdateTraveler: (payload: TravelerFormDraft) => Promise<void>
   onReloadTravelers: () => Promise<void>
+}
+
+const emptyTravelerFormDraft: TravelerFormDraft = {
+  travelerId: null,
+  fullName: '',
+  documentType: 'passport',
+  documentNumber: '',
+  phone: '',
+  birthDate: '',
+  seatPreference: 'none',
+  mealPreference: 'standard',
+  accessibilityRequestNotes: '',
+  emergencyContactName: '',
+  emergencyContactPhoneNumber: '',
+  isDefaultTraveler: false,
+}
+
+function createTravelerFormDraft(traveler: TravelerResponse): TravelerFormDraft {
+  return {
+    travelerId: traveler.travelerId,
+    fullName: traveler.fullName,
+    documentType: traveler.documentType,
+    documentNumber: traveler.documentNumber,
+    phone: traveler.phone,
+    birthDate: traveler.birthDate,
+    seatPreference: 'none',
+    mealPreference: 'standard',
+    accessibilityRequestNotes: '',
+    emergencyContactName: '',
+    emergencyContactPhoneNumber: '',
+    isDefaultTraveler: traveler.isDefault,
+  }
+}
+
+function renderTravelerLabel(traveler: TravelerResponse): string {
+  return `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
 }
 
 export function TravelerPanel({
@@ -35,10 +86,28 @@ export function TravelerPanel({
   travelers,
   translate,
   onCreateTraveler,
+  onUpdateTraveler,
   onReloadTravelers,
 }: TravelerPanelProps) {
   const todayInputValue = new Date().toISOString().slice(0, 10)
-  const [draftBirthDate, setDraftBirthDate] = useState('')
+  const [travelerFormDraft, setTravelerFormDraft] = useState<TravelerFormDraft>(emptyTravelerFormDraft)
+
+  const derivedTravelerTypeLabel = useMemo(
+    () => deriveTravelerTypeLabelFromBirthDate(travelerFormDraft.birthDate, currentLanguage),
+    [travelerFormDraft.birthDate, currentLanguage],
+  )
+
+  const isEditingTraveler = travelerFormDraft.travelerId !== null
+
+  function updateTravelerFormDraft<K extends keyof TravelerFormDraft>(
+    key: K,
+    value: TravelerFormDraft[K],
+  ) {
+    setTravelerFormDraft(currentTravelerFormDraft => ({
+      ...currentTravelerFormDraft,
+      [key]: value,
+    }))
+  }
 
   return (
     <section className="page-card">
@@ -63,40 +132,58 @@ export function TravelerPanel({
         className="stack-form panel-card"
         onSubmit={async event => {
           event.preventDefault()
-          const formData = new FormData(event.currentTarget)
-          const birthDate = String(formData.get('birthDate') ?? '')
-          if (!birthDate || birthDate > todayInputValue) {
+          if (!travelerFormDraft.birthDate || travelerFormDraft.birthDate > todayInputValue) {
             return
           }
 
-          await onCreateTraveler({
-            fullName: String(formData.get('fullName') ?? ''),
-            documentType: String(formData.get('documentType') ?? 'passport'),
-            documentNumber: String(formData.get('documentNumber') ?? ''),
-            phone: String(formData.get('phone') ?? ''),
-            birthDate,
-            seatPreference: String(formData.get('seatPreference') ?? 'none'),
-            mealPreference: String(formData.get('mealPreference') ?? 'standard'),
-            accessibilityRequestNotes:
-              String(formData.get('accessibilityRequestNotes') ?? '').trim() || null,
-            emergencyContactName:
-              String(formData.get('emergencyContactName') ?? '').trim() || null,
-            emergencyContactPhoneNumber:
-              String(formData.get('emergencyContactPhoneNumber') ?? '').trim() || null,
-            isDefaultTraveler: formData.get('isDefaultTraveler') === 'on',
-          })
-          setDraftBirthDate('')
-          event.currentTarget.reset()
+          if (travelerFormDraft.travelerId) {
+            await onUpdateTraveler(travelerFormDraft)
+          } else {
+            await onCreateTraveler({
+              fullName: travelerFormDraft.fullName,
+              documentType: travelerFormDraft.documentType,
+              documentNumber: travelerFormDraft.documentNumber,
+              phone: travelerFormDraft.phone,
+              birthDate: travelerFormDraft.birthDate,
+              seatPreference: travelerFormDraft.seatPreference,
+              mealPreference: travelerFormDraft.mealPreference,
+              accessibilityRequestNotes: travelerFormDraft.accessibilityRequestNotes.trim() || null,
+              emergencyContactName: travelerFormDraft.emergencyContactName.trim() || null,
+              emergencyContactPhoneNumber: travelerFormDraft.emergencyContactPhoneNumber.trim() || null,
+              isDefaultTraveler: travelerFormDraft.isDefaultTraveler,
+            })
+          }
+
+          setTravelerFormDraft(emptyTravelerFormDraft)
         }}
       >
+        <div className="panel-heading">
+          <h3>{isEditingTraveler ? translate('travelers.edit') : translate('travelers.add')}</h3>
+          {isEditingTraveler ? (
+            <button type="button" className="secondary-button" onClick={() => setTravelerFormDraft(emptyTravelerFormDraft)}>
+              {translate('travelers.cancelEdit')}
+            </button>
+          ) : null}
+        </div>
+
         <div className="three-column-grid">
           <label>
             {translate('travelers.fullName')}
-            <input name="fullName" placeholder="Lin Chen" required disabled={isGuestMode || isBusy} />
+            <input
+              value={travelerFormDraft.fullName}
+              onChange={event => updateTravelerFormDraft('fullName', event.target.value)}
+              placeholder="Lin Chen"
+              required
+              disabled={isGuestMode || isBusy}
+            />
           </label>
           <label>
             {translate('travelers.documentType')}
-            <select name="documentType" defaultValue="passport" disabled={isGuestMode || isBusy}>
+            <select
+              value={travelerFormDraft.documentType}
+              onChange={event => updateTravelerFormDraft('documentType', event.target.value)}
+              disabled={isGuestMode || isBusy}
+            >
               <option value="passport">{translate('travelers.document.passport')}</option>
               <option value="identity-card">{translate('travelers.document.identity-card')}</option>
               <option value="residence-permit">{translate('travelers.document.residence-permit')}</option>
@@ -105,37 +192,52 @@ export function TravelerPanel({
           </label>
           <label>
             {translate('travelers.documentNumber')}
-            <input name="documentNumber" placeholder="E12345678" required disabled={isGuestMode || isBusy} />
+            <input
+              value={travelerFormDraft.documentNumber}
+              onChange={event => updateTravelerFormDraft('documentNumber', event.target.value)}
+              placeholder="E12345678"
+              required
+              disabled={isGuestMode || isBusy}
+            />
           </label>
         </div>
 
         <div className="three-column-grid">
           <label>
             {translate('travelers.phone')}
-            <input name="phone" placeholder="+8613812345678" required disabled={isGuestMode || isBusy} />
+            <input
+              value={travelerFormDraft.phone}
+              onChange={event => updateTravelerFormDraft('phone', event.target.value)}
+              placeholder="+8613812345678"
+              required
+              disabled={isGuestMode || isBusy}
+            />
           </label>
           <label>
             {translate('travelers.birthDate')}
             <input
-              name="birthDate"
               type="date"
               max={todayInputValue}
               required
               disabled={isGuestMode || isBusy}
-              value={draftBirthDate}
-              onChange={event => setDraftBirthDate(event.target.value)}
+              value={travelerFormDraft.birthDate}
+              onChange={event => updateTravelerFormDraft('birthDate', event.target.value)}
             />
           </label>
           <label>
             {translate('travelers.derivedType')}
-            <input value={deriveTravelerTypeLabelFromBirthDate(draftBirthDate, currentLanguage)} readOnly disabled />
+            <input value={derivedTravelerTypeLabel} readOnly disabled />
           </label>
         </div>
 
         <div className="two-column-grid">
           <label>
             {translate('travelers.seatPreference')}
-            <select name="seatPreference" defaultValue="none" disabled={isGuestMode || isBusy}>
+            <select
+              value={travelerFormDraft.seatPreference}
+              onChange={event => updateTravelerFormDraft('seatPreference', event.target.value)}
+              disabled={isGuestMode || isBusy}
+            >
               <option value="window">{translate('travelers.seat.window')}</option>
               <option value="aisle">{translate('travelers.seat.aisle')}</option>
               <option value="middle">{translate('travelers.seat.middle')}</option>
@@ -144,7 +246,11 @@ export function TravelerPanel({
           </label>
           <label>
             {translate('travelers.mealPreference')}
-            <select name="mealPreference" defaultValue="standard" disabled={isGuestMode || isBusy}>
+            <select
+              value={travelerFormDraft.mealPreference}
+              onChange={event => updateTravelerFormDraft('mealPreference', event.target.value)}
+              disabled={isGuestMode || isBusy}
+            >
               <option value="standard">{translate('travelers.meal.standard')}</option>
               <option value="vegetarian">{translate('travelers.meal.vegetarian')}</option>
               <option value="vegan">{translate('travelers.meal.vegan')}</option>
@@ -155,27 +261,46 @@ export function TravelerPanel({
 
         <label>
           {translate('travelers.accessibility')}
-          <input name="accessibilityRequestNotes" disabled={isGuestMode || isBusy} />
+          <input
+            value={travelerFormDraft.accessibilityRequestNotes}
+            onChange={event => updateTravelerFormDraft('accessibilityRequestNotes', event.target.value)}
+            disabled={isGuestMode || isBusy}
+          />
         </label>
 
         <div className="two-column-grid">
           <label>
             {translate('travelers.emergencyName')}
-            <input name="emergencyContactName" disabled={isGuestMode || isBusy} />
+            <input
+              value={travelerFormDraft.emergencyContactName}
+              onChange={event => updateTravelerFormDraft('emergencyContactName', event.target.value)}
+              disabled={isGuestMode || isBusy}
+            />
           </label>
           <label>
             {translate('travelers.emergencyPhone')}
-            <input name="emergencyContactPhoneNumber" disabled={isGuestMode || isBusy} />
+            <input
+              value={travelerFormDraft.emergencyContactPhoneNumber}
+              onChange={event => updateTravelerFormDraft('emergencyContactPhoneNumber', event.target.value)}
+              disabled={isGuestMode || isBusy}
+            />
           </label>
         </div>
 
-        <label className="checkbox-row">
-          <input type="checkbox" name="isDefaultTraveler" disabled={isGuestMode || isBusy} />
-          {translate('travelers.primaryToggle')}
-        </label>
+        {!isEditingTraveler ? (
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={travelerFormDraft.isDefaultTraveler}
+              onChange={event => updateTravelerFormDraft('isDefaultTraveler', event.target.checked)}
+              disabled={isGuestMode || isBusy}
+            />
+            {translate('travelers.primaryToggle')}
+          </label>
+        ) : null}
 
         <button type="submit" disabled={isGuestMode || isBusy}>
-          {translate('travelers.add')}
+          {isEditingTraveler ? translate('travelers.saveEdit') : translate('travelers.add')}
         </button>
       </form>
 
@@ -186,17 +311,22 @@ export function TravelerPanel({
             {travelers.map(traveler => (
               <li key={traveler.travelerId}>
                 <div>
-                  <strong>{traveler.fullName}</strong>
+                  <strong>{renderTravelerLabel(traveler)}</strong>
                   <p>{`${localizeDocumentType(traveler.documentType, currentLanguage)} · ${traveler.documentNumber}`}</p>
                   <p>{deriveTravelerTypeLabelFromBirthDate(traveler.birthDate, currentLanguage)}</p>
                 </div>
-                <span className="tag-chip">
-                  {traveler.isDefault
-                    ? currentLanguage === 'zh'
-                      ? '默认出行人'
-                      : 'Primary traveler'
-                    : deriveTravelerTypeLabelFromBirthDate(traveler.birthDate, currentLanguage)}
-                </span>
+                <div className="compact-action-block">
+                  <span className="tag-chip">
+                    {traveler.isDefault
+                      ? translate('travelers.primary')
+                      : deriveTravelerTypeLabelFromBirthDate(traveler.birthDate, currentLanguage)}
+                  </span>
+                  {!isGuestMode ? (
+                    <button type="button" className="secondary-button" onClick={() => setTravelerFormDraft(createTravelerFormDraft(traveler))}>
+                      {translate('travelers.edit')}
+                    </button>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
