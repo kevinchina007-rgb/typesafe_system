@@ -23,6 +23,8 @@ trait UserService[F[_]]:
 
   def assignDefaultTraveler(userId: UserId, travelerId: TravelerId): F[User]
 
+  def updateUserAvatar(userId: UserId, avatarUrl: AvatarUrl): F[User]
+
 final class LiveUserService[F[_]: MonadThrow](
     userRepository: UserRepository[F]
 ) extends UserService[F]:
@@ -74,6 +76,11 @@ final class LiveUserService[F[_]: MonadThrow](
   override def assignDefaultTraveler(userId: UserId, travelerId: TravelerId): F[User] =
     loadUser(userId)
       .flatMap(user => MonadThrow[F].fromEither(user.assignDefaultTravelerProfile(travelerId)))
+      .flatMap(userRepository.saveUser)
+
+  override def updateUserAvatar(userId: UserId, avatarUrl: AvatarUrl): F[User] =
+    loadUser(userId)
+      .flatMap(user => MonadThrow[F].fromEither(user.updateAvatarUrl(avatarUrl)))
       .flatMap(userRepository.saveUser)
 
   private def loadUser(userId: UserId): F[User] =

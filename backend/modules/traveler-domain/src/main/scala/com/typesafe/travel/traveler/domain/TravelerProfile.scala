@@ -257,6 +257,8 @@ enum TravelerError(val message: String) extends DomainError:
       extends TravelerError(s"Archived traveler profile '${travelerId.value}' cannot become default")
   case DefaultTravelerProfileCannotBeArchived(travelerId: TravelerId)
       extends TravelerError(s"Default traveler profile '${travelerId.value}' cannot be archived")
+  case TravelerDocumentNumberAlreadyExists(travelerDocumentNumber: DocumentNumber)
+      extends TravelerError(s"Traveler document '${travelerDocumentNumber.value}' already exists")
   case TravelerLoyaltyMembershipNumberWasEmpty
       extends TravelerError("Traveler loyalty membership number must not be empty")
   case TravelerAccessibilityNotesWereTooLong(actualLength: Int)

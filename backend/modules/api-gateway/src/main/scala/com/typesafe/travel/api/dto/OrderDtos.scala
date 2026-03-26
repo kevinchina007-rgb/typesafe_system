@@ -1,23 +1,11 @@
 package com.typesafe.travel.api.dto
 
 import com.typesafe.travel.order.domain.*
+import com.typesafe.travel.shared.kernel.CabinClass
 
 final case class CreateOrderRequestDto(
     ownerUserId: String,
-    travelerId: String,
-    orderCurrency: String,
-    itemKind: String,
-    providerId: String,
-    providerLabel: String,
-    productId: String,
-    referenceCode: String,
-    variantLabel: String,
-    originCode: String,
-    destinationCode: String,
-    periodStart: String,
-    periodEnd: String,
-    quantity: Int,
-    bookedAmount: String
+    orderCurrency: String
 )
 
 final case class AuthorizePaymentRequestDto(
@@ -32,13 +20,45 @@ final case class RequestRefundRequestDto(
     refundReason: String
 )
 
+final case class FlightItemDetailsResponseDto(
+    airlineName: String,
+    airlineCode: String,
+    flightId: String,
+    flightNumber: String,
+    departureAirport: String,
+    arrivalAirport: String,
+    departureTime: String,
+    arrivalTime: String,
+    cabinClass: String,
+    travelerIds: List[String],
+    unitPrice: String,
+    currency: String
+)
+
+final case class HotelItemDetailsResponseDto(
+    hotelId: String,
+    hotelName: String,
+    location: String,
+    roomTypeId: String,
+    roomTypeName: String,
+    checkInDate: String,
+    checkOutDate: String,
+    guestTravelerIds: List[String],
+    roomCount: Int,
+    unitPrice: String,
+    totalPrice: String,
+    currency: String
+)
+
 final case class OrderLineItemResponseDto(
     orderItemId: String,
     orderItemKind: String,
     orderItemStatus: String,
     bookedAmount: String,
     bookedCurrency: String,
-    summaryLabel: String
+    summaryLabel: String,
+    flightDetails: Option[FlightItemDetailsResponseDto],
+    hotelDetails: Option[HotelItemDetailsResponseDto]
 )
 
 final case class PaymentResponseDto(
@@ -107,7 +127,25 @@ object OrderResponseDto:
             orderItemStatus = flightOrderItem.orderItemStatus.toString,
             bookedAmount = flightOrderItem.bookedMoney.amount.toString,
             bookedCurrency = flightOrderItem.bookedMoney.currency.toString,
-            summaryLabel = s"${flightOrderItem.flightBookingSnapshot.flightNumber.value} ${flightOrderItem.flightBookingSnapshot.departureAirportCode.value}-${flightOrderItem.flightBookingSnapshot.arrivalAirportCode.value}"
+            summaryLabel =
+              s"${flightOrderItem.flightBookingSnapshot.airlineName.value} ${flightOrderItem.flightBookingSnapshot.flightNumber.value} ${flightOrderItem.flightBookingSnapshot.departureAirportCode.value}-${flightOrderItem.flightBookingSnapshot.arrivalAirportCode.value}",
+            flightDetails = Some(
+              FlightItemDetailsResponseDto(
+                airlineName = flightOrderItem.flightBookingSnapshot.airlineName.value,
+                airlineCode = flightOrderItem.flightBookingSnapshot.airlineCode.value,
+                flightId = flightOrderItem.flightBookingSnapshot.flightId.value,
+                flightNumber = flightOrderItem.flightBookingSnapshot.flightNumber.value,
+                departureAirport = flightOrderItem.flightBookingSnapshot.departureAirportCode.value,
+                arrivalAirport = flightOrderItem.flightBookingSnapshot.arrivalAirportCode.value,
+                departureTime = flightOrderItem.flightBookingSnapshot.flightSchedule.departureAt.toString,
+                arrivalTime = flightOrderItem.flightBookingSnapshot.flightSchedule.arrivalAt.toString,
+                cabinClass = flightOrderItem.flightBookingSnapshot.cabinClass.value,
+                travelerIds = flightOrderItem.flightBookingSnapshot.travelerIds.map(_.value).toList,
+                unitPrice = flightOrderItem.flightBookingSnapshot.unitPriceSnapshot.amount.toString,
+                currency = flightOrderItem.flightBookingSnapshot.unitPriceSnapshot.currency.toString
+              )
+            ),
+            hotelDetails = None
           )
         case hotelOrderItem: HotelOrderItem =>
           OrderLineItemResponseDto(
@@ -116,7 +154,25 @@ object OrderResponseDto:
             orderItemStatus = hotelOrderItem.orderItemStatus.toString,
             bookedAmount = hotelOrderItem.bookedMoney.amount.toString,
             bookedCurrency = hotelOrderItem.bookedMoney.currency.toString,
-            summaryLabel = s"${hotelOrderItem.hotelBookingSnapshot.hotelName.value} ${hotelOrderItem.hotelBookingSnapshot.roomTypeName.value}"
+            summaryLabel =
+              s"${hotelOrderItem.hotelBookingSnapshot.hotelName.value} ${hotelOrderItem.hotelBookingSnapshot.roomTypeName.value}",
+            flightDetails = None,
+            hotelDetails = Some(
+              HotelItemDetailsResponseDto(
+                hotelId = hotelOrderItem.hotelBookingSnapshot.hotelId.value,
+                hotelName = hotelOrderItem.hotelBookingSnapshot.hotelName.value,
+                location = hotelOrderItem.hotelBookingSnapshot.hotelLocation.value,
+                roomTypeId = hotelOrderItem.hotelBookingSnapshot.roomTypeId.value,
+                roomTypeName = hotelOrderItem.hotelBookingSnapshot.roomTypeName.value,
+                checkInDate = hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkIn.toString,
+                checkOutDate = hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkOut.toString,
+                guestTravelerIds = hotelOrderItem.hotelBookingSnapshot.guestTravelerIds.map(_.value).toList,
+                roomCount = hotelOrderItem.hotelBookingSnapshot.roomCount.value,
+                unitPrice = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.amount.toString,
+                totalPrice = hotelOrderItem.hotelBookingSnapshot.totalPriceSnapshot.amount.toString,
+                currency = hotelOrderItem.hotelBookingSnapshot.totalPriceSnapshot.currency.toString
+              )
+            )
           )
       },
       orderPayments = order.orderPayments.toList.map(payment =>
@@ -158,13 +214,16 @@ object OrderDtoMappers:
       case "wallet"        => PaymentMethod.Wallet
       case _               => PaymentMethod.LoyaltyPoints
 
+  def toCabinClass(cabinClassValue: String) =
+    CabinClass.create(cabinClassValue)
+
 object TravelerDtoMappers:
   def toTravelerDocumentType(documentTypeValue: String): com.typesafe.travel.traveler.domain.TravelerDocumentType =
     documentTypeValue.trim.toLowerCase match
-      case "identity-card"  => com.typesafe.travel.traveler.domain.TravelerDocumentType.NationalIdentityCard
+      case "identity-card"    => com.typesafe.travel.traveler.domain.TravelerDocumentType.NationalIdentityCard
       case "residence-permit" => com.typesafe.travel.traveler.domain.TravelerDocumentType.ResidencePermit
-      case "other" => com.typesafe.travel.traveler.domain.TravelerDocumentType.OtherGovernmentDocument
-      case _ => com.typesafe.travel.traveler.domain.TravelerDocumentType.Passport
+      case "other"            => com.typesafe.travel.traveler.domain.TravelerDocumentType.OtherGovernmentDocument
+      case _                  => com.typesafe.travel.traveler.domain.TravelerDocumentType.Passport
 
   def toSeatPreference(seatPreferenceValue: String): com.typesafe.travel.traveler.domain.SeatPreference =
     seatPreferenceValue.trim.toLowerCase match

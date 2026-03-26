@@ -38,6 +38,7 @@ lazy val root = (project in file("."))
     sharedKernel,
     identityDomain,
     travelerDomain,
+    flightDomain,
     orderDomain,
     apiGateway
   )
@@ -66,9 +67,15 @@ lazy val travelerDomain = module("traveler-domain")
 
 lazy val flightDomain = module("flight-domain")
   .dependsOn(sharedKernel)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+  )
 
 lazy val hotelDomain = module("hotel-domain")
   .dependsOn(sharedKernel)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+  )
 
 lazy val orderDomain = module("order-domain")
   .dependsOn(sharedKernel, travelerDomain)
@@ -90,6 +97,8 @@ lazy val apiGateway = module("api-gateway")
     sharedKernel,
     identityDomain,
     travelerDomain,
+    flightDomain,
+    hotelDomain,
     orderDomain
   )
   .settings(
@@ -100,7 +109,8 @@ lazy val apiGateway = module("api-gateway")
       http4sCirceDependency,
       http4sServerDependency,
       circeGenericDependency,
-      circeParserDependency
+      circeParserDependency,
+      munitDependency
     ),
     Compile / run / mainClass := Some("com.typesafe.travel.api.Main")
   )

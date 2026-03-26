@@ -9,3 +9,8 @@ final case class HealthResponseDto(
 final case class ErrorResponseDto(
     message: String
 )
+
+final case class ApiErrorResponseDto(
+    code: String,
+    message: String
+)

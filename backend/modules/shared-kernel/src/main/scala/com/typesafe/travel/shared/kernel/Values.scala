@@ -18,6 +18,10 @@ final case class Money private (amount: BigDecimal, currency: Currency):
     else
       Money.create(amount - otherMoney.amount, currency)
 
+  def multiply(multiplier: Int): Either[SharedValidationError, Money] =
+    if multiplier >= 0 then Money.create(amount * BigDecimal(multiplier), currency)
+    else Left(SharedValidationError.NumberWasOutOfRange("money-multiplier", BigDecimal(0), BigDecimal(Int.MaxValue), BigDecimal(multiplier)))
+
 object Money:
   def create(amount: BigDecimal, currency: Currency): Either[SharedValidationError, Money] =
     if amount >= 0 then Right(Money(amount, currency))
@@ -148,6 +152,26 @@ object LoyaltyProgramName:
   def unsafe(value: String): LoyaltyProgramName =
     create(value).fold(throw _, identity)
 
+final case class AirlineName private (value: String)
+
+object AirlineName:
+  def create(value: String): Either[SharedValidationError, AirlineName] =
+    validateTrimmedValue("airline-name", value, 160).map(AirlineName.apply)
+
+  def unsafe(value: String): AirlineName =
+    create(value).fold(throw _, identity)
+
+final case class AirlineCode private (value: String)
+
+object AirlineCode:
+  def create(value: String): Either[SharedValidationError, AirlineCode] =
+    val normalizedValue = value.trim.toUpperCase
+    if normalizedValue.matches("^[A-Z0-9]{2,3}$") then Right(AirlineCode(normalizedValue))
+    else Left(SharedValidationError.AirlineCodeWasInvalid(normalizedValue))
+
+  def unsafe(value: String): AirlineCode =
+    create(value).fold(throw _, identity)
+
 final case class CabinCode private (value: String)
 
 object CabinCode:
@@ -155,6 +179,20 @@ object CabinCode:
     validateTrimmedValue("cabin-code", value, 30).map(CabinCode.apply)
 
   def unsafe(value: String): CabinCode =
+    create(value).fold(throw _, identity)
+
+final case class CabinClass private (value: String)
+
+object CabinClass:
+  private val supportedCabinClasses =
+    Set("ECONOMY", "PREMIUM_ECONOMY", "BUSINESS", "FIRST")
+
+  def create(value: String): Either[SharedValidationError, CabinClass] =
+    val normalizedValue = value.trim.toUpperCase.replace('-', '_').replace(' ', '_')
+    if supportedCabinClasses.contains(normalizedValue) then Right(CabinClass(normalizedValue))
+    else Left(SharedValidationError.CabinClassWasInvalid(normalizedValue))
+
+  def unsafe(value: String): CabinClass =
     create(value).fold(throw _, identity)
 
 final case class FlightNumber private (value: String)
@@ -182,6 +220,43 @@ object HotelName:
     validateTrimmedValue("hotel-name", value, 160).map(HotelName.apply)
 
   def unsafe(value: String): HotelName =
+    create(value).fold(throw _, identity)
+
+final case class HotelLocation private (value: String)
+
+object HotelLocation:
+  def create(value: String): Either[SharedValidationError, HotelLocation] =
+    validateTrimmedValue("hotel-location", value, 160).map(HotelLocation.apply)
+
+  def unsafe(value: String): HotelLocation =
+    create(value).fold(throw _, identity)
+
+final case class AvatarUrl private (value: String)
+
+object AvatarUrl:
+  def create(value: String): Either[SharedValidationError, AvatarUrl] =
+    val normalizedValue = value.trim
+    if normalizedValue.isEmpty then Left(SharedValidationError.RequiredFieldWasEmpty("avatar-url"))
+    else if normalizedValue.length > 300 then
+      Left(SharedValidationError.StringWasTooLong("avatar-url", 300, normalizedValue.length))
+    else if normalizedValue.startsWith("/uploads/avatars/") then Right(AvatarUrl(normalizedValue))
+    else Left(SharedValidationError.AvatarUrlWasInvalid(normalizedValue))
+
+  def unsafe(value: String): AvatarUrl =
+    create(value).fold(throw _, identity)
+
+final case class BedType private (value: String)
+
+object BedType:
+  private val supportedBedTypes =
+    Set("SINGLE", "DOUBLE", "TWIN", "QUEEN", "KING", "FAMILY")
+
+  def create(value: String): Either[SharedValidationError, BedType] =
+    val normalizedValue = value.trim.toUpperCase.replace('-', '_').replace(' ', '_')
+    if supportedBedTypes.contains(normalizedValue) then Right(BedType(normalizedValue))
+    else Left(SharedValidationError.BedTypeWasInvalid(normalizedValue))
+
+  def unsafe(value: String): BedType =
     create(value).fold(throw _, identity)
 
 final case class AirportCode private (value: String)

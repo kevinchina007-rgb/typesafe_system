@@ -21,6 +21,7 @@ final case class User private (
     primaryEmailAddress: EmailAddress,
     userDisplayName: PersonName,
     userPhoneNumber: ContactNumber,
+    avatarUrl: Option[AvatarUrl],
     userAccountStatus: UserAccountStatus,
     membershipLevel: UserMembershipLevel,
     loyaltyPoints: Points,
@@ -81,6 +82,13 @@ final case class User private (
       case None =>
         Right(this)
 
+  def updateAvatarUrl(nextAvatarUrl: AvatarUrl): Either[UserError, User] =
+    userAccountStatus match
+      case UserAccountStatus.Closed =>
+        Left(UserError.CannotUpdateAvatarForClosedUser(userId))
+      case _ =>
+        Right(copy(avatarUrl = Some(nextAvatarUrl)))
+
 object User:
   def registerNewUser(
       userId: UserId,
@@ -94,6 +102,7 @@ object User:
       primaryEmailAddress = primaryEmailAddress,
       userDisplayName = userDisplayName,
       userPhoneNumber = userPhoneNumber,
+      avatarUrl = None,
       userAccountStatus = UserAccountStatus.PendingActivation,
       membershipLevel = UserMembershipLevel.Standard,
       loyaltyPoints = Points.zero,
@@ -125,3 +134,5 @@ enum UserError(val message: String) extends DomainError:
       extends UserError(
         s"User '${userId.value}' default traveler '${currentTravelerId.value}' did not match '${requestedTravelerId.value}'"
       )
+  case CannotUpdateAvatarForClosedUser(userId: UserId)
+      extends UserError(s"Closed user '${userId.value}' cannot update avatar")

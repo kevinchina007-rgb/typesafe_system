@@ -72,6 +72,7 @@ final class LiveTravelerProfileService[F[_]: MonadThrow](
     for
       ownerUser <- loadOwnerUser(ownerUserId)
       existingTravelerProfiles <- travelerProfileRepository.findTravelerProfilesByOwnerUserId(ownerUserId)
+      _ <- ensureTravelerDocumentNumberIsAvailable(travelerDocumentNumber, None)
       travelerId <- travelerProfileRepository.nextTravelerId
       shouldBecomeDefaultTravelerProfile = requestedDefaultTravelerProfile || existingTravelerProfiles.isEmpty
       createdTravelerProfile = TravelerProfile.createTravelerProfile(
@@ -103,8 +104,9 @@ final class LiveTravelerProfileService[F[_]: MonadThrow](
       travelerEmergencyContact: Option[TravelerEmergencyContact]
   ): F[TravelerProfile] =
     loadTravelerProfile(ownerUserId, travelerId)
-      .flatMap(
-        _.updateTravelerProfile(
+      .flatMap { existingTravelerProfile =>
+        ensureTravelerDocumentNumberIsAvailable(travelerDocumentNumber, Some(existingTravelerProfile.travelerId)).flatMap(_ =>
+          existingTravelerProfile.updateTravelerProfile(
           updatedTravelerFullName = travelerFullName,
           updatedTravelerDocumentType = travelerDocumentType,
           updatedTravelerDocumentNumber = travelerDocumentNumber,
@@ -113,8 +115,9 @@ final class LiveTravelerProfileService[F[_]: MonadThrow](
           updatedTravelerType = TravelerType.deriveFromBirthDate(travelerBirthDate, LocalDate.now()),
           updatedTravelerPreferences = travelerPreferences,
           updatedTravelerEmergencyContact = travelerEmergencyContact
-        ).liftTo[F]
-      )
+          ).liftTo[F]
+        )
+      }
       .flatMap(travelerProfileRepository.saveTravelerProfile)
 
   override def addTravelerIdentityDocument(
@@ -198,3 +201,15 @@ final class LiveTravelerProfileService[F[_]: MonadThrow](
       .findTravelerProfileById(travelerId)
       .flatMap(_.liftTo[F](TravelerError.TravelerProfileWasNotFound(travelerId)))
       .flatMap(_.ensureOwnedBy(ownerUserId).liftTo[F])
+
+  private def ensureTravelerDocumentNumberIsAvailable(
+      travelerDocumentNumber: DocumentNumber,
+      currentTravelerId: Option[TravelerId]
+  ): F[Unit] =
+    travelerProfileRepository.findTravelerProfilesByDocumentNumber(travelerDocumentNumber).flatMap { matchingTravelerProfiles =>
+      val conflictingTravelerProfiles = matchingTravelerProfiles.filterNot(travelerProfile =>
+        currentTravelerId.contains(travelerProfile.travelerId)
+      )
+      if conflictingTravelerProfiles.isEmpty then MonadThrow[F].unit
+      else MonadThrow[F].raiseError(TravelerError.TravelerDocumentNumberAlreadyExists(travelerDocumentNumber))
+    }

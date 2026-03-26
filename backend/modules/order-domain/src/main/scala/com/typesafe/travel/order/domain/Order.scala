@@ -28,22 +28,29 @@ sealed trait OrderLineItem:
 
 final case class FlightBookingSnapshot(
     airlineId: AirlineId,
+    airlineName: AirlineName,
+    airlineCode: AirlineCode,
     flightId: FlightId,
     flightNumber: FlightNumber,
     flightSchedule: FlightSchedule,
     departureAirportCode: AirportCode,
     arrivalAirportCode: AirportCode,
-    cabinCode: CabinCode,
-    travelerId: TravelerId
+    cabinClass: CabinClass,
+    travelerIds: Vector[TravelerId],
+    unitPriceSnapshot: Money
 )
 
 final case class HotelBookingSnapshot(
     hotelId: HotelId,
     hotelName: HotelName,
+    hotelLocation: HotelLocation,
     roomTypeId: RoomTypeId,
     roomTypeName: RoomTypeName,
     stayPeriod: StayPeriod,
-    guestCount: Capacity
+    guestTravelerIds: Vector[TravelerId],
+    roomCount: RoomCount,
+    unitPriceSnapshot: Money,
+    totalPriceSnapshot: Money
 )
 
 final case class FlightOrderItem private (
@@ -197,14 +204,24 @@ final case class Order private (
       flightBookingSnapshot: FlightBookingSnapshot,
       bookedMoney: Money
   ): Either[OrderError, Order] =
-    addOrderLineItem(FlightOrderItem.createReservedFlightOrderItem(orderItemId, flightBookingSnapshot, bookedMoney))
+    for
+      _ <- validateFlightBookingSnapshot(flightBookingSnapshot)
+      orderWithLineItem <- addOrderLineItem(
+        FlightOrderItem.createReservedFlightOrderItem(orderItemId, flightBookingSnapshot, bookedMoney)
+      )
+    yield orderWithLineItem
 
   def addHotelOrderItem(
       orderItemId: OrderItemId,
       hotelBookingSnapshot: HotelBookingSnapshot,
       bookedMoney: Money
   ): Either[OrderError, Order] =
-    addOrderLineItem(HotelOrderItem.createReservedHotelOrderItem(orderItemId, hotelBookingSnapshot, bookedMoney))
+    for
+      _ <- validateHotelBookingSnapshot(hotelBookingSnapshot)
+      updatedOrder <- addOrderLineItem(
+        HotelOrderItem.createReservedHotelOrderItem(orderItemId, hotelBookingSnapshot, bookedMoney)
+      )
+    yield updatedOrder
 
   def submitOrderForPayment: Either[OrderError, Order] =
     orderStatus match
@@ -324,9 +341,35 @@ final case class Order private (
       case _ =>
         Left(OrderError.OrderItemsCouldOnlyBeAddedInDraft(orderId, orderStatus))
 
+  private def validateFlightBookingSnapshot(
+      flightBookingSnapshot: FlightBookingSnapshot
+  ): Either[OrderError, Unit] =
+    if flightBookingSnapshot.travelerIds.isEmpty then
+      Left(OrderError.FlightBookingTravelerSelectionWasEmpty(orderId, flightBookingSnapshot.flightId))
+    else if flightBookingSnapshot.travelerIds.distinct.size != flightBookingSnapshot.travelerIds.size then
+      Left(OrderError.FlightBookingTravelerSelectionContainedDuplicates(orderId, flightBookingSnapshot.flightId))
+    else if flightBookingSnapshot.unitPriceSnapshot.currency != orderCurrency then
+      Left(OrderError.OrderCurrencyDidNotMatch(orderId, orderCurrency, flightBookingSnapshot.unitPriceSnapshot.currency))
+    else Right(())
+
   private def ensureMatchingCurrency(moneyToCheck: Money): Either[OrderError, Unit] =
     if moneyToCheck.currency == orderCurrency then Right(())
     else Left(OrderError.OrderCurrencyDidNotMatch(orderId, orderCurrency, moneyToCheck.currency))
+
+  private def validateHotelBookingSnapshot(
+      hotelBookingSnapshot: HotelBookingSnapshot
+  ): Either[OrderError, Unit] =
+    if hotelBookingSnapshot.guestTravelerIds.isEmpty then
+      Left(OrderError.HotelBookingGuestSelectionWasEmpty(orderId, hotelBookingSnapshot.roomTypeId))
+    else if hotelBookingSnapshot.guestTravelerIds.distinct.size != hotelBookingSnapshot.guestTravelerIds.size then
+      Left(OrderError.HotelBookingGuestSelectionContainedDuplicates(orderId, hotelBookingSnapshot.roomTypeId))
+    else if hotelBookingSnapshot.roomCount.value <= 0 then
+      Left(OrderError.HotelBookingRoomCountWasInvalid(orderId, hotelBookingSnapshot.roomTypeId, hotelBookingSnapshot.roomCount))
+    else if hotelBookingSnapshot.unitPriceSnapshot.currency != orderCurrency then
+      Left(OrderError.OrderCurrencyDidNotMatch(orderId, orderCurrency, hotelBookingSnapshot.unitPriceSnapshot.currency))
+    else if hotelBookingSnapshot.totalPriceSnapshot.currency != orderCurrency then
+      Left(OrderError.OrderCurrencyDidNotMatch(orderId, orderCurrency, hotelBookingSnapshot.totalPriceSnapshot.currency))
+    else Right(())
 
   private def updatePayment(
       paymentId: PaymentId
@@ -436,3 +479,13 @@ enum OrderError(val message: String) extends DomainError:
       extends OrderError(s"Refund '${refundId.value}' cannot be settled from status $currentRefundStatus")
   case OrderCouldNotBeCancelled(orderId: OrderId, currentOrderStatus: OrderStatus)
       extends OrderError(s"Order '${orderId.value}' cannot be cancelled from status $currentOrderStatus")
+  case FlightBookingTravelerSelectionWasEmpty(orderId: OrderId, flightId: FlightId)
+      extends OrderError(s"Order '${orderId.value}' cannot add flight '${flightId.value}' without any travelers")
+  case FlightBookingTravelerSelectionContainedDuplicates(orderId: OrderId, flightId: FlightId)
+      extends OrderError(s"Order '${orderId.value}' cannot add flight '${flightId.value}' with duplicate travelers")
+  case HotelBookingGuestSelectionWasEmpty(orderId: OrderId, roomTypeId: RoomTypeId)
+      extends OrderError(s"Order '${orderId.value}' cannot add room type '${roomTypeId.value}' without any guests")
+  case HotelBookingGuestSelectionContainedDuplicates(orderId: OrderId, roomTypeId: RoomTypeId)
+      extends OrderError(s"Order '${orderId.value}' cannot add room type '${roomTypeId.value}' with duplicate guests")
+  case HotelBookingRoomCountWasInvalid(orderId: OrderId, roomTypeId: RoomTypeId, roomCount: RoomCount)
+      extends OrderError(s"Order '${orderId.value}' cannot add room type '${roomTypeId.value}' with room count ${roomCount.value}")

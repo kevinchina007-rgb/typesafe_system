@@ -60,3 +60,22 @@ final class UserSpec extends FunSuite:
 
     assert(result.swap.exists(_.isInstanceOf[UserError.CannotAssignDefaultTravelerToClosedUser]))
   }
+
+  test("active user can update avatar url") {
+    val activeUser =
+      User
+        .registerNewUser(
+          userId = UserId("user-4"),
+          primaryEmailAddress = EmailAddress.unsafe("margaret@example.com"),
+          userDisplayName = PersonName.unsafe("Margaret Hamilton"),
+          userPhoneNumber = ContactNumber.unsafe("+15550000004"),
+          registeredAt = registeredAtInstant
+        )
+        .activateUserAccount
+        .toOption
+        .get
+
+    val updatedUser = activeUser.updateAvatarUrl(AvatarUrl.unsafe("/uploads/avatars/user-4-avatar.png"))
+
+    assertEquals(updatedUser.map(_.avatarUrl.map(_.value)), Right(Some("/uploads/avatars/user-4-avatar.png")))
+  }

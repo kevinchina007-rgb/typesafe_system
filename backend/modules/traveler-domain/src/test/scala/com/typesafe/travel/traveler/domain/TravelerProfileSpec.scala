@@ -93,6 +93,54 @@ final class TravelerProfileSpec extends FunSuite:
     assert(duplicateAttempt.swap.exists(_.isInstanceOf[TravelerError.DuplicateTravelerIdentityDocument]))
   }
 
+  test("creating another traveler with the same document number is rejected") {
+    val existingTravelerProfile =
+      TravelerProfile.createTravelerProfile(
+        travelerId = TravelerId("traveler-existing"),
+        ownerUserId = UserId("user-1"),
+        travelerFullName = PersonName.unsafe("Existing Traveler"),
+        travelerDocumentType = TravelerDocumentType.Passport,
+        travelerDocumentNumber = DocumentNumber.unsafe("P8888888"),
+        travelerPhoneNumber = ContactNumber.unsafe("+15550000029"),
+        travelerBirthDate = BirthDate.unsafe(LocalDate.parse("1991-02-01")),
+        travelerType = TravelerType.AdultTraveler,
+        travelerPreferences = TravelerPreferences.defaultTravelerPreferences,
+        travelerEmergencyContact = None,
+        isDefaultTravelerProfile = true
+      )
+
+    val travelerProfileRepository = InMemoryTravelerProfileRepository(
+      Map(existingTravelerProfile.travelerId -> existingTravelerProfile)
+    )
+    val userRepository = InMemoryUserRepository(
+      List(
+        User.registerNewUser(
+          userId = UserId("user-1"),
+          primaryEmailAddress = EmailAddress.unsafe("ada@example.com"),
+          userDisplayName = PersonName.unsafe("Ada Lovelace"),
+          userPhoneNumber = ContactNumber.unsafe("+15550000011"),
+          registeredAt = Instant.parse("2026-03-25T00:00:00Z")
+        )
+      )
+    )
+    val travelerProfileService = LiveTravelerProfileService[TestEither](travelerProfileRepository, userRepository)
+
+    val duplicateAttempt =
+      travelerProfileService.createTravelerProfile(
+        ownerUserId = UserId("user-1"),
+        travelerFullName = PersonName.unsafe("Duplicate Traveler"),
+        travelerDocumentType = TravelerDocumentType.Passport,
+        travelerDocumentNumber = DocumentNumber.unsafe("P8888888"),
+        travelerPhoneNumber = ContactNumber.unsafe("+15550000031"),
+        travelerBirthDate = BirthDate.unsafe(LocalDate.parse("1993-10-10")),
+        travelerPreferences = TravelerPreferences.defaultTravelerPreferences,
+        travelerEmergencyContact = None,
+        requestedDefaultTravelerProfile = false
+      )
+
+    assert(duplicateAttempt.swap.exists(_.isInstanceOf[TravelerError.TravelerDocumentNumberAlreadyExists]))
+  }
+
   private final case class InMemoryTravelerProfileRepository(
       storedTravelerProfiles: Map[TravelerId, TravelerProfile] = Map.empty
   ) extends TravelerProfileRepository[TestEither]:
@@ -101,6 +149,9 @@ final class TravelerProfileSpec extends FunSuite:
 
     override def findTravelerProfileById(travelerId: TravelerId): TestEither[Option[TravelerProfile]] =
       Right(storedTravelerProfiles.get(travelerId))
+
+    override def findTravelerProfilesByDocumentNumber(travelerDocumentNumber: DocumentNumber): TestEither[List[TravelerProfile]] =
+      Right(storedTravelerProfiles.values.filter(_.travelerDocumentNumber == travelerDocumentNumber).toList)
 
     override def findTravelerProfilesByOwnerUserId(ownerUserId: UserId): TestEither[List[TravelerProfile]] =
       Right(storedTravelerProfiles.values.filter(_.ownerUserId == ownerUserId).toList)

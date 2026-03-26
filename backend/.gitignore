@@ -12,3 +12,5 @@ backend-run.stdout.log
 backend-run.stderr.log
 backend-live.stdout.log
 backend-live.stderr.log
+uploads/avatars/*
+!uploads/avatars/.gitkeep

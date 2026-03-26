@@ -11,6 +11,8 @@ final class OrderSpec extends FunSuite:
   private val testFlightBookingSnapshot =
     FlightBookingSnapshot(
       airlineId = AirlineId("airline-1"),
+      airlineName = AirlineName.unsafe("China Eastern"),
+      airlineCode = AirlineCode.unsafe("MU"),
       flightId = FlightId("flight-1"),
       flightNumber = FlightNumber.unsafe("MU5123"),
       flightSchedule = FlightSchedule.unsafe(
@@ -19,18 +21,23 @@ final class OrderSpec extends FunSuite:
       ),
       departureAirportCode = AirportCode.unsafe("PVG"),
       arrivalAirportCode = AirportCode.unsafe("NRT"),
-      cabinCode = CabinCode.unsafe("ECONOMY"),
-      travelerId = TravelerId("traveler-1")
+      cabinClass = CabinClass.unsafe("economy"),
+      travelerIds = Vector(TravelerId("traveler-1")),
+      unitPriceSnapshot = Money.unsafe(BigDecimal(500), Currency.USD)
     )
 
   private val testHotelBookingSnapshot =
     HotelBookingSnapshot(
       hotelId = HotelId("hotel-1"),
       hotelName = HotelName.unsafe("Tokyo Grand Hotel"),
+      hotelLocation = HotelLocation.unsafe("Tokyo"),
       roomTypeId = RoomTypeId("room-type-1"),
       roomTypeName = RoomTypeName.unsafe("Deluxe Twin"),
       stayPeriod = StayPeriod.unsafe(LocalDate.parse("2026-04-05"), LocalDate.parse("2026-04-08")),
-      guestCount = Capacity.unsafe(2)
+      guestTravelerIds = Vector(TravelerId("traveler-1"), TravelerId("traveler-2")),
+      roomCount = RoomCount.unsafe(1),
+      unitPriceSnapshot = Money.unsafe(BigDecimal(100), Currency.USD),
+      totalPriceSnapshot = Money.unsafe(BigDecimal(300), Currency.USD)
     )
 
   test("draft order rejects mixed currencies") {

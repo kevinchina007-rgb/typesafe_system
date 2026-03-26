@@ -1,0 +1,58 @@
+package com.typesafe.travel.api.dto
+
+import com.typesafe.travel.hotel.domain.*
+
+final case class RoomTypeSummaryResponseDto(
+    roomTypeId: String,
+    roomTypeName: String,
+    capacity: Int,
+    bedType: String,
+    basePrice: String,
+    currency: String,
+    status: String,
+    isBookableForRequestedStay: Boolean
+)
+
+final case class HotelResponseDto(
+    hotelId: String,
+    hotelName: String,
+    location: String,
+    status: String,
+    createdAt: String,
+    roomTypes: List[RoomTypeSummaryResponseDto]
+)
+
+final case class HotelListResponseDto(
+    hotels: List[HotelResponseDto]
+)
+
+final case class AddHotelItemRequestDto(
+    buyerUserId: String,
+    roomTypeId: String,
+    guestTravelerIds: List[String],
+    checkInDate: String,
+    checkOutDate: String,
+    roomCount: Int
+)
+
+object HotelResponseDto:
+  def fromDomain(hotel: Hotel, requestedStayPeriod: Option[com.typesafe.travel.shared.kernel.StayPeriod]): HotelResponseDto =
+    HotelResponseDto(
+      hotelId = hotel.hotelId.value,
+      hotelName = hotel.hotelName.value,
+      location = hotel.hotelLocation.value,
+      status = hotel.hotelStatus.toString,
+      createdAt = hotel.createdAt.toString,
+      roomTypes = hotel.roomTypes.toList.map(roomType =>
+        RoomTypeSummaryResponseDto(
+          roomTypeId = roomType.roomTypeId.value,
+          roomTypeName = roomType.roomTypeName.value,
+          capacity = roomType.roomCapacity.value,
+          bedType = roomType.bedType.value,
+          basePrice = roomType.basePrice.amount.toString,
+          currency = roomType.basePrice.currency.toString,
+          status = roomType.roomTypeStatus.toString,
+          isBookableForRequestedStay = requestedStayPeriod.forall(period => roomType.ensureBookableForStay(period, com.typesafe.travel.shared.kernel.RoomCount.unsafe(1)).isRight)
+        )
+      )
+    )
