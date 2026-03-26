@@ -1,7 +1,8 @@
-import type { AppLanguage, OrderResponse, TravelerResponse } from '../lib/mvp-types'
+import type { AppLanguage, OrderResponse } from '../lib/mvp-types'
 import {
   formatIsoDateTime,
   localizeBookingKind,
+  localizeCabinClass,
   localizePaymentMethod,
   mapBackendStatusToProductLabel,
 } from '../lib/view-models'
@@ -10,24 +11,10 @@ type OrderPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
   isGuestMode: boolean
-  travelers: TravelerResponse[]
   booking: OrderResponse | null
   translate: (translationKey: string) => string
   onCreateBooking: (payload: {
-    travelerId: string
     orderCurrency: string
-    itemKind: string
-    providerId: string
-    providerLabel: string
-    productId: string
-    referenceCode: string
-    variantLabel: string
-    originCode: string
-    destinationCode: string
-    periodStart: string
-    periodEnd: string
-    quantity: number
-    bookedAmount: string
   }) => Promise<void>
   onReloadBooking: () => Promise<void>
   onSubmitBooking: () => Promise<void>
@@ -51,7 +38,6 @@ export function OrderPanel({
   currentLanguage,
   isBusy,
   isGuestMode,
-  travelers,
   booking,
   translate,
   onCreateBooking,
@@ -89,108 +75,22 @@ export function OrderPanel({
           event.preventDefault()
           const formData = new FormData(event.currentTarget)
           await onCreateBooking({
-            travelerId: String(formData.get('travelerId') ?? ''),
             orderCurrency: String(formData.get('orderCurrency') ?? 'CNY'),
-            itemKind: String(formData.get('itemKind') ?? 'hotel'),
-            providerId: String(formData.get('providerId') ?? ''),
-            providerLabel: String(formData.get('providerLabel') ?? ''),
-            productId: String(formData.get('productId') ?? ''),
-            referenceCode: String(formData.get('referenceCode') ?? ''),
-            variantLabel: String(formData.get('variantLabel') ?? ''),
-            originCode: String(formData.get('originCode') ?? ''),
-            destinationCode: String(formData.get('destinationCode') ?? ''),
-            periodStart: String(formData.get('periodStart') ?? ''),
-            periodEnd: String(formData.get('periodEnd') ?? ''),
-            quantity: Number(formData.get('quantity') ?? 1),
-            bookedAmount: String(formData.get('bookedAmount') ?? ''),
           })
         }}
       >
         <div className="three-column-grid">
           <label>
-            {translate('bookings.traveler')}
-            <select name="travelerId" disabled={isGuestMode || travelers.length === 0 || isBusy}>
-              {travelers.map(traveler => (
-                <option key={traveler.travelerId} value={traveler.travelerId}>
-                  {traveler.fullName}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
             {translate('bookings.currency')}
-            <select name="orderCurrency" defaultValue="CNY" disabled={isGuestMode || isBusy}>
+            <select name="orderCurrency" defaultValue={booking?.orderCurrency ?? 'CNY'} disabled={isGuestMode || isBusy}>
               <option value="CNY">CNY</option>
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
             </select>
           </label>
-          <label>
-            {translate('bookings.kind')}
-            <select name="itemKind" defaultValue="hotel" disabled={isGuestMode || isBusy}>
-              <option value="hotel">{translate('bookings.kind.hotel')}</option>
-              <option value="flight">{translate('bookings.kind.flight')}</option>
-            </select>
-          </label>
         </div>
 
-        <div className="three-column-grid">
-          <label>
-            {translate('bookings.providerId')}
-            <input name="providerId" defaultValue="provider-001" required disabled={isGuestMode || isBusy} />
-          </label>
-          <label>
-            {translate('bookings.providerName')}
-            <input name="providerLabel" defaultValue="West Lake Retreat" required disabled={isGuestMode || isBusy} />
-          </label>
-          <label>
-            {translate('bookings.productId')}
-            <input name="productId" defaultValue="product-001" required disabled={isGuestMode || isBusy} />
-          </label>
-        </div>
-
-        <div className="three-column-grid">
-          <label>
-            {translate('bookings.reference')}
-            <input name="referenceCode" defaultValue="MU5123" required disabled={isGuestMode || isBusy} />
-          </label>
-          <label>
-            {translate('bookings.variant')}
-            <input name="variantLabel" defaultValue="DeluxeRoom" required disabled={isGuestMode || isBusy} />
-          </label>
-          <label>
-            {translate('bookings.price')}
-            <input name="bookedAmount" defaultValue="1888" required disabled={isGuestMode || isBusy} />
-          </label>
-        </div>
-
-        <div className="three-column-grid">
-          <label>
-            {translate('bookings.origin')}
-            <input name="originCode" defaultValue="SHA" disabled={isGuestMode || isBusy} />
-          </label>
-          <label>
-            {translate('bookings.destination')}
-            <input name="destinationCode" defaultValue="HGH" disabled={isGuestMode || isBusy} />
-          </label>
-          <label>
-            {translate('bookings.quantity')}
-            <input name="quantity" type="number" min="1" defaultValue="1" required disabled={isGuestMode || isBusy} />
-          </label>
-        </div>
-
-        <div className="two-column-grid">
-          <label>
-            {translate('bookings.start')}
-            <input name="periodStart" defaultValue="2026-04-01" required disabled={isGuestMode || isBusy} />
-          </label>
-          <label>
-            {translate('bookings.end')}
-            <input name="periodEnd" defaultValue="2026-04-03" required disabled={isGuestMode || isBusy} />
-          </label>
-        </div>
-
-        <button type="submit" disabled={isGuestMode || travelers.length === 0 || isBusy}>
+        <button type="submit" disabled={isGuestMode || isBusy}>
           {translate('bookings.create')}
         </button>
       </form>
@@ -199,7 +99,12 @@ export function OrderPanel({
         <button type="button" disabled={!booking || isGuestMode || isBusy} onClick={() => void onSubmitBooking()}>
           {translate('bookings.continuePayment')}
         </button>
-        <button type="button" className="secondary-button" disabled={!booking || isGuestMode || isBusy} onClick={() => void onCancelBooking()}>
+        <button
+          type="button"
+          className="secondary-button"
+          disabled={!booking || isGuestMode || isBusy}
+          onClick={() => void onCancelBooking()}
+        >
           {translate('bookings.cancel')}
         </button>
       </div>
@@ -216,7 +121,7 @@ export function OrderPanel({
           })
         }}
       >
-        <input name="paymentAmount" defaultValue={booking?.totalPrice ?? '1888'} disabled={!booking || isGuestMode || isBusy} />
+        <input name="paymentAmount" defaultValue={booking?.totalPrice ?? '0'} disabled={!booking || isGuestMode || isBusy} />
         <select name="paymentCurrency" defaultValue={booking?.orderCurrency ?? 'CNY'} disabled={!booking || isGuestMode || isBusy}>
           <option value="CNY">CNY</option>
           <option value="USD">USD</option>
@@ -244,7 +149,7 @@ export function OrderPanel({
           })
         }}
       >
-        <input name="refundAmount" defaultValue={booking?.totalCapturedAmount ?? '100'} disabled={!booking || isGuestMode || isBusy} />
+        <input name="refundAmount" defaultValue={booking?.totalCapturedAmount ?? '0'} disabled={!booking || isGuestMode || isBusy} />
         <select name="refundCurrency" defaultValue={booking?.orderCurrency ?? 'CNY'} disabled={!booking || isGuestMode || isBusy}>
           <option value="CNY">CNY</option>
           <option value="USD">USD</option>
@@ -282,6 +187,10 @@ export function OrderPanel({
                 <strong>{`${booking.totalPrice} ${booking.orderCurrency}`}</strong>
               </div>
               <div>
+                <span className="detail-label">{translate('booking.remainingRefund')}</span>
+                <strong>{`${booking.remainingRefundableAmount} ${booking.orderCurrency}`}</strong>
+              </div>
+              <div>
                 <span className="detail-label">{translate('booking.createdAt')}</span>
                 <strong>{formatIsoDateTime(booking.createdAt, translate('booking.notYet'))}</strong>
               </div>
@@ -305,7 +214,24 @@ export function OrderPanel({
                 <li key={orderLineItem.orderItemId}>
                   <div>
                     <strong>{orderLineItem.summaryLabel}</strong>
-                    <p>{`${localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)} · ${mapBackendStatusToProductLabel(orderLineItem.orderItemStatus, currentLanguage)}`}</p>
+                    <p>
+                      {`${localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)} · ${mapBackendStatusToProductLabel(orderLineItem.orderItemStatus, currentLanguage)}`}
+                    </p>
+                    {orderLineItem.flightDetails ? (
+                      <p>
+                        {`${translate('booking.flight.cabin')}: ${localizeCabinClass(orderLineItem.flightDetails.cabinClass, currentLanguage)} · ${translate('booking.flight.travelers')}: ${orderLineItem.flightDetails.travelerIds.length}`}
+                      </p>
+                    ) : null}
+                    {orderLineItem.hotelDetails ? (
+                      <>
+                        <p>
+                          {`${translate('booking.hotel.roomType')}: ${orderLineItem.hotelDetails.roomTypeName} · ${translate('booking.hotel.guests')}: ${orderLineItem.hotelDetails.guestTravelerIds.length}`}
+                        </p>
+                        <p>
+                          {`${translate('booking.hotel.stay')}: ${orderLineItem.hotelDetails.checkInDate} - ${orderLineItem.hotelDetails.checkOutDate} · ${translate('booking.hotel.roomCount')}: ${orderLineItem.hotelDetails.roomCount}`}
+                        </p>
+                      </>
+                    ) : null}
                   </div>
                   <span className="tag-chip">{`${orderLineItem.bookedAmount} ${orderLineItem.bookedCurrency}`}</span>
                 </li>

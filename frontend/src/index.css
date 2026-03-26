@@ -24,6 +24,11 @@ select {
   font: inherit;
 }
 
+img {
+  display: block;
+  max-width: 100%;
+}
+
 button {
   border: none;
   border-radius: 999px;
@@ -265,12 +270,74 @@ select {
   color: #607284;
 }
 
+.flight-card {
+  gap: 1rem;
+}
+
+.flights-list {
+  margin-top: 1rem;
+}
+
+.compact-action-block {
+  min-width: 220px;
+}
+
+.compact-action-block select[multiple] {
+  min-height: 108px;
+}
+
 .tag-chip {
   border-radius: 999px;
   background: #edf5ff;
   color: #1d4c88;
   padding: 0.4rem 0.8rem;
   white-space: nowrap;
+}
+
+.avatar-panel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #dbe5ef;
+  border-radius: 20px;
+  background: #ffffff;
+}
+
+.avatar-preview-shell {
+  width: 88px;
+  height: 88px;
+}
+
+.avatar-preview-image,
+.avatar-preview-fallback {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+}
+
+.avatar-preview-image {
+  object-fit: cover;
+  border: 2px solid #d7e4f1;
+}
+
+.avatar-preview-fallback {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #1767ff, #1d8cff);
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.avatar-panel-copy {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.hidden-file-input {
+  display: none;
 }
 
 .toast-notice {

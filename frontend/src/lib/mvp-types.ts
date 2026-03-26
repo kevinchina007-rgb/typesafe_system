@@ -4,11 +4,17 @@ export type HealthResponse = {
   backendPort: number
 }
 
+export type ApiErrorResponse = {
+  code: string
+  message: string
+}
+
 export type UserResponse = {
   userId: string
   email: string
   nickname: string
   phone: string
+  avatarUrl: string | null
   status: string
   membershipLevel: string
   points: number
@@ -33,6 +39,91 @@ export type TravelerListResponse = {
   travelers: TravelerResponse[]
 }
 
+export type CabinInventoryResponse = {
+  inventoryId: string
+  cabinClass: string
+  availableSeats: number
+  unitPrice: string
+  currency: string
+  status: string
+  isBookable: boolean
+}
+
+export type FlightResponse = {
+  flightId: string
+  airlineId: string
+  airlineName: string
+  airlineCode: string
+  flightNumber: string
+  departureAirport: string
+  arrivalAirport: string
+  departureTime: string
+  arrivalTime: string
+  status: string
+  basePrice: string
+  currency: string
+  createdAt: string
+  cabinInventories: CabinInventoryResponse[]
+}
+
+export type FlightListResponse = {
+  flights: FlightResponse[]
+}
+
+export type RoomTypeSummaryResponse = {
+  roomTypeId: string
+  roomTypeName: string
+  capacity: number
+  bedType: string
+  basePrice: string
+  currency: string
+  status: string
+  isBookableForRequestedStay: boolean
+}
+
+export type HotelResponse = {
+  hotelId: string
+  hotelName: string
+  location: string
+  status: string
+  createdAt: string
+  roomTypes: RoomTypeSummaryResponse[]
+}
+
+export type HotelListResponse = {
+  hotels: HotelResponse[]
+}
+
+export type FlightItemDetailsResponse = {
+  airlineName: string
+  airlineCode: string
+  flightId: string
+  flightNumber: string
+  departureAirport: string
+  arrivalAirport: string
+  departureTime: string
+  arrivalTime: string
+  cabinClass: string
+  travelerIds: string[]
+  unitPrice: string
+  currency: string
+}
+
+export type HotelItemDetailsResponse = {
+  hotelId: string
+  hotelName: string
+  location: string
+  roomTypeId: string
+  roomTypeName: string
+  checkInDate: string
+  checkOutDate: string
+  guestTravelerIds: string[]
+  roomCount: number
+  unitPrice: string
+  totalPrice: string
+  currency: string
+}
+
 export type OrderLineItemResponse = {
   orderItemId: string
   orderItemKind: string
@@ -40,6 +131,8 @@ export type OrderLineItemResponse = {
   bookedAmount: string
   bookedCurrency: string
   summaryLabel: string
+  flightDetails: FlightItemDetailsResponse | null
+  hotelDetails: HotelItemDetailsResponse | null
 }
 
 export type PaymentResponse = {
@@ -85,7 +178,7 @@ export type OrderResponse = {
 
 export type AppLanguage = 'en' | 'zh'
 
-export type AppViewKey = 'explore' | 'account' | 'travelers' | 'bookings'
+export type AppViewKey = 'explore' | 'account' | 'travelers' | 'flights' | 'hotels' | 'bookings'
 
 export type AppNotice = {
   id: number
