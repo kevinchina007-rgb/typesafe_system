@@ -13,6 +13,77 @@ import java.time.{Instant, LocalDate}
 final class DoobieHotelRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends HotelRepository[F]:
+  def saveHotel(hotel: Hotel): F[Hotel] =
+    val upsertHotel =
+      for
+        updatedRowCount <- sql"""
+          update hotels
+          set
+            name = ${hotel.hotelName.value},
+            location = ${hotel.hotelLocation.value},
+            status = ${hotel.hotelStatus.toString},
+            created_at = ${hotel.createdAt}
+          where hotel_id = ${hotel.hotelId.value}
+        """.update.run
+        _ <- if updatedRowCount > 0 then ().pure[ConnectionIO]
+        else
+          sql"""
+            insert into hotels (hotel_id, name, location, status, created_at)
+            values (
+              ${hotel.hotelId.value},
+              ${hotel.hotelName.value},
+              ${hotel.hotelLocation.value},
+              ${hotel.hotelStatus.toString},
+              ${hotel.createdAt}
+            )
+          """.update.run.void
+        _ <- sql"""
+          delete from hotel_room_inventories
+          where room_type_id in (
+            select room_type_id from hotel_room_types where hotel_id = ${hotel.hotelId.value}
+          )
+        """.update.run
+        _ <- sql"delete from hotel_room_types where hotel_id = ${hotel.hotelId.value}".update.run
+        _ <- hotel.roomTypes.traverse_ { roomType =>
+          for
+            _ <- sql"""
+              insert into hotel_room_types (
+                room_type_id, hotel_id, name, capacity, bed_type, base_price_amount, base_price_currency, status
+              ) values (
+                ${roomType.roomTypeId.value},
+                ${hotel.hotelId.value},
+                ${roomType.roomTypeName.value},
+                ${roomType.roomCapacity.value},
+                ${roomType.bedType.value},
+                ${roomType.basePrice.amount},
+                ${roomType.basePrice.currency.toString},
+                ${roomType.roomTypeStatus.toString}
+              )
+            """.update.run
+            _ <- roomType.roomInventories.traverse_ { roomInventory =>
+              sql"""
+                insert into hotel_room_inventories (
+                  inventory_id, room_type_id, inventory_date, available_rooms, unit_price_amount, unit_price_currency,
+                  status, version_number, updated_at
+                ) values (
+                  ${roomInventory.roomInventoryId.value},
+                  ${roomType.roomTypeId.value},
+                  ${roomInventory.inventoryDate},
+                  ${roomInventory.availableRooms.value},
+                  ${roomInventory.unitPrice.amount},
+                  ${roomInventory.unitPrice.currency.toString},
+                  ${roomInventory.roomInventoryStatus.toString},
+                  ${0},
+                  ${Option.empty[Instant]}
+                )
+              """.update.run
+            }
+          yield ()
+        }
+      yield ()
+
+    upsertHotel.transact(transactor).as(hotel)
+
   override def findHotelById(hotelId: HotelId): F[Option[Hotel]] =
     sql"""
       select hotel_id, name, location, status, created_at

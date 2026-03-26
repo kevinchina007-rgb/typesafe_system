@@ -116,16 +116,27 @@ final class DoobieOrderRepository[F[_]: Async](
       for
         _ <- sql"delete from order_line_items where order_id = ${order.orderId.value}".update.run
         _ <- order.orderLineItems.zipWithIndex.traverse_ { case (orderLineItem, lineItemIndex) =>
+          val lineItemPersistenceColumns = toLineItemPersistenceColumns(orderLineItem)
           sql"""
             insert into order_line_items (
-              order_item_id, order_id, item_kind, item_status, booked_amount, booked_currency, snapshot_json, sort_index
+              order_item_id, order_id, item_kind, item_status,
+              flight_id, room_type_id, cabin_class, check_in_date, check_out_date, room_count,
+              traveler_ids_json, unit_amount, unit_currency,
+              booked_amount, booked_currency, snapshot_json, sort_index
             ) values (
               ${orderLineItem.orderItemId.value},
               ${order.orderId.value},
-              ${orderLineItem match
-                  case _: FlightOrderItem => "flight"
-                  case _: HotelOrderItem  => "hotel"},
+              ${lineItemPersistenceColumns.itemKind},
               ${orderLineItem.orderItemStatus.toString},
+              ${lineItemPersistenceColumns.flightId},
+              ${lineItemPersistenceColumns.roomTypeId},
+              ${lineItemPersistenceColumns.cabinClass},
+              ${lineItemPersistenceColumns.checkInDate},
+              ${lineItemPersistenceColumns.checkOutDate},
+              ${lineItemPersistenceColumns.roomCount},
+              ${lineItemPersistenceColumns.travelerIdsJson},
+              ${lineItemPersistenceColumns.unitAmount},
+              ${lineItemPersistenceColumns.unitCurrency},
               ${orderLineItem.bookedMoney.amount},
               ${orderLineItem.bookedMoney.currency.toString},
               ${DatabaseCodecs.encodeOrderLineItemSnapshot(orderLineItem)},
@@ -141,7 +152,8 @@ final class DoobieOrderRepository[F[_]: Async](
         _ <- order.orderPayments.traverse_ { payment =>
           sql"""
             insert into order_payments (
-              payment_id, order_id, payment_amount, payment_currency, payment_method, payment_status, authorized_at, captured_at
+              payment_id, order_id, payment_amount, payment_currency, payment_method, payment_status,
+              authorized_at, created_at, captured_at, metadata_json
             ) values (
               ${payment.paymentId.value},
               ${order.orderId.value},
@@ -150,7 +162,9 @@ final class DoobieOrderRepository[F[_]: Async](
               ${payment.paymentMethod.toString},
               ${payment.paymentStatus.toString},
               ${payment.authorizedAt},
-              ${payment.capturedAt}
+              ${payment.authorizedAt},
+              ${payment.capturedAt},
+              ${Option.empty[String]}
             )
           """.update.run
         }
@@ -162,7 +176,8 @@ final class DoobieOrderRepository[F[_]: Async](
         _ <- order.orderRefunds.traverse_ { refund =>
           sql"""
             insert into order_refunds (
-              refund_id, order_id, refund_amount, refund_currency, refund_reason, refund_status, requested_at, approved_at, settled_at
+              refund_id, order_id, refund_amount, refund_currency, refund_reason, refund_status,
+              requested_at, created_at, approved_at, settled_at, metadata_json
             ) values (
               ${refund.refundId.value},
               ${order.orderId.value},
@@ -171,8 +186,10 @@ final class DoobieOrderRepository[F[_]: Async](
               ${refund.refundReason},
               ${refund.refundStatus.toString},
               ${refund.requestedAt},
+              ${refund.requestedAt},
               ${refund.approvedAt},
-              ${refund.settledAt}
+              ${refund.settledAt},
+              ${Option.empty[String]}
             )
           """.update.run
         }
@@ -210,6 +227,15 @@ final class DoobieOrderRepository[F[_]: Async](
         order_item_id,
         item_kind,
         item_status,
+        flight_id,
+        room_type_id,
+        cabin_class,
+        check_in_date,
+        check_out_date,
+        room_count,
+        traveler_ids_json,
+        unit_amount,
+        unit_currency,
         booked_amount,
         booked_currency,
         snapshot_json
@@ -230,7 +256,7 @@ final class DoobieOrderRepository[F[_]: Async](
         payment_currency,
         payment_method,
         payment_status,
-        authorized_at,
+        coalesce(created_at, authorized_at),
         captured_at
       from order_payments
       where order_id = ${orderId.value}
@@ -249,7 +275,7 @@ final class DoobieOrderRepository[F[_]: Async](
         refund_currency,
         refund_reason,
         refund_status,
-        requested_at,
+        coalesce(created_at, requested_at),
         approved_at,
         settled_at
       from order_refunds
@@ -331,6 +357,35 @@ final class DoobieOrderRepository[F[_]: Async](
       settledAt = settledAtValue
     )
 
+  private def toLineItemPersistenceColumns(orderLineItem: OrderLineItem): OrderLineItemPersistenceColumns =
+    orderLineItem match
+      case flightOrderItem: FlightOrderItem =>
+        OrderLineItemPersistenceColumns(
+          itemKind = "flight",
+          flightId = Some(flightOrderItem.flightBookingSnapshot.flightId.value),
+          roomTypeId = None,
+          cabinClass = Some(flightOrderItem.flightBookingSnapshot.cabinClass.value),
+          checkInDate = None,
+          checkOutDate = None,
+          roomCount = None,
+          travelerIdsJson = Some(DatabaseCodecs.encodeTravelerIds(flightOrderItem.flightBookingSnapshot.travelerIds)),
+          unitAmount = Some(flightOrderItem.flightBookingSnapshot.unitPriceSnapshot.amount),
+          unitCurrency = Some(flightOrderItem.flightBookingSnapshot.unitPriceSnapshot.currency.toString)
+        )
+      case hotelOrderItem: HotelOrderItem =>
+        OrderLineItemPersistenceColumns(
+          itemKind = "hotel",
+          flightId = None,
+          roomTypeId = Some(hotelOrderItem.hotelBookingSnapshot.roomTypeId.value),
+          cabinClass = None,
+          checkInDate = Some(hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkIn),
+          checkOutDate = Some(hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkOut),
+          roomCount = Some(hotelOrderItem.hotelBookingSnapshot.roomCount.value),
+          travelerIdsJson = Some(DatabaseCodecs.encodeTravelerIds(hotelOrderItem.hotelBookingSnapshot.guestTravelerIds)),
+          unitAmount = Some(hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.amount),
+          unitCurrency = Some(hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString)
+        )
+
   private final case class OrderRow(
       orderId: String,
       buyerUserId: String,
@@ -346,10 +401,32 @@ final class DoobieOrderRepository[F[_]: Async](
       cancelledAt: Option[Instant]
   )
 
+  private final case class OrderLineItemPersistenceColumns(
+      itemKind: String,
+      flightId: Option[String],
+      roomTypeId: Option[String],
+      cabinClass: Option[String],
+      checkInDate: Option[java.time.LocalDate],
+      checkOutDate: Option[java.time.LocalDate],
+      roomCount: Option[Int],
+      travelerIdsJson: Option[String],
+      unitAmount: Option[BigDecimal],
+      unitCurrency: Option[String]
+  )
+
   private final case class OrderLineItemRow(
       orderItemId: String,
       itemKind: String,
       itemStatus: String,
+      flightId: Option[String],
+      roomTypeId: Option[String],
+      cabinClass: Option[String],
+      checkInDate: Option[java.time.LocalDate],
+      checkOutDate: Option[java.time.LocalDate],
+      roomCount: Option[Int],
+      travelerIdsJson: Option[String],
+      unitAmount: Option[BigDecimal],
+      unitCurrency: Option[String],
       bookedAmount: BigDecimal,
       bookedCurrency: String,
       snapshotJson: String

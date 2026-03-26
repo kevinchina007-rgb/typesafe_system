@@ -76,6 +76,10 @@ object DatabaseCodecs:
       totalPriceCurrency: String
   )
 
+  final case class SerializedTravelerIds(
+      travelerIds: Vector[String]
+  )
+
   given Encoder[SerializedTravelerIdentityDocument] = deriveEncoder
   given Decoder[SerializedTravelerIdentityDocument] = deriveDecoder
   given Encoder[SerializedTravelerLoyaltyMembership] = deriveEncoder
@@ -88,6 +92,8 @@ object DatabaseCodecs:
   given Decoder[SerializedFlightBookingSnapshot] = deriveDecoder
   given Encoder[SerializedHotelBookingSnapshot] = deriveEncoder
   given Decoder[SerializedHotelBookingSnapshot] = deriveDecoder
+  given Encoder[SerializedTravelerIds] = deriveEncoder
+  given Decoder[SerializedTravelerIds] = deriveDecoder
 
   def encodeTravelerIdentityDocuments(travelerIdentityDocuments: List[TravelerIdentityDocument]): String =
     travelerIdentityDocuments.map { travelerIdentityDocument =>
@@ -266,6 +272,15 @@ object DatabaseCodecs:
 
   def parseCurrency(currencyValue: String): Either[Throwable, Currency] =
     Either.catchNonFatal(Currency.valueOf(currencyValue))
+
+  def encodeTravelerIds(travelerIds: Vector[TravelerId]): String =
+    SerializedTravelerIds(travelerIds.map(_.value)).asJson.noSpaces
+
+  def decodeTravelerIds(serializedValue: String): Either[Throwable, Vector[TravelerId]] =
+    decode[SerializedTravelerIds](serializedValue)
+      .map(_.travelerIds.map(TravelerId.apply))
+      .left
+      .map(error => new IllegalArgumentException(s"Could not decode traveler ids: ${error.getMessage}", error))
 
   def parseJson(jsonValue: String): Either[Throwable, Json] =
     io.circe.parser.parse(jsonValue).left.map(error => new IllegalArgumentException(error.getMessage, error))

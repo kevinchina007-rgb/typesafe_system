@@ -13,6 +13,95 @@ import java.time.{Instant, OffsetDateTime}
 final class DoobieFlightRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends FlightRepository[F]:
+  def saveAirline(airline: Airline): F[Airline] =
+    val upsertAirline =
+      for
+        updatedRowCount <- sql"""
+          update airlines
+          set
+            name = ${airline.airlineName.value},
+            code = ${airline.airlineCode.value},
+            status = ${airline.airlineStatus.toString},
+            created_at = ${airline.createdAt}
+          where airline_id = ${airline.airlineId.value}
+        """.update.run
+        _ <- if updatedRowCount > 0 then ().pure[ConnectionIO]
+        else
+          sql"""
+            insert into airlines (airline_id, name, code, status, created_at)
+            values (
+              ${airline.airlineId.value},
+              ${airline.airlineName.value},
+              ${airline.airlineCode.value},
+              ${airline.airlineStatus.toString},
+              ${airline.createdAt}
+            )
+          """.update.run.void
+      yield ()
+
+    upsertAirline.transact(transactor).as(airline)
+
+  def saveFlight(flight: Flight): F[Flight] =
+    val upsertFlight =
+      for
+        updatedRowCount <- sql"""
+          update flights
+          set
+            airline_id = ${flight.airlineId.value},
+            flight_number = ${flight.flightNumber.value},
+            departure_airport = ${flight.departureAirport.value},
+            arrival_airport = ${flight.arrivalAirport.value},
+            departure_time = ${flight.flightSchedule.departureAt},
+            arrival_time = ${flight.flightSchedule.arrivalAt},
+            status = ${flight.flightStatus.toString},
+            base_price_amount = ${flight.basePrice.amount},
+            base_price_currency = ${flight.basePrice.currency.toString},
+            created_at = ${flight.createdAt}
+          where flight_id = ${flight.flightId.value}
+        """.update.run
+        _ <- if updatedRowCount > 0 then ().pure[ConnectionIO]
+        else
+          sql"""
+            insert into flights (
+              flight_id, airline_id, flight_number, departure_airport, arrival_airport,
+              departure_time, arrival_time, status, base_price_amount, base_price_currency, created_at
+            ) values (
+              ${flight.flightId.value},
+              ${flight.airlineId.value},
+              ${flight.flightNumber.value},
+              ${flight.departureAirport.value},
+              ${flight.arrivalAirport.value},
+              ${flight.flightSchedule.departureAt},
+              ${flight.flightSchedule.arrivalAt},
+              ${flight.flightStatus.toString},
+              ${flight.basePrice.amount},
+              ${flight.basePrice.currency.toString},
+              ${flight.createdAt}
+            )
+          """.update.run.void
+        _ <- sql"delete from flight_cabin_inventories where flight_id = ${flight.flightId.value}".update.run
+        _ <- flight.cabinInventories.traverse_ { cabinInventory =>
+          sql"""
+            insert into flight_cabin_inventories (
+              inventory_id, flight_id, cabin_class, available_seats, unit_price_amount, unit_price_currency,
+              status, version_number, updated_at
+            ) values (
+              ${cabinInventory.cabinInventoryId.value},
+              ${flight.flightId.value},
+              ${cabinInventory.cabinClass.value},
+              ${cabinInventory.availableSeats.value},
+              ${cabinInventory.unitPrice.amount},
+              ${cabinInventory.unitPrice.currency.toString},
+              ${cabinInventory.inventoryStatus.toString},
+              ${0},
+              ${Option.empty[Instant]}
+            )
+          """.update.run
+        }
+      yield ()
+
+    upsertFlight.transact(transactor).as(flight)
+
   override def findAirlineById(airlineId: AirlineId): F[Option[Airline]] =
     sql"""
       select airline_id, name, code, status, created_at
