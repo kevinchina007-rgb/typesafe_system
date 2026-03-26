@@ -14,3 +14,4 @@ backend-live.stdout.log
 backend-live.stderr.log
 uploads/avatars/*
 !uploads/avatars/.gitkeep
+data/
