@@ -7,14 +7,20 @@ import java.time.Instant
 
 trait OrderService[F[_]]:
   def createDraftOrder(ownerUserId: UserId, orderCurrency: Currency, createdAt: Instant): F[Order]
+  def listOrdersForUser(ownerUserId: UserId): F[List[Order]]
   def addFlightOrderItem(orderId: OrderId, flightBookingSnapshot: FlightBookingSnapshot, bookedMoney: Money): F[Order]
   def addHotelOrderItem(orderId: OrderId, hotelBookingSnapshot: HotelBookingSnapshot, bookedMoney: Money): F[Order]
   def submitOrderForPayment(orderId: OrderId): F[Order]
+  def payOrder(orderId: OrderId, paymentMethod: PaymentMethod, paidAt: Instant): F[Order]
   def authorizeOrderPayment(orderId: OrderId, paymentAmount: Money, paymentMethod: PaymentMethod, authorizedAt: Instant): F[Order]
   def captureAuthorizedPayment(orderId: OrderId, paymentId: PaymentId, capturedAt: Instant): F[Order]
+  def requestCustomerRefund(orderId: OrderId, refundReason: String, requestedAt: Instant): F[Order]
   def requestOrderRefund(orderId: OrderId, refundAmount: Money, refundReason: String, requestedAt: Instant): F[Order]
   def approveRequestedRefund(orderId: OrderId, refundId: RefundId, approvedAt: Instant): F[Order]
+  def rejectRequestedRefund(orderId: OrderId, refundId: RefundId): F[Order]
   def settleApprovedRefund(orderId: OrderId, refundId: RefundId, settledAt: Instant): F[Order]
+  def confirmSupplierOrderItem(orderId: OrderId, orderItemId: OrderItemId, managerId: ManagerId, note: Option[String], decidedAt: Instant): F[Order]
+  def rejectSupplierOrderItem(orderId: OrderId, orderItemId: OrderItemId, managerId: ManagerId, reason: String, decidedAt: Instant): F[Order]
 
 final class LiveOrderService[F[_]: MonadThrow](
     orderRepository: OrderRepository[F]
@@ -24,6 +30,9 @@ final class LiveOrderService[F[_]: MonadThrow](
     orderRepository.nextOrderId.flatMap { generatedOrderId =>
       orderRepository.saveOrder(Order.createDraftOrder(generatedOrderId, ownerUserId, orderCurrency, createdAt))
     }
+
+  override def listOrdersForUser(ownerUserId: UserId): F[List[Order]] =
+    orderRepository.findAllOrders.map(_.filter(_.ownerUserId == ownerUserId).sortBy(_.createdAt.toEpochMilli).reverse)
 
   override def addFlightOrderItem(
       orderId: OrderId,
@@ -49,6 +58,19 @@ final class LiveOrderService[F[_]: MonadThrow](
     loadOrder(orderId)
       .flatMap(_.submitOrderForPayment.liftTo[F])
       .flatMap(orderRepository.saveOrder)
+
+  override def payOrder(orderId: OrderId, paymentMethod: PaymentMethod, paidAt: Instant): F[Order] =
+    for
+      order <- loadOrder(orderId)
+      submittedOrder <- order.orderStatus match
+        case OrderStatus.Draft => order.submitOrderForPayment.liftTo[F]
+        case _                 => order.pure[F]
+      paidAmount = submittedOrder.totalBookedMoney
+      paymentId <- orderRepository.nextPaymentId
+      authorizedOrder <- submittedOrder.authorizeOrderPayment(paymentId, paidAmount, paymentMethod, paidAt).liftTo[F]
+      capturedOrder <- authorizedOrder.captureAuthorizedPayment(paymentId, paidAt).liftTo[F]
+      savedOrder <- orderRepository.saveOrder(capturedOrder)
+    yield savedOrder
 
   override def authorizeOrderPayment(
       orderId: OrderId,
@@ -81,14 +103,63 @@ final class LiveOrderService[F[_]: MonadThrow](
       savedOrder <- orderRepository.saveOrder(updatedOrder)
     yield savedOrder
 
+  override def requestCustomerRefund(orderId: OrderId, refundReason: String, requestedAt: Instant): F[Order] =
+    for
+      order <- loadOrder(orderId)
+      refundId <- orderRepository.nextRefundId
+      requestedOrder <- order
+        .requestOrderRefund(
+          refundId = refundId,
+          refundAmount = order.remainingRefundableMoney,
+          refundReason = refundReason,
+          requestedAt = requestedAt
+        )
+        .liftTo[F]
+      resultingOrder <- if order.allSupplierReviewDecisionsConfirmed then
+        orderRepository.saveOrder(requestedOrder)
+      else
+        requestedOrder
+          .approveRequestedRefund(refundId, requestedAt)
+          .liftTo[F]
+          .flatMap(_.settleApprovedRefund(refundId, requestedAt).liftTo[F])
+          .flatMap(orderRepository.saveOrder)
+    yield resultingOrder
+
   override def approveRequestedRefund(orderId: OrderId, refundId: RefundId, approvedAt: Instant): F[Order] =
     loadOrder(orderId)
       .flatMap(_.approveRequestedRefund(refundId, approvedAt).liftTo[F])
       .flatMap(orderRepository.saveOrder)
 
+  override def rejectRequestedRefund(orderId: OrderId, refundId: RefundId): F[Order] =
+    loadOrder(orderId)
+      .flatMap(_.rejectRequestedRefund(refundId).liftTo[F])
+      .flatMap(orderRepository.saveOrder)
+
   override def settleApprovedRefund(orderId: OrderId, refundId: RefundId, settledAt: Instant): F[Order] =
     loadOrder(orderId)
       .flatMap(_.settleApprovedRefund(refundId, settledAt).liftTo[F])
+      .flatMap(orderRepository.saveOrder)
+
+  override def confirmSupplierOrderItem(
+      orderId: OrderId,
+      orderItemId: OrderItemId,
+      managerId: ManagerId,
+      note: Option[String],
+      decidedAt: Instant
+  ): F[Order] =
+    loadOrder(orderId)
+      .flatMap(_.confirmSupplierOrderItem(orderItemId, managerId, note, decidedAt).liftTo[F])
+      .flatMap(orderRepository.saveOrder)
+
+  override def rejectSupplierOrderItem(
+      orderId: OrderId,
+      orderItemId: OrderItemId,
+      managerId: ManagerId,
+      reason: String,
+      decidedAt: Instant
+  ): F[Order] =
+    loadOrder(orderId)
+      .flatMap(_.rejectSupplierOrderItem(orderItemId, managerId, reason, decidedAt).liftTo[F])
       .flatMap(orderRepository.saveOrder)
 
   private def addOrderLineItem(

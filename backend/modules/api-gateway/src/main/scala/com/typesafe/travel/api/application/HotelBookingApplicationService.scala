@@ -42,9 +42,8 @@ trait HotelBookingApplicationService[F[_]]:
       stayPeriod: Option[StayPeriod]
   ): F[List[Hotel]]
   def getHotelDetails(hotelId: HotelId): F[Hotel]
-  def addHotelItemToOrder(
+  def createHotelOrder(
       actingUserId: UserId,
-      orderId: OrderId,
       roomTypeId: RoomTypeId,
       guestTravelerIds: List[TravelerId],
       checkInDate: LocalDate,
@@ -70,9 +69,8 @@ final class LiveHotelBookingApplicationService[F[_]: MonadThrow](
   override def getHotelDetails(hotelId: HotelId): F[Hotel] =
     hotelService.getHotelDetails(hotelId)
 
-  override def addHotelItemToOrder(
+  override def createHotelOrder(
       actingUserId: UserId,
-      orderId: OrderId,
       roomTypeId: RoomTypeId,
       guestTravelerIds: List[TravelerId],
       checkInDate: LocalDate,
@@ -82,8 +80,6 @@ final class LiveHotelBookingApplicationService[F[_]: MonadThrow](
     for
       stayPeriod <- StayPeriod.create(checkInDate, checkOutDate).leftMap(_ => HotelBookingApplicationError.StayPeriodWasInvalid(checkInDate, checkOutDate)).liftTo[F]
       _ <- ensureRoomCount(roomCount)
-      existingOrder <- orderRepository.findOrderById(orderId).flatMap(_.liftTo[F](OrderError.OrderWasNotFound(orderId)))
-      _ <- ensureOrderOwnership(existingOrder, actingUserId)
       validatedTravelerIds <- validateTravelerSelection(guestTravelerIds)
       travelerProfiles <- validatedTravelerIds.traverse(loadOwnedTravelerProfile(actingUserId, _))
       hotel <- hotelRepository.findHotelByRoomTypeId(roomTypeId).flatMap(_.liftTo[F](HotelError.RoomTypeWasNotFound(roomTypeId)))
@@ -102,8 +98,13 @@ final class LiveHotelBookingApplicationService[F[_]: MonadThrow](
           otherHotelError
       }.liftTo[F]
       totalPriceSnapshot <- calculateTotalStayPrice(roomType.roomTypeId, roomInventories, roomCount, checkInDate, checkOutDate)
+      createdOrder <- orderService.createDraftOrder(
+        ownerUserId = actingUserId,
+        orderCurrency = totalPriceSnapshot.currency,
+        createdAt = java.time.Instant.now()
+      )
       updatedOrder <- orderService.addHotelOrderItem(
-        orderId = orderId,
+        orderId = createdOrder.orderId,
         hotelBookingSnapshot = HotelBookingSnapshot(
           hotelId = hotel.hotelId,
           hotelName = hotel.hotelName,
@@ -119,10 +120,6 @@ final class LiveHotelBookingApplicationService[F[_]: MonadThrow](
         bookedMoney = totalPriceSnapshot
       )
     yield updatedOrder
-
-  private def ensureOrderOwnership(order: Order, actingUserId: UserId): F[Unit] =
-    if order.ownerUserId == actingUserId then MonadThrow[F].unit
-    else MonadThrow[F].raiseError(HotelBookingApplicationError.OrderWasNotOwnedByUser(order.orderId, actingUserId))
 
   private def validateTravelerSelection(guestTravelerIds: List[TravelerId]): F[List[TravelerId]] =
     if guestTravelerIds.isEmpty then

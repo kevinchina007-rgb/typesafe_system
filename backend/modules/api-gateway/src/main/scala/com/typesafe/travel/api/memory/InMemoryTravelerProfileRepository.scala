@@ -39,6 +39,12 @@ final class InMemoryTravelerProfileRepository[F[_]: Sync] private (
       travelerProfile
     }
 
+  override def deleteTravelerProfile(travelerId: TravelerId): F[Unit] =
+    Sync[F].delay {
+      travelerState.remove(travelerId)
+      ()
+    }
+
 object InMemoryTravelerProfileRepository:
   def create[F[_]: Sync]: InMemoryTravelerProfileRepository[F] =
     new InMemoryTravelerProfileRepository[F](TrieMap.empty, AtomicLong(0))

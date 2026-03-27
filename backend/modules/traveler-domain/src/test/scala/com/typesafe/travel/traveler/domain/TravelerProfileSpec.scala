@@ -169,6 +169,9 @@ final class TravelerProfileSpec extends FunSuite:
     override def saveTravelerProfile(travelerProfile: TravelerProfile): TestEither[TravelerProfile] =
       Right(travelerProfile)
 
+    override def deleteTravelerProfile(travelerId: TravelerId): TestEither[Unit] =
+      Right(())
+
   private final case class InMemoryUserRepository(
       storedUsers: List[User]
   ) extends UserRepository[TestEither]:

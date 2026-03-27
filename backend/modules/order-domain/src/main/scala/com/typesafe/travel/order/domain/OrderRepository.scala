@@ -8,5 +8,7 @@ trait OrderRepository[F[_]]:
   def nextPaymentId: F[PaymentId]
   def nextRefundId: F[RefundId]
   def findOrderById(orderId: OrderId): F[Option[Order]]
+  def findOrderByOrderItemId(orderItemId: OrderItemId): F[Option[Order]]
+  def findAllOrders: F[List[Order]]
   def findOrdersByOwnerUserId(ownerUserId: UserId): F[List[Order]]
   def saveOrder(order: Order): F[Order]

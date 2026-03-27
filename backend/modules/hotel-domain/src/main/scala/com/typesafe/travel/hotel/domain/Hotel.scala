@@ -131,6 +131,9 @@ final case class Hotel private (
     roomTypes: Vector[RoomType],
     createdAt: Instant
 ):
+  def addRoomType(roomType: RoomType): Hotel =
+    copy(roomTypes = roomTypes :+ roomType)
+
   def findRoomTypeById(roomTypeId: RoomTypeId): Either[HotelError, RoomType] =
     roomTypes.find(_.roomTypeId == roomTypeId).toRight(HotelError.RoomTypeWasNotFound(roomTypeId))
 

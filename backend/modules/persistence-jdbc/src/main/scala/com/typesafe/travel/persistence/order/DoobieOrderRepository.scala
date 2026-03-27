@@ -48,6 +48,49 @@ final class DoobieOrderRepository[F[_]: Async](
       """.query[OrderRow]
     ).map(_.headOption)
 
+  override def findOrderByOrderItemId(orderItemId: OrderItemId): F[Option[Order]] =
+    loadOrders(
+      sql"""
+        select
+          o.order_id,
+          o.buyer_user_id,
+          o.order_type,
+          o.status,
+          o.currency,
+          o.total_price_amount,
+          o.remaining_refundable_amount,
+          o.created_at,
+          o.paid_at,
+          o.confirmed_at,
+          o.completed_at,
+          o.cancelled_at
+        from orders o
+        inner join order_line_items oli on oli.order_id = o.order_id
+        where oli.order_item_id = ${orderItemId.value}
+      """.query[OrderRow]
+    ).map(_.headOption)
+
+  override def findAllOrders: F[List[Order]] =
+    loadOrders(
+      sql"""
+        select
+          order_id,
+          buyer_user_id,
+          order_type,
+          status,
+          currency,
+          total_price_amount,
+          remaining_refundable_amount,
+          created_at,
+          paid_at,
+          confirmed_at,
+          completed_at,
+          cancelled_at
+        from orders
+        order by created_at, order_id
+      """.query[OrderRow]
+    )
+
   override def findOrdersByOwnerUserId(ownerUserId: UserId): F[List[Order]] =
     loadOrders(
       sql"""
@@ -122,6 +165,7 @@ final class DoobieOrderRepository[F[_]: Async](
               order_item_id, order_id, item_kind, item_status,
               flight_id, room_type_id, cabin_class, check_in_date, check_out_date, room_count,
               traveler_ids_json, unit_amount, unit_currency,
+              supplier_review_status, review_decision, review_reason, reviewed_at, reviewed_by_manager_id,
               booked_amount, booked_currency, snapshot_json, sort_index
             ) values (
               ${orderLineItem.orderItemId.value},
@@ -137,6 +181,11 @@ final class DoobieOrderRepository[F[_]: Async](
               ${lineItemPersistenceColumns.travelerIdsJson},
               ${lineItemPersistenceColumns.unitAmount},
               ${lineItemPersistenceColumns.unitCurrency},
+              ${orderLineItem.supplierReviewStatus.toString},
+              ${orderLineItem.supplierReviewDecision.map(_.decision.toString)},
+              ${orderLineItem.supplierReviewDecision.flatMap(_.reason)},
+              ${orderLineItem.supplierReviewDecision.map(_.decidedAt)},
+              ${orderLineItem.supplierReviewDecision.map(_.managerId.value)},
               ${orderLineItem.bookedMoney.amount},
               ${orderLineItem.bookedMoney.currency.toString},
               ${DatabaseCodecs.encodeOrderLineItemSnapshot(orderLineItem)},
@@ -236,6 +285,11 @@ final class DoobieOrderRepository[F[_]: Async](
         traveler_ids_json,
         unit_amount,
         unit_currency,
+        supplier_review_status,
+        review_decision,
+        review_reason,
+        reviewed_at,
+        reviewed_by_manager_id,
         booked_amount,
         booked_currency,
         snapshot_json
@@ -292,6 +346,8 @@ final class DoobieOrderRepository[F[_]: Async](
       bookedCurrency <- Async[F].fromEither(DatabaseCodecs.parseCurrency(orderLineItemRow.bookedCurrency))
       bookedMoney <- Async[F].fromEither(Money.create(orderLineItemRow.bookedAmount, bookedCurrency))
       orderItemStatus = OrderItemStatus.valueOf(orderLineItemRow.itemStatus)
+      supplierReviewDecision = buildSupplierReviewDecision(orderLineItemRow)
+      supplierReviewStatus = SupplierReviewStatus.valueOf(orderLineItemRow.supplierReviewStatus)
       orderLineItem <- orderLineItemRow.itemKind match
         case "flight" =>
           Async[F].fromEither(DatabaseCodecs.decodeFlightBookingSnapshot(orderLineItemRow.snapshotJson)).map { flightBookingSnapshot =>
@@ -299,7 +355,9 @@ final class DoobieOrderRepository[F[_]: Async](
               OrderItemId(orderLineItemRow.orderItemId),
               flightBookingSnapshot,
               bookedMoney,
-              orderItemStatus
+              orderItemStatus,
+              supplierReviewStatus,
+              supplierReviewDecision
             )
           }
         case "hotel" =>
@@ -308,7 +366,9 @@ final class DoobieOrderRepository[F[_]: Async](
               OrderItemId(orderLineItemRow.orderItemId),
               hotelBookingSnapshot,
               bookedMoney,
-              orderItemStatus
+              orderItemStatus,
+              supplierReviewStatus,
+              supplierReviewDecision
             )
           }
         case otherKind =>
@@ -386,6 +446,20 @@ final class DoobieOrderRepository[F[_]: Async](
           unitCurrency = Some(hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString)
         )
 
+  private def buildSupplierReviewDecision(orderLineItemRow: OrderLineItemRow): Option[SupplierReviewDecision] =
+    (orderLineItemRow.reviewDecision, orderLineItemRow.reviewedAt, orderLineItemRow.reviewedByManagerId) match
+      case (Some(reviewDecisionValue), Some(reviewedAtValue), Some(reviewedByManagerIdValue)) =>
+        Some(
+          SupplierReviewDecision(
+            decision = SupplierReviewDecisionType.valueOf(reviewDecisionValue),
+            reason = orderLineItemRow.reviewReason,
+            decidedAt = reviewedAtValue,
+            managerId = ManagerId(reviewedByManagerIdValue)
+          )
+        )
+      case _ =>
+        None
+
   private final case class OrderRow(
       orderId: String,
       buyerUserId: String,
@@ -427,6 +501,11 @@ final class DoobieOrderRepository[F[_]: Async](
       travelerIdsJson: Option[String],
       unitAmount: Option[BigDecimal],
       unitCurrency: Option[String],
+      supplierReviewStatus: String,
+      reviewDecision: Option[String],
+      reviewReason: Option[String],
+      reviewedAt: Option[Instant],
+      reviewedByManagerId: Option[String],
       bookedAmount: BigDecimal,
       bookedCurrency: String,
       snapshotJson: String

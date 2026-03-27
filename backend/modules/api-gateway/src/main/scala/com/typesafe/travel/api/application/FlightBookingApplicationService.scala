@@ -31,9 +31,8 @@ trait FlightBookingApplicationService[F[_]]:
       departureDate: Option[LocalDate]
   ): F[List[(Airline, Flight)]]
   def getFlightDetails(flightId: FlightId): F[(Airline, Flight)]
-  def addFlightItemToOrder(
+  def createFlightOrder(
       actingUserId: UserId,
-      orderId: OrderId,
       flightId: FlightId,
       travelerIds: List[TravelerId],
       cabinClass: CabinClass
@@ -61,24 +60,26 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow](
   override def getFlightDetails(flightId: FlightId): F[(Airline, Flight)] =
     flightService.getFlightDetails(flightId).flatMap(toAirlineFlightTuple)
 
-  override def addFlightItemToOrder(
+  override def createFlightOrder(
       actingUserId: UserId,
-      orderId: OrderId,
       flightId: FlightId,
       travelerIds: List[TravelerId],
       cabinClass: CabinClass
   ): F[Order] =
     for
-      existingOrder <- orderRepository.findOrderById(orderId).flatMap(_.liftTo[F](OrderError.OrderWasNotFound(orderId)))
-      _ <- ensureOrderOwnership(existingOrder, actingUserId)
       validatedTravelerIds <- validateTravelerSelection(travelerIds)
       travelerProfiles <- validatedTravelerIds.traverse(loadOwnedTravelerProfile(actingUserId, _))
       flight <- flightService.getFlightDetails(flightId)
       airline <- flightRepository.findAirlineById(flight.airlineId).flatMap(_.liftTo[F](FlightError.AirlineWasNotFound(flight.airlineId)))
       cabinInventory <- flight.ensureBookableCabinInventory(cabinClass).leftMap(mapFlightError(_, cabinClass)).liftTo[F]
       bookedMoney <- cabinInventory.unitPrice.multiply(travelerProfiles.size).liftTo[F]
+      createdOrder <- orderService.createDraftOrder(
+        ownerUserId = actingUserId,
+        orderCurrency = cabinInventory.unitPrice.currency,
+        createdAt = java.time.Instant.now()
+      )
       updatedOrder <- orderService.addFlightOrderItem(
-        orderId = orderId,
+        orderId = createdOrder.orderId,
         flightBookingSnapshot = FlightBookingSnapshot(
           airlineId = airline.airlineId,
           airlineName = airline.airlineName,
@@ -109,10 +110,6 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow](
   ): Boolean =
     departureAirportQuery.forall(queryText => TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesAirportQuery(flight.departureAirport, queryText)) &&
     arrivalAirportQuery.forall(queryText => TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesAirportQuery(flight.arrivalAirport, queryText))
-
-  private def ensureOrderOwnership(order: Order, actingUserId: UserId): F[Unit] =
-    if order.ownerUserId == actingUserId then MonadThrow[F].unit
-    else MonadThrow[F].raiseError(FlightBookingApplicationError.OrderWasNotOwnedByUser(order.orderId, actingUserId))
 
   private def validateTravelerSelection(travelerIds: List[TravelerId]): F[List[TravelerId]] =
     if travelerIds.isEmpty then

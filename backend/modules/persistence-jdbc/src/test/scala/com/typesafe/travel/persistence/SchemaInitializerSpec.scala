@@ -41,7 +41,7 @@ final class SchemaInitializerSpec extends FunSuite:
       sql"select version from schema_migrations order by version".query[Int].to[List].transact(secondTransactor).unsafeRunSync()
 
     assertEquals(reloadedUser, Some(savedUser))
-    assertEquals(appliedMigrationVersions, List(1, 2))
+    assertEquals(appliedMigrationVersions, List(1, 2, 3))
   }
 
   test("failed migration is not recorded in schema_migrations") {

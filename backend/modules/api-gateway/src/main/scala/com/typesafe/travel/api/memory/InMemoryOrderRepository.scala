@@ -29,6 +29,12 @@ final class InMemoryOrderRepository[F[_]: Sync] private (
   override def findOrderById(orderId: OrderId): F[Option[Order]] =
     Sync[F].delay(orderState.get(orderId))
 
+  override def findOrderByOrderItemId(orderItemId: OrderItemId): F[Option[Order]] =
+    Sync[F].delay(orderState.values.find(_.orderLineItems.exists(_.orderItemId == orderItemId)))
+
+  override def findAllOrders: F[List[Order]] =
+    Sync[F].delay(orderState.values.toList.sortBy(_.orderId.value))
+
   override def findOrdersByOwnerUserId(ownerUserId: UserId): F[List[Order]] =
     Sync[F].delay(orderState.values.filter(_.ownerUserId == ownerUserId).toList.sortBy(_.orderId.value))
 

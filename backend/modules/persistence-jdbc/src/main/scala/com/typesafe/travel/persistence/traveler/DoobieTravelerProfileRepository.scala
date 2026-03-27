@@ -148,6 +148,9 @@ final class DoobieTravelerProfileRepository[F[_]: Async](
       else insertNewTravelerProfile.transact(transactor).as(travelerProfile)
     }
 
+  override def deleteTravelerProfile(travelerId: TravelerId): F[Unit] =
+    sql"delete from traveler_profiles where traveler_id = ${travelerId.value}".update.run.transact(transactor).void
+
   private def selectTravelerProfiles(travelerProfileQuery: Query0[TravelerRow]): F[List[TravelerProfile]] =
     travelerProfileQuery.to[List].transact(transactor).flatMap(_.traverse(buildTravelerProfile))
 

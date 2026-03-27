@@ -107,6 +107,128 @@ final class OrderSpec extends FunSuite:
       confirmedOrder.map(_.orderLineItems.map(_.orderItemStatus)),
       Right(Vector(OrderItemStatus.Confirmed))
     )
+    assertEquals(
+      confirmedOrder.map(_.orderLineItems.map(_.supplierReviewStatus)),
+      Right(Vector(SupplierReviewStatus.PendingSupplierConfirmation))
+    )
+  }
+
+  test("supplier confirm accepts optional note after payment confirmation") {
+    val supplierConfirmedOrder =
+      Order
+        .createDraftOrder(OrderId("order-3b"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
+        .addFlightOrderItem(
+          OrderItemId("item-1"),
+          testFlightBookingSnapshot,
+          Money.unsafe(BigDecimal(800), Currency.USD)
+        )
+        .flatMap(_.submitOrderForPayment)
+        .flatMap(
+          _.authorizeOrderPayment(
+            paymentId = PaymentId("payment-1"),
+            paymentAmount = Money.unsafe(BigDecimal(800), Currency.USD),
+            paymentMethod = PaymentMethod.Card,
+            authorizedAt = orderCreatedAtInstant.plusSeconds(300)
+          )
+        )
+        .flatMap(_.captureAuthorizedPayment(PaymentId("payment-1"), orderCreatedAtInstant.plusSeconds(600)))
+        .flatMap(
+          _.confirmSupplierOrderItem(
+            orderItemId = OrderItemId("item-1"),
+            managerId = ManagerId("manager-airline-mu"),
+            note = Some("seat released"),
+            decidedAt = orderCreatedAtInstant.plusSeconds(900)
+          )
+        )
+
+    assertEquals(
+      supplierConfirmedOrder.map(_.orderLineItems.head.supplierReviewStatus),
+      Right(SupplierReviewStatus.SupplierConfirmed)
+    )
+    assertEquals(
+      supplierConfirmedOrder.flatMap(_.orderLineItems.head.supplierReviewDecision.toRight(OrderError.OrderItemWasNotFound(OrderId("order-3b"), OrderItemId("item-1")))).map(_.reason),
+      Right(Some("seat released"))
+    )
+  }
+
+  test("supplier reject requires non-empty reason") {
+    val rejectAttempt =
+      Order
+        .createDraftOrder(OrderId("order-3c"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
+        .addFlightOrderItem(
+          OrderItemId("item-1"),
+          testFlightBookingSnapshot,
+          Money.unsafe(BigDecimal(800), Currency.USD)
+        )
+        .flatMap(_.submitOrderForPayment)
+        .flatMap(
+          _.authorizeOrderPayment(
+            paymentId = PaymentId("payment-1"),
+            paymentAmount = Money.unsafe(BigDecimal(800), Currency.USD),
+            paymentMethod = PaymentMethod.Card,
+            authorizedAt = orderCreatedAtInstant.plusSeconds(300)
+          )
+        )
+        .flatMap(_.captureAuthorizedPayment(PaymentId("payment-1"), orderCreatedAtInstant.plusSeconds(600)))
+        .flatMap(
+          _.rejectSupplierOrderItem(
+            orderItemId = OrderItemId("item-1"),
+            managerId = ManagerId("manager-airline-mu"),
+            reason = "   ",
+            decidedAt = orderCreatedAtInstant.plusSeconds(900)
+          )
+        )
+
+    assert(rejectAttempt.swap.exists(_.isInstanceOf[OrderError.SupplierRejectReasonWasEmpty]))
+  }
+
+  test("mixed booking allows independent supplier decisions per item") {
+    val decidedOrder =
+      Order
+        .createDraftOrder(OrderId("order-3d"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
+        .addFlightOrderItem(
+          OrderItemId("item-flight"),
+          testFlightBookingSnapshot,
+          Money.unsafe(BigDecimal(500), Currency.USD)
+        )
+        .flatMap(
+          _.addHotelOrderItem(
+            OrderItemId("item-hotel"),
+            testHotelBookingSnapshot,
+            Money.unsafe(BigDecimal(300), Currency.USD)
+          )
+        )
+        .flatMap(_.submitOrderForPayment)
+        .flatMap(
+          _.authorizeOrderPayment(
+            paymentId = PaymentId("payment-1"),
+            paymentAmount = Money.unsafe(BigDecimal(800), Currency.USD),
+            paymentMethod = PaymentMethod.Card,
+            authorizedAt = orderCreatedAtInstant.plusSeconds(300)
+          )
+        )
+        .flatMap(_.captureAuthorizedPayment(PaymentId("payment-1"), orderCreatedAtInstant.plusSeconds(600)))
+        .flatMap(
+          _.confirmSupplierOrderItem(
+            orderItemId = OrderItemId("item-flight"),
+            managerId = ManagerId("manager-airline-mu"),
+            note = None,
+            decidedAt = orderCreatedAtInstant.plusSeconds(900)
+          )
+        )
+        .flatMap(
+          _.rejectSupplierOrderItem(
+            orderItemId = OrderItemId("item-hotel"),
+            managerId = ManagerId("manager-hotel-westlake"),
+            reason = "sold out on arrival date",
+            decidedAt = orderCreatedAtInstant.plusSeconds(960)
+          )
+        )
+
+    assertEquals(
+      decidedOrder.map(_.orderLineItems.map(_.supplierReviewStatus)),
+      Right(Vector(SupplierReviewStatus.SupplierConfirmed, SupplierReviewStatus.SupplierRejected))
+    )
   }
 
   test("refund request cannot exceed remaining refundable balance") {

@@ -15,9 +15,12 @@ final case class AuthorizePaymentRequestDto(
 )
 
 final case class RequestRefundRequestDto(
-    refundAmount: String,
-    refundCurrency: String,
     refundReason: String
+)
+
+final case class PayOrderRequestDto(
+    paymentMethod: String,
+    paymentSucceeded: Boolean
 )
 
 final case class FlightItemDetailsResponseDto(
@@ -54,6 +57,8 @@ final case class OrderLineItemResponseDto(
     orderItemId: String,
     orderItemKind: String,
     orderItemStatus: String,
+    supplierReviewStatus: String,
+    supplierReviewDecision: Option[SupplierReviewDecisionResponseDto],
     bookedAmount: String,
     bookedCurrency: String,
     summaryLabel: String,
@@ -102,13 +107,17 @@ final case class OrderResponseDto(
     orderRefunds: List[RefundResponseDto]
 )
 
+final case class OrderListResponseDto(
+    orders: List[OrderResponseDto]
+)
+
 object OrderResponseDto:
   def fromDomain(order: Order): OrderResponseDto =
     OrderResponseDto(
       orderId = order.orderId.value,
       buyerUserId = order.ownerUserId.value,
       orderType = order.orderType.toString,
-      status = order.orderStatus.toString,
+      status = deriveCustomerFacingOrderStatus(order),
       orderCurrency = order.orderCurrency.toString,
       totalPrice = order.totalBookedMoney.amount.toString,
       totalCapturedAmount = order.totalCapturedMoney.amount.toString,
@@ -125,6 +134,8 @@ object OrderResponseDto:
             orderItemId = flightOrderItem.orderItemId.value,
             orderItemKind = "flight",
             orderItemStatus = flightOrderItem.orderItemStatus.toString,
+            supplierReviewStatus = flightOrderItem.supplierReviewStatus.toString,
+            supplierReviewDecision = flightOrderItem.supplierReviewDecision.map(SupplierReviewDecisionResponseDto.fromDomain),
             bookedAmount = flightOrderItem.bookedMoney.amount.toString,
             bookedCurrency = flightOrderItem.bookedMoney.currency.toString,
             summaryLabel =
@@ -152,6 +163,8 @@ object OrderResponseDto:
             orderItemId = hotelOrderItem.orderItemId.value,
             orderItemKind = "hotel",
             orderItemStatus = hotelOrderItem.orderItemStatus.toString,
+            supplierReviewStatus = hotelOrderItem.supplierReviewStatus.toString,
+            supplierReviewDecision = hotelOrderItem.supplierReviewDecision.map(SupplierReviewDecisionResponseDto.fromDomain),
             bookedAmount = hotelOrderItem.bookedMoney.amount.toString,
             bookedCurrency = hotelOrderItem.bookedMoney.currency.toString,
             summaryLabel =
@@ -200,6 +213,14 @@ object OrderResponseDto:
       )
     )
 
+  private def deriveCustomerFacingOrderStatus(order: Order): String =
+    if order.orderStatus == OrderStatus.Cancelled then "Cancelled"
+    else if order.orderStatus == OrderStatus.Refunded || order.totalSettledRefundMoney.amount >= order.totalBookedMoney.amount && order.totalBookedMoney.amount > 0 then "Refunded"
+    else if order.orderRefunds.exists(_.refundStatus == RefundStatus.Requested) && order.allSupplierReviewDecisionsConfirmed then "PendingRefund"
+    else if order.hasCapturedPayment && order.allSupplierReviewDecisionsConfirmed then "Booked"
+    else if order.hasCapturedPayment then "Paid"
+    else "PendingPayment"
+
 object OrderDtoMappers:
   def toCurrency(currencyValue: String) =
     currencyValue.trim.toUpperCase match
@@ -209,6 +230,9 @@ object OrderDtoMappers:
 
   def toPaymentMethod(paymentMethodValue: String): PaymentMethod =
     paymentMethodValue.trim.toLowerCase match
+      case "alipay"       => PaymentMethod.Wallet
+      case "wechat-pay"   => PaymentMethod.Wallet
+      case "nailong-pay"  => PaymentMethod.Wallet
       case "card"          => PaymentMethod.Card
       case "bank-transfer" => PaymentMethod.BankTransfer
       case "wallet"        => PaymentMethod.Wallet

@@ -10,7 +10,8 @@ final case class RoomTypeSummaryResponseDto(
     basePrice: String,
     currency: String,
     status: String,
-    isBookableForRequestedStay: Boolean
+    isBookableForRequestedStay: Boolean,
+    availableRoomsForRequestedStay: Option[Int]
 )
 
 final case class HotelResponseDto(
@@ -26,7 +27,7 @@ final case class HotelListResponseDto(
     hotels: List[HotelResponseDto]
 )
 
-final case class AddHotelItemRequestDto(
+final case class BookHotelRequestDto(
     buyerUserId: String,
     roomTypeId: String,
     guestTravelerIds: List[String],
@@ -52,7 +53,13 @@ object HotelResponseDto:
           basePrice = roomType.basePrice.amount.toString,
           currency = roomType.basePrice.currency.toString,
           status = roomType.roomTypeStatus.toString,
-          isBookableForRequestedStay = requestedStayPeriod.forall(period => roomType.ensureBookableForStay(period, com.typesafe.travel.shared.kernel.RoomCount.unsafe(1)).isRight)
+          isBookableForRequestedStay = requestedStayPeriod.forall(period => roomType.ensureBookableForStay(period, com.typesafe.travel.shared.kernel.RoomCount.unsafe(1)).isRight),
+          availableRoomsForRequestedStay = requestedStayPeriod.flatMap(period =>
+            roomType
+              .ensureBookableForStay(period, com.typesafe.travel.shared.kernel.RoomCount.unsafe(1))
+              .toOption
+              .map(_.map(_.availableRooms.value).min)
+          )
         )
       )
     )

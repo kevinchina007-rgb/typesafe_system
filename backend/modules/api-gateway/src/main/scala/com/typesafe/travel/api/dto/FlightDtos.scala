@@ -33,7 +33,7 @@ final case class FlightListResponseDto(
     flights: List[FlightResponseDto]
 )
 
-final case class AddFlightItemRequestDto(
+final case class BookFlightRequestDto(
     buyerUserId: String,
     flightId: String,
     travelerIds: List[String],

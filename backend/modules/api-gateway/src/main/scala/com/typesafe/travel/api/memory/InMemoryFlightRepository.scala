@@ -1,29 +1,56 @@
 package com.typesafe.travel.api.memory
 
-import cats.Applicative
-import cats.syntax.all.*
+import cats.effect.kernel.Sync
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.shared.kernel.*
-import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
 
-final class InMemoryFlightRepository[F[_]: Applicative] private (
-    airlines: Map[AirlineId, Airline],
-    flights: Map[FlightId, Flight]
+import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
+import java.util.concurrent.atomic.AtomicLong
+import scala.collection.concurrent.TrieMap
+
+final class InMemoryFlightRepository[F[_]: Sync] private (
+    airlineState: TrieMap[AirlineId, Airline],
+    flightState: TrieMap[FlightId, Flight],
+    airlineSequence: AtomicLong,
+    flightSequence: AtomicLong,
+    inventorySequence: AtomicLong
 ) extends FlightRepository[F]:
+  override def nextAirlineId: F[AirlineId] =
+    Sync[F].delay(AirlineId(s"airline-generated-${airlineSequence.incrementAndGet()}"))
+
+  override def nextFlightId: F[FlightId] =
+    Sync[F].delay(FlightId(s"flight-generated-${flightSequence.incrementAndGet()}"))
+
+  override def nextCabinInventoryId: F[CabinInventoryId] =
+    Sync[F].delay(CabinInventoryId(s"inventory-generated-${inventorySequence.incrementAndGet()}"))
+
   override def findAirlineById(airlineId: AirlineId): F[Option[Airline]] =
-    airlines.get(airlineId).pure[F]
+    Sync[F].delay(airlineState.get(airlineId))
 
   override def findFlightById(flightId: FlightId): F[Option[Flight]] =
-    flights.get(flightId).pure[F]
+    Sync[F].delay(flightState.get(flightId))
 
   override def searchFlights(flightSearchCriteria: FlightSearchCriteria): F[List[Flight]] =
-    flights.values.toList
-      .filter(_.matchesSearch(flightSearchCriteria.departureAirport, flightSearchCriteria.arrivalAirport, flightSearchCriteria.departureDate))
-      .sortBy(_.flightSchedule.departureAt.toInstant)
-      .pure[F]
+    Sync[F].delay(
+      flightState.values.toList
+        .filter(_.matchesSearch(flightSearchCriteria.departureAirport, flightSearchCriteria.arrivalAirport, flightSearchCriteria.departureDate))
+        .sortBy(_.flightSchedule.departureAt.toInstant)
+    )
+
+  override def saveAirline(airline: Airline): F[Airline] =
+    Sync[F].delay {
+      airlineState.put(airline.airlineId, airline)
+      airline
+    }
+
+  override def saveFlight(flight: Flight): F[Flight] =
+    Sync[F].delay {
+      flightState.put(flight.flightId, flight)
+      flight
+    }
 
 object InMemoryFlightRepository:
-  def create[F[_]: Applicative]: InMemoryFlightRepository[F] =
+  def create[F[_]: Sync]: InMemoryFlightRepository[F] =
     val chinaEasternAirline =
       Airline.createAirline(
         airlineId = AirlineId("airline-mu"),
@@ -80,8 +107,11 @@ object InMemoryFlightRepository:
     )
 
     new InMemoryFlightRepository[F](
-      airlines = Map(chinaEasternAirline.airlineId -> chinaEasternAirline, springAirline.airlineId -> springAirline),
-      flights = sampleFlights.map(flight => flight.flightId -> flight).toMap
+      airlineState = TrieMap(chinaEasternAirline.airlineId -> chinaEasternAirline, springAirline.airlineId -> springAirline),
+      flightState = TrieMap.from(sampleFlights.map(flight => flight.flightId -> flight)),
+      airlineSequence = AtomicLong(100),
+      flightSequence = AtomicLong(100),
+      inventorySequence = AtomicLong(1000)
     )
 
   private def buildFlight(

@@ -10,8 +10,12 @@ object ReferenceDataSeeder:
     for
       airlineCount <- sql"select count(*) from airlines".query[Long].unique.transact(transactor)
       hotelCount <- sql"select count(*) from hotels".query[Long].unique.transact(transactor)
+      airlineManagerCount <- sql"select count(*) from airline_managers".query[Long].unique.transact(transactor)
+      hotelManagerCount <- sql"select count(*) from hotel_managers".query[Long].unique.transact(transactor)
       _ <- if airlineCount == 0 then seedFlights(transactor) else Async[F].unit
       _ <- if hotelCount == 0 then seedHotels(transactor) else Async[F].unit
+      _ <- if airlineManagerCount == 0 then seedAirlineManagers(transactor) else Async[F].unit
+      _ <- if hotelManagerCount == 0 then seedHotelManagers(transactor) else Async[F].unit
     yield ()
 
   private def seedFlights[F[_]: Async](transactor: Transactor[F]): F[Unit] =
@@ -113,6 +117,30 @@ object ReferenceDataSeeder:
       )
 
     (insertHotels ++ insertRoomTypes ++ insertInventories).sequence.transact(transactor).void
+
+  private def seedAirlineManagers[F[_]: Async](transactor: Transactor[F]): F[Unit] =
+    List(
+      sql"""
+        insert into airline_managers (manager_id, airline_id, email, display_name, status, created_at)
+        values ('manager-airline-mu', 'airline-mu', 'ops@mu.example', 'China Eastern Ops', 'Active', timestamp '2026-03-27 00:00:00')
+      """.update.run,
+      sql"""
+        insert into airline_managers (manager_id, airline_id, email, display_name, status, created_at)
+        values ('manager-airline-9c', 'airline-9c', 'ops@9c.example', 'Spring Airlines Ops', 'Active', timestamp '2026-03-27 00:00:00')
+      """.update.run
+    ).sequence.transact(transactor).void
+
+  private def seedHotelManagers[F[_]: Async](transactor: Transactor[F]): F[Unit] =
+    List(
+      sql"""
+        insert into hotel_managers (manager_id, hotel_id, email, display_name, status, created_at)
+        values ('manager-hotel-westlake', 'hotel-hz-westlake', 'ops@westlake.example', 'West Lake Ops', 'Active', timestamp '2026-03-27 00:00:00')
+      """.update.run,
+      sql"""
+        insert into hotel_managers (manager_id, hotel_id, email, display_name, status, created_at)
+        values ('manager-hotel-bund', 'hotel-sh-bund', 'ops@bund.example', 'Bund Hotel Ops', 'Active', timestamp '2026-03-27 00:00:00')
+      """.update.run
+    ).sequence.transact(transactor).void
 
   private def insertCabinInventory(
       inventoryId: String,

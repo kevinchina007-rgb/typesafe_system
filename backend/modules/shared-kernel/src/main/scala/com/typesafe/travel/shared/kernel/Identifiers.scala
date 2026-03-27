@@ -8,6 +8,7 @@ final case class CabinInventoryId(value: String) extends AnyVal
 final case class HotelId(value: String) extends AnyVal
 final case class RoomTypeId(value: String) extends AnyVal
 final case class RoomInventoryId(value: String) extends AnyVal
+final case class ManagerId(value: String) extends AnyVal
 final case class OrderId(value: String) extends AnyVal
 final case class OrderItemId(value: String) extends AnyVal
 final case class PaymentId(value: String) extends AnyVal

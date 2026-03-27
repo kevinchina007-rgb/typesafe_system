@@ -11,7 +11,8 @@ final case class MigrationStep(
 object MigrationPlan:
   val defaultSteps: List[MigrationStep] = List(
     loadMigrationStep(1, "baseline", "db/migrations/V1__baseline.sql"),
-    loadMigrationStep(2, "order_and_inventory_refinement", "db/migrations/V2__order_and_inventory_refinement.sql")
+    loadMigrationStep(2, "order_and_inventory_refinement", "db/migrations/V2__order_and_inventory_refinement.sql"),
+    loadMigrationStep(3, "manager_workflow_phase1", "db/migrations/V3__manager_workflow_phase1.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

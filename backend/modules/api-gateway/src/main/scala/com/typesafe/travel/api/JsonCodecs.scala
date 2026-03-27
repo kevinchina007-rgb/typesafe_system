@@ -18,9 +18,15 @@ object JsonCodecs:
   given Encoder[TravelerListResponseDto] = deriveEncoder
 
   given Decoder[CreateOrderRequestDto] = deriveDecoder
-  given Decoder[AddFlightItemRequestDto] = deriveDecoder
-  given Decoder[AddHotelItemRequestDto] = deriveDecoder
-  given Decoder[AuthorizePaymentRequestDto] = deriveDecoder
+  given Decoder[ManagerLoginRequestDto] = deriveDecoder
+  given Decoder[RegisterAirlineManagerRequestDto] = deriveDecoder
+  given Decoder[RegisterHotelManagerRequestDto] = deriveDecoder
+  given Decoder[CreateManagerFlightRequestDto] = deriveDecoder
+  given Decoder[CreateManagerRoomTypeRequestDto] = deriveDecoder
+  given Decoder[ManagerDecisionRequestDto] = deriveDecoder
+  given Decoder[BookFlightRequestDto] = deriveDecoder
+  given Decoder[BookHotelRequestDto] = deriveDecoder
+  given Decoder[PayOrderRequestDto] = deriveDecoder
   given Decoder[RequestRefundRequestDto] = deriveDecoder
 
   given Encoder[CabinInventoryResponseDto] = deriveEncoder
@@ -31,7 +37,14 @@ object JsonCodecs:
   given Encoder[HotelListResponseDto] = deriveEncoder
   given Encoder[FlightItemDetailsResponseDto] = deriveEncoder
   given Encoder[HotelItemDetailsResponseDto] = deriveEncoder
+  given Encoder[ManagerSessionResponseDto] = deriveEncoder
+  given Encoder[SupplierReviewDecisionResponseDto] = deriveEncoder
+  given Encoder[ManagerBookingTaskResponseDto] = deriveEncoder
+  given Encoder[ManagerBookingTaskListResponseDto] = deriveEncoder
+  given Encoder[ManagerRefundTaskResponseDto] = deriveEncoder
+  given Encoder[ManagerRefundTaskListResponseDto] = deriveEncoder
   given Encoder[OrderLineItemResponseDto] = deriveEncoder
   given Encoder[PaymentResponseDto] = deriveEncoder
   given Encoder[RefundResponseDto] = deriveEncoder
   given Encoder[OrderResponseDto] = deriveEncoder
+  given Encoder[OrderListResponseDto] = deriveEncoder

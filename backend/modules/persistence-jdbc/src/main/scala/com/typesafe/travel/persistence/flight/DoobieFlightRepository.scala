@@ -9,10 +9,20 @@ import doobie.*
 import doobie.implicits.*
 
 import java.time.{Instant, OffsetDateTime}
+import java.util.UUID
 
 final class DoobieFlightRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends FlightRepository[F]:
+  override def nextAirlineId: F[AirlineId] =
+    Async[F].delay(AirlineId(s"airline-${UUID.randomUUID().toString.take(12)}"))
+
+  override def nextFlightId: F[FlightId] =
+    Async[F].delay(FlightId(s"flight-${UUID.randomUUID().toString.take(12)}"))
+
+  override def nextCabinInventoryId: F[CabinInventoryId] =
+    Async[F].delay(CabinInventoryId(s"inventory-${UUID.randomUUID().toString.take(12)}"))
+
   def saveAirline(airline: Airline): F[Airline] =
     val upsertAirline =
       for

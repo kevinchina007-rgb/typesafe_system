@@ -9,10 +9,20 @@ import doobie.*
 import doobie.implicits.*
 
 import java.time.{Instant, LocalDate}
+import java.util.UUID
 
 final class DoobieHotelRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends HotelRepository[F]:
+  override def nextHotelId: F[HotelId] =
+    Async[F].delay(HotelId(s"hotel-${UUID.randomUUID().toString.take(12)}"))
+
+  override def nextRoomTypeId: F[RoomTypeId] =
+    Async[F].delay(RoomTypeId(s"room-type-${UUID.randomUUID().toString.take(12)}"))
+
+  override def nextRoomInventoryId: F[RoomInventoryId] =
+    Async[F].delay(RoomInventoryId(s"room-inventory-${UUID.randomUUID().toString.take(12)}"))
+
   def saveHotel(hotel: Hotel): F[Hotel] =
     val upsertHotel =
       for

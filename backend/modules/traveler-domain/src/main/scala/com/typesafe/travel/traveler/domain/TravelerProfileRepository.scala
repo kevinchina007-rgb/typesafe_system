@@ -11,3 +11,4 @@ trait TravelerProfileRepository[F[_]]:
   ): F[List[TravelerProfile]]
   def findTravelerProfilesByOwnerUserId(ownerUserId: UserId): F[List[TravelerProfile]]
   def saveTravelerProfile(travelerProfile: TravelerProfile): F[TravelerProfile]
+  def deleteTravelerProfile(travelerId: TravelerId): F[Unit]

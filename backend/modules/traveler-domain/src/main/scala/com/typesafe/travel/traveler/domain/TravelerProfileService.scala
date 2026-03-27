@@ -53,6 +53,11 @@ trait TravelerProfileService[F[_]]:
       travelerId: TravelerId
   ): F[TravelerProfile]
 
+  def deleteTravelerProfile(
+      ownerUserId: UserId,
+      travelerId: TravelerId
+  ): F[Unit]
+
 final class LiveTravelerProfileService[F[_]: MonadThrow](
     travelerProfileRepository: TravelerProfileRepository[F],
     userRepository: UserRepository[F]
@@ -166,6 +171,36 @@ final class LiveTravelerProfileService[F[_]: MonadThrow](
       updatedOwnerUser <- ownerUser.assignDefaultTravelerProfile(travelerId).liftTo[F]
       _ <- userRepository.saveUser(updatedOwnerUser)
     yield savedDefaultTravelerProfile
+
+  override def deleteTravelerProfile(
+      ownerUserId: UserId,
+      travelerId: TravelerId
+  ): F[Unit] =
+    for
+      ownerUser <- loadOwnerUser(ownerUserId)
+      travelerProfile <- loadTravelerProfile(ownerUserId, travelerId)
+      ownerTravelerProfiles <- travelerProfileRepository.findTravelerProfilesByOwnerUserId(ownerUserId)
+      _ <- travelerProfileRepository.deleteTravelerProfile(travelerId)
+      _ <- if travelerProfile.isDefaultTravelerProfile then
+        ownerTravelerProfiles.filterNot(_.travelerId == travelerId) match
+          case nextDefaultTravelerProfile :: remainingTravelerProfiles =>
+            for
+              promotedTravelerProfile <- nextDefaultTravelerProfile.markAsDefaultTravelerProfile.liftTo[F]
+              _ <- travelerProfileRepository.saveTravelerProfile(promotedTravelerProfile)
+              _ <- remainingTravelerProfiles.traverse(currentTravelerProfile =>
+                travelerProfileRepository.saveTravelerProfile(currentTravelerProfile.clearDefaultTravelerProfile)
+              )
+              updatedOwnerUser <- ownerUser.assignDefaultTravelerProfile(promotedTravelerProfile.travelerId).liftTo[F]
+              _ <- userRepository.saveUser(updatedOwnerUser)
+            yield ()
+          case Nil =>
+            ownerUser
+              .clearDefaultTravelerProfile(travelerId)
+              .liftTo[F]
+              .flatMap(userRepository.saveUser)
+              .void
+      else MonadThrow[F].unit
+    yield ()
 
   private def saveAdjustedDefaultTravelerProfiles(
       ownerUserId: UserId,

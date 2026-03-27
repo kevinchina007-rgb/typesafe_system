@@ -9,6 +9,7 @@ import com.typesafe.travel.api.dto.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.identity.domain.*
+import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.*
@@ -19,7 +20,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.headers
 import org.http4s.multipart.Multipart
 
-import java.time.{Instant, LocalDate}
+import java.time.{Instant, LocalDate, OffsetDateTime}
 import java.nio.file.{Files => NioFiles, Path}
 
 final class ApiRouter[F[_]: Async](
@@ -28,6 +29,7 @@ final class ApiRouter[F[_]: Async](
     orderService: OrderService[F],
     flightBookingApplicationService: FlightBookingApplicationService[F],
     hotelBookingApplicationService: HotelBookingApplicationService[F],
+    managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
     avatarApplicationService: AvatarApplicationService[F],
     userRepository: UserRepository[F],
     travelerProfileRepository: TravelerProfileRepository[F],
@@ -41,9 +43,15 @@ final class ApiRouter[F[_]: Async](
   private given loginUserDecoder: EntityDecoder[F, LoginUserRequestDto] = jsonOf[F, LoginUserRequestDto]
   private given createTravelerDecoder: EntityDecoder[F, CreateTravelerRequestDto] = jsonOf[F, CreateTravelerRequestDto]
   private given createOrderDecoder: EntityDecoder[F, CreateOrderRequestDto] = jsonOf[F, CreateOrderRequestDto]
-  private given addFlightItemDecoder: EntityDecoder[F, AddFlightItemRequestDto] = jsonOf[F, AddFlightItemRequestDto]
-  private given addHotelItemDecoder: EntityDecoder[F, AddHotelItemRequestDto] = jsonOf[F, AddHotelItemRequestDto]
-  private given authorizePaymentDecoder: EntityDecoder[F, AuthorizePaymentRequestDto] = jsonOf[F, AuthorizePaymentRequestDto]
+  private given managerLoginDecoder: EntityDecoder[F, ManagerLoginRequestDto] = jsonOf[F, ManagerLoginRequestDto]
+  private given managerDecisionDecoder: EntityDecoder[F, ManagerDecisionRequestDto] = jsonOf[F, ManagerDecisionRequestDto]
+  private given registerAirlineManagerDecoder: EntityDecoder[F, RegisterAirlineManagerRequestDto] = jsonOf[F, RegisterAirlineManagerRequestDto]
+  private given registerHotelManagerDecoder: EntityDecoder[F, RegisterHotelManagerRequestDto] = jsonOf[F, RegisterHotelManagerRequestDto]
+  private given createManagerFlightDecoder: EntityDecoder[F, CreateManagerFlightRequestDto] = jsonOf[F, CreateManagerFlightRequestDto]
+  private given createManagerRoomTypeDecoder: EntityDecoder[F, CreateManagerRoomTypeRequestDto] = jsonOf[F, CreateManagerRoomTypeRequestDto]
+  private given addFlightItemDecoder: EntityDecoder[F, BookFlightRequestDto] = jsonOf[F, BookFlightRequestDto]
+  private given addHotelItemDecoder: EntityDecoder[F, BookHotelRequestDto] = jsonOf[F, BookHotelRequestDto]
+  private given authorizePaymentDecoder: EntityDecoder[F, PayOrderRequestDto] = jsonOf[F, PayOrderRequestDto]
   private given requestRefundDecoder: EntityDecoder[F, RequestRefundRequestDto] = jsonOf[F, RequestRefundRequestDto]
   private given multipartDecoder: EntityDecoder[F, Multipart[F]] = EntityDecoder.multipart[F]
 
@@ -103,6 +111,51 @@ final class ApiRouter[F[_]: Async](
         case None            => NotFound(ApiErrorResponseDto("user_not_found", s"User '$userIdValue' was not found").asJson)
       }
 
+    case request @ POST -> Root / "api" / "manager" / "session" / "login" =>
+      for
+        managerLoginRequestDto <- request.as[ManagerLoginRequestDto]
+        primaryEmailAddress <- fromEither(EmailAddress.create(managerLoginRequestDto.email))
+        managerSession <- managerWorkflowApplicationService.loginManager(
+          managerType = ManagerDtoMappers.toManagerType(managerLoginRequestDto.managerType),
+          primaryEmailAddress = primaryEmailAddress
+        )
+        response <- Ok(ManagerSessionResponseDto.fromApplication(managerSession).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "airline" / "register" =>
+      for
+        registerAirlineManagerRequestDto <- request.as[RegisterAirlineManagerRequestDto]
+        primaryEmailAddress <- fromEither(EmailAddress.create(registerAirlineManagerRequestDto.email))
+        displayName <- fromEither(PersonName.create(registerAirlineManagerRequestDto.displayName))
+        airlineName <- fromEither(AirlineName.create(registerAirlineManagerRequestDto.airlineName))
+        airlineCode <- fromEither(AirlineCode.create(registerAirlineManagerRequestDto.airlineCode))
+        managerSession <- managerWorkflowApplicationService.registerAirlineManager(
+          primaryEmailAddress = primaryEmailAddress,
+          displayName = displayName,
+          airlineName = airlineName,
+          airlineCode = airlineCode,
+          createdAt = Instant.now()
+        )
+        response <- Created(ManagerSessionResponseDto.fromApplication(managerSession).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "hotel" / "register" =>
+      for
+        registerHotelManagerRequestDto <- request.as[RegisterHotelManagerRequestDto]
+        primaryEmailAddress <- fromEither(EmailAddress.create(registerHotelManagerRequestDto.email))
+        displayName <- fromEither(PersonName.create(registerHotelManagerRequestDto.displayName))
+        hotelName <- fromEither(HotelName.create(registerHotelManagerRequestDto.hotelName))
+        hotelLocation <- fromEither(HotelLocation.create(registerHotelManagerRequestDto.location))
+        managerSession <- managerWorkflowApplicationService.registerHotelManager(
+          primaryEmailAddress = primaryEmailAddress,
+          displayName = displayName,
+          hotelName = hotelName,
+          hotelLocation = hotelLocation,
+          createdAt = Instant.now()
+        )
+        response <- Created(ManagerSessionResponseDto.fromApplication(managerSession).asJson)
+      yield response
+
     case request @ POST -> Root / "api" / "users" / userIdValue / "avatar" =>
       for
         multipartPayload <- request.as[Multipart[F]]
@@ -156,6 +209,16 @@ final class ApiRouter[F[_]: Async](
       travelerProfileRepository
         .findTravelerProfilesByOwnerUserId(UserId(userIdValue))
         .flatMap(travelers => Ok(TravelerListResponseDto(travelers.map(TravelerResponseDto.fromDomain)).asJson))
+
+    case DELETE -> Root / "api" / "users" / userIdValue / "travelers" / travelerIdValue =>
+      travelerProfileService
+        .deleteTravelerProfile(UserId(userIdValue), TravelerId(travelerIdValue))
+        .flatMap(_ => NoContent())
+
+    case GET -> Root / "api" / "users" / userIdValue / "orders" =>
+      orderService
+        .listOrdersForUser(UserId(userIdValue))
+        .flatMap(orders => Ok(OrderListResponseDto(orders.map(OrderResponseDto.fromDomain)).asJson))
 
     case request @ PUT -> Root / "api" / "users" / userIdValue / "travelers" / travelerIdValue =>
       for
@@ -231,34 +294,32 @@ final class ApiRouter[F[_]: Async](
         response <- Created(OrderResponseDto.fromDomain(createdOrder).asJson)
       yield response
 
-    case request @ POST -> Root / "api" / "orders" / orderIdValue / "flight-items" =>
+    case request @ POST -> Root / "api" / "flights" / "book" =>
       for
-        addFlightItemRequestDto <- request.as[AddFlightItemRequestDto]
+        addFlightItemRequestDto <- request.as[BookFlightRequestDto]
         selectedCabinClass <- fromEither(OrderDtoMappers.toCabinClass(addFlightItemRequestDto.cabinClass))
-        updatedOrder <- flightBookingApplicationService.addFlightItemToOrder(
+        updatedOrder <- flightBookingApplicationService.createFlightOrder(
           actingUserId = UserId(addFlightItemRequestDto.buyerUserId),
-          orderId = OrderId(orderIdValue),
           flightId = FlightId(addFlightItemRequestDto.flightId),
           travelerIds = addFlightItemRequestDto.travelerIds.map(TravelerId.apply),
           cabinClass = selectedCabinClass
         )
-        response <- Ok(OrderResponseDto.fromDomain(updatedOrder).asJson)
+        response <- Created(OrderResponseDto.fromDomain(updatedOrder).asJson)
       yield response
 
-    case request @ POST -> Root / "api" / "orders" / orderIdValue / "hotel-items" =>
+    case request @ POST -> Root / "api" / "hotels" / "book" =>
       for
-        addHotelItemRequestDto <- request.as[AddHotelItemRequestDto]
+        addHotelItemRequestDto <- request.as[BookHotelRequestDto]
         roomCount <- fromEither(RoomCount.create(addHotelItemRequestDto.roomCount))
-        updatedOrder <- hotelBookingApplicationService.addHotelItemToOrder(
+        updatedOrder <- hotelBookingApplicationService.createHotelOrder(
           actingUserId = UserId(addHotelItemRequestDto.buyerUserId),
-          orderId = OrderId(orderIdValue),
           roomTypeId = RoomTypeId(addHotelItemRequestDto.roomTypeId),
           guestTravelerIds = addHotelItemRequestDto.guestTravelerIds.map(TravelerId.apply),
           checkInDate = LocalDate.parse(addHotelItemRequestDto.checkInDate),
           checkOutDate = LocalDate.parse(addHotelItemRequestDto.checkOutDate),
           roomCount = roomCount
         )
-        response <- Ok(OrderResponseDto.fromDomain(updatedOrder).asJson)
+        response <- Created(OrderResponseDto.fromDomain(updatedOrder).asJson)
       yield response
 
     case GET -> Root / "api" / "orders" / orderIdValue =>
@@ -267,33 +328,156 @@ final class ApiRouter[F[_]: Async](
         case None             => NotFound(ApiErrorResponseDto("order_not_found", s"Order '$orderIdValue' was not found").asJson)
       }
 
+    case GET -> Root / "api" / "manager" / "tasks" :? ManagerIdQueryParamMatcher(managerIdValue) +&
+        ManagerTypeQueryParamMatcher(managerTypeValue) +&
+        TaskStatusQueryParamMatcher(taskStatusValue) =>
+      for
+        managerIdText <- fromEither(managerIdValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
+        managerTypeText <- fromEither(managerTypeValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerType")))
+        tasks <- managerWorkflowApplicationService.listManagerTasks(
+          managerId = ManagerId(managerIdText),
+          managerType = ManagerDtoMappers.toManagerType(managerTypeText),
+          requestedSupplierReviewStatuses = parseRequestedSupplierReviewStatuses(taskStatusValue)
+        )
+        response <- Ok(ManagerBookingTaskListResponseDto(tasks.map(ManagerBookingTaskResponseDto.fromApplication)).asJson)
+      yield response
+
+    case GET -> Root / "api" / "manager" / "refund-tasks" :? ManagerIdQueryParamMatcher(managerIdValue) +&
+        ManagerTypeQueryParamMatcher(managerTypeValue) =>
+      for
+        managerIdText <- fromEither(managerIdValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
+        managerTypeText <- fromEither(managerTypeValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerType")))
+        tasks <- managerWorkflowApplicationService.listManagerRefundTasks(
+          managerId = ManagerId(managerIdText),
+          managerType = ManagerDtoMappers.toManagerType(managerTypeText)
+        )
+        response <- Ok(ManagerRefundTaskListResponseDto(tasks.map(ManagerRefundTaskResponseDto.fromApplication)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "flights" =>
+      for
+        createManagerFlightRequestDto <- request.as[CreateManagerFlightRequestDto]
+        flightNumber <- fromEither(FlightNumber.create(createManagerFlightRequestDto.flightNumber))
+        departureAirport <- fromEither(AirportCode.create(createManagerFlightRequestDto.departureAirport))
+        arrivalAirport <- fromEither(AirportCode.create(createManagerFlightRequestDto.arrivalAirport))
+        economySeatCount <- fromEither(SeatCount.create(createManagerFlightRequestDto.economySeatCount))
+        economyPrice <- fromEither(Money.create(BigDecimal(createManagerFlightRequestDto.economyPrice), OrderDtoMappers.toCurrency(createManagerFlightRequestDto.currency)))
+        businessSeatCount <- fromEither(SeatCount.create(createManagerFlightRequestDto.businessSeatCount))
+        businessPrice <- fromEither(Money.create(BigDecimal(createManagerFlightRequestDto.businessPrice), OrderDtoMappers.toCurrency(createManagerFlightRequestDto.currency)))
+        airlineAndFlight <- managerWorkflowApplicationService.createFlightForAirlineManager(
+          managerId = ManagerId(createManagerFlightRequestDto.managerId),
+          flightNumber = flightNumber,
+          departureAirport = departureAirport,
+          arrivalAirport = arrivalAirport,
+          departureAt = OffsetDateTime.parse(createManagerFlightRequestDto.departureTime),
+          arrivalAt = OffsetDateTime.parse(createManagerFlightRequestDto.arrivalTime),
+          economySeatCount = economySeatCount,
+          economyPrice = economyPrice,
+          businessSeatCount = businessSeatCount,
+          businessPrice = businessPrice,
+          createdAt = Instant.now()
+        )
+        response <- Created(FlightResponseDto.fromDomain(airlineAndFlight._1, airlineAndFlight._2).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "hotel-room-types" =>
+      for
+        createManagerRoomTypeRequestDto <- request.as[CreateManagerRoomTypeRequestDto]
+        roomTypeName <- fromEither(RoomTypeName.create(createManagerRoomTypeRequestDto.roomTypeName))
+        roomCapacity <- fromEither(Capacity.create(createManagerRoomTypeRequestDto.capacity))
+        bedType <- fromEither(BedType.create(createManagerRoomTypeRequestDto.bedType))
+        nightlyPrice <- fromEither(
+          Money.create(
+            amount = BigDecimal(createManagerRoomTypeRequestDto.nightlyPrice),
+            currency = OrderDtoMappers.toCurrency(createManagerRoomTypeRequestDto.currency)
+          )
+        )
+        availableRooms <- fromEither(RoomCount.create(createManagerRoomTypeRequestDto.availableRooms))
+        hotel <- managerWorkflowApplicationService.createRoomTypeForHotelManager(
+          managerId = ManagerId(createManagerRoomTypeRequestDto.managerId),
+          roomTypeName = roomTypeName,
+          roomCapacity = roomCapacity,
+          bedType = bedType,
+          nightlyPrice = nightlyPrice,
+          availableRooms = availableRooms,
+          inventoryStartDate = LocalDate.parse(createManagerRoomTypeRequestDto.inventoryStartDate),
+          inventoryEndDate = LocalDate.parse(createManagerRoomTypeRequestDto.inventoryEndDate)
+        )
+        response <- Created(HotelResponseDto.fromDomain(hotel, None).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "booking-items" / orderItemValue / "confirm" =>
+      for
+        managerDecisionRequestDto <- request.as[ManagerDecisionRequestDto]
+        updatedOrder <- managerWorkflowApplicationService.confirmBookingItem(
+          managerId = ManagerId(managerDecisionRequestDto.managerId),
+          managerType = ManagerDtoMappers.toManagerType(managerDecisionRequestDto.managerType),
+          orderItemId = OrderItemId(orderItemValue),
+          note = managerDecisionRequestDto.note.map(_.trim).filter(_.nonEmpty),
+          decidedAt = Instant.now()
+        )
+        response <- Ok(OrderResponseDto.fromDomain(updatedOrder).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "booking-items" / orderItemValue / "reject" =>
+      for
+        managerDecisionRequestDto <- request.as[ManagerDecisionRequestDto]
+        rejectReason <- fromEither(
+          managerDecisionRequestDto.reason.map(_.trim).filter(_.nonEmpty).toRight(OrderError.SupplierRejectReasonWasEmpty(OrderItemId(orderItemValue)))
+        )
+        updatedOrder <- managerWorkflowApplicationService.rejectBookingItem(
+          managerId = ManagerId(managerDecisionRequestDto.managerId),
+          managerType = ManagerDtoMappers.toManagerType(managerDecisionRequestDto.managerType),
+          orderItemId = OrderItemId(orderItemValue),
+          reason = rejectReason,
+          decidedAt = Instant.now()
+        )
+        response <- Ok(OrderResponseDto.fromDomain(updatedOrder).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "orders" / orderIdValue / "refund" / "approve" =>
+      for
+        managerIdText <- fromEither(request.params.get("managerId").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
+        managerTypeText <- fromEither(request.params.get("managerType").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerType")))
+        order <- managerWorkflowApplicationService.approveRefund(
+          managerId = ManagerId(managerIdText),
+          managerType = ManagerDtoMappers.toManagerType(managerTypeText),
+          orderId = OrderId(orderIdValue),
+          decidedAt = Instant.now()
+        )
+        response <- Ok(OrderResponseDto.fromDomain(order).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "orders" / orderIdValue / "refund" / "reject" =>
+      for
+        managerIdText <- fromEither(request.params.get("managerId").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
+        managerTypeText <- fromEither(request.params.get("managerType").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerType")))
+        order <- managerWorkflowApplicationService.rejectRefund(
+          managerId = ManagerId(managerIdText),
+          managerType = ManagerDtoMappers.toManagerType(managerTypeText),
+          orderId = OrderId(orderIdValue)
+        )
+        response <- Ok(OrderResponseDto.fromDomain(order).asJson)
+      yield response
+
     case POST -> Root / "api" / "orders" / orderIdValue / "submit" =>
       orderService
         .submitOrderForPayment(OrderId(orderIdValue))
         .flatMap(order => Ok(OrderResponseDto.fromDomain(order).asJson))
 
-    case request @ POST -> Root / "api" / "orders" / orderIdValue / "payments" =>
+    case request @ POST -> Root / "api" / "orders" / orderIdValue / "pay" =>
       for
-        authorizePaymentRequestDto <- request.as[AuthorizePaymentRequestDto]
-        paymentAmount <- fromEither(
-          Money.create(
-            amount = BigDecimal(authorizePaymentRequestDto.paymentAmount),
-            currency = OrderDtoMappers.toCurrency(authorizePaymentRequestDto.paymentCurrency)
-          )
-        )
-        orderAfterPaymentAuthorization <- orderService.authorizeOrderPayment(
+        authorizePaymentRequestDto <- request.as[PayOrderRequestDto]
+        orderAfterPaymentAuthorization <- if authorizePaymentRequestDto.paymentSucceeded then
+          orderService.payOrder(
           orderId = OrderId(orderIdValue),
-          paymentAmount = paymentAmount,
           paymentMethod = OrderDtoMappers.toPaymentMethod(authorizePaymentRequestDto.paymentMethod),
-          authorizedAt = Instant.now()
+          paidAt = Instant.now()
         )
+        else
+          orderRepository.findOrderById(OrderId(orderIdValue)).flatMap(_.liftTo[F](OrderError.OrderWasNotFound(OrderId(orderIdValue))))
         response <- Ok(OrderResponseDto.fromDomain(orderAfterPaymentAuthorization).asJson)
       yield response
-
-    case POST -> Root / "api" / "orders" / orderIdValue / "payments" / paymentIdValue / "capture" =>
-      orderService
-        .captureAuthorizedPayment(OrderId(orderIdValue), PaymentId(paymentIdValue), Instant.now())
-        .flatMap(order => Ok(OrderResponseDto.fromDomain(order).asJson))
 
     case POST -> Root / "api" / "orders" / orderIdValue / "cancel" =>
       orderRepository
@@ -306,15 +490,8 @@ final class ApiRouter[F[_]: Async](
     case request @ POST -> Root / "api" / "orders" / orderIdValue / "refunds" =>
       for
         requestRefundRequestDto <- request.as[RequestRefundRequestDto]
-        refundAmount <- fromEither(
-          Money.create(
-            amount = BigDecimal(requestRefundRequestDto.refundAmount),
-            currency = OrderDtoMappers.toCurrency(requestRefundRequestDto.refundCurrency)
-          )
-        )
-        updatedOrder <- orderService.requestOrderRefund(
+        updatedOrder <- orderService.requestCustomerRefund(
           orderId = OrderId(orderIdValue),
-          refundAmount = refundAmount,
           refundReason = requestRefundRequestDto.refundReason,
           requestedAt = Instant.now()
         )
@@ -343,6 +520,9 @@ final class ApiRouter[F[_]: Async](
   private object HotelLocationQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("location")
   private object CheckInDateQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("checkInDate")
   private object CheckOutDateQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("checkOutDate")
+  private object ManagerIdQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("managerId")
+  private object ManagerTypeQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("managerType")
+  private object TaskStatusQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("status")
 
   private def parseOptionalSearchText(searchTextValue: Option[String]): F[Option[String]] =
     searchTextValue match
@@ -381,6 +561,18 @@ final class ApiRouter[F[_]: Async](
         yield Some(TravelerEmergencyContact.create(parsedContactName, parsedContactNumber))
       case _ =>
         MonadThrow[F].pure(None)
+
+  private def parseRequestedSupplierReviewStatuses(taskStatusValue: Option[String]): Set[SupplierReviewStatus] =
+    taskStatusValue.map(_.trim.toLowerCase).filter(_.nonEmpty) match
+      case Some("confirmed") => Set(SupplierReviewStatus.SupplierConfirmed)
+      case Some("rejected")  => Set(SupplierReviewStatus.SupplierRejected)
+      case Some("all") =>
+        Set(
+          SupplierReviewStatus.PendingSupplierConfirmation,
+          SupplierReviewStatus.SupplierConfirmed,
+          SupplierReviewStatus.SupplierRejected
+        )
+      case _ => Set(SupplierReviewStatus.PendingSupplierConfirmation)
 
   private def fromEither[A](value: Either[? <: Throwable, A]): F[A] =
     MonadThrow[F].fromEither(value.leftMap(identity))
@@ -424,10 +616,26 @@ final class ApiRouter[F[_]: Async](
           Status.BadRequest -> ApiErrorResponseDto("avatar_too_large", throwable.getMessage)
         case AvatarApplicationError.AvatarUploadFailed(_) =>
           Status.BadRequest -> ApiErrorResponseDto("avatar_upload_failed", throwable.getMessage)
+        case ManagerError.ManagerWasNotFoundByEmail(_, _) | ManagerError.ManagerWasNotFoundById(_, _) =>
+          Status.NotFound -> ApiErrorResponseDto("manager_not_found", throwable.getMessage)
+        case ManagerError.ManagerEmailAlreadyExists(_) =>
+          Status.Conflict -> ApiErrorResponseDto("manager_email_exists", throwable.getMessage)
+        case ManagerError.ManagerWasInactive(_, _) =>
+          Status.Forbidden -> ApiErrorResponseDto("manager_inactive", throwable.getMessage)
+        case ManagerError.ManagerScopeDidNotMatch(_, _, _) =>
+          Status.Forbidden -> ApiErrorResponseDto("manager_scope_mismatch", throwable.getMessage)
         case TravelerError.TravelerDocumentNumberAlreadyExists(_) =>
           Status.Conflict -> ApiErrorResponseDto("traveler_document_exists", throwable.getMessage)
+        case OrderError.SupplierRejectReasonWasEmpty(_) =>
+          Status.BadRequest -> ApiErrorResponseDto("decision_reason_required", throwable.getMessage)
+        case OrderError.OrderItemWasNotFound(_, _) =>
+          Status.NotFound -> ApiErrorResponseDto("order_item_not_found", throwable.getMessage)
+        case OrderError.OrderItemWasNotAwaitingSupplierDecision(_, _) =>
+          Status.BadRequest -> ApiErrorResponseDto("order_item_not_actionable", throwable.getMessage)
         case OrderError.OrderCurrencyDidNotMatch(_, _, _) =>
           Status.BadRequest -> ApiErrorResponseDto("currency_mismatch", throwable.getMessage)
+        case OrderError.PaymentWasAlreadyCompleted(_) =>
+          Status.BadRequest -> ApiErrorResponseDto("payment_already_completed", throwable.getMessage)
         case OrderError.OrderWasNotFound(_) =>
           Status.NotFound -> ApiErrorResponseDto("order_not_found", throwable.getMessage)
         case sharedValidationError: SharedValidationError =>
@@ -444,6 +652,7 @@ object ApiRouter:
       orderService: OrderService[F],
       flightBookingApplicationService: FlightBookingApplicationService[F],
       hotelBookingApplicationService: HotelBookingApplicationService[F],
+      managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
       avatarApplicationService: AvatarApplicationService[F],
       userRepository: UserRepository[F],
       travelerProfileRepository: TravelerProfileRepository[F],
@@ -456,6 +665,7 @@ object ApiRouter:
       orderService,
       flightBookingApplicationService,
       hotelBookingApplicationService,
+      managerWorkflowApplicationService,
       avatarApplicationService,
       userRepository,
       travelerProfileRepository,

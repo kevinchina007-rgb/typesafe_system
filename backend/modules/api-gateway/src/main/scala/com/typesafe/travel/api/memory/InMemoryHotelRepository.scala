@@ -1,35 +1,56 @@
 package com.typesafe.travel.api.memory
 
-import cats.Applicative
-import cats.syntax.all.*
+import cats.effect.kernel.Sync
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.shared.kernel.*
-import java.time.{Instant, LocalDate}
 
-final class InMemoryHotelRepository[F[_]: Applicative] private (
-    hotels: Map[HotelId, Hotel]
+import java.time.{Instant, LocalDate}
+import java.util.concurrent.atomic.AtomicLong
+import scala.collection.concurrent.TrieMap
+
+final class InMemoryHotelRepository[F[_]: Sync] private (
+    hotelState: TrieMap[HotelId, Hotel],
+    hotelSequence: AtomicLong,
+    roomTypeSequence: AtomicLong,
+    roomInventorySequence: AtomicLong
 ) extends HotelRepository[F]:
+  override def nextHotelId: F[HotelId] =
+    Sync[F].delay(HotelId(s"hotel-generated-${hotelSequence.incrementAndGet()}"))
+
+  override def nextRoomTypeId: F[RoomTypeId] =
+    Sync[F].delay(RoomTypeId(s"room-type-generated-${roomTypeSequence.incrementAndGet()}"))
+
+  override def nextRoomInventoryId: F[RoomInventoryId] =
+    Sync[F].delay(RoomInventoryId(s"room-inventory-generated-${roomInventorySequence.incrementAndGet()}"))
+
   override def findHotelById(hotelId: HotelId): F[Option[Hotel]] =
-    hotels.get(hotelId).pure[F]
+    Sync[F].delay(hotelState.get(hotelId))
 
   override def findHotelByRoomTypeId(roomTypeId: RoomTypeId): F[Option[Hotel]] =
-    hotels.values.find(_.roomTypes.exists(_.roomTypeId == roomTypeId)).pure[F]
+    Sync[F].delay(hotelState.values.find(_.roomTypes.exists(_.roomTypeId == roomTypeId)))
 
   override def searchHotels(hotelSearchCriteria: HotelSearchCriteria): F[List[Hotel]] =
-    hotels.values.toList
-      .filter(_.isSearchMatch(hotelSearchCriteria.location, hotelSearchCriteria.stayPeriod))
-      .sortBy(_.hotelName.value)
-      .pure[F]
+    Sync[F].delay(
+      hotelState.values.toList
+        .filter(_.isSearchMatch(hotelSearchCriteria.location, hotelSearchCriteria.stayPeriod))
+        .sortBy(_.hotelName.value)
+    )
+
+  override def saveHotel(hotel: Hotel): F[Hotel] =
+    Sync[F].delay {
+      hotelState.put(hotel.hotelId, hotel)
+      hotel
+    }
 
 object InMemoryHotelRepository:
-  def create[F[_]: Applicative]: InMemoryHotelRepository[F] =
+  def create[F[_]: Sync]: InMemoryHotelRepository[F] =
     val createdAtInstant = Instant.parse("2026-03-26T00:00:00Z")
 
     val hangzhouHotelId = HotelId("hotel-hz-westlake")
     val shanghaiHotelId = HotelId("hotel-sh-bund")
 
     new InMemoryHotelRepository[F](
-      Map(
+      hotelState = TrieMap(
         hangzhouHotelId -> Hotel.createHotel(
           hotelId = hangzhouHotelId,
           hotelName = HotelName.unsafe("West Lake Retreat"),
@@ -91,7 +112,10 @@ object InMemoryHotelRepository:
           ),
           createdAt = createdAtInstant
         )
-      )
+      ),
+      hotelSequence = AtomicLong(100),
+      roomTypeSequence = AtomicLong(100),
+      roomInventorySequence = AtomicLong(1000)
     )
 
   private def buildRoomType(
