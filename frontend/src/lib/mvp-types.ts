@@ -79,6 +79,7 @@ export type RoomTypeSummaryResponse = {
   currency: string
   status: string
   isBookableForRequestedStay: boolean
+  availableRoomsForRequestedStay: number | null
 }
 
 export type HotelResponse = {
@@ -124,10 +125,19 @@ export type HotelItemDetailsResponse = {
   currency: string
 }
 
+export type SupplierReviewDecisionResponse = {
+  decision: string
+  reason: string | null
+  decidedAt: string
+  managerId: string
+}
+
 export type OrderLineItemResponse = {
   orderItemId: string
   orderItemKind: string
   orderItemStatus: string
+  supplierReviewStatus: string
+  supplierReviewDecision: SupplierReviewDecisionResponse | null
   bookedAmount: string
   bookedCurrency: string
   summaryLabel: string
@@ -176,9 +186,56 @@ export type OrderResponse = {
   orderRefunds: RefundResponse[]
 }
 
+export type OrderListResponse = {
+  orders: OrderResponse[]
+}
+
 export type AppLanguage = 'en' | 'zh'
 
-export type AppViewKey = 'explore' | 'account' | 'travelers' | 'flights' | 'hotels' | 'bookings'
+export type ManagerType = 'airline' | 'hotel'
+
+export type ManagerSessionResponse = {
+  managerId: string
+  managerType: string
+  email: string
+  displayName: string
+  status: string
+  scopeId: string
+  createdAt: string
+}
+
+export type ManagerTaskResponse = {
+  orderId: string
+  orderItemId: string
+  buyerUserId: string
+  taskType: string
+  supplierReviewStatus: string
+  summaryLabel: string
+  detailLabel: string
+  reviewDecision: SupplierReviewDecisionResponse | null
+}
+
+export type ManagerTaskListResponse = {
+  tasks: ManagerTaskResponse[]
+}
+
+export type ManagerRefundTaskResponse = {
+  orderId: string
+  buyerUserId: string
+  taskType: string
+  summaryLabel: string
+  refundId: string
+  refundReason: string
+  refundAmount: string
+  refundCurrency: string
+  requestedAt: string
+}
+
+export type ManagerRefundTaskListResponse = {
+  tasks: ManagerRefundTaskResponse[]
+}
+
+export type AppViewKey = 'explore' | 'account' | 'travelers' | 'flights' | 'hotels' | 'bookings' | 'manager'
 
 export type AppNotice = {
   id: number

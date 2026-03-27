@@ -5,6 +5,10 @@ import type {
   HealthResponse,
   HotelListResponse,
   HotelResponse,
+  ManagerRefundTaskListResponse,
+  ManagerSessionResponse,
+  ManagerTaskListResponse,
+  OrderListResponse,
   OrderResponse,
   TravelerListResponse,
   TravelerResponse,
@@ -46,6 +50,10 @@ async function apiRequest<TResponse>(path: string, options?: RequestInit): Promi
     }
 
     throw new Error(responseBodyText || `HTTP ${response.status}`)
+  }
+
+  if (response.status === 204) {
+    return undefined as TResponse
   }
 
   return (await response.json()) as TResponse
@@ -127,6 +135,11 @@ export const travelMvpApiClient = {
   listTravelers: (userId: string): Promise<TravelerListResponse> =>
     apiRequest(`/users/${userId}/travelers`),
 
+  deleteTraveler: (userId: string, travelerId: string): Promise<void> =>
+    apiRequest(`/users/${userId}/travelers/${travelerId}`, {
+      method: 'DELETE',
+    }),
+
   listFlights: (query: {
     departureAirport?: string
     arrivalAirport?: string
@@ -179,17 +192,7 @@ export const travelMvpApiClient = {
     return apiRequest(`/hotels/${hotelId}${suffix}`)
   },
 
-  createOrder: (payload: {
-    ownerUserId: string
-    orderCurrency: string
-  }): Promise<OrderResponse> =>
-    apiRequest('/orders', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  addFlightItemToOrder: (
-    orderId: string,
+  createFlightOrder: (
     payload: {
       buyerUserId: string
       flightId: string
@@ -197,13 +200,12 @@ export const travelMvpApiClient = {
       cabinClass: string
     },
   ): Promise<OrderResponse> =>
-    apiRequest(`/orders/${orderId}/flight-items`, {
+    apiRequest('/flights/book', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
 
-  addHotelItemToOrder: (
-    orderId: string,
+  createHotelOrder: (
     payload: {
       buyerUserId: string
       roomTypeId: string
@@ -213,32 +215,136 @@ export const travelMvpApiClient = {
       roomCount: number
     },
   ): Promise<OrderResponse> =>
-    apiRequest(`/orders/${orderId}/hotel-items`, {
+    apiRequest('/hotels/book', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
 
   getOrder: (orderId: string): Promise<OrderResponse> => apiRequest(`/orders/${orderId}`),
+  listOrders: (userId: string): Promise<OrderListResponse> => apiRequest(`/users/${userId}/orders`),
 
-  submitOrder: (orderId: string): Promise<OrderResponse> =>
-    apiRequest(`/orders/${orderId}/submit`, { method: 'POST' }),
-
-  authorizePayment: (
-    orderId: string,
-    payload: {
-      paymentAmount: string
-      paymentCurrency: string
-      paymentMethod: string
-    },
-  ): Promise<OrderResponse> =>
-    apiRequest(`/orders/${orderId}/payments`, {
+  loginManager: (payload: { managerType: string; email: string }): Promise<ManagerSessionResponse> =>
+    apiRequest('/manager/session/login', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
 
-  capturePayment: (orderId: string, paymentId: string): Promise<OrderResponse> =>
-    apiRequest(`/orders/${orderId}/payments/${paymentId}/capture`, {
+  registerAirlineManager: (payload: {
+    email: string
+    displayName: string
+    airlineName: string
+    airlineCode: string
+  }): Promise<ManagerSessionResponse> =>
+    apiRequest('/manager/airline/register', {
       method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  registerHotelManager: (payload: {
+    email: string
+    displayName: string
+    hotelName: string
+    location: string
+  }): Promise<ManagerSessionResponse> =>
+    apiRequest('/manager/hotel/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createManagerRoomType: (payload: {
+    managerId: string
+    roomTypeName: string
+    capacity: number
+    bedType: string
+    nightlyPrice: string
+    currency: string
+    availableRooms: number
+    inventoryStartDate: string
+    inventoryEndDate: string
+  }): Promise<HotelResponse> =>
+    apiRequest('/manager/hotel-room-types', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listManagerTasks: (query: {
+    managerId: string
+    managerType: string
+    status?: string
+  }): Promise<ManagerTaskListResponse> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('managerId', query.managerId)
+    searchParams.set('managerType', query.managerType)
+    if (query.status) {
+      searchParams.set('status', query.status)
+    }
+    return apiRequest(`/manager/tasks?${searchParams.toString()}`)
+  },
+
+  listManagerRefundTasks: (query: {
+    managerId: string
+    managerType: string
+  }): Promise<ManagerRefundTaskListResponse> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('managerId', query.managerId)
+    searchParams.set('managerType', query.managerType)
+    return apiRequest(`/manager/refund-tasks?${searchParams.toString()}`)
+  },
+
+  createManagerFlight: (payload: {
+    managerId: string
+    flightNumber: string
+    departureAirport: string
+    arrivalAirport: string
+    departureTime: string
+    arrivalTime: string
+    economySeatCount: number
+    economyPrice: string
+    businessSeatCount: number
+    businessPrice: string
+    currency: string
+  }): Promise<FlightResponse> =>
+    apiRequest('/manager/flights', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  confirmManagerBookingItem: (
+    orderItemId: string,
+    payload: {
+      managerId: string
+      managerType: string
+      note?: string | null
+    },
+  ): Promise<OrderResponse> =>
+    apiRequest(`/manager/booking-items/${orderItemId}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  rejectManagerBookingItem: (
+    orderItemId: string,
+    payload: {
+      managerId: string
+      managerType: string
+      reason: string
+    },
+  ): Promise<OrderResponse> =>
+    apiRequest(`/manager/booking-items/${orderItemId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  payOrder: (
+    orderId: string,
+    payload: {
+      paymentMethod: string
+      paymentSucceeded: boolean
+    },
+  ): Promise<OrderResponse> =>
+    apiRequest(`/orders/${orderId}/pay`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
 
   cancelOrder: (orderId: string): Promise<OrderResponse> =>
@@ -247,8 +353,6 @@ export const travelMvpApiClient = {
   requestRefund: (
     orderId: string,
     payload: {
-      refundAmount: string
-      refundCurrency: string
       refundReason: string
     },
   ): Promise<OrderResponse> =>
@@ -257,13 +361,13 @@ export const travelMvpApiClient = {
       body: JSON.stringify(payload),
     }),
 
-  approveRefund: (orderId: string, refundId: string): Promise<OrderResponse> =>
-    apiRequest(`/orders/${orderId}/refunds/${refundId}/approve`, {
+  approveRefund: (orderId: string, managerId: string, managerType: string): Promise<OrderResponse> =>
+    apiRequest(`/manager/orders/${orderId}/refund/approve?managerId=${encodeURIComponent(managerId)}&managerType=${encodeURIComponent(managerType)}`, {
       method: 'POST',
     }),
 
-  settleRefund: (orderId: string, refundId: string): Promise<OrderResponse> =>
-    apiRequest(`/orders/${orderId}/refunds/${refundId}/settle`, {
+  rejectRefund: (orderId: string, managerId: string, managerType: string): Promise<OrderResponse> =>
+    apiRequest(`/manager/orders/${orderId}/refund/reject?managerId=${encodeURIComponent(managerId)}&managerType=${encodeURIComponent(managerType)}`, {
       method: 'POST',
     }),
 }

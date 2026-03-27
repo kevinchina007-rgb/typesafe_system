@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { AppLanguage, FlightResponse, OrderResponse, TravelerResponse } from '../lib/mvp-types'
+import type { AppLanguage, FlightResponse, TravelerResponse } from '../lib/mvp-types'
 import { formatIsoDateTime, localizeCabinClass, mapBackendStatusToProductLabel } from '../lib/view-models'
 
 type FlightsPanelProps = {
@@ -8,15 +8,13 @@ type FlightsPanelProps = {
   isBusy: boolean
   isGuestMode: boolean
   travelers: TravelerResponse[]
-  currentBooking: OrderResponse | null
   translate: (translationKey: string) => string
   onSearchFlights: (payload: {
     departureAirport?: string
     arrivalAirport?: string
     date?: string
   }) => Promise<FlightResponse[]>
-  onCreateBookingShell: (payload: { orderCurrency: string }) => Promise<void>
-  onAddFlightToBooking: (payload: {
+  onBookFlight: (payload: {
     flightId: string
     travelerIds: string[]
     cabinClass: string
@@ -32,14 +30,13 @@ export function FlightsPanel({
   isBusy,
   isGuestMode,
   travelers,
-  currentBooking,
   translate,
   onSearchFlights,
-  onCreateBookingShell,
-  onAddFlightToBooking,
+  onBookFlight,
 }: FlightsPanelProps) {
   const [flightResponses, setFlightResponses] = useState<FlightResponse[]>([])
   const [hasSearchedFlights, setHasSearchedFlights] = useState(false)
+  const [searchDate, setSearchDate] = useState('2026-04-05')
 
   return (
     <section className="page-card">
@@ -58,13 +55,15 @@ export function FlightsPanel({
         onSubmit={async event => {
           event.preventDefault()
           const formData = new FormData(event.currentTarget)
-          const nextFlightResponses = await onSearchFlights({
+          const nextDate = String(formData.get('date') ?? '').trim()
+          setSearchDate(nextDate)
+          const nextFlights = await onSearchFlights({
             departureAirport: String(formData.get('departureAirport') ?? '').trim() || undefined,
             arrivalAirport: String(formData.get('arrivalAirport') ?? '').trim() || undefined,
-            date: String(formData.get('date') ?? '').trim() || undefined,
+            date: nextDate || undefined,
           })
           setHasSearchedFlights(true)
-          setFlightResponses(nextFlightResponses)
+          setFlightResponses(nextFlights)
         }}
       >
         <div className="three-column-grid">
@@ -78,7 +77,7 @@ export function FlightsPanel({
           </label>
           <label>
             {translate('flights.date')}
-            <input name="date" type="date" defaultValue="2026-04-05" />
+            <input name="date" type="date" defaultValue={searchDate} />
           </label>
         </div>
 
@@ -87,36 +86,13 @@ export function FlightsPanel({
         </button>
       </form>
 
-      {!isGuestMode ? (
-        <form
-          className="inline-form"
-          onSubmit={async event => {
-            event.preventDefault()
-            const formData = new FormData(event.currentTarget)
-            await onCreateBookingShell({
-              orderCurrency: String(formData.get('orderCurrency') ?? 'CNY'),
-            })
-          }}
-        >
-          <select name="orderCurrency" defaultValue={currentBooking?.orderCurrency ?? 'CNY'} disabled={isBusy}>
-            <option value="CNY">CNY</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-          </select>
-          <button type="submit" disabled={isBusy}>
-            {translate('flights.createBooking')}
-          </button>
-        </form>
-      ) : null}
-
       {isGuestMode ? <p className="empty-state">{translate('flights.guest')}</p> : null}
-      {!currentBooking && !isGuestMode ? <p className="empty-state">{translate('flights.requireBooking')}</p> : null}
 
       {hasSearchedFlights ? (
         <div className="entity-list flights-list">
           {flightResponses.length > 0 ? (
             flightResponses.map(flightResponse => (
-              <article key={flightResponse.flightId} className="panel-card flight-card">
+              <article key={flightResponse.flightId} className="panel-card hotel-card">
                 <div className="panel-heading">
                   <div>
                     <strong>{`${flightResponse.airlineName} ${flightResponse.flightNumber}`}</strong>
@@ -134,20 +110,15 @@ export function FlightsPanel({
                     <span className="detail-label">{translate('flights.arrivalTime')}</span>
                     <strong>{formatIsoDateTime(flightResponse.arrivalTime, '-')}</strong>
                   </div>
-                  <div>
-                    <span className="detail-label">{translate('flights.status')}</span>
-                    <strong>{mapBackendStatusToProductLabel(flightResponse.status, currentLanguage)}</strong>
-                  </div>
                 </div>
 
                 <ul className="entity-list">
-                  {flightResponse.cabinInventories.map(cabinInventoryResponse => (
-                    <li key={cabinInventoryResponse.inventoryId}>
+                  {flightResponse.cabinInventories.map(cabinInventory => (
+                    <li key={cabinInventory.inventoryId}>
                       <div>
-                        <strong>{localizeCabinClass(cabinInventoryResponse.cabinClass, currentLanguage)}</strong>
-                        <p>
-                          {`${translate('flights.availableSeats')}: ${cabinInventoryResponse.availableSeats} · ${cabinInventoryResponse.unitPrice} ${cabinInventoryResponse.currency}`}
-                        </p>
+                        <strong>{localizeCabinClass(cabinInventory.cabinClass, currentLanguage)}</strong>
+                        <p>{`${translate('flights.availableSeats')}: ${cabinInventory.availableSeats}`}</p>
+                        <p>{`${cabinInventory.unitPrice} ${cabinInventory.currency}`}</p>
                       </div>
                       <form
                         className="compact-action-block"
@@ -158,22 +129,29 @@ export function FlightsPanel({
                             .getAll('travelerIds')
                             .map(value => String(value))
                             .filter(Boolean)
-                          await onAddFlightToBooking({
+                          await onBookFlight({
                             flightId: flightResponse.flightId,
                             travelerIds: selectedTravelerIds,
-                            cabinClass: cabinInventoryResponse.cabinClass,
+                            cabinClass: cabinInventory.cabinClass,
                           })
                         }}
                       >
-                        <select name="travelerIds" multiple disabled={!currentBooking || isBusy || !cabinInventoryResponse.isBookable}>
+                        <div className="checkbox-list">
+                          <p className="detail-label">{translate('flights.selectTravelers')}</p>
                           {travelers.map(traveler => (
-                            <option key={traveler.travelerId} value={traveler.travelerId}>
+                            <label key={traveler.travelerId} className="checkbox-row">
+                              <input
+                                type="checkbox"
+                                name="travelerIds"
+                                value={traveler.travelerId}
+                                disabled={isGuestMode || isBusy || !cabinInventory.isBookable}
+                              />
                               {renderTravelerOptionLabel(traveler)}
-                            </option>
+                            </label>
                           ))}
-                        </select>
-                        <button type="submit" disabled={!currentBooking || isBusy || !cabinInventoryResponse.isBookable}>
-                          {translate('flights.addToBooking')}
+                        </div>
+                        <button type="submit" disabled={isGuestMode || isBusy || !cabinInventory.isBookable}>
+                          {translate('flights.bookNow')}
                         </button>
                       </form>
                     </li>

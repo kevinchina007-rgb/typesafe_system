@@ -40,6 +40,7 @@ type TravelerPanelProps = {
   translate: (translationKey: string) => string
   onCreateTraveler: (payload: CreateTravelerPayload) => Promise<void>
   onUpdateTraveler: (payload: TravelerFormDraft) => Promise<void>
+  onDeleteTraveler: (travelerId: string) => Promise<void>
   onReloadTravelers: () => Promise<void>
 }
 
@@ -87,6 +88,7 @@ export function TravelerPanel({
   translate,
   onCreateTraveler,
   onUpdateTraveler,
+  onDeleteTraveler,
   onReloadTravelers,
 }: TravelerPanelProps) {
   const todayInputValue = new Date().toISOString().slice(0, 10)
@@ -322,9 +324,14 @@ export function TravelerPanel({
                       : deriveTravelerTypeLabelFromBirthDate(traveler.birthDate, currentLanguage)}
                   </span>
                   {!isGuestMode ? (
-                    <button type="button" className="secondary-button" onClick={() => setTravelerFormDraft(createTravelerFormDraft(traveler))}>
-                      {translate('travelers.edit')}
-                    </button>
+                    <>
+                      <button type="button" className="secondary-button" onClick={() => setTravelerFormDraft(createTravelerFormDraft(traveler))}>
+                        {translate('travelers.edit')}
+                      </button>
+                      <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onDeleteTraveler(traveler.travelerId)}>
+                        {translate('travelers.delete')}
+                      </button>
+                    </>
                   ) : null}
                 </div>
               </li>

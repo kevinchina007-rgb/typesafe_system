@@ -4,6 +4,7 @@ import {
   localizeBookingKind,
   localizeCabinClass,
   localizePaymentMethod,
+  localizeSupplierReviewStatus,
   mapBackendStatusToProductLabel,
 } from '../lib/view-models'
 
@@ -11,44 +12,24 @@ type OrderPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
   isGuestMode: boolean
-  booking: OrderResponse | null
+  orders: OrderResponse[]
   translate: (translationKey: string) => string
-  onCreateBooking: (payload: {
-    orderCurrency: string
-  }) => Promise<void>
-  onReloadBooking: () => Promise<void>
-  onSubmitBooking: () => Promise<void>
-  onAuthorizePayment: (payload: {
-    paymentAmount: string
-    paymentCurrency: string
-    paymentMethod: string
-  }) => Promise<void>
-  onCapturePayment: (paymentId: string) => Promise<void>
-  onCancelBooking: () => Promise<void>
-  onRequestRefund: (payload: {
-    refundAmount: string
-    refundCurrency: string
-    refundReason: string
-  }) => Promise<void>
-  onApproveRefund: (refundId: string) => Promise<void>
-  onSettleRefund: (refundId: string) => Promise<void>
+  onReloadOrders: () => Promise<void>
+  onOpenPayment: (order: OrderResponse) => void
+  onCancelOrder: (orderId: string) => Promise<void>
+  onRequestRefund: (orderId: string, refundReason: string) => Promise<void>
 }
 
 export function OrderPanel({
   currentLanguage,
   isBusy,
   isGuestMode,
-  booking,
+  orders,
   translate,
-  onCreateBooking,
-  onReloadBooking,
-  onSubmitBooking,
-  onAuthorizePayment,
-  onCapturePayment,
-  onCancelBooking,
+  onReloadOrders,
+  onOpenPayment,
+  onCancelOrder,
   onRequestRefund,
-  onApproveRefund,
-  onSettleRefund,
 }: OrderPanelProps) {
   return (
     <section className="page-card">
@@ -57,244 +38,149 @@ export function OrderPanel({
           <p className="eyebrow-label">{translate('nav.bookings')}</p>
           <h2>{translate('bookings.title')}</h2>
         </div>
-        <button
-          type="button"
-          disabled={!booking || isGuestMode || isBusy}
-          className="secondary-button"
-          onClick={() => void onReloadBooking()}
-        >
+        <button type="button" disabled={isGuestMode || isBusy} className="secondary-button" onClick={() => void onReloadOrders()}>
           {translate('bookings.refresh')}
         </button>
       </div>
 
       <p className="hero-copy">{translate('bookings.description')}</p>
 
-      <form
-        className="stack-form panel-card"
-        onSubmit={async event => {
-          event.preventDefault()
-          const formData = new FormData(event.currentTarget)
-          await onCreateBooking({
-            orderCurrency: String(formData.get('orderCurrency') ?? 'CNY'),
-          })
-        }}
-      >
-        <div className="three-column-grid">
-          <label>
-            {translate('bookings.currency')}
-            <select name="orderCurrency" defaultValue={booking?.orderCurrency ?? 'CNY'} disabled={isGuestMode || isBusy}>
-              <option value="CNY">CNY</option>
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-            </select>
-          </label>
-        </div>
-
-        <button type="submit" disabled={isGuestMode || isBusy}>
-          {translate('bookings.create')}
-        </button>
-      </form>
-
-      <div className="action-cluster">
-        <button type="button" disabled={!booking || isGuestMode || isBusy} onClick={() => void onSubmitBooking()}>
-          {translate('bookings.continuePayment')}
-        </button>
-        <button
-          type="button"
-          className="secondary-button"
-          disabled={!booking || isGuestMode || isBusy}
-          onClick={() => void onCancelBooking()}
-        >
-          {translate('bookings.cancel')}
-        </button>
-      </div>
-
-      <form
-        className="inline-form"
-        onSubmit={async event => {
-          event.preventDefault()
-          const formData = new FormData(event.currentTarget)
-          await onAuthorizePayment({
-            paymentAmount: String(formData.get('paymentAmount') ?? ''),
-            paymentCurrency: String(formData.get('paymentCurrency') ?? 'CNY'),
-            paymentMethod: String(formData.get('paymentMethod') ?? 'card'),
-          })
-        }}
-      >
-        <input name="paymentAmount" defaultValue={booking?.totalPrice ?? '0'} disabled={!booking || isGuestMode || isBusy} />
-        <select name="paymentCurrency" defaultValue={booking?.orderCurrency ?? 'CNY'} disabled={!booking || isGuestMode || isBusy}>
-          <option value="CNY">CNY</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-        </select>
-        <select name="paymentMethod" defaultValue="card" disabled={!booking || isGuestMode || isBusy}>
-          <option value="card">{translate('bookings.payment.method.card')}</option>
-          <option value="bank-transfer">{translate('bookings.payment.method.bank-transfer')}</option>
-          <option value="wallet">{translate('bookings.payment.method.wallet')}</option>
-        </select>
-        <button type="submit" disabled={!booking || isGuestMode || isBusy}>
-          {translate('bookings.pay')}
-        </button>
-      </form>
-
-      <form
-        className="inline-form"
-        onSubmit={async event => {
-          event.preventDefault()
-          const formData = new FormData(event.currentTarget)
-          await onRequestRefund({
-            refundAmount: String(formData.get('refundAmount') ?? ''),
-            refundCurrency: String(formData.get('refundCurrency') ?? 'CNY'),
-            refundReason: String(formData.get('refundReason') ?? ''),
-          })
-        }}
-      >
-        <input name="refundAmount" defaultValue={booking?.totalCapturedAmount ?? '0'} disabled={!booking || isGuestMode || isBusy} />
-        <select name="refundCurrency" defaultValue={booking?.orderCurrency ?? 'CNY'} disabled={!booking || isGuestMode || isBusy}>
-          <option value="CNY">CNY</option>
-          <option value="USD">USD</option>
-          <option value="EUR">EUR</option>
-        </select>
-        <input
-          name="refundReason"
-          defaultValue={translate('bookings.refund.reasonPlaceholder')}
-          disabled={!booking || isGuestMode || isBusy}
-        />
-        <button type="submit" disabled={!booking || isGuestMode || isBusy}>
-          {translate('bookings.requestRefund')}
-        </button>
-      </form>
-
       <div className="list-surface">
         {isGuestMode ? <p className="empty-state">{translate('bookings.guest')}</p> : null}
-        {booking ? (
-          <>
-            <div className="detail-grid">
-              <div>
-                <span className="detail-label">{translate('booking.reference')}</span>
-                <strong>{booking.orderId}</strong>
-              </div>
-              <div>
-                <span className="detail-label">{translate('booking.type')}</span>
-                <strong>{localizeBookingKind(booking.orderType, currentLanguage)}</strong>
-              </div>
-              <div>
-                <span className="detail-label">{translate('booking.status')}</span>
-                <strong>{mapBackendStatusToProductLabel(booking.status, currentLanguage)}</strong>
-              </div>
-              <div>
-                <span className="detail-label">{translate('booking.totalPrice')}</span>
-                <strong>{`${booking.totalPrice} ${booking.orderCurrency}`}</strong>
-              </div>
-              <div>
-                <span className="detail-label">{translate('booking.remainingRefund')}</span>
-                <strong>{`${booking.remainingRefundableAmount} ${booking.orderCurrency}`}</strong>
-              </div>
-              <div>
-                <span className="detail-label">{translate('booking.createdAt')}</span>
-                <strong>{formatIsoDateTime(booking.createdAt, translate('booking.notYet'))}</strong>
-              </div>
-              <div>
-                <span className="detail-label">{translate('booking.paidAt')}</span>
-                <strong>{formatIsoDateTime(booking.paidAt, translate('booking.notYet'))}</strong>
-              </div>
-              <div>
-                <span className="detail-label">{translate('booking.confirmedAt')}</span>
-                <strong>{formatIsoDateTime(booking.confirmedAt, translate('booking.notYet'))}</strong>
-              </div>
-              <div>
-                <span className="detail-label">{translate('booking.cancelledAt')}</span>
-                <strong>{formatIsoDateTime(booking.cancelledAt, translate('booking.notYet'))}</strong>
-              </div>
-            </div>
+        {!isGuestMode && orders.length === 0 ? <p className="empty-state">{translate('bookings.empty')}</p> : null}
 
-            <h3>{translate('booking.section.items')}</h3>
-            <ul className="entity-list">
-              {booking.orderLineItems.map(orderLineItem => (
-                <li key={orderLineItem.orderItemId}>
-                  <div>
-                    <strong>{orderLineItem.summaryLabel}</strong>
-                    <p>
-                      {`${localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)} · ${mapBackendStatusToProductLabel(orderLineItem.orderItemStatus, currentLanguage)}`}
-                    </p>
-                    {orderLineItem.flightDetails ? (
-                      <p>
-                        {`${translate('booking.flight.cabin')}: ${localizeCabinClass(orderLineItem.flightDetails.cabinClass, currentLanguage)} · ${translate('booking.flight.travelers')}: ${orderLineItem.flightDetails.travelerIds.length}`}
-                      </p>
-                    ) : null}
-                    {orderLineItem.hotelDetails ? (
-                      <>
-                        <p>
-                          {`${translate('booking.hotel.roomType')}: ${orderLineItem.hotelDetails.roomTypeName} · ${translate('booking.hotel.guests')}: ${orderLineItem.hotelDetails.guestTravelerIds.length}`}
-                        </p>
-                        <p>
-                          {`${translate('booking.hotel.stay')}: ${orderLineItem.hotelDetails.checkInDate} - ${orderLineItem.hotelDetails.checkOutDate} · ${translate('booking.hotel.roomCount')}: ${orderLineItem.hotelDetails.roomCount}`}
-                        </p>
-                      </>
-                    ) : null}
+        {orders.length > 0 ? (
+          <ul className="entity-list">
+            {orders.map(order => (
+              <li key={order.orderId}>
+                <div className="order-card-content">
+                  <div className="detail-grid">
+                    <div>
+                      <span className="detail-label">{translate('booking.reference')}</span>
+                      <strong>{order.orderId}</strong>
+                    </div>
+                    <div>
+                      <span className="detail-label">{translate('booking.type')}</span>
+                      <strong>{localizeBookingKind(order.orderType, currentLanguage)}</strong>
+                    </div>
+                    <div>
+                      <span className="detail-label">{translate('booking.status')}</span>
+                      <strong>{mapBackendStatusToProductLabel(order.status, currentLanguage)}</strong>
+                    </div>
+                    <div>
+                      <span className="detail-label">{translate('booking.totalPrice')}</span>
+                      <strong>{`${order.totalPrice} ${order.orderCurrency}`}</strong>
+                    </div>
+                    <div>
+                      <span className="detail-label">{translate('booking.createdAt')}</span>
+                      <strong>{formatIsoDateTime(order.createdAt, translate('booking.notYet'))}</strong>
+                    </div>
+                    <div>
+                      <span className="detail-label">{translate('booking.paidAt')}</span>
+                      <strong>{formatIsoDateTime(order.paidAt, translate('booking.notYet'))}</strong>
+                    </div>
                   </div>
-                  <span className="tag-chip">{`${orderLineItem.bookedAmount} ${orderLineItem.bookedCurrency}`}</span>
-                </li>
-              ))}
-            </ul>
 
-            <h3>{translate('booking.section.payments')}</h3>
-            {booking.orderPayments.length > 0 ? (
-              <ul className="entity-list">
-                {booking.orderPayments.map(payment => (
-                  <li key={payment.paymentId}>
-                    <div>
-                      <strong>{localizePaymentMethod(payment.paymentMethod, currentLanguage)}</strong>
-                      <p>{mapBackendStatusToProductLabel(payment.paymentStatus, currentLanguage)}</p>
-                    </div>
-                    <div className="compact-action-block">
-                      <span className="tag-chip">{`${payment.paymentAmount} ${payment.paymentCurrency}`}</span>
-                      {payment.paymentStatus === 'Authorized' ? (
-                        <button type="button" disabled={isGuestMode || isBusy} onClick={() => void onCapturePayment(payment.paymentId)}>
-                          {translate('bookings.confirmPayment')}
-                        </button>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="empty-state">{translate('booking.notYet')}</p>
-            )}
+                  <ul className="entity-list">
+                    {order.orderLineItems.map(orderLineItem => (
+                      <li key={orderLineItem.orderItemId}>
+                        <div>
+                          <strong>{orderLineItem.summaryLabel}</strong>
+                          <p>{`${localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)} | ${localizeSupplierReviewStatus(orderLineItem.supplierReviewStatus, currentLanguage)}`}</p>
+                          {orderLineItem.flightDetails ? (
+                            <p>
+                              {`${translate('booking.flight.cabin')}: ${localizeCabinClass(orderLineItem.flightDetails.cabinClass, currentLanguage)} | ${translate('booking.flight.travelers')}: ${orderLineItem.flightDetails.travelerIds.length}`}
+                            </p>
+                          ) : null}
+                          {orderLineItem.hotelDetails ? (
+                            <p>
+                              {`${translate('booking.hotel.roomType')}: ${orderLineItem.hotelDetails.roomTypeName} | ${translate('booking.hotel.guests')}: ${orderLineItem.hotelDetails.guestTravelerIds.length} | ${translate('booking.hotel.roomCount')}: ${orderLineItem.hotelDetails.roomCount}`}
+                            </p>
+                          ) : null}
+                          {orderLineItem.supplierReviewDecision?.reason ? (
+                            <p>{orderLineItem.supplierReviewDecision.reason}</p>
+                          ) : null}
+                        </div>
+                        <span className="tag-chip">{`${orderLineItem.bookedAmount} ${orderLineItem.bookedCurrency}`}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-            <h3>{translate('booking.section.refunds')}</h3>
-            {booking.orderRefunds.length > 0 ? (
-              <ul className="entity-list">
-                {booking.orderRefunds.map(refund => (
-                  <li key={refund.refundId}>
-                    <div>
-                      <strong>{refund.refundReason}</strong>
-                      <p>{mapBackendStatusToProductLabel(refund.refundStatus, currentLanguage)}</p>
-                    </div>
+                  {order.orderPayments.length > 0 ? (
                     <div className="compact-action-block">
-                      <span className="tag-chip">{`${refund.refundAmount} ${refund.refundCurrency}`}</span>
-                      {refund.refundStatus === 'Requested' ? (
-                        <button type="button" disabled={isGuestMode || isBusy} onClick={() => void onApproveRefund(refund.refundId)}>
-                          {translate('bookings.approveRefund')}
-                        </button>
-                      ) : null}
-                      {refund.refundStatus === 'Approved' ? (
-                        <button type="button" disabled={isGuestMode || isBusy} onClick={() => void onSettleRefund(refund.refundId)}>
-                          {translate('bookings.settleRefund')}
-                        </button>
-                      ) : null}
+                      <span className="detail-label">{translate('booking.section.payments')}</span>
+                      <strong>
+                        {order.orderPayments
+                          .map(payment => `${localizePaymentMethod(payment.paymentMethod, currentLanguage)} ${payment.paymentAmount} ${payment.paymentCurrency}`)
+                          .join(' | ')}
+                      </strong>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="empty-state">{translate('booking.notYet')}</p>
-            )}
-          </>
-        ) : (
-          <p className="empty-state">{translate('bookings.empty')}</p>
-        )}
+                  ) : null}
+
+                  {order.orderRefunds.length > 0 ? (
+                    <div className="compact-action-block">
+                      <span className="detail-label">{translate('booking.section.refunds')}</span>
+                      <strong>
+                        {order.orderRefunds
+                          .map(refund => `${refund.refundAmount} ${refund.refundCurrency} ${mapBackendStatusToProductLabel(refund.refundStatus, currentLanguage)}`)
+                          .join(' | ')}
+                      </strong>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div className="manager-task-actions">
+                  {order.status === 'PendingPayment' ? (
+                    <>
+                      <button type="button" disabled={isBusy} onClick={() => onOpenPayment(order)}>
+                        {translate('bookings.pay')}
+                      </button>
+                      <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onCancelOrder(order.orderId)}>
+                        {translate('bookings.cancel')}
+                      </button>
+                    </>
+                  ) : null}
+
+                  {order.status === 'Paid' || order.status === 'Booked' ? (
+                    <RefundActionForm
+                      disabled={isBusy}
+                      translate={translate}
+                      onSubmit={refundReason => onRequestRefund(order.orderId, refundReason)}
+                    />
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </section>
+  )
+}
+
+function RefundActionForm({
+  disabled,
+  translate,
+  onSubmit,
+}: {
+  disabled: boolean
+  translate: (translationKey: string) => string
+  onSubmit: (refundReason: string) => Promise<void>
+}) {
+  return (
+    <form
+      className="inline-form"
+      onSubmit={async event => {
+        event.preventDefault()
+        const formData = new FormData(event.currentTarget)
+        await onSubmit(String(formData.get('refundReason') ?? ''))
+        event.currentTarget.reset()
+      }}
+    >
+      <input name="refundReason" placeholder={translate('bookings.refund.reasonPlaceholder')} disabled={disabled} />
+      <button type="submit" disabled={disabled}>
+        {translate('bookings.requestRefund')}
+      </button>
+    </form>
   )
 }

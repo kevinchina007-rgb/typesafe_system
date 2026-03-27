@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react'
 import { AppSidebar } from '../components/AppSidebar'
 import { FlightsPanel } from '../components/FlightsPanel'
 import { HotelsPanel } from '../components/HotelsPanel'
+import { ManagerPanel } from '../components/ManagerPanel'
 import { OrderPanel } from '../components/OrderPanel'
+import { PaymentModal } from '../components/PaymentModal'
 import { ToastNotice } from '../components/ToastNotice'
 import { TravelerPanel } from '../components/TravelerPanel'
 import { UserPanel } from '../components/UserPanel'
@@ -16,6 +18,9 @@ import type {
   FlightResponse,
   HealthResponse,
   HotelResponse,
+  ManagerRefundTaskResponse,
+  ManagerSessionResponse,
+  ManagerTaskResponse,
   OrderResponse,
   TravelerResponse,
   UserResponse,
@@ -30,7 +35,11 @@ export function MvpApp() {
   const [backendHealthResponse, setBackendHealthResponse] = useState<HealthResponse | null>(null)
   const [signedInUserResponse, setSignedInUserResponse] = useState<UserResponse | null>(null)
   const [travelerResponses, setTravelerResponses] = useState<TravelerResponse[]>([])
-  const [currentOrderResponse, setCurrentOrderResponse] = useState<OrderResponse | null>(null)
+  const [orderResponses, setOrderResponses] = useState<OrderResponse[]>([])
+  const [currentManagerSession, setCurrentManagerSession] = useState<ManagerSessionResponse | null>(null)
+  const [managerTaskResponses, setManagerTaskResponses] = useState<ManagerTaskResponse[]>([])
+  const [managerRefundTaskResponses, setManagerRefundTaskResponses] = useState<ManagerRefundTaskResponse[]>([])
+  const [pendingPaymentOrder, setPendingPaymentOrder] = useState<OrderResponse | null>(null)
   const [isPageBusy, setIsPageBusy] = useState(false)
   const [loginEmailDraft, setLoginEmailDraft] = useState('')
   const [currentNotice, setCurrentNotice] = useState<AppNotice | null>(null)
@@ -84,10 +93,8 @@ export function MvpApp() {
       return
     }
 
-    await runPageAction(async () => {
-      const userResponse = await travelMvpApiClient.getUser(signedInUserResponse.userId)
-      setSignedInUserResponse(userResponse)
-    }, translate('account.refresh'), translate('notice.actionSuccess'))
+    const userResponse = await travelMvpApiClient.getUser(signedInUserResponse.userId)
+    setSignedInUserResponse(userResponse)
   }
 
   async function reloadTravelerList() {
@@ -95,21 +102,42 @@ export function MvpApp() {
       return
     }
 
-    await runPageAction(async () => {
-      const travelerListResponse = await travelMvpApiClient.listTravelers(signedInUserResponse.userId)
-      setTravelerResponses(travelerListResponse.travelers)
-    }, translate('travelers.refresh'), translate('notice.actionSuccess'))
+    const travelerListResponse = await travelMvpApiClient.listTravelers(signedInUserResponse.userId)
+    setTravelerResponses(travelerListResponse.travelers)
   }
 
-  async function reloadCurrentOrder() {
-    if (!currentOrderResponse) {
+  async function reloadOrders() {
+    if (!signedInUserResponse) {
       return
     }
 
-    await runPageAction(async () => {
-      const orderResponse = await travelMvpApiClient.getOrder(currentOrderResponse.orderId)
-      setCurrentOrderResponse(orderResponse)
-    }, translate('bookings.refresh'), translate('notice.actionSuccess'))
+    const orderListResponse = await travelMvpApiClient.listOrders(signedInUserResponse.userId)
+    setOrderResponses(orderListResponse.orders)
+  }
+
+  async function reloadManagerTasks(taskStatus: 'pending' | 'all' | 'confirmed' | 'rejected' = 'pending') {
+    if (!currentManagerSession) {
+      return
+    }
+
+    const taskListResponse = await travelMvpApiClient.listManagerTasks({
+      managerId: currentManagerSession.managerId,
+      managerType: currentManagerSession.managerType.toLowerCase(),
+      status: taskStatus,
+    })
+    setManagerTaskResponses(taskListResponse.tasks)
+  }
+
+  async function reloadManagerRefundTasks() {
+    if (!currentManagerSession) {
+      return
+    }
+
+    const refundTaskListResponse = await travelMvpApiClient.listManagerRefundTasks({
+      managerId: currentManagerSession.managerId,
+      managerType: currentManagerSession.managerType.toLowerCase(),
+    })
+    setManagerRefundTaskResponses(refundTaskListResponse.tasks)
   }
 
   function requireSignedInUser() {
@@ -117,6 +145,13 @@ export function MvpApp() {
       throw new Error(translate('error.loginRequired'))
     }
     return signedInUserResponse
+  }
+
+  function requireManagerSession() {
+    if (!currentManagerSession) {
+      throw new Error(translate('error.managerNotFound'))
+    }
+    return currentManagerSession
   }
 
   async function searchFlights(payload: {
@@ -129,12 +164,7 @@ export function MvpApp() {
       return flightListResponse.flights
     } catch (error) {
       const technicalMessage = error instanceof Error ? error.message : 'Unknown error'
-      showNotice(
-        'error',
-        translate('error.friendly.default'),
-        mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage),
-        technicalMessage,
-      )
+      showNotice('error', translate('error.friendly.default'), mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage), technicalMessage)
       return []
     }
   }
@@ -149,12 +179,7 @@ export function MvpApp() {
       return hotelListResponse.hotels
     } catch (error) {
       const technicalMessage = error instanceof Error ? error.message : 'Unknown error'
-      showNotice(
-        'error',
-        translate('error.friendly.default'),
-        mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage),
-        technicalMessage,
-      )
+      showNotice('error', translate('error.friendly.default'), mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage), technicalMessage)
       return []
     }
   }
@@ -199,8 +224,12 @@ export function MvpApp() {
               await runPageAction(async () => {
                 const signedInAccount = await travelMvpApiClient.loginUser(payload)
                 setSignedInUserResponse(signedInAccount)
-                const travelerListResponse = await travelMvpApiClient.listTravelers(signedInAccount.userId)
+                const [travelerListResponse, orderListResponse] = await Promise.all([
+                  travelMvpApiClient.listTravelers(signedInAccount.userId),
+                  travelMvpApiClient.listOrders(signedInAccount.userId),
+                ])
                 setTravelerResponses(travelerListResponse.travelers)
+                setOrderResponses(orderListResponse.orders)
                 setCurrentViewKey('travelers')
               }, translate('account.login'), translate('notice.loginSuccess'))
             }}
@@ -214,11 +243,15 @@ export function MvpApp() {
             onAvatarValidationError={message => {
               showNotice('error', translate('error.friendly.default'), message)
             }}
-            onRefreshAccount={reloadCurrentUser}
+            onRefreshAccount={async () => {
+              await runPageAction(async () => {
+                await reloadCurrentUser()
+              }, translate('account.refresh'), translate('notice.actionSuccess'))
+            }}
             onLogout={() => {
               setSignedInUserResponse(null)
               setTravelerResponses([])
-              setCurrentOrderResponse(null)
+              setOrderResponses([])
               setCurrentViewKey('explore')
               showNotice('info', translate('guest.badge'), translate('notice.logoutSuccess'))
             }}
@@ -236,10 +269,7 @@ export function MvpApp() {
               const signedInUser = requireSignedInUser()
               await runPageAction(async () => {
                 await travelMvpApiClient.createTraveler(signedInUser.userId, payload)
-                const refreshedUserResponse = await travelMvpApiClient.getUser(signedInUser.userId)
-                const travelerListResponse = await travelMvpApiClient.listTravelers(signedInUser.userId)
-                setSignedInUserResponse(refreshedUserResponse)
-                setTravelerResponses(travelerListResponse.travelers)
+                await Promise.all([reloadCurrentUser(), reloadTravelerList()])
               }, translate('travelers.add'), translate('notice.travelerSaved'))
             }}
             onUpdateTraveler={async payload => {
@@ -247,9 +277,8 @@ export function MvpApp() {
               if (!payload.travelerId) {
                 throw new Error('Missing traveler id')
               }
-              const travelerId = payload.travelerId
               await runPageAction(async () => {
-                await travelMvpApiClient.updateTraveler(signedInUser.userId, travelerId, {
+                await travelMvpApiClient.updateTraveler(signedInUser.userId, payload.travelerId!, {
                   fullName: payload.fullName,
                   documentType: payload.documentType,
                   documentNumber: payload.documentNumber,
@@ -262,13 +291,21 @@ export function MvpApp() {
                   emergencyContactPhoneNumber: payload.emergencyContactPhoneNumber.trim() || null,
                   isDefaultTraveler: payload.isDefaultTraveler,
                 })
-                const refreshedUserResponse = await travelMvpApiClient.getUser(signedInUser.userId)
-                const travelerListResponse = await travelMvpApiClient.listTravelers(signedInUser.userId)
-                setSignedInUserResponse(refreshedUserResponse)
-                setTravelerResponses(travelerListResponse.travelers)
+                await Promise.all([reloadCurrentUser(), reloadTravelerList()])
               }, translate('travelers.saveEdit'), translate('notice.travelerSaved'))
             }}
-            onReloadTravelers={reloadTravelerList}
+            onDeleteTraveler={async travelerId => {
+              const signedInUser = requireSignedInUser()
+              await runPageAction(async () => {
+                await travelMvpApiClient.deleteTraveler(signedInUser.userId, travelerId)
+                await Promise.all([reloadCurrentUser(), reloadTravelerList()])
+              }, translate('travelers.delete'), translate('notice.travelerDeleted'))
+            }}
+            onReloadTravelers={async () => {
+              await runPageAction(async () => {
+                await reloadTravelerList()
+              }, translate('travelers.refresh'), translate('notice.actionSuccess'))
+            }}
           />
         ) : null}
 
@@ -278,34 +315,20 @@ export function MvpApp() {
             isBusy={isPageBusy}
             isGuestMode={isGuestMode}
             travelers={travelerResponses}
-            currentBooking={currentOrderResponse}
             translate={translate}
             onSearchFlights={searchFlights}
-            onCreateBookingShell={async payload => {
+            onBookFlight={async payload => {
               const signedInUser = requireSignedInUser()
               await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.createOrder({
-                  ownerUserId: signedInUser.userId,
-                  orderCurrency: payload.orderCurrency,
-                })
-                setCurrentOrderResponse(bookingResponse)
-              }, translate('flights.createBooking'), translate('notice.bookingCreated'))
-            }}
-            onAddFlightToBooking={async payload => {
-              const signedInUser = requireSignedInUser()
-              if (!currentOrderResponse) {
-                throw new Error(translate('flights.requireBooking'))
-              }
-              await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.addFlightItemToOrder(currentOrderResponse.orderId, {
+                await travelMvpApiClient.createFlightOrder({
                   buyerUserId: signedInUser.userId,
                   flightId: payload.flightId,
                   travelerIds: payload.travelerIds,
                   cabinClass: payload.cabinClass,
                 })
-                setCurrentOrderResponse(bookingResponse)
+                await reloadOrders()
                 setCurrentViewKey('bookings')
-              }, translate('flights.addToBooking'), translate('notice.flightAdded'))
+              }, translate('flights.bookNow'), translate('notice.bookingCreated'))
             }}
           />
         ) : null}
@@ -316,26 +339,12 @@ export function MvpApp() {
             isBusy={isPageBusy}
             isGuestMode={isGuestMode}
             travelers={travelerResponses}
-            currentBooking={currentOrderResponse}
             translate={translate}
             onSearchHotels={searchHotels}
-            onCreateBookingShell={async payload => {
+            onBookHotel={async payload => {
               const signedInUser = requireSignedInUser()
               await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.createOrder({
-                  ownerUserId: signedInUser.userId,
-                  orderCurrency: payload.orderCurrency,
-                })
-                setCurrentOrderResponse(bookingResponse)
-              }, translate('hotels.createBooking'), translate('notice.bookingCreated'))
-            }}
-            onAddHotelToBooking={async payload => {
-              const signedInUser = requireSignedInUser()
-              if (!currentOrderResponse) {
-                throw new Error(translate('hotels.requireBooking'))
-              }
-              await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.addHotelItemToOrder(currentOrderResponse.orderId, {
+                await travelMvpApiClient.createHotelOrder({
                   buyerUserId: signedInUser.userId,
                   roomTypeId: payload.roomTypeId,
                   guestTravelerIds: payload.guestTravelerIds,
@@ -343,9 +352,9 @@ export function MvpApp() {
                   checkOutDate: payload.checkOutDate,
                   roomCount: payload.roomCount,
                 })
-                setCurrentOrderResponse(bookingResponse)
+                await reloadOrders()
                 setCurrentViewKey('bookings')
-              }, translate('hotels.addToBooking'), translate('notice.hotelAdded'))
+              }, translate('hotels.bookNow'), translate('notice.bookingCreated'))
             }}
           />
         ) : null}
@@ -355,87 +364,161 @@ export function MvpApp() {
             currentLanguage={currentLanguage}
             isBusy={isPageBusy}
             isGuestMode={isGuestMode}
-            booking={currentOrderResponse}
+            orders={orderResponses}
             translate={translate}
-            onCreateBooking={async payload => {
-              const signedInUser = requireSignedInUser()
+            onReloadOrders={async () => {
               await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.createOrder({
-                  ownerUserId: signedInUser.userId,
-                  orderCurrency: payload.orderCurrency,
-                })
-                setCurrentOrderResponse(bookingResponse)
-              }, translate('bookings.create'), translate('notice.bookingCreated'))
+                await reloadOrders()
+              }, translate('bookings.refresh'), translate('notice.actionSuccess'))
             }}
-            onReloadBooking={reloadCurrentOrder}
-            onSubmitBooking={async () => {
-              if (!currentOrderResponse) {
-                throw new Error(translate('bookings.empty'))
-              }
-              await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.submitOrder(currentOrderResponse.orderId)
-                setCurrentOrderResponse(bookingResponse)
-              }, translate('bookings.continuePayment'), translate('notice.actionSuccess'))
+            onOpenPayment={order => {
+              setPendingPaymentOrder(order)
             }}
-            onAuthorizePayment={async payload => {
-              if (!currentOrderResponse) {
-                throw new Error(translate('bookings.empty'))
-              }
+            onCancelOrder={async orderId => {
               await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.authorizePayment(currentOrderResponse.orderId, payload)
-                setCurrentOrderResponse(bookingResponse)
-              }, translate('bookings.pay'), translate('notice.actionSuccess'))
-            }}
-            onCapturePayment={async paymentId => {
-              if (!currentOrderResponse) {
-                throw new Error(translate('bookings.empty'))
-              }
-              await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.capturePayment(currentOrderResponse.orderId, paymentId)
-                setCurrentOrderResponse(bookingResponse)
-              }, translate('bookings.confirmPayment'), translate('notice.actionSuccess'))
-            }}
-            onCancelBooking={async () => {
-              if (!currentOrderResponse) {
-                throw new Error(translate('bookings.empty'))
-              }
-              await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.cancelOrder(currentOrderResponse.orderId)
-                setCurrentOrderResponse(bookingResponse)
+                await travelMvpApiClient.cancelOrder(orderId)
+                await reloadOrders()
               }, translate('bookings.cancel'), translate('notice.actionSuccess'))
             }}
-            onRequestRefund={async payload => {
-              if (!currentOrderResponse) {
-                throw new Error(translate('bookings.empty'))
-              }
+            onRequestRefund={async (orderId, refundReason) => {
               await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.requestRefund(currentOrderResponse.orderId, payload)
-                setCurrentOrderResponse(bookingResponse)
+                await travelMvpApiClient.requestRefund(orderId, { refundReason })
+                await reloadOrders()
               }, translate('bookings.requestRefund'), translate('notice.actionSuccess'))
             }}
-            onApproveRefund={async refundId => {
-              if (!currentOrderResponse) {
-                throw new Error(translate('bookings.empty'))
-              }
+          />
+        ) : null}
+
+        {currentViewKey === 'manager' ? (
+          <ManagerPanel
+            currentLanguage={currentLanguage}
+            isBusy={isPageBusy}
+            managerSession={currentManagerSession}
+            managerTasks={managerTaskResponses}
+            managerRefundTasks={managerRefundTaskResponses}
+            translate={translate}
+            onRegisterAirlineManager={async payload => {
               await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.approveRefund(currentOrderResponse.orderId, refundId)
-                setCurrentOrderResponse(bookingResponse)
-              }, translate('bookings.approveRefund'), translate('notice.actionSuccess'))
+                const session = await travelMvpApiClient.registerAirlineManager(payload)
+                setCurrentManagerSession(session)
+                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
+              }, translate('manager.createAccount'), translate('notice.actionSuccess'))
             }}
-            onSettleRefund={async refundId => {
-              if (!currentOrderResponse) {
-                throw new Error(translate('bookings.empty'))
-              }
+            onRegisterHotelManager={async payload => {
               await runPageAction(async () => {
-                const bookingResponse = await travelMvpApiClient.settleRefund(currentOrderResponse.orderId, refundId)
-                setCurrentOrderResponse(bookingResponse)
-              }, translate('bookings.settleRefund'), translate('notice.actionSuccess'))
+                const session = await travelMvpApiClient.registerHotelManager(payload)
+                setCurrentManagerSession(session)
+                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
+              }, translate('manager.createAccount'), translate('notice.actionSuccess'))
+            }}
+            onCreateManagerRoomType={async payload => {
+              await runPageAction(async () => {
+                await travelMvpApiClient.createManagerRoomType(payload)
+              }, translate('manager.createRoomType'), translate('notice.actionSuccess'))
+            }}
+            onLoginManager={async payload => {
+              await runPageAction(async () => {
+                const session = await travelMvpApiClient.loginManager(payload)
+                setCurrentManagerSession(session)
+                const [tasks, refundTasks] = await Promise.all([
+                  travelMvpApiClient.listManagerTasks({
+                    managerId: session.managerId,
+                    managerType: session.managerType.toLowerCase(),
+                    status: 'pending',
+                  }),
+                  travelMvpApiClient.listManagerRefundTasks({
+                    managerId: session.managerId,
+                    managerType: session.managerType.toLowerCase(),
+                  }),
+                ])
+                setManagerTaskResponses(tasks.tasks)
+                setManagerRefundTaskResponses(refundTasks.tasks)
+              }, translate('manager.login'), translate('notice.actionSuccess'))
+            }}
+            onReloadTasks={async status => {
+              await runPageAction(async () => {
+                await reloadManagerTasks(status)
+              }, translate('manager.refresh'), translate('notice.actionSuccess'))
+            }}
+            onReloadRefundTasks={async () => {
+              await runPageAction(async () => {
+                await reloadManagerRefundTasks()
+              }, translate('manager.refundTasks'), translate('notice.actionSuccess'))
+            }}
+            onCreateManagerFlight={async payload => {
+              const managerSession = requireManagerSession()
+              await runPageAction(async () => {
+                await travelMvpApiClient.createManagerFlight({
+                  managerId: managerSession.managerId,
+                  ...payload,
+                })
+              }, translate('manager.createFlight'), translate('notice.actionSuccess'))
+            }}
+            onConfirmTask={async payload => {
+              const managerSession = requireManagerSession()
+              await runPageAction(async () => {
+                await travelMvpApiClient.confirmManagerBookingItem(payload.orderItemId, {
+                  managerId: managerSession.managerId,
+                  managerType: managerSession.managerType.toLowerCase(),
+                  note: payload.note.trim() || null,
+                })
+                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
+              }, translate('manager.confirm'), translate('notice.actionSuccess'))
+            }}
+            onRejectTask={async payload => {
+              const managerSession = requireManagerSession()
+              await runPageAction(async () => {
+                await travelMvpApiClient.rejectManagerBookingItem(payload.orderItemId, {
+                  managerId: managerSession.managerId,
+                  managerType: managerSession.managerType.toLowerCase(),
+                  reason: payload.reason,
+                })
+                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
+              }, translate('manager.reject'), translate('notice.actionSuccess'))
+            }}
+            onApproveRefundTask={async payload => {
+              const managerSession = requireManagerSession()
+              await runPageAction(async () => {
+                await travelMvpApiClient.approveRefund(payload.orderId, managerSession.managerId, managerSession.managerType.toLowerCase())
+                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
+              }, translate('manager.approveRefund'), translate('notice.actionSuccess'))
+            }}
+            onRejectRefundTask={async payload => {
+              const managerSession = requireManagerSession()
+              await runPageAction(async () => {
+                await travelMvpApiClient.rejectRefund(payload.orderId, managerSession.managerId, managerSession.managerType.toLowerCase())
+                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
+              }, translate('manager.rejectRefund'), translate('notice.actionSuccess'))
+            }}
+            onLogoutManager={() => {
+              setCurrentManagerSession(null)
+              setManagerTaskResponses([])
+              setManagerRefundTaskResponses([])
             }}
           />
         ) : null}
       </section>
 
       <ToastNotice notice={currentNotice} onDismiss={() => setCurrentNotice(null)} />
+      <PaymentModal
+        isOpen={pendingPaymentOrder !== null}
+        order={pendingPaymentOrder}
+        isBusy={isPageBusy}
+        translate={translate}
+        onClose={() => setPendingPaymentOrder(null)}
+        onConfirmPayment={async payload => {
+          await runPageAction(async () => {
+            await travelMvpApiClient.payOrder(payload.orderId, {
+              paymentMethod: payload.paymentMethod,
+              paymentSucceeded: payload.paymentSucceeded,
+            })
+            await reloadOrders()
+            if (payload.paymentSucceeded) {
+              setPendingPaymentOrder(null)
+            }
+          }, translate('bookings.pay'), payload.paymentSucceeded ? translate('notice.paymentSuccess') : translate('notice.paymentPending'))
+        }}
+      />
     </main>
   )
 }

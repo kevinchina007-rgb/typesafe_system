@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { AppLanguage, HotelResponse, OrderResponse, TravelerResponse } from '../lib/mvp-types'
+import type { AppLanguage, HotelResponse, TravelerResponse } from '../lib/mvp-types'
 import { formatIsoDateTime, localizeBedType, mapBackendStatusToProductLabel } from '../lib/view-models'
 
 type HotelsPanelProps = {
@@ -8,15 +8,13 @@ type HotelsPanelProps = {
   isBusy: boolean
   isGuestMode: boolean
   travelers: TravelerResponse[]
-  currentBooking: OrderResponse | null
   translate: (translationKey: string) => string
   onSearchHotels: (payload: {
     location?: string
     checkInDate?: string
     checkOutDate?: string
   }) => Promise<HotelResponse[]>
-  onCreateBookingShell: (payload: { orderCurrency: string }) => Promise<void>
-  onAddHotelToBooking: (payload: {
+  onBookHotel: (payload: {
     roomTypeId: string
     guestTravelerIds: string[]
     checkInDate: string
@@ -34,11 +32,9 @@ export function HotelsPanel({
   isBusy,
   isGuestMode,
   travelers,
-  currentBooking,
   translate,
   onSearchHotels,
-  onCreateBookingShell,
-  onAddHotelToBooking,
+  onBookHotel,
 }: HotelsPanelProps) {
   const [hotelResponses, setHotelResponses] = useState<HotelResponse[]>([])
   const [hasSearchedHotels, setHasSearchedHotels] = useState(false)
@@ -95,30 +91,7 @@ export function HotelsPanel({
         </button>
       </form>
 
-      {!isGuestMode ? (
-        <form
-          className="inline-form"
-          onSubmit={async event => {
-            event.preventDefault()
-            const formData = new FormData(event.currentTarget)
-            await onCreateBookingShell({
-              orderCurrency: String(formData.get('orderCurrency') ?? 'CNY'),
-            })
-          }}
-        >
-          <select name="orderCurrency" defaultValue={currentBooking?.orderCurrency ?? 'CNY'} disabled={isBusy}>
-            <option value="CNY">CNY</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-          </select>
-          <button type="submit" disabled={isBusy}>
-            {translate('hotels.createBooking')}
-          </button>
-        </form>
-      ) : null}
-
       {isGuestMode ? <p className="empty-state">{translate('hotels.guest')}</p> : null}
-      {!currentBooking && !isGuestMode ? <p className="empty-state">{translate('hotels.requireBooking')}</p> : null}
 
       {hasSearchedHotels ? (
         <div className="entity-list flights-list">
@@ -150,11 +123,12 @@ export function HotelsPanel({
                       <div>
                         <strong>{roomTypeResponse.roomTypeName}</strong>
                         <p>
-                          {`${translate('hotels.bedType')}: ${localizeBedType(roomTypeResponse.bedType, currentLanguage)} · ${translate('hotels.capacity')}: ${roomTypeResponse.capacity}`}
+                          {`${translate('hotels.bedType')}: ${localizeBedType(roomTypeResponse.bedType, currentLanguage)} | ${translate('hotels.capacity')}: ${roomTypeResponse.capacity}`}
                         </p>
-                        <p>
-                          {`${translate('hotels.priceFrom')}: ${roomTypeResponse.basePrice} ${roomTypeResponse.currency}`}
-                        </p>
+                        <p>{`${translate('hotels.priceFrom')}: ${roomTypeResponse.basePrice} ${roomTypeResponse.currency}`}</p>
+                        {roomTypeResponse.availableRoomsForRequestedStay !== null ? (
+                          <p>{`${translate('hotels.availableRooms')}: ${roomTypeResponse.availableRoomsForRequestedStay}`}</p>
+                        ) : null}
                       </div>
                       <form
                         className="compact-action-block"
@@ -165,7 +139,7 @@ export function HotelsPanel({
                             .getAll('guestTravelerIds')
                             .map(value => String(value))
                             .filter(Boolean)
-                          await onAddHotelToBooking({
+                          await onBookHotel({
                             roomTypeId: roomTypeResponse.roomTypeId,
                             guestTravelerIds: selectedGuestTravelerIds,
                             checkInDate: String(formData.get('checkInDate') ?? searchCheckInDate),
@@ -176,23 +150,32 @@ export function HotelsPanel({
                       >
                         <input name="checkInDate" type="date" defaultValue={searchCheckInDate} />
                         <input name="checkOutDate" type="date" defaultValue={searchCheckOutDate} />
-                        <input name="roomCount" type="number" min={1} defaultValue={1} />
-                        <select
-                          name="guestTravelerIds"
-                          multiple
-                          disabled={!currentBooking || isBusy || !roomTypeResponse.isBookableForRequestedStay}
-                        >
+                        <input
+                          name="roomCount"
+                          type="number"
+                          min={1}
+                          max={roomTypeResponse.availableRoomsForRequestedStay ?? undefined}
+                          defaultValue={1}
+                          disabled={isGuestMode || isBusy || !roomTypeResponse.isBookableForRequestedStay}
+                        />
+                        <div className="checkbox-list">
                           {travelers.map(traveler => (
-                            <option key={traveler.travelerId} value={traveler.travelerId}>
+                            <label key={traveler.travelerId} className="checkbox-row">
+                              <input
+                                type="checkbox"
+                                name="guestTravelerIds"
+                                value={traveler.travelerId}
+                                disabled={isGuestMode || isBusy || !roomTypeResponse.isBookableForRequestedStay}
+                              />
                               {renderTravelerOptionLabel(traveler)}
-                            </option>
+                            </label>
                           ))}
-                        </select>
+                        </div>
                         <button
                           type="submit"
-                          disabled={!currentBooking || isBusy || !roomTypeResponse.isBookableForRequestedStay}
+                          disabled={isGuestMode || isBusy || !roomTypeResponse.isBookableForRequestedStay}
                         >
-                          {translate('hotels.addToBooking')}
+                          {translate('hotels.bookNow')}
                         </button>
                       </form>
                     </li>
