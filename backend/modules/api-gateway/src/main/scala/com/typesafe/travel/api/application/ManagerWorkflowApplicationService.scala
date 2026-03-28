@@ -4,6 +4,7 @@ import cats.MonadThrow
 import cats.syntax.all.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.hotel.domain.*
+import com.typesafe.travel.inventory.domain.ReservationLifecycle
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
@@ -118,6 +119,7 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
     managerRepository: ManagerRepository[F],
     orderRepository: OrderRepository[F],
     orderService: OrderService[F],
+    reservationLifecycle: ReservationLifecycle[F],
     flightRepository: FlightRepository[F],
     hotelRepository: HotelRepository[F]
 ) extends ManagerWorkflowApplicationService[F]:
@@ -287,10 +289,8 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
       managerContext <- loadManagerContext(managerId, managerType)
       order <- loadScopedOrder(managerContext, orderItemId)
       rejectedOrder <- orderService.rejectSupplierOrderItem(order.orderId, orderItemId, managerId, reason, decidedAt)
-      resultingOrder <- if rejectedOrder.remainingRefundableMoney.amount > 0 then
-        orderService.requestCustomerRefund(rejectedOrder.orderId, reason, decidedAt)
-      else rejectedOrder.pure[F]
-    yield resultingOrder
+      _ <- reservationLifecycle.releaseActiveReservationsForOrderItem(orderItemId, decidedAt)
+    yield rejectedOrder
 
   override def approveRefund(
       managerId: ManagerId,

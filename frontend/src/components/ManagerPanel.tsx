@@ -123,10 +123,22 @@ export function ManagerPanel({
               }}
             >
               <h3>{translate('manager.registerAirline')}</h3>
-              <input name="displayName" placeholder={translate('manager.displayName')} required />
-              <input name="email" type="email" placeholder="ops@airline.example" required />
-              <input name="airlineName" placeholder={translate('manager.airlineName')} required />
-              <input name="airlineCode" placeholder="MU" required />
+              <label>
+                {translate('manager.displayName')}
+                <input name="displayName" placeholder={translate('manager.displayName')} required />
+              </label>
+              <label>
+                {translate('manager.email')}
+                <input name="email" type="email" placeholder="ops@airline.example" required />
+              </label>
+              <label>
+                {translate('manager.airlineName')}
+                <input name="airlineName" placeholder={translate('manager.airlineName')} required />
+              </label>
+              <label>
+                {translate('manager.airlineCode')}
+                <input name="airlineCode" placeholder="MU" required />
+              </label>
               <button type="submit" disabled={isBusy}>
                 {translate('manager.createAccount')}
               </button>
@@ -147,10 +159,22 @@ export function ManagerPanel({
               }}
             >
               <h3>{translate('manager.registerHotel')}</h3>
-              <input name="displayName" placeholder={translate('manager.displayName')} required />
-              <input name="email" type="email" placeholder="ops@hotel.example" required />
-              <input name="hotelName" placeholder={translate('manager.hotelName')} required />
-              <input name="location" placeholder={translate('manager.hotelLocation')} required />
+              <label>
+                {translate('manager.displayName')}
+                <input name="displayName" placeholder={translate('manager.displayName')} required />
+              </label>
+              <label>
+                {translate('manager.email')}
+                <input name="email" type="email" placeholder="ops@hotel.example" required />
+              </label>
+              <label>
+                {translate('manager.hotelName')}
+                <input name="hotelName" placeholder={translate('manager.hotelName')} required />
+              </label>
+              <label>
+                {translate('manager.hotelLocation')}
+                <input name="location" placeholder={translate('manager.hotelLocation')} required />
+              </label>
               <button type="submit" disabled={isBusy}>
                 {translate('manager.createAccount')}
               </button>
@@ -231,20 +255,50 @@ export function ManagerPanel({
             >
               <h3>{translate('manager.createFlight')}</h3>
               <div className="three-column-grid">
-                <input name="flightNumber" placeholder="MU5123" required />
-                <input name="departureAirport" placeholder="PVG" required />
-                <input name="arrivalAirport" placeholder="HND" required />
-                <input name="departureTime" type="datetime-local" required />
-                <input name="arrivalTime" type="datetime-local" required />
-                <input name="economySeatCount" type="number" min={1} defaultValue={20} required />
-                <input name="economyPrice" type="number" min={1} defaultValue={880} required />
-                <input name="businessSeatCount" type="number" min={1} defaultValue={6} required />
-                <input name="businessPrice" type="number" min={1} defaultValue={1880} required />
-                <select name="currency" defaultValue="CNY">
-                  <option value="CNY">CNY</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
+                <label>
+                  {translate('manager.flightNumber')}
+                  <input name="flightNumber" placeholder="MU5123" required />
+                </label>
+                <label>
+                  {translate('manager.departureAirport')}
+                  <input name="departureAirport" placeholder="PVG" required />
+                </label>
+                <label>
+                  {translate('manager.arrivalAirport')}
+                  <input name="arrivalAirport" placeholder="HND" required />
+                </label>
+                <label>
+                  {translate('manager.departureTime')}
+                  <input name="departureTime" type="datetime-local" required />
+                </label>
+                <label>
+                  {translate('manager.arrivalTime')}
+                  <input name="arrivalTime" type="datetime-local" required />
+                </label>
+                <label>
+                  {translate('manager.economySeatCount')}
+                  <input name="economySeatCount" type="number" min={1} defaultValue={20} required />
+                </label>
+                <label>
+                  {translate('manager.economyPrice')}
+                  <input name="economyPrice" type="number" min={1} defaultValue={880} required />
+                </label>
+                <label>
+                  {translate('manager.businessSeatCount')}
+                  <input name="businessSeatCount" type="number" min={1} defaultValue={6} required />
+                </label>
+                <label>
+                  {translate('manager.businessPrice')}
+                  <input name="businessPrice" type="number" min={1} defaultValue={1880} required />
+                </label>
+                <label>
+                  {translate('manager.currency')}
+                  <select name="currency" defaultValue="CNY">
+                    <option value="CNY">CNY</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </label>
               </div>
               <button type="submit" disabled={isBusy}>
                 {translate('manager.createFlight')}
@@ -274,24 +328,48 @@ export function ManagerPanel({
             >
               <h3>{translate('manager.createRoomType')}</h3>
               <div className="three-column-grid">
-                <input name="roomTypeName" placeholder={translate('manager.roomTypeName')} required />
-                <input name="capacity" type="number" min={1} defaultValue={2} required />
-                <select name="bedType" defaultValue="queen">
-                  <option value="single">Single</option>
-                  <option value="double">Double</option>
-                  <option value="twin">Twin</option>
-                  <option value="queen">Queen</option>
-                  <option value="king">King</option>
-                </select>
-                <input name="nightlyPrice" type="number" min={1} defaultValue={699} required />
-                <select name="currency" defaultValue="CNY">
-                  <option value="CNY">CNY</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                </select>
-                <input name="availableRooms" type="number" min={1} defaultValue={5} required />
-                <input name="inventoryStartDate" type="date" defaultValue="2026-04-01" required />
-                <input name="inventoryEndDate" type="date" defaultValue="2026-04-30" required />
+                <label>
+                  {translate('manager.roomTypeName')}
+                  <input name="roomTypeName" placeholder={translate('manager.roomTypeName')} required />
+                </label>
+                <label>
+                  {translate('manager.capacity')}
+                  <input name="capacity" type="number" min={1} defaultValue={2} required />
+                </label>
+                <label>
+                  {translate('manager.bedType')}
+                  <select name="bedType" defaultValue="queen">
+                    <option value="single">Single</option>
+                    <option value="double">Double</option>
+                    <option value="twin">Twin</option>
+                    <option value="queen">Queen</option>
+                    <option value="king">King</option>
+                  </select>
+                </label>
+                <label>
+                  {translate('manager.nightlyPrice')}
+                  <input name="nightlyPrice" type="number" min={1} defaultValue={699} required />
+                </label>
+                <label>
+                  {translate('manager.currency')}
+                  <select name="currency" defaultValue="CNY">
+                    <option value="CNY">CNY</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                  </select>
+                </label>
+                <label>
+                  {translate('manager.availableRooms')}
+                  <input name="availableRooms" type="number" min={1} defaultValue={5} required />
+                </label>
+                <label>
+                  {translate('manager.inventoryStartDate')}
+                  <input name="inventoryStartDate" type="date" defaultValue="2026-04-01" required />
+                </label>
+                <label>
+                  {translate('manager.inventoryEndDate')}
+                  <input name="inventoryEndDate" type="date" defaultValue="2026-04-30" required />
+                </label>
               </div>
               <button type="submit" disabled={isBusy}>
                 {translate('manager.createRoomType')}
@@ -328,28 +406,34 @@ export function ManagerPanel({
                       <p>{localizeSupplierReviewStatus(task.supplierReviewStatus, currentLanguage)}</p>
                     </div>
                     <div className="manager-task-actions">
-                      <input
-                        value={draftNotesByTaskId[task.orderItemId] ?? ''}
-                        placeholder={translate('manager.notePlaceholder')}
-                        disabled={isBusy || task.supplierReviewStatus !== 'PendingSupplierConfirmation'}
-                        onChange={event =>
-                          setDraftNotesByTaskId(currentDrafts => ({
-                            ...currentDrafts,
-                            [task.orderItemId]: event.target.value,
-                          }))
-                        }
-                      />
-                      <input
-                        value={draftReasonsByTaskId[task.orderItemId] ?? ''}
-                        placeholder={translate('manager.rejectReasonPlaceholder')}
-                        disabled={isBusy || task.supplierReviewStatus !== 'PendingSupplierConfirmation'}
-                        onChange={event =>
-                          setDraftReasonsByTaskId(currentDrafts => ({
-                            ...currentDrafts,
-                            [task.orderItemId]: event.target.value,
-                          }))
-                        }
-                      />
+                      <label>
+                        {translate('manager.note')}
+                        <input
+                          value={draftNotesByTaskId[task.orderItemId] ?? ''}
+                          placeholder={translate('manager.notePlaceholder')}
+                          disabled={isBusy || task.supplierReviewStatus !== 'PendingSupplierConfirmation'}
+                          onChange={event =>
+                            setDraftNotesByTaskId(currentDrafts => ({
+                              ...currentDrafts,
+                              [task.orderItemId]: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        {translate('manager.rejectReason')}
+                        <input
+                          value={draftReasonsByTaskId[task.orderItemId] ?? ''}
+                          placeholder={translate('manager.rejectReasonPlaceholder')}
+                          disabled={isBusy || task.supplierReviewStatus !== 'PendingSupplierConfirmation'}
+                          onChange={event =>
+                            setDraftReasonsByTaskId(currentDrafts => ({
+                              ...currentDrafts,
+                              [task.orderItemId]: event.target.value,
+                            }))
+                          }
+                        />
+                      </label>
                       <div className="compact-action-block">
                         <button
                           type="button"

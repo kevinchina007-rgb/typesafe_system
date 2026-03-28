@@ -4,6 +4,7 @@ import {
   localizeBookingKind,
   localizeCabinClass,
   localizePaymentMethod,
+  localizeReservationStatus,
   localizeSupplierReviewStatus,
   mapBackendStatusToProductLabel,
 } from '../lib/view-models'
@@ -88,14 +89,43 @@ export function OrderPanel({
                           <strong>{orderLineItem.summaryLabel}</strong>
                           <p>{`${localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)} | ${localizeSupplierReviewStatus(orderLineItem.supplierReviewStatus, currentLanguage)}`}</p>
                           {orderLineItem.flightDetails ? (
-                            <p>
-                              {`${translate('booking.flight.cabin')}: ${localizeCabinClass(orderLineItem.flightDetails.cabinClass, currentLanguage)} | ${translate('booking.flight.travelers')}: ${orderLineItem.flightDetails.travelerIds.length}`}
-                            </p>
+                            <>
+                              <p>
+                                {`${translate('booking.flight.cabin')}: ${localizeCabinClass(orderLineItem.flightDetails.cabinClass, currentLanguage)} | ${translate('booking.flight.travelers')}: ${orderLineItem.flightDetails.travelerIds.length}`}
+                              </p>
+                              <p>
+                                {`${translate('booking.flight.departureTime')}: ${formatIsoDateTime(orderLineItem.flightDetails.departureTime, translate('booking.notYet'))} | ${translate('booking.flight.arrivalTime')}: ${formatIsoDateTime(orderLineItem.flightDetails.arrivalTime, translate('booking.notYet'))}`}
+                              </p>
+                              {orderLineItem.flightDetails.reservationStatus ? (
+                                <p>
+                                  {`${translate('booking.flight.reservation')}: ${localizeReservationStatus(orderLineItem.flightDetails.reservationStatus, currentLanguage)}`}
+                                  {orderLineItem.flightDetails.reservationExpiresAt
+                                    ? ` | ${translate('booking.flight.reservationExpiresAt')}: ${formatIsoDateTime(orderLineItem.flightDetails.reservationExpiresAt, translate('booking.notYet'))}`
+                                    : ''}
+                                </p>
+                              ) : null}
+                            </>
                           ) : null}
                           {orderLineItem.hotelDetails ? (
-                            <p>
-                              {`${translate('booking.hotel.roomType')}: ${orderLineItem.hotelDetails.roomTypeName} | ${translate('booking.hotel.guests')}: ${orderLineItem.hotelDetails.guestTravelerIds.length} | ${translate('booking.hotel.roomCount')}: ${orderLineItem.hotelDetails.roomCount}`}
-                            </p>
+                            <>
+                              <p>
+                                {`${translate('booking.hotel.roomType')}: ${orderLineItem.hotelDetails.roomTypeName} | ${translate('booking.hotel.guests')}: ${orderLineItem.hotelDetails.guestTravelerIds.length} | ${translate('booking.hotel.roomCount')}: ${orderLineItem.hotelDetails.roomCount}`}
+                              </p>
+                              <p>
+                                {`${translate('booking.hotel.stay')}: ${orderLineItem.hotelDetails.checkInDate} -> ${orderLineItem.hotelDetails.checkOutDate}`}
+                              </p>
+                              {orderLineItem.hotelDetails.reservationStatus ? (
+                                <p>
+                                  {`${translate('booking.hotel.reservation')}: ${localizeReservationStatus(orderLineItem.hotelDetails.reservationStatus, currentLanguage)}`}
+                                  {orderLineItem.hotelDetails.reservationExpiresAt
+                                    ? ` | ${translate('booking.hotel.reservationExpiresAt')}: ${formatIsoDateTime(orderLineItem.hotelDetails.reservationExpiresAt, translate('booking.notYet'))}`
+                                    : ''}
+                                </p>
+                              ) : null}
+                              <p>
+                                {`${translate('booking.hotel.unitPrice')}: ${orderLineItem.hotelDetails.unitPrice} ${orderLineItem.hotelDetails.currency} | ${translate('booking.hotel.totalPrice')}: ${orderLineItem.hotelDetails.totalPrice} ${orderLineItem.hotelDetails.currency}`}
+                              </p>
+                            </>
                           ) : null}
                           {orderLineItem.supplierReviewDecision?.reason ? (
                             <p>{orderLineItem.supplierReviewDecision.reason}</p>
@@ -177,7 +207,10 @@ function RefundActionForm({
         event.currentTarget.reset()
       }}
     >
-      <input name="refundReason" placeholder={translate('bookings.refund.reasonPlaceholder')} disabled={disabled} />
+      <label>
+        {translate('bookings.refund.reason')}
+        <input name="refundReason" placeholder={translate('bookings.refund.reasonPlaceholder')} disabled={disabled} />
+      </label>
       <button type="submit" disabled={disabled}>
         {translate('bookings.requestRefund')}
       </button>

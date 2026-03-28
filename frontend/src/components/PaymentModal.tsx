@@ -47,16 +47,19 @@ export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onConf
         </div>
 
         {!selectedPaymentMethod ? (
-          <div className="payment-method-grid">
-            <button type="button" disabled={isBusy} onClick={() => setSelectedPaymentMethod('alipay')}>
-              {translate('payment.method.alipay')}
-            </button>
-            <button type="button" disabled={isBusy} onClick={() => setSelectedPaymentMethod('wechat-pay')}>
-              {translate('payment.method.wechat')}
-            </button>
-            <button type="button" disabled={isBusy} onClick={() => setSelectedPaymentMethod('nailong-pay')}>
-              {translate('payment.method.nailong')}
-            </button>
+          <div>
+            <p className="detail-label">{translate('payment.methodLabel')}</p>
+            <div className="payment-method-grid">
+              <button type="button" disabled={isBusy} onClick={() => setSelectedPaymentMethod('alipay')}>
+                {translate('payment.method.alipay')}
+              </button>
+              <button type="button" disabled={isBusy} onClick={() => setSelectedPaymentMethod('wechat-pay')}>
+                {translate('payment.method.wechat')}
+              </button>
+              <button type="button" disabled={isBusy} onClick={() => setSelectedPaymentMethod('nailong-pay')}>
+                {translate('payment.method.nailong')}
+              </button>
+            </div>
           </div>
         ) : (
           <div className="stack-form">
@@ -70,6 +73,7 @@ export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onConf
             </div>
 
             <div className="action-cluster">
+              <span className="detail-label">{translate('payment.confirmLabel')}</span>
               <button
                 type="button"
                 disabled={isBusy}

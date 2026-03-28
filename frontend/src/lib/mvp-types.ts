@@ -106,6 +106,8 @@ export type FlightItemDetailsResponse = {
   arrivalTime: string
   cabinClass: string
   travelerIds: string[]
+  reservationStatus: string | null
+  reservationExpiresAt: string | null
   unitPrice: string
   currency: string
 }
@@ -120,6 +122,8 @@ export type HotelItemDetailsResponse = {
   checkOutDate: string
   guestTravelerIds: string[]
   roomCount: number
+  reservationStatus: string | null
+  reservationExpiresAt: string | null
   unitPrice: string
   totalPrice: string
   currency: string

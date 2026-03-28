@@ -148,17 +148,27 @@ export function HotelsPanel({
                           })
                         }}
                       >
-                        <input name="checkInDate" type="date" defaultValue={searchCheckInDate} />
-                        <input name="checkOutDate" type="date" defaultValue={searchCheckOutDate} />
-                        <input
-                          name="roomCount"
-                          type="number"
-                          min={1}
-                          max={roomTypeResponse.availableRoomsForRequestedStay ?? undefined}
-                          defaultValue={1}
-                          disabled={isGuestMode || isBusy || !roomTypeResponse.isBookableForRequestedStay}
-                        />
+                        <label>
+                          {translate('hotels.checkInDate')}
+                          <input name="checkInDate" type="date" defaultValue={searchCheckInDate} />
+                        </label>
+                        <label>
+                          {translate('hotels.checkOutDate')}
+                          <input name="checkOutDate" type="date" defaultValue={searchCheckOutDate} />
+                        </label>
+                        <label>
+                          {translate('hotels.roomCount')}
+                          <input
+                            name="roomCount"
+                            type="number"
+                            min={1}
+                            max={roomTypeResponse.availableRoomsForRequestedStay ?? undefined}
+                            defaultValue={1}
+                            disabled={isGuestMode || isBusy || !roomTypeResponse.isBookableForRequestedStay}
+                          />
+                        </label>
                         <div className="checkbox-list">
+                          <p className="detail-label">{translate('hotels.selectGuests')}</p>
                           {travelers.map(traveler => (
                             <label key={traveler.travelerId} className="checkbox-row">
                               <input
