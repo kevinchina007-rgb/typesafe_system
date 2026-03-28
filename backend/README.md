@@ -9,6 +9,7 @@ This backend now exposes a minimal runnable HTTP layer for the travel booking MV
 - `traveler-domain`: traveler ownership, default traveler rules, repository/service traits
 - `flight-domain`: airlines, flights, cabin inventory, search, and booking availability rules
 - `hotel-domain`: hotels, room types, room inventory, stay availability, and booking rules
+- `train-domain`: railway managers, train journeys, train stops, whole-train seat inventories, adjacent segment fares, and offset-based refund policy rules
 - `order-domain`: `Order` aggregate root, flight and hotel line items, payment/refund state flow, repository/service traits
 - `persistence-jdbc`: schema init, Doobie repositories, JSON snapshot codecs, H2-backed development persistence
 - `api-gateway`: DTO mapping, application services, HTTP API, wiring, and startup
@@ -101,6 +102,7 @@ npm run dev
 11. Complete payment once.
 12. Use manager review to confirm or reject booking items.
 13. Restart the backend in `database` mode and verify the same user, travelers, orders, and reservations are still present.
+14. Optionally create a railway manager, enter train admin, create a train journey, and add a train ticket item into an order shell.
 
 ## MVP API Summary
 
@@ -115,8 +117,12 @@ npm run dev
 - `GET /api/flights/:flightId`
 - `GET /api/hotels`
 - `GET /api/hotels/:hotelId`
+- `GET /api/trains`
+- `GET /api/trains/:trainId`
 - `POST /api/flights/book`
 - `POST /api/hotels/book`
+- `POST /api/orders`
+- `POST /api/orders/:orderId/train-items`
 - `GET /api/orders/:orderId`
 - `GET /api/users/:userId/orders`
 - `POST /api/orders/:orderId/payment-session`
@@ -128,6 +134,10 @@ npm run dev
 - `POST /api/manager/session/login`
 - `POST /api/manager/booking-items/:orderItemId/confirm`
 - `POST /api/manager/booking-items/:orderItemId/reject`
+- `POST /api/train-admin/managers`
+- `POST /api/train-admin/session/login`
+- `GET /api/train-admin/trains`
+- `POST /api/train-admin/trains`
 
 ## Notes
 
@@ -161,6 +171,11 @@ npm run dev
 - `SchemaInitializer` is idempotent and safe to run on repeated startup.
 - Restart/recoverability is covered by file-backed H2 integration tests, not only same-process in-memory tests.
 - In-memory mode is still available as a fallback for comparison and rollback during migration.
+- Train Ticket Phase 1 reuses the existing order shell and adds a train item into `Order`; it does not introduce a separate train-only order aggregate.
+- Train route prices for non-adjacent stations are derived by summing adjacent `train_segment_prices`; the full route price is treated as derived view data.
+- Train refund policy segments are modeled only by offsets relative to departure time.
+- Train payments auto-settle into booked semantics after payment success and skip supplier review.
+- Train locking currently uses a whole-train seat inventory model (`totalSeats` / `saleableSeats`) rather than strict segment-level inventory.
 
 ## Real Inventory Locking Completed Scope
 
@@ -200,7 +215,27 @@ npm run dev
 - Mixed booking is supported:
   - flight and hotel reservations can coexist under one order
   - each reservation can expire, confirm, or release independently
-  - one item-side transition should not corrupt the other
+- one item-side transition should not corrupt the other
+
+## Train Ticket Phase 1 Scope
+
+- Railway managers create and maintain train journeys, but do not review train orders.
+- Train journeys include:
+  - ordered stops
+  - whole-train seat inventories by seat class
+  - adjacent segment prices by seat class
+  - a sale start time
+  - refund policy segments modeled by offsets before departure
+- Train items reuse the existing order, payment, refund, persistence, and booking foundations.
+- Train route prices are pure derived values:
+  - sum adjacent segment prices from `fromStation` to `toStation`
+- Train refund amount is computed in the train domain/application layer, and the generic order refund flow only consumes that computed amount.
+
+## Train Locking Limits
+
+- Current train locking only covers whole-train seat inventory by seat class.
+- It is not a strict segment-level inventory model between arbitrary stop pairs.
+- Strict train segment inventory is explicitly a future enhancement beyond Train Ticket Phase 1.
 
 ## Future Enhancements Still Not Done
 
