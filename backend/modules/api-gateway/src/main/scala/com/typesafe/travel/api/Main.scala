@@ -1,18 +1,47 @@
 package com.typesafe.travel.api
 
 import cats.effect.{IO, IOApp}
-import com.comcast.ip4s.{host, port}
+import com.comcast.ip4s.{Host, Port, host}
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.middleware.CORS
 
+import java.net.{BindException, HttpURLConnection, URI}
+
 object Main extends IOApp.Simple:
   override def run: IO[Unit] =
+    val backendPort = configuredBackendPort
     ApplicationWiring.create[IO].flatMap { applicationWiring =>
       EmberServerBuilder
         .default[IO]
         .withHost(host"0.0.0.0")
-        .withPort(port"8080")
+        .withPort(backendPort)
         .withHttpApp(CORS.policy.withAllowOriginAll(applicationWiring.httpApp))
         .build
         .useForever
+    }.handleErrorWith {
+      case _: BindException =>
+        if isBackendAlreadyHealthy(backendPort) then
+          IO.println(s"travel-backend is already running on port ${backendPort.value}; startup skipped.")
+        else
+          IO.println(s"Port ${backendPort.value} is already in use. Stop the existing process or set TRAVEL_BACKEND_PORT to another port.")
+      case throwable =>
+        IO.raiseError(throwable)
     }
+
+  private def configuredBackendPort: Port =
+    sys.env
+      .get("TRAVEL_BACKEND_PORT")
+      .flatMap(_.trim.toIntOption)
+      .flatMap(Port.fromInt)
+      .getOrElse(Port.fromInt(8080).get)
+
+  private def isBackendAlreadyHealthy(backendPort: Port): Boolean =
+    val healthCheckUri = URI.create(s"http://${Host.fromString("127.0.0.1").get}:${backendPort.value}/api/health")
+    try
+      val connection = healthCheckUri.toURL.openConnection().asInstanceOf[HttpURLConnection]
+      connection.setConnectTimeout(1000)
+      connection.setReadTimeout(1000)
+      connection.setRequestMethod("GET")
+      connection.getResponseCode == 200
+    catch
+      case _: Throwable => false

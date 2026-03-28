@@ -14,8 +14,10 @@ import type {
   TravelerResponse,
   UserResponse,
 } from './mvp-types'
+import { getTravelBackendOrigin } from './runtime-config'
 
-const travelMvpApiBaseUrl = 'http://localhost:8080/api'
+const travelBackendOrigin = getTravelBackendOrigin()
+const travelMvpApiBaseUrl = `${travelBackendOrigin}/api`
 
 function formatApiErrorMessage(apiErrorResponse: ApiErrorResponse, status: number): string {
   return `${apiErrorResponse.code}|${apiErrorResponse.message}|HTTP ${status}`

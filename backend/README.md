@@ -93,16 +93,14 @@ npm run dev
 3. Create a user and sign in.
 4. Optionally upload a PNG or JPG avatar for that account.
 5. Add a traveler for that user.
-6. Create an empty booking shell.
-7. Browse flights with `departureAirport`, `arrivalAirport`, and `date`.
-8. Choose a cabin and add the flight to the booking.
-9. Browse hotels with `location`, `checkInDate`, and `checkOutDate`.
-10. Choose a room type and add the hotel stay to the booking.
-11. Open the booking page and confirm the snapshots are now part of the order.
-12. Submit the order.
-13. Authorize a payment, then capture it.
-14. Request a refund, approve it, and settle it.
-15. Restart the backend in `database` mode and verify the same user, travelers, and booking are still present.
+6. Browse flights with `departureAirport`, `arrivalAirport`, and `date`.
+7. Choose travelers and create a flight order directly.
+8. Browse hotels with `location`, `checkInDate`, and `checkOutDate`.
+9. Choose a room type, room count, and guests to create a hotel order directly.
+10. Open the booking page and confirm the order items and reservation holds are visible.
+11. Complete payment once.
+12. Use manager review to confirm or reject booking items.
+13. Restart the backend in `database` mode and verify the same user, travelers, orders, and reservations are still present.
 
 ## MVP API Summary
 
@@ -117,17 +115,19 @@ npm run dev
 - `GET /api/flights/:flightId`
 - `GET /api/hotels`
 - `GET /api/hotels/:hotelId`
-- `POST /api/orders`
-- `POST /api/orders/:orderId/flight-items`
-- `POST /api/orders/:orderId/hotel-items`
+- `POST /api/flights/book`
+- `POST /api/hotels/book`
 - `GET /api/orders/:orderId`
-- `POST /api/orders/:orderId/submit`
-- `POST /api/orders/:orderId/payments`
-- `POST /api/orders/:orderId/payments/:paymentId/capture`
+- `GET /api/users/:userId/orders`
+- `POST /api/orders/:orderId/payment-session`
+- `POST /api/orders/:orderId/payment-session/confirm`
 - `POST /api/orders/:orderId/cancel`
 - `POST /api/orders/:orderId/refunds`
 - `POST /api/orders/:orderId/refunds/:refundId/approve`
 - `POST /api/orders/:orderId/refunds/:refundId/settle`
+- `POST /api/manager/session/login`
+- `POST /api/manager/booking-items/:orderItemId/confirm`
+- `POST /api/manager/booking-items/:orderItemId/reject`
 
 ## Notes
 
@@ -160,6 +160,53 @@ npm run dev
 - Search aliases remain application-layer rules, not database-driven search infrastructure.
 - `SchemaInitializer` is idempotent and safe to run on repeated startup.
 - Restart/recoverability is covered by file-backed H2 integration tests, not only same-process in-memory tests.
-- Cabin availability is checked only when adding a flight item. This MVP does not implement inventory locking or concurrency control yet.
-- Room availability is checked day by day for the requested stay only when adding a hotel item. This MVP does not implement inventory locking or concurrency control yet.
 - In-memory mode is still available as a fallback for comparison and rollback during migration.
+
+## Real Inventory Locking Completed Scope
+
+- Flight locking and hotel locking both use persisted `inventory_reservations`.
+- Shared reservation fields are:
+  - `reservation_id`
+  - `resource_type`
+  - `resource_id`
+  - `order_id`
+  - `order_item_id`
+  - `quantity`
+  - `status`
+  - `reserved_at`
+  - `expires_at`
+  - `confirmed_at`
+  - `released_at`
+- Hotel reservations additionally store:
+  - `check_in_date`
+  - `check_out_date`
+- Reservation lifecycle is unified as:
+  - `Active`
+  - `Expired`
+  - `Confirmed`
+  - `Released`
+- State transitions are:
+  - booking creates reservation -> `Active`
+  - TTL timeout via lazy cleanup -> `Expired`
+  - payment success -> `Confirmed`
+  - user cancel -> `Released`
+  - manager reject of an unconfirmed item -> `Released`
+- Reservation linkage is centered on stable `order_item_id`.
+- Flight sellable quantity is:
+  - `availableSeats - active(unexpired) reservations - confirmed reservations`
+- Hotel sellable quantity is evaluated day by day over `[checkInDate, checkOutDate)`:
+  - `availableRooms(day) - active(unexpired) overlapping reservations - confirmed overlapping reservations`
+  - if any day is short, the whole stay lock fails
+- Mixed booking is supported:
+  - flight and hotel reservations can coexist under one order
+  - each reservation can expire, confirm, or release independently
+  - one item-side transition should not corrupt the other
+
+## Future Enhancements Still Not Done
+
+- No distributed locking or multi-instance strong consistency.
+- No background scheduler; timeout cleanup is still lazy.
+- No optimistic locking or inventory version conflict handling.
+- No automatic rollback of already confirmed reservations on manager reject.
+- No analytics, reporting, or reservation operations console.
+- No commercial-grade high-concurrency guarantees across multiple nodes.

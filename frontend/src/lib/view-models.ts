@@ -1,4 +1,7 @@
 import type { AppLanguage } from './mvp-types'
+import { getTravelBackendOrigin } from './runtime-config'
+
+const travelBackendOrigin = getTravelBackendOrigin()
 
 export function deriveTravelerTypeLabelFromBirthDate(birthDateValue: string, language: AppLanguage): string {
   if (!birthDateValue) {
@@ -58,6 +61,8 @@ export function mapBackendStatusToProductLabel(backendStatus: string, language: 
     Paid: 'Paid',
     Booked: 'Booked',
     PendingRefund: 'Pending refund',
+    Expired: 'Expired',
+    Released: 'Released',
   }
 
   const chineseStatusLabels: Record<string, string> = {
@@ -86,12 +91,14 @@ export function mapBackendStatusToProductLabel(backendStatus: string, language: 
     Available: '可预订',
     Inactive: '已停用',
     NotSubmitted: '未提交',
-    PendingSupplierConfirmation: '待供给侧确认',
-    SupplierConfirmed: '供给侧已确认',
-    SupplierRejected: '供给侧已拒绝',
+    PendingSupplierConfirmation: '待供应侧确认',
+    SupplierConfirmed: '供应侧已确认',
+    SupplierRejected: '供应侧已拒绝',
     Paid: '已支付',
     Booked: '已预订',
     PendingRefund: '待退款',
+    Expired: '已过期',
+    Released: '已释放',
   }
 
   const labelTable = language === 'zh' ? chineseStatusLabels : englishStatusLabels
@@ -170,6 +177,12 @@ export function mapTechnicalErrorToFriendlyMessage(backendMessage: string, langu
   }
   if (normalizedMessage.includes('payment_already_completed')) {
     return language === 'zh' ? '这个订单已经支付成功，不能重复支付。' : 'This order has already been paid.'
+  }
+  if (normalizedMessage.includes('inventory_not_available')) {
+    return language === 'zh' ? '当前库存已不足，请重新选择。' : 'The selected inventory is no longer available.'
+  }
+  if (normalizedMessage.includes('reservation_expired')) {
+    return language === 'zh' ? '当前锁定已超时，请重新下单。' : 'This reservation has expired. Please book again.'
   }
   if (normalizedMessage.includes('birth date') || normalizedMessage.includes('future') || normalizedMessage.includes('validation_error')) {
     return language === 'zh' ? '请检查日期和输入内容后再试。' : 'Please check your dates and input values, then try again.'
@@ -314,6 +327,10 @@ export function localizeSupplierReviewStatus(supplierReviewStatus: string, langu
   return mapBackendStatusToProductLabel(supplierReviewStatus, language)
 }
 
+export function localizeReservationStatus(reservationStatus: string, language: AppLanguage): string {
+  return mapBackendStatusToProductLabel(reservationStatus, language)
+}
+
 export function localizeManagerTaskType(taskTypeValue: string, language: AppLanguage): string {
   const labels =
     language === 'zh'
@@ -337,5 +354,5 @@ export function toBackendAssetUrl(relativeAssetUrl: string): string {
   if (relativeAssetUrl.startsWith('http://') || relativeAssetUrl.startsWith('https://')) {
     return relativeAssetUrl
   }
-  return `http://localhost:8080${relativeAssetUrl}`
+  return `${travelBackendOrigin}${relativeAssetUrl}`
 }

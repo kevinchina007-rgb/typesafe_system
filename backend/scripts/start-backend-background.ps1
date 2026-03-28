@@ -4,11 +4,17 @@ param(
 )
 
 $backendRootPath = 'E:\typesafe\template\backend'
-$startScriptPath = Join-Path $backendRootPath 'scripts\start-backend.cmd'
+$startScriptPath = Join-Path $backendRootPath 'scripts\start-backend.ps1'
 
-Start-Process cmd.exe `
+Start-Process powershell.exe `
   -WorkingDirectory $backendRootPath `
   -ArgumentList @(
-    '/k',
-    "`"$startScriptPath`" $RepositoryMode"
+    '-NoProfile',
+    '-ExecutionPolicy',
+    'Bypass',
+    '-NoExit',
+    '-File',
+    $startScriptPath,
+    '-RepositoryMode',
+    $RepositoryMode
   )
