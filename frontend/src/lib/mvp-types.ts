@@ -95,6 +95,53 @@ export type HotelListResponse = {
   hotels: HotelResponse[]
 }
 
+export type TrainStopResponse = {
+  stopId: string
+  stationCode: string
+  stationName: string
+  sequenceNo: number
+  arrivalTime: string | null
+  departureTime: string | null
+}
+
+export type TrainSeatInventoryResponse = {
+  inventoryId: string
+  seatClass: string
+  totalSeats: number
+  saleableSeats: number
+  status: string
+}
+
+export type TrainSegmentPriceResponse = {
+  fromStationCode: string
+  toStationCode: string
+  seatClass: string
+  amount: string
+  currency: string
+}
+
+export type TrainRefundPolicyResponse = {
+  startOffsetMinutesBeforeDeparture: number
+  endOffsetMinutesBeforeDeparture: number
+  refundType: string
+  refundRate: string
+}
+
+export type TrainResponse = {
+  trainId: string
+  trainNumber: string
+  saleStartsAt: string
+  status: string
+  stops: TrainStopResponse[]
+  seatInventories: TrainSeatInventoryResponse[]
+  segmentPrices: TrainSegmentPriceResponse[]
+  refundPolicies: TrainRefundPolicyResponse[]
+}
+
+export type TrainListResponse = {
+  trains: TrainResponse[]
+}
+
 export type FlightItemDetailsResponse = {
   airlineName: string
   airlineCode: string
@@ -129,6 +176,24 @@ export type HotelItemDetailsResponse = {
   currency: string
 }
 
+export type TrainItemDetailsResponse = {
+  trainId: string
+  trainNumber: string
+  fromStationCode: string
+  fromStationName: string
+  toStationCode: string
+  toStationName: string
+  departureTime: string
+  arrivalTime: string
+  seatClass: string
+  travelerIds: string[]
+  reservationStatus: string | null
+  reservationExpiresAt: string | null
+  unitPrice: string
+  totalPrice: string
+  currency: string
+}
+
 export type SupplierReviewDecisionResponse = {
   decision: string
   reason: string | null
@@ -147,6 +212,7 @@ export type OrderLineItemResponse = {
   summaryLabel: string
   flightDetails: FlightItemDetailsResponse | null
   hotelDetails: HotelItemDetailsResponse | null
+  trainDetails: TrainItemDetailsResponse | null
 }
 
 export type PaymentResponse = {
@@ -198,6 +264,15 @@ export type AppLanguage = 'en' | 'zh'
 
 export type ManagerType = 'airline' | 'hotel'
 
+export type TrainAdminSessionResponse = {
+  managerId: string
+  operatorCode: string
+  email: string
+  displayName: string
+  status: string
+  managedTrains: TrainResponse[]
+}
+
 export type ManagerSessionResponse = {
   managerId: string
   managerType: string
@@ -239,7 +314,7 @@ export type ManagerRefundTaskListResponse = {
   tasks: ManagerRefundTaskResponse[]
 }
 
-export type AppViewKey = 'explore' | 'account' | 'travelers' | 'flights' | 'hotels' | 'bookings' | 'manager'
+export type AppViewKey = 'explore' | 'account' | 'travelers' | 'flights' | 'hotels' | 'trains' | 'bookings' | 'manager' | 'trainAdmin'
 
 export type AppNotice = {
   id: number

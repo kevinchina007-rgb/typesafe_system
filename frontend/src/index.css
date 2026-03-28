@@ -20,7 +20,8 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
@@ -49,12 +50,18 @@ button:disabled {
 }
 
 input,
-select {
+select,
+textarea {
   width: 100%;
   border: 1px solid #c9d6e5;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.88);
   padding: 0.9rem 1rem;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
 }
 
 .layout-shell {

@@ -5,6 +5,9 @@ import type {
   HealthResponse,
   HotelListResponse,
   HotelResponse,
+  TrainAdminSessionResponse,
+  TrainListResponse,
+  TrainResponse,
   ManagerRefundTaskListResponse,
   ManagerSessionResponse,
   ManagerTaskListResponse,
@@ -194,6 +197,44 @@ export const travelMvpApiClient = {
     return apiRequest(`/hotels/${hotelId}${suffix}`)
   },
 
+  listTrains: (query: {
+    fromStation?: string
+    toStation?: string
+    date?: string
+  }): Promise<TrainListResponse> => {
+    const searchParams = new URLSearchParams()
+    if (query.fromStation) searchParams.set('fromStation', query.fromStation)
+    if (query.toStation) searchParams.set('toStation', query.toStation)
+    if (query.date) searchParams.set('date', query.date)
+    const suffix = searchParams.toString() ? `?${searchParams.toString()}` : ''
+    return apiRequest(`/trains${suffix}`)
+  },
+
+  getTrain: (trainId: string): Promise<TrainResponse> => apiRequest(`/trains/${trainId}`),
+
+  createOrder: (payload: { ownerUserId: string; orderCurrency: string }): Promise<OrderResponse> =>
+    apiRequest('/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  addTrainItemToOrder: (
+    orderId: string,
+    payload: {
+      buyerUserId: string
+      orderId: string
+      trainId: string
+      travelerIds: string[]
+      fromStationCode: string
+      toStationCode: string
+      seatClass: string
+    },
+  ): Promise<OrderResponse> =>
+    apiRequest(`/orders/${orderId}/train-items`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   createFlightOrder: (
     payload: {
       buyerUserId: string
@@ -249,6 +290,39 @@ export const travelMvpApiClient = {
     location: string
   }): Promise<ManagerSessionResponse> =>
     apiRequest('/manager/hotel/register', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  registerRailwayManager: (payload: {
+    operatorCode: string
+    email: string
+    displayName: string
+  }): Promise<TrainAdminSessionResponse> =>
+    apiRequest('/train-admin/managers', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  loginRailwayManager: (payload: { email: string }): Promise<TrainAdminSessionResponse> =>
+    apiRequest('/train-admin/session/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listManagedTrains: (managerId: string): Promise<TrainListResponse> =>
+    apiRequest(`/train-admin/trains?managerId=${encodeURIComponent(managerId)}`),
+
+  createTrainJourney: (payload: {
+    managerId: string
+    trainNumber: string
+    saleStartsAt: string
+    stops: Array<{ stationCode: string; stationName: string; arrivalTime?: string | null; departureTime?: string | null }>
+    seatInventories: Array<{ seatClass: string; totalSeats: number; saleableSeats: number }>
+    segmentPrices: Array<{ fromStationCode: string; toStationCode: string; seatClass: string; amount: string; currency: string }>
+    refundPolicies: Array<{ startOffsetMinutesBeforeDeparture: number; endOffsetMinutesBeforeDeparture: number; refundType: string; refundRate: string }>
+  }): Promise<TrainResponse> =>
+    apiRequest('/train-admin/trains', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

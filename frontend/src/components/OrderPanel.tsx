@@ -6,6 +6,7 @@ import {
   localizePaymentMethod,
   localizeReservationStatus,
   localizeSupplierReviewStatus,
+  localizeTrainSeatClass,
   mapBackendStatusToProductLabel,
 } from '../lib/view-models'
 
@@ -124,6 +125,30 @@ export function OrderPanel({
                               ) : null}
                               <p>
                                 {`${translate('booking.hotel.unitPrice')}: ${orderLineItem.hotelDetails.unitPrice} ${orderLineItem.hotelDetails.currency} | ${translate('booking.hotel.totalPrice')}: ${orderLineItem.hotelDetails.totalPrice} ${orderLineItem.hotelDetails.currency}`}
+                              </p>
+                            </>
+                          ) : null}
+                          {orderLineItem.trainDetails ? (
+                            <>
+                              <p>
+                                {`${translate('booking.train.route')}: ${orderLineItem.trainDetails.fromStationName} (${orderLineItem.trainDetails.fromStationCode}) -> ${orderLineItem.trainDetails.toStationName} (${orderLineItem.trainDetails.toStationCode})`}
+                              </p>
+                              <p>
+                                {`${translate('booking.train.seatClass')}: ${localizeTrainSeatClass(orderLineItem.trainDetails.seatClass, currentLanguage)} | ${translate('booking.train.travelers')}: ${orderLineItem.trainDetails.travelerIds.length}`}
+                              </p>
+                              <p>
+                                {`${translate('booking.train.departureTime')}: ${formatIsoDateTime(orderLineItem.trainDetails.departureTime, translate('booking.notYet'))} | ${translate('booking.train.arrivalTime')}: ${formatIsoDateTime(orderLineItem.trainDetails.arrivalTime, translate('booking.notYet'))}`}
+                              </p>
+                              {orderLineItem.trainDetails.reservationStatus ? (
+                                <p>
+                                  {`${translate('booking.train.reservation')}: ${localizeReservationStatus(orderLineItem.trainDetails.reservationStatus, currentLanguage)}`}
+                                  {orderLineItem.trainDetails.reservationExpiresAt
+                                    ? ` | ${translate('booking.train.reservationExpiresAt')}: ${formatIsoDateTime(orderLineItem.trainDetails.reservationExpiresAt, translate('booking.notYet'))}`
+                                    : ''}
+                                </p>
+                              ) : null}
+                              <p>
+                                {`${translate('booking.train.unitPrice')}: ${orderLineItem.trainDetails.unitPrice} ${orderLineItem.trainDetails.currency} | ${translate('booking.train.totalPrice')}: ${orderLineItem.trainDetails.totalPrice} ${orderLineItem.trainDetails.currency}`}
                               </p>
                             </>
                           ) : null}

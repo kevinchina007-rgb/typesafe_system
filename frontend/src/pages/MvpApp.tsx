@@ -6,6 +6,8 @@ import { HotelsPanel } from '../components/HotelsPanel'
 import { ManagerPanel } from '../components/ManagerPanel'
 import { OrderPanel } from '../components/OrderPanel'
 import { PaymentModal } from '../components/PaymentModal'
+import { TrainAdminPanel } from '../components/TrainAdminPanel'
+import { TrainsPanel } from '../components/TrainsPanel'
 import { ToastNotice } from '../components/ToastNotice'
 import { TravelerPanel } from '../components/TravelerPanel'
 import { UserPanel } from '../components/UserPanel'
@@ -22,6 +24,8 @@ import type {
   ManagerSessionResponse,
   ManagerTaskResponse,
   OrderResponse,
+  TrainAdminSessionResponse,
+  TrainResponse,
   TravelerResponse,
   UserResponse,
 } from '../lib/mvp-types'
@@ -37,6 +41,7 @@ export function MvpApp() {
   const [travelerResponses, setTravelerResponses] = useState<TravelerResponse[]>([])
   const [orderResponses, setOrderResponses] = useState<OrderResponse[]>([])
   const [currentManagerSession, setCurrentManagerSession] = useState<ManagerSessionResponse | null>(null)
+  const [currentTrainAdminSession, setCurrentTrainAdminSession] = useState<TrainAdminSessionResponse | null>(null)
   const [managerTaskResponses, setManagerTaskResponses] = useState<ManagerTaskResponse[]>([])
   const [managerRefundTaskResponses, setManagerRefundTaskResponses] = useState<ManagerRefundTaskResponse[]>([])
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<OrderResponse | null>(null)
@@ -182,6 +187,37 @@ export function MvpApp() {
       showNotice('error', translate('error.friendly.default'), mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage), technicalMessage)
       return []
     }
+  }
+
+  async function searchTrains(payload: {
+    fromStation?: string
+    toStation?: string
+    date?: string
+  }): Promise<TrainResponse[]> {
+    try {
+      const trainListResponse = await travelMvpApiClient.listTrains(payload)
+      return trainListResponse.trains
+    } catch (error) {
+      const technicalMessage = error instanceof Error ? error.message : 'Unknown error'
+      showNotice('error', translate('error.friendly.default'), mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage), technicalMessage)
+      return []
+    }
+  }
+
+  async function reloadManagedTrains() {
+    if (!currentTrainAdminSession) {
+      return
+    }
+
+    const trainListResponse = await travelMvpApiClient.listManagedTrains(currentTrainAdminSession.managerId)
+    setCurrentTrainAdminSession(currentSession =>
+      currentSession
+        ? {
+            ...currentSession,
+            managedTrains: trainListResponse.trains,
+          }
+        : currentSession,
+    )
   }
 
   return (
@@ -359,6 +395,37 @@ export function MvpApp() {
           />
         ) : null}
 
+        {currentViewKey === 'trains' ? (
+          <TrainsPanel
+            currentLanguage={currentLanguage}
+            isBusy={isPageBusy}
+            isGuestMode={isGuestMode}
+            travelers={travelerResponses}
+            translate={translate}
+            onSearchTrains={searchTrains}
+            onBookTrain={async payload => {
+              const signedInUser = requireSignedInUser()
+              await runPageAction(async () => {
+                const createdOrder = await travelMvpApiClient.createOrder({
+                  ownerUserId: signedInUser.userId,
+                  orderCurrency: payload.orderCurrency,
+                })
+                await travelMvpApiClient.addTrainItemToOrder(createdOrder.orderId, {
+                  buyerUserId: signedInUser.userId,
+                  orderId: createdOrder.orderId,
+                  trainId: payload.trainId,
+                  travelerIds: payload.travelerIds,
+                  fromStationCode: payload.fromStationCode,
+                  toStationCode: payload.toStationCode,
+                  seatClass: payload.seatClass,
+                })
+                await reloadOrders()
+                setCurrentViewKey('bookings')
+              }, translate('trains.bookNow'), translate('notice.bookingCreated'))
+            }}
+          />
+        ) : null}
+
         {currentViewKey === 'bookings' ? (
           <OrderPanel
             currentLanguage={currentLanguage}
@@ -494,6 +561,53 @@ export function MvpApp() {
               setCurrentManagerSession(null)
               setManagerTaskResponses([])
               setManagerRefundTaskResponses([])
+            }}
+          />
+        ) : null}
+
+        {currentViewKey === 'trainAdmin' ? (
+          <TrainAdminPanel
+            currentLanguage={currentLanguage}
+            isBusy={isPageBusy}
+            trainAdminSession={currentTrainAdminSession}
+            translate={translate}
+            onRegisterRailwayManager={async payload => {
+              await runPageAction(async () => {
+                const session = await travelMvpApiClient.registerRailwayManager(payload)
+                setCurrentTrainAdminSession(session)
+              }, translate('trainAdmin.createAccount'), translate('notice.actionSuccess'))
+            }}
+            onLoginRailwayManager={async payload => {
+              await runPageAction(async () => {
+                const session = await travelMvpApiClient.loginRailwayManager(payload)
+                setCurrentTrainAdminSession(session)
+              }, translate('trainAdmin.login'), translate('notice.actionSuccess'))
+            }}
+            onReloadManagedTrains={async () => {
+              await runPageAction(async () => {
+                await reloadManagedTrains()
+              }, translate('trainAdmin.refresh'), translate('notice.actionSuccess'))
+            }}
+            onCreateTrainJourney={async payload => {
+              const currentSession = currentTrainAdminSession
+              if (!currentSession) {
+                throw new Error(translate('error.managerNotFound'))
+              }
+              await runPageAction(async () => {
+                await travelMvpApiClient.createTrainJourney({
+                  managerId: currentSession.managerId,
+                  trainNumber: payload.trainNumber,
+                  saleStartsAt: payload.saleStartsAt,
+                  stops: payload.stops,
+                  seatInventories: payload.seatInventories,
+                  segmentPrices: payload.segmentPrices,
+                  refundPolicies: payload.refundPolicies,
+                })
+                await reloadManagedTrains()
+              }, translate('trainAdmin.createTrain'), translate('notice.actionSuccess'))
+            }}
+            onLogoutRailwayManager={() => {
+              setCurrentTrainAdminSession(null)
             }}
           />
         ) : null}

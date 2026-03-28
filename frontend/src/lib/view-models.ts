@@ -350,6 +350,30 @@ export function localizeManagerTaskType(taskTypeValue: string, language: AppLang
   return labels[taskTypeValue as keyof typeof labels] ?? taskTypeValue
 }
 
+export function localizeTrainSeatClass(seatClassValue: string, language: AppLanguage): string {
+  const normalizedSeatClass = seatClassValue.trim().toLowerCase()
+  const labels =
+    language === 'zh'
+      ? {
+          'second-class': 'Second class',
+          'first-class': 'First class',
+          business: 'Business',
+          sleeper: 'Sleeper',
+          softsleeper: 'Soft sleeper',
+          hardsleeper: 'Hard sleeper',
+        }
+      : {
+          'second-class': 'Second class',
+          'first-class': 'First class',
+          business: 'Business',
+          sleeper: 'Sleeper',
+          softsleeper: 'Soft sleeper',
+          hardsleeper: 'Hard sleeper',
+        }
+
+  return labels[normalizedSeatClass as keyof typeof labels] ?? seatClassValue
+}
+
 export function toBackendAssetUrl(relativeAssetUrl: string): string {
   if (relativeAssetUrl.startsWith('http://') || relativeAssetUrl.startsWith('https://')) {
     return relativeAssetUrl
