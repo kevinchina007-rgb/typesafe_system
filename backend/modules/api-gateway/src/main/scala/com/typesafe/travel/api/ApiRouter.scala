@@ -13,6 +13,7 @@ import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
+import com.typesafe.travel.train.domain.*
 import com.typesafe.travel.traveler.domain.*
 import io.circe.syntax.*
 import org.http4s.*
@@ -31,6 +32,8 @@ final class ApiRouter[F[_]: Async](
     orderLifecycleApplicationService: OrderLifecycleApplicationService[F],
     flightBookingApplicationService: FlightBookingApplicationService[F],
     hotelBookingApplicationService: HotelBookingApplicationService[F],
+    trainBookingApplicationService: TrainBookingApplicationService[F],
+    trainAdminApplicationService: TrainAdminApplicationService[F],
     managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
     avatarApplicationService: AvatarApplicationService[F],
     userRepository: UserRepository[F],
@@ -52,8 +55,12 @@ final class ApiRouter[F[_]: Async](
   private given registerHotelManagerDecoder: EntityDecoder[F, RegisterHotelManagerRequestDto] = jsonOf[F, RegisterHotelManagerRequestDto]
   private given createManagerFlightDecoder: EntityDecoder[F, CreateManagerFlightRequestDto] = jsonOf[F, CreateManagerFlightRequestDto]
   private given createManagerRoomTypeDecoder: EntityDecoder[F, CreateManagerRoomTypeRequestDto] = jsonOf[F, CreateManagerRoomTypeRequestDto]
+  private given registerRailwayManagerDecoder: EntityDecoder[F, RegisterRailwayManagerRequestDto] = jsonOf[F, RegisterRailwayManagerRequestDto]
+  private given trainAdminLoginDecoder: EntityDecoder[F, TrainAdminLoginRequestDto] = jsonOf[F, TrainAdminLoginRequestDto]
+  private given createTrainJourneyDecoder: EntityDecoder[F, CreateTrainJourneyRequestDto] = jsonOf[F, CreateTrainJourneyRequestDto]
   private given addFlightItemDecoder: EntityDecoder[F, BookFlightRequestDto] = jsonOf[F, BookFlightRequestDto]
   private given addHotelItemDecoder: EntityDecoder[F, BookHotelRequestDto] = jsonOf[F, BookHotelRequestDto]
+  private given addTrainItemDecoder: EntityDecoder[F, BookTrainItemRequestDto] = jsonOf[F, BookTrainItemRequestDto]
   private given authorizePaymentDecoder: EntityDecoder[F, PayOrderRequestDto] = jsonOf[F, PayOrderRequestDto]
   private given requestRefundDecoder: EntityDecoder[F, RequestRefundRequestDto] = jsonOf[F, RequestRefundRequestDto]
   private given multipartDecoder: EntityDecoder[F, Multipart[F]] = EntityDecoder.multipart[F]
@@ -287,6 +294,104 @@ final class ApiRouter[F[_]: Async](
         response <- Ok(HotelResponseDto.fromDomain(hotel, stayPeriod).asJson)
       yield response
 
+    case request @ POST -> Root / "api" / "train-admin" / "managers" =>
+      for
+        registerRailwayManagerRequestDto <- request.as[RegisterRailwayManagerRequestDto]
+        primaryEmailAddress <- fromEither(EmailAddress.create(registerRailwayManagerRequestDto.email))
+        displayName <- fromEither(PersonName.create(registerRailwayManagerRequestDto.displayName))
+        managerSession <- trainAdminApplicationService.registerRailwayManager(
+          operatorCode = registerRailwayManagerRequestDto.operatorCode,
+          primaryEmailAddress = primaryEmailAddress,
+          displayName = displayName,
+          createdAt = Instant.now()
+        )
+        response <- Created(TrainAdminSessionResponseDto.fromApplication(managerSession).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "train-admin" / "session" / "login" =>
+      for
+        trainAdminLoginRequestDto <- request.as[TrainAdminLoginRequestDto]
+        primaryEmailAddress <- fromEither(EmailAddress.create(trainAdminLoginRequestDto.email))
+        managerSession <- trainAdminApplicationService.loginRailwayManager(primaryEmailAddress)
+        response <- Ok(TrainAdminSessionResponseDto.fromApplication(managerSession).asJson)
+      yield response
+
+    case GET -> Root / "api" / "train-admin" / "trains" :? ManagerIdQueryParamMatcher(managerIdValue) =>
+      for
+        managerIdText <- fromEither(managerIdValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
+        trains <- trainAdminApplicationService.listManagedTrains(ManagerId(managerIdText))
+        response <- Ok(TrainListResponseDto(trains.map(TrainResponseDto.fromDomain)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "train-admin" / "trains" =>
+      for
+        createTrainJourneyRequestDto <- request.as[CreateTrainJourneyRequestDto]
+        trainNumber <- fromEither(TrainDtoMappers.toTrainNumber(createTrainJourneyRequestDto.trainNumber))
+        stops <- createTrainJourneyRequestDto.stops.traverse { stopRequestDto =>
+          for
+            stationCode <- fromEither(TrainDtoMappers.toTrainStationCode(stopRequestDto.stationCode))
+            stationName <- fromEither(TrainDtoMappers.toTrainStationName(stopRequestDto.stationName))
+          yield CreateTrainStopInput(
+            stationCode = stationCode,
+            stationName = stationName,
+            arrivalTime = stopRequestDto.arrivalTime.map(Instant.parse),
+            departureTime = stopRequestDto.departureTime.map(Instant.parse)
+          )
+        }
+        seatInventories <- createTrainJourneyRequestDto.seatInventories.traverse { seatInventoryRequestDto =>
+          for
+            seatClass <- fromEither(TrainDtoMappers.toTrainSeatClass(seatInventoryRequestDto.seatClass))
+            totalSeats <- fromEither(SeatCount.create(seatInventoryRequestDto.totalSeats))
+            saleableSeats <- fromEither(SeatCount.create(seatInventoryRequestDto.saleableSeats))
+          yield CreateTrainSeatInventoryInput(seatClass, totalSeats, saleableSeats)
+        }
+        segmentPrices <- createTrainJourneyRequestDto.segmentPrices.traverse { segmentPriceRequestDto =>
+          for
+            fromStationCode <- fromEither(TrainDtoMappers.toTrainStationCode(segmentPriceRequestDto.fromStationCode))
+            toStationCode <- fromEither(TrainDtoMappers.toTrainStationCode(segmentPriceRequestDto.toStationCode))
+            seatClass <- fromEither(TrainDtoMappers.toTrainSeatClass(segmentPriceRequestDto.seatClass))
+            price <- fromEither(Money.create(BigDecimal(segmentPriceRequestDto.amount), TrainDtoMappers.toCurrency(segmentPriceRequestDto.currency)))
+          yield CreateTrainSegmentPriceInput(fromStationCode, toStationCode, seatClass, price)
+        }
+        refundPolicies <- createTrainJourneyRequestDto.refundPolicies.traverse { refundPolicyRequestDto =>
+          for
+            refundRate <- fromEither(TrainDtoMappers.toRefundRate(refundPolicyRequestDto.refundRate))
+          yield CreateTrainRefundPolicyInput(
+            startOffsetBeforeDeparture = TrainDtoMappers.toOffsetDuration(refundPolicyRequestDto.startOffsetMinutesBeforeDeparture),
+            endOffsetBeforeDeparture = TrainDtoMappers.toOffsetDuration(refundPolicyRequestDto.endOffsetMinutesBeforeDeparture),
+            refundType = TrainDtoMappers.toTrainRefundType(refundPolicyRequestDto.refundType),
+            refundRate = refundRate
+          )
+        }
+        trainJourney <- trainAdminApplicationService.createTrainJourney(
+          managerId = ManagerId(createTrainJourneyRequestDto.managerId),
+          trainNumber = trainNumber,
+          saleStartsAt = Instant.parse(createTrainJourneyRequestDto.saleStartsAt),
+          stops = stops,
+          seatConfigs = seatInventories,
+          segmentPrices = segmentPrices,
+          refundPolicies = refundPolicies,
+          createdAt = Instant.now()
+        )
+        response <- Created(TrainResponseDto.fromDomain(trainJourney).asJson)
+      yield response
+
+    case GET -> Root / "api" / "trains" :? FromStationQueryParamMatcher(fromStationValue) +&
+        ToStationQueryParamMatcher(toStationValue) +&
+        DepartureDateQueryParamMatcher(departureDateValue) =>
+      for
+        fromStationQuery <- parseOptionalSearchText(fromStationValue)
+        toStationQuery <- parseOptionalSearchText(toStationValue)
+        departureDate <- parseOptionalDate(departureDateValue)
+        trains <- trainBookingApplicationService.browseTrains(fromStationQuery, toStationQuery, departureDate)
+        response <- Ok(TrainListResponseDto(trains.map(TrainResponseDto.fromDomain)).asJson)
+      yield response
+
+    case GET -> Root / "api" / "trains" / trainIdValue =>
+      trainBookingApplicationService
+        .getTrainDetails(TrainId(trainIdValue))
+        .flatMap(trainJourney => Ok(TrainResponseDto.fromDomain(trainJourney).asJson))
+
     case request @ POST -> Root / "api" / "orders" =>
       for
         createOrderRequestDto <- request.as[CreateOrderRequestDto]
@@ -323,6 +428,25 @@ final class ApiRouter[F[_]: Async](
           checkInDate = LocalDate.parse(addHotelItemRequestDto.checkInDate),
           checkOutDate = LocalDate.parse(addHotelItemRequestDto.checkOutDate),
           roomCount = roomCount
+        )
+        orderResponseDto <- toOrderResponseDto(updatedOrder)
+        response <- Created(orderResponseDto.asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "orders" / orderIdValue / "train-items" =>
+      for
+        bookTrainItemRequestDto <- request.as[BookTrainItemRequestDto]
+        fromStationCode <- fromEither(TrainDtoMappers.toTrainStationCode(bookTrainItemRequestDto.fromStationCode))
+        toStationCode <- fromEither(TrainDtoMappers.toTrainStationCode(bookTrainItemRequestDto.toStationCode))
+        seatClass <- fromEither(TrainDtoMappers.toTrainSeatClass(bookTrainItemRequestDto.seatClass))
+        updatedOrder <- trainBookingApplicationService.addTrainItemToOrder(
+          actingUserId = UserId(bookTrainItemRequestDto.buyerUserId),
+          orderId = OrderId(orderIdValue),
+          trainId = TrainId(bookTrainItemRequestDto.trainId),
+          travelerIds = bookTrainItemRequestDto.travelerIds.map(TravelerId.apply),
+          fromStationCode = fromStationCode,
+          toStationCode = toStationCode,
+          seatClass = seatClass
         )
         orderResponseDto <- toOrderResponseDto(updatedOrder)
         response <- Created(orderResponseDto.asJson)
@@ -497,11 +621,23 @@ final class ApiRouter[F[_]: Async](
     case request @ POST -> Root / "api" / "orders" / orderIdValue / "refunds" =>
       for
         requestRefundRequestDto <- request.as[RequestRefundRequestDto]
-        updatedOrder <- orderService.requestCustomerRefund(
-          orderId = OrderId(orderIdValue),
-          refundReason = requestRefundRequestDto.refundReason,
-          requestedAt = Instant.now()
-        )
+        existingOrder <- orderRepository.findOrderById(OrderId(orderIdValue)).flatMap(_.liftTo[F](OrderError.OrderWasNotFound(OrderId(orderIdValue))))
+        updatedOrder <- if existingOrder.orderLineItems.exists(_.isInstanceOf[TrainOrderItem]) then
+          for
+            refundAmount <- trainBookingApplicationService.calculateRefundAmountForOrder(OrderId(orderIdValue), Instant.now())
+            order <- orderService.requestOrderRefund(
+              orderId = OrderId(orderIdValue),
+              refundAmount = refundAmount,
+              refundReason = requestRefundRequestDto.refundReason,
+              requestedAt = Instant.now()
+            )
+          yield order
+        else
+          orderService.requestCustomerRefund(
+            orderId = OrderId(orderIdValue),
+            refundReason = requestRefundRequestDto.refundReason,
+            requestedAt = Instant.now()
+          )
         orderResponseDto <- toOrderResponseDto(updatedOrder)
         response <- Ok(orderResponseDto.asJson)
       yield response
@@ -526,6 +662,8 @@ final class ApiRouter[F[_]: Async](
   private object ArrivalAirportQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("arrivalAirport")
   private object DepartureDateQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("date")
   private object HotelLocationQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("location")
+  private object FromStationQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("fromStation")
+  private object ToStationQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("toStation")
   private object CheckInDateQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("checkInDate")
   private object CheckOutDateQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("checkOutDate")
   private object ManagerIdQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("managerId")
@@ -623,6 +761,20 @@ final class ApiRouter[F[_]: Async](
           Status.BadRequest -> ApiErrorResponseDto("room_capacity_exceeded", throwable.getMessage)
         case HotelBookingApplicationError.TravelerSelectionWasInvalid(_) =>
           Status.BadRequest -> ApiErrorResponseDto("invalid_traveler_selection", throwable.getMessage)
+        case TrainError.RailwayManagerWasNotFoundByEmail(_) | TrainError.RailwayManagerWasNotFoundById(_) =>
+          Status.NotFound -> ApiErrorResponseDto("train_manager_not_found", throwable.getMessage)
+        case TrainError.TrainWasNotFound(_) =>
+          Status.NotFound -> ApiErrorResponseDto("train_not_found", throwable.getMessage)
+        case TrainError.TrainWasNotOpenForSale(_, _, _) =>
+          Status.BadRequest -> ApiErrorResponseDto("train_not_on_sale", throwable.getMessage)
+        case TrainError.TrainStopWasNotFound(_, _) =>
+          Status.BadRequest -> ApiErrorResponseDto("train_station_invalid", throwable.getMessage)
+        case TrainError.TrainStationOrderWasInvalid(_, _, _) =>
+          Status.BadRequest -> ApiErrorResponseDto("train_station_order_invalid", throwable.getMessage)
+        case TrainError.TrainSegmentPriceWasMissing(_, _, _, _) =>
+          Status.BadRequest -> ApiErrorResponseDto("train_price_not_defined", throwable.getMessage)
+        case TrainBookingApplicationError.TravelerSelectionWasInvalid(_) =>
+          Status.BadRequest -> ApiErrorResponseDto("invalid_traveler_selection", throwable.getMessage)
         case AvatarApplicationError.AvatarWasMissing =>
           Status.BadRequest -> ApiErrorResponseDto("avatar_missing", throwable.getMessage)
         case AvatarApplicationError.AvatarFileTypeWasInvalid(_) | AvatarApplicationError.AvatarFileExtensionWasInvalid(_) =>
@@ -668,6 +820,8 @@ object ApiRouter:
       orderLifecycleApplicationService: OrderLifecycleApplicationService[F],
       flightBookingApplicationService: FlightBookingApplicationService[F],
       hotelBookingApplicationService: HotelBookingApplicationService[F],
+      trainBookingApplicationService: TrainBookingApplicationService[F],
+      trainAdminApplicationService: TrainAdminApplicationService[F],
       managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
       avatarApplicationService: AvatarApplicationService[F],
       userRepository: UserRepository[F],
@@ -683,6 +837,8 @@ object ApiRouter:
       orderLifecycleApplicationService,
       flightBookingApplicationService,
       hotelBookingApplicationService,
+      trainBookingApplicationService,
+      trainAdminApplicationService,
       managerWorkflowApplicationService,
       avatarApplicationService,
       userRepository,

@@ -163,7 +163,8 @@ final class DoobieOrderRepository[F[_]: Async](
           sql"""
             insert into order_line_items (
               order_item_id, order_id, item_kind, item_status,
-              flight_id, room_type_id, cabin_class, check_in_date, check_out_date, room_count,
+              flight_id, room_type_id, train_id, train_from_stop_id, train_to_stop_id, train_seat_inventory_id,
+              cabin_class, seat_class, check_in_date, check_out_date, room_count,
               traveler_ids_json, unit_amount, unit_currency,
               supplier_review_status, review_decision, review_reason, reviewed_at, reviewed_by_manager_id,
               booked_amount, booked_currency, snapshot_json, sort_index
@@ -174,7 +175,12 @@ final class DoobieOrderRepository[F[_]: Async](
               ${orderLineItem.orderItemStatus.toString},
               ${lineItemPersistenceColumns.flightId},
               ${lineItemPersistenceColumns.roomTypeId},
+              ${lineItemPersistenceColumns.trainId},
+              ${lineItemPersistenceColumns.trainFromStopId},
+              ${lineItemPersistenceColumns.trainToStopId},
+              ${lineItemPersistenceColumns.trainSeatInventoryId},
               ${lineItemPersistenceColumns.cabinClass},
+              ${lineItemPersistenceColumns.seatClass},
               ${lineItemPersistenceColumns.checkInDate},
               ${lineItemPersistenceColumns.checkOutDate},
               ${lineItemPersistenceColumns.roomCount},
@@ -286,7 +292,12 @@ final class DoobieOrderRepository[F[_]: Async](
         item_status,
         flight_id,
         room_type_id,
+        train_id,
+        train_from_stop_id,
+        train_to_stop_id,
+        train_seat_inventory_id,
         cabin_class,
+        seat_class,
         check_in_date,
         check_out_date,
         room_count,
@@ -375,6 +386,16 @@ final class DoobieOrderRepository[F[_]: Async](
             supplierReviewDecision
           )
         }
+      case "train" =>
+        Async[F].fromEither(DatabaseCodecs.decodeTrainBookingSnapshot(orderLineItemRow.snapshotJson)).map { trainBookingSnapshot =>
+          TrainOrderItem.restorePersistedTrainOrderItem(
+            OrderItemId(orderLineItemRow.orderItemId),
+            trainBookingSnapshot,
+            orderItemStatus,
+            supplierReviewStatus,
+            supplierReviewDecision
+          )
+        }
       case otherKind =>
         Async[F].raiseError(new IllegalArgumentException(s"Unsupported order line item kind '$otherKind'"))
 
@@ -427,7 +448,12 @@ final class DoobieOrderRepository[F[_]: Async](
           itemKind = "flight",
           flightId = Some(flightOrderItem.flightBookingSnapshot.flightId.value),
           roomTypeId = None,
+          trainId = None,
+          trainFromStopId = None,
+          trainToStopId = None,
+          trainSeatInventoryId = None,
           cabinClass = Some(flightOrderItem.flightBookingSnapshot.cabinClass.value),
+          seatClass = None,
           checkInDate = None,
           checkOutDate = None,
           roomCount = None,
@@ -440,7 +466,12 @@ final class DoobieOrderRepository[F[_]: Async](
           itemKind = "hotel",
           flightId = None,
           roomTypeId = Some(hotelOrderItem.hotelBookingSnapshot.roomTypeId.value),
+          trainId = None,
+          trainFromStopId = None,
+          trainToStopId = None,
+          trainSeatInventoryId = None,
           cabinClass = None,
+          seatClass = None,
           checkInDate = Some(hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkIn),
           checkOutDate = Some(hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkOut),
           roomCount = Some(hotelOrderItem.hotelBookingSnapshot.roomCount.value),
@@ -448,7 +479,24 @@ final class DoobieOrderRepository[F[_]: Async](
           unitAmount = Some(hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.amount),
           unitCurrency = Some(hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString)
         )
-
+      case trainOrderItem: TrainOrderItem =>
+        OrderLineItemPersistenceColumns(
+          itemKind = "train",
+          flightId = None,
+          roomTypeId = None,
+          trainId = Some(trainOrderItem.trainBookingSnapshot.trainId.value),
+          trainFromStopId = Some(trainOrderItem.trainBookingSnapshot.fromStopId.value),
+          trainToStopId = Some(trainOrderItem.trainBookingSnapshot.toStopId.value),
+          trainSeatInventoryId = Some(trainOrderItem.trainBookingSnapshot.seatInventoryId.value),
+          cabinClass = None,
+          seatClass = Some(trainOrderItem.trainBookingSnapshot.seatClass.value),
+          checkInDate = None,
+          checkOutDate = None,
+          roomCount = None,
+          travelerIdsJson = Some(DatabaseCodecs.encodeTravelerIds(trainOrderItem.trainBookingSnapshot.travelerIds)),
+          unitAmount = Some(trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.amount),
+          unitCurrency = Some(trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.currency.toString)
+        )
   private def buildSupplierReviewDecision(orderLineItemRow: OrderLineItemRow): Option[SupplierReviewDecision] =
     (orderLineItemRow.reviewDecision, orderLineItemRow.reviewedAt, orderLineItemRow.reviewedByManagerId) match
       case (Some(reviewDecisionValue), Some(reviewedAtValue), Some(reviewedByManagerIdValue)) =>
@@ -482,7 +530,12 @@ final class DoobieOrderRepository[F[_]: Async](
       itemKind: String,
       flightId: Option[String],
       roomTypeId: Option[String],
+      trainId: Option[String],
+      trainFromStopId: Option[String],
+      trainToStopId: Option[String],
+      trainSeatInventoryId: Option[String],
       cabinClass: Option[String],
+      seatClass: Option[String],
       checkInDate: Option[java.time.LocalDate],
       checkOutDate: Option[java.time.LocalDate],
       roomCount: Option[Int],
@@ -497,7 +550,12 @@ final class DoobieOrderRepository[F[_]: Async](
       itemStatus: String,
       flightId: Option[String],
       roomTypeId: Option[String],
+      trainId: Option[String],
+      trainFromStopId: Option[String],
+      trainToStopId: Option[String],
+      trainSeatInventoryId: Option[String],
       cabinClass: Option[String],
+      seatClass: Option[String],
       checkInDate: Option[java.time.LocalDate],
       checkOutDate: Option[java.time.LocalDate],
       roomCount: Option[Int],

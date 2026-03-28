@@ -10,6 +10,7 @@ trait OrderService[F[_]]:
   def listOrdersForUser(ownerUserId: UserId): F[List[Order]]
   def addFlightOrderItem(orderId: OrderId, flightBookingSnapshot: FlightBookingSnapshot): F[Order]
   def addHotelOrderItem(orderId: OrderId, hotelBookingSnapshot: HotelBookingSnapshot): F[Order]
+  def addTrainOrderItem(orderId: OrderId, trainBookingSnapshot: TrainBookingSnapshot): F[Order]
   def submitOrderForPayment(orderId: OrderId): F[Order]
   def payOrder(orderId: OrderId, paymentMethod: PaymentMethod, paidAt: Instant): F[Order]
   def authorizeOrderPayment(orderId: OrderId, paymentAmount: Money, paymentMethod: PaymentMethod, authorizedAt: Instant): F[Order]
@@ -50,6 +51,15 @@ final class LiveOrderService[F[_]: MonadThrow](
     addOrderLineItem(
       orderId,
       generatedOrderItemId => _.addHotelOrderItem(generatedOrderItemId, hotelBookingSnapshot)
+    )
+
+  override def addTrainOrderItem(
+      orderId: OrderId,
+      trainBookingSnapshot: TrainBookingSnapshot
+  ): F[Order] =
+    addOrderLineItem(
+      orderId,
+      generatedOrderItemId => _.addTrainOrderItem(generatedOrderItemId, trainBookingSnapshot)
     )
 
   override def submitOrderForPayment(orderId: OrderId): F[Order] =

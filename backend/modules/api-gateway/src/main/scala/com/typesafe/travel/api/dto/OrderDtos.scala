@@ -58,6 +58,24 @@ final case class HotelItemDetailsResponseDto(
     currency: String
 )
 
+final case class TrainItemDetailsResponseDto(
+    trainId: String,
+    trainNumber: String,
+    fromStationCode: String,
+    fromStationName: String,
+    toStationCode: String,
+    toStationName: String,
+    departureTime: String,
+    arrivalTime: String,
+    seatClass: String,
+    travelerIds: List[String],
+    reservationStatus: Option[String],
+    reservationExpiresAt: Option[String],
+    unitPrice: String,
+    totalPrice: String,
+    currency: String
+)
+
 final case class OrderLineItemResponseDto(
     orderItemId: String,
     orderItemKind: String,
@@ -68,7 +86,8 @@ final case class OrderLineItemResponseDto(
     bookedCurrency: String,
     summaryLabel: String,
     flightDetails: Option[FlightItemDetailsResponseDto],
-    hotelDetails: Option[HotelItemDetailsResponseDto]
+    hotelDetails: Option[HotelItemDetailsResponseDto],
+    trainDetails: Option[TrainItemDetailsResponseDto]
 )
 
 final case class PaymentResponseDto(
@@ -165,7 +184,8 @@ object OrderResponseDto:
                 currency = flightOrderItem.flightBookingSnapshot.unitPriceSnapshot.currency.toString
               )
             ),
-            hotelDetails = None
+            hotelDetails = None,
+            trainDetails = None
           )
         case hotelOrderItem: HotelOrderItem =>
           OrderLineItemResponseDto(
@@ -197,6 +217,40 @@ object OrderResponseDto:
                 unitPrice = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.amount.toString,
                 totalPrice = hotelOrderItem.bookedMoney.amount.toString,
                 currency = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString
+              )
+            ),
+            trainDetails = None
+          )
+        case trainOrderItem: TrainOrderItem =>
+          OrderLineItemResponseDto(
+            orderItemId = trainOrderItem.orderItemId.value,
+            orderItemKind = "train",
+            orderItemStatus = trainOrderItem.orderItemStatus.toString,
+            supplierReviewStatus = trainOrderItem.supplierReviewStatus.toString,
+            supplierReviewDecision = None,
+            bookedAmount = trainOrderItem.bookedMoney.amount.toString,
+            bookedCurrency = trainOrderItem.bookedMoney.currency.toString,
+            summaryLabel =
+              s"${trainOrderItem.trainBookingSnapshot.trainNumber.value} ${trainOrderItem.trainBookingSnapshot.fromStationName.value}-${trainOrderItem.trainBookingSnapshot.toStationName.value}",
+            flightDetails = None,
+            hotelDetails = None,
+            trainDetails = Some(
+              TrainItemDetailsResponseDto(
+                trainId = trainOrderItem.trainBookingSnapshot.trainId.value,
+                trainNumber = trainOrderItem.trainBookingSnapshot.trainNumber.value,
+                fromStationCode = trainOrderItem.trainBookingSnapshot.fromStationCode.value,
+                fromStationName = trainOrderItem.trainBookingSnapshot.fromStationName.value,
+                toStationCode = trainOrderItem.trainBookingSnapshot.toStationCode.value,
+                toStationName = trainOrderItem.trainBookingSnapshot.toStationName.value,
+                departureTime = trainOrderItem.trainBookingSnapshot.departureTime.toString,
+                arrivalTime = trainOrderItem.trainBookingSnapshot.arrivalTime.toString,
+                seatClass = trainOrderItem.trainBookingSnapshot.seatClass.value,
+                travelerIds = trainOrderItem.trainBookingSnapshot.travelerIds.map(_.value).toList,
+                reservationStatus = inventoryReservations.find(_.orderItemId == trainOrderItem.orderItemId).map(_.reservationStatus.toString),
+                reservationExpiresAt = inventoryReservations.find(_.orderItemId == trainOrderItem.orderItemId).map(_.expiresAt.toString),
+                unitPrice = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.amount.toString,
+                totalPrice = trainOrderItem.bookedMoney.amount.toString,
+                currency = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.currency.toString
               )
             )
           )

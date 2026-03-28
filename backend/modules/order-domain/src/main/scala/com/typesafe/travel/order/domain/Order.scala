@@ -1,6 +1,7 @@
 package com.typesafe.travel.order.domain
 
 import com.typesafe.travel.shared.kernel.*
+import com.typesafe.travel.train.domain.*
 import java.time.Instant
 
 enum OrderStatus:
@@ -25,7 +26,7 @@ enum PaymentMethod:
   case Card, BankTransfer, Wallet, LoyaltyPoints
 
 enum OrderType:
-  case FlightBooking, HotelBooking, MixedBooking, PendingSelection
+  case FlightBooking, HotelBooking, TrainBooking, MixedBooking, PendingSelection
 
 sealed trait OrderLineItem:
   def orderItemId: OrderItemId
@@ -64,6 +65,24 @@ final case class HotelBookingSnapshot(
     stayPeriod: StayPeriod,
     guestTravelerIds: Vector[TravelerId],
     roomCount: RoomCount,
+    unitPriceSnapshot: Money
+)
+
+final case class TrainBookingSnapshot(
+    trainId: TrainId,
+    trainNumber: TrainNumber,
+    fromStopId: TrainStopId,
+    fromStationCode: TrainStationCode,
+    fromStationName: TrainStationName,
+    toStopId: TrainStopId,
+    toStationCode: TrainStationCode,
+    toStationName: TrainStationName,
+    departureTime: Instant,
+    arrivalTime: Instant,
+    seatInventoryId: TrainSeatInventoryId,
+    seatClass: TrainSeatClass,
+    travelerIds: Vector[TravelerId],
+    saleStartsAt: Instant,
     unitPriceSnapshot: Money
 )
 
@@ -247,6 +266,49 @@ object HotelOrderItem:
   ): HotelOrderItem =
     HotelOrderItem(orderItemId, hotelBookingSnapshot, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
 
+final case class TrainOrderItem private (
+    orderItemId: OrderItemId,
+    trainBookingSnapshot: TrainBookingSnapshot,
+    orderItemStatus: OrderItemStatus,
+    supplierReviewStatus: SupplierReviewStatus,
+    supplierReviewDecision: Option[SupplierReviewDecision]
+) extends OrderLineItem:
+  override def bookedMoney: Money =
+    trainBookingSnapshot.unitPriceSnapshot
+      .multiply(trainBookingSnapshot.travelerIds.size)
+      .fold(throw _, identity)
+
+  def markConfirmedOrderItem: TrainOrderItem =
+    copy(orderItemStatus = OrderItemStatus.Confirmed)
+
+  def markRefundedOrderItem: TrainOrderItem =
+    copy(orderItemStatus = OrderItemStatus.Refunded)
+
+  def markCancelledOrderItem: TrainOrderItem =
+    copy(orderItemStatus = OrderItemStatus.Cancelled)
+
+object TrainOrderItem:
+  def createReservedTrainOrderItem(
+      orderItemId: OrderItemId,
+      trainBookingSnapshot: TrainBookingSnapshot
+  ): TrainOrderItem =
+    TrainOrderItem(
+      orderItemId = orderItemId,
+      trainBookingSnapshot = trainBookingSnapshot,
+      orderItemStatus = OrderItemStatus.Reserved,
+      supplierReviewStatus = SupplierReviewStatus.NotSubmitted,
+      supplierReviewDecision = None
+    )
+
+  def restorePersistedTrainOrderItem(
+      orderItemId: OrderItemId,
+      trainBookingSnapshot: TrainBookingSnapshot,
+      orderItemStatus: OrderItemStatus,
+      supplierReviewStatus: SupplierReviewStatus,
+      supplierReviewDecision: Option[SupplierReviewDecision]
+  ): TrainOrderItem =
+    TrainOrderItem(orderItemId, trainBookingSnapshot, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
+
 final case class Payment private (
     paymentId: PaymentId,
     paymentAmount: Money,
@@ -345,21 +407,24 @@ final case class Order private (
     orderRefunds.exists(_.refundStatus == RefundStatus.Requested)
 
   def allSupplierReviewDecisionsConfirmed: Boolean =
-    orderLineItems.nonEmpty && orderLineItems.forall {
-      case flightOrderItem: FlightOrderItem => flightOrderItem.supplierReviewStatus == SupplierReviewStatus.SupplierConfirmed
-      case hotelOrderItem: HotelOrderItem   => hotelOrderItem.supplierReviewStatus == SupplierReviewStatus.SupplierConfirmed
+    val orderItemsRequiringSupplierReview = orderLineItems.collect {
+      case flightOrderItem: FlightOrderItem => flightOrderItem
+      case hotelOrderItem: HotelOrderItem   => hotelOrderItem
     }
+    orderItemsRequiringSupplierReview.isEmpty || orderItemsRequiringSupplierReview.forall(_.supplierReviewStatus == SupplierReviewStatus.SupplierConfirmed)
 
   def hasAnySupplierRejected: Boolean =
     orderLineItems.exists {
       case flightOrderItem: FlightOrderItem => flightOrderItem.supplierReviewStatus == SupplierReviewStatus.SupplierRejected
       case hotelOrderItem: HotelOrderItem   => hotelOrderItem.supplierReviewStatus == SupplierReviewStatus.SupplierRejected
+      case _: TrainOrderItem                => false
     }
 
   def orderType: OrderType =
     if orderLineItems.isEmpty then OrderType.PendingSelection
     else if orderLineItems.forall(_.isInstanceOf[FlightOrderItem]) then OrderType.FlightBooking
     else if orderLineItems.forall(_.isInstanceOf[HotelOrderItem]) then OrderType.HotelBooking
+    else if orderLineItems.forall(_.isInstanceOf[TrainOrderItem]) then OrderType.TrainBooking
     else OrderType.MixedBooking
 
   def totalBookedMoney: Money =
@@ -403,6 +468,17 @@ final case class Order private (
       _ <- validateHotelBookingSnapshot(hotelBookingSnapshot)
       updatedOrder <- addOrderLineItem(
         HotelOrderItem.createReservedHotelOrderItem(orderItemId, hotelBookingSnapshot)
+      )
+    yield updatedOrder
+
+  def addTrainOrderItem(
+      orderItemId: OrderItemId,
+      trainBookingSnapshot: TrainBookingSnapshot
+  ): Either[OrderError, Order] =
+    for
+      _ <- validateTrainBookingSnapshot(trainBookingSnapshot)
+      updatedOrder <- addOrderLineItem(
+        TrainOrderItem.createReservedTrainOrderItem(orderItemId, trainBookingSnapshot)
       )
     yield updatedOrder
 
@@ -512,6 +588,7 @@ final case class Order private (
             orderLineItems = orderLineItems.map {
               case flightOrderItem: FlightOrderItem => flightOrderItem.markCancelledOrderItem
               case hotelOrderItem: HotelOrderItem   => hotelOrderItem.markCancelledOrderItem
+              case trainOrderItem: TrainOrderItem   => trainOrderItem.markCancelledOrderItem
             }
           )
         )
@@ -527,6 +604,7 @@ final case class Order private (
     updateOrderLineItem(orderItemId) {
       case flightOrderItem: FlightOrderItem => flightOrderItem.markSupplierConfirmed(managerId, note, decidedAt)
       case hotelOrderItem: HotelOrderItem   => hotelOrderItem.markSupplierConfirmed(managerId, note, decidedAt)
+      case _: TrainOrderItem                => Left(OrderError.OrderItemDidNotSupportSupplierReview(orderItemId))
     }.map(_.refreshOrderStatusAfterSupplierDecision(decidedAt))
 
   def rejectSupplierOrderItem(
@@ -538,6 +616,7 @@ final case class Order private (
     updateOrderLineItem(orderItemId) {
       case flightOrderItem: FlightOrderItem => flightOrderItem.markSupplierRejected(managerId, reason, decidedAt)
       case hotelOrderItem: HotelOrderItem   => hotelOrderItem.markSupplierRejected(managerId, reason, decidedAt)
+      case _: TrainOrderItem                => Left(OrderError.OrderItemDidNotSupportSupplierReview(orderItemId))
     }
 
   private def addOrderLineItem(orderLineItem: OrderLineItem): Either[OrderError, Order] =
@@ -575,6 +654,17 @@ final case class Order private (
       Left(OrderError.HotelBookingRoomCountWasInvalid(orderId, hotelBookingSnapshot.roomTypeId, hotelBookingSnapshot.roomCount))
     else if hotelBookingSnapshot.unitPriceSnapshot.currency != orderCurrency then
       Left(OrderError.OrderCurrencyDidNotMatch(orderId, orderCurrency, hotelBookingSnapshot.unitPriceSnapshot.currency))
+    else Right(())
+
+  private def validateTrainBookingSnapshot(
+      trainBookingSnapshot: TrainBookingSnapshot
+  ): Either[OrderError, Unit] =
+    if trainBookingSnapshot.travelerIds.isEmpty then
+      Left(OrderError.TrainBookingTravelerSelectionWasEmpty(orderId, trainBookingSnapshot.trainId))
+    else if trainBookingSnapshot.travelerIds.distinct.size != trainBookingSnapshot.travelerIds.size then
+      Left(OrderError.TrainBookingTravelerSelectionContainedDuplicates(orderId, trainBookingSnapshot.trainId))
+    else if trainBookingSnapshot.unitPriceSnapshot.currency != orderCurrency then
+      Left(OrderError.OrderCurrencyDidNotMatch(orderId, orderCurrency, trainBookingSnapshot.unitPriceSnapshot.currency))
     else Right(())
 
   private def updatePayment(
@@ -617,6 +707,7 @@ final case class Order private (
         orderLineItems = orderLineItems.map {
           case flightOrderItem: FlightOrderItem => flightOrderItem.markRefundedOrderItem
           case hotelOrderItem: HotelOrderItem   => hotelOrderItem.markRefundedOrderItem
+          case trainOrderItem: TrainOrderItem   => trainOrderItem.markRefundedOrderItem
         }
       )
     else if totalSettledRefundMoney.amount > 0 then
@@ -630,6 +721,7 @@ final case class Order private (
         orderLineItems = orderLineItems.map {
           case flightOrderItem: FlightOrderItem => flightOrderItem.markConfirmedOrderItem
           case hotelOrderItem: HotelOrderItem   => hotelOrderItem.markConfirmedOrderItem
+          case trainOrderItem: TrainOrderItem   => trainOrderItem.markConfirmedOrderItem
         }
       )
     else
@@ -745,8 +837,14 @@ enum OrderError(val message: String) extends DomainError:
       extends OrderError(s"Order '${orderId.value}' cannot add room type '${roomTypeId.value}' with duplicate guests")
   case HotelBookingRoomCountWasInvalid(orderId: OrderId, roomTypeId: RoomTypeId, roomCount: RoomCount)
       extends OrderError(s"Order '${orderId.value}' cannot add room type '${roomTypeId.value}' with room count ${roomCount.value}")
+  case TrainBookingTravelerSelectionWasEmpty(orderId: OrderId, trainId: TrainId)
+      extends OrderError(s"Order '${orderId.value}' cannot add train '${trainId.value}' without any travelers")
+  case TrainBookingTravelerSelectionContainedDuplicates(orderId: OrderId, trainId: TrainId)
+      extends OrderError(s"Order '${orderId.value}' cannot add train '${trainId.value}' with duplicate travelers")
   case OrderItemWasNotFound(orderId: OrderId, orderItemId: OrderItemId)
       extends OrderError(s"Order item '${orderItemId.value}' was not found in order '${orderId.value}'")
+  case OrderItemDidNotSupportSupplierReview(orderItemId: OrderItemId)
+      extends OrderError(s"Order item '${orderItemId.value}' does not support supplier review")
   case OrderItemWasNotAwaitingSupplierDecision(orderItemId: OrderItemId, supplierReviewStatus: SupplierReviewStatus)
       extends OrderError(s"Order item '${orderItemId.value}' cannot be decided from supplier review status $supplierReviewStatus")
   case SupplierRejectReasonWasEmpty(orderItemId: OrderItemId)

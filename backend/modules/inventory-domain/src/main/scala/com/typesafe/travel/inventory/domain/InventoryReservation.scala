@@ -7,6 +7,7 @@ import java.time.{Instant, LocalDate}
 enum ReservationResourceType:
   case FlightCabinInventory
   case HotelRoomType
+  case TrainSeatInventory
 
 enum ReservationStatus:
   case Active, Expired, Confirmed, Released

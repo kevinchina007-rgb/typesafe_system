@@ -3,6 +3,7 @@ package com.typesafe.travel.persistence.codecs
 import cats.syntax.all.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
+import com.typesafe.travel.train.domain.*
 import com.typesafe.travel.traveler.domain.*
 import doobie.implicits.javasql.DateMeta
 import doobie.implicits.javatimedrivernative.JavaOffsetDateTimeMeta
@@ -74,6 +75,25 @@ object DatabaseCodecs:
       unitPriceCurrency: String
   )
 
+  final case class SerializedTrainBookingSnapshot(
+      trainId: String,
+      trainNumber: String,
+      fromStopId: String,
+      fromStationCode: String,
+      fromStationName: String,
+      toStopId: String,
+      toStationCode: String,
+      toStationName: String,
+      departureTime: String,
+      arrivalTime: String,
+      seatInventoryId: String,
+      seatClass: String,
+      travelerIds: Vector[String],
+      saleStartsAt: String,
+      unitPriceAmount: BigDecimal,
+      unitPriceCurrency: String
+  )
+
   final case class SerializedTravelerIds(
       travelerIds: Vector[String]
   )
@@ -90,6 +110,8 @@ object DatabaseCodecs:
   given Decoder[SerializedFlightBookingSnapshot] = deriveDecoder
   given Encoder[SerializedHotelBookingSnapshot] = deriveEncoder
   given Decoder[SerializedHotelBookingSnapshot] = deriveDecoder
+  given Encoder[SerializedTrainBookingSnapshot] = deriveEncoder
+  given Decoder[SerializedTrainBookingSnapshot] = deriveDecoder
   given Encoder[SerializedTravelerIds] = deriveEncoder
   given Decoder[SerializedTravelerIds] = deriveDecoder
 
@@ -206,6 +228,25 @@ object DatabaseCodecs:
           unitPriceAmount = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.amount,
           unitPriceCurrency = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString
         ).asJson.noSpaces
+      case trainOrderItem: TrainOrderItem =>
+        SerializedTrainBookingSnapshot(
+          trainId = trainOrderItem.trainBookingSnapshot.trainId.value,
+          trainNumber = trainOrderItem.trainBookingSnapshot.trainNumber.value,
+          fromStopId = trainOrderItem.trainBookingSnapshot.fromStopId.value,
+          fromStationCode = trainOrderItem.trainBookingSnapshot.fromStationCode.value,
+          fromStationName = trainOrderItem.trainBookingSnapshot.fromStationName.value,
+          toStopId = trainOrderItem.trainBookingSnapshot.toStopId.value,
+          toStationCode = trainOrderItem.trainBookingSnapshot.toStationCode.value,
+          toStationName = trainOrderItem.trainBookingSnapshot.toStationName.value,
+          departureTime = trainOrderItem.trainBookingSnapshot.departureTime.toString,
+          arrivalTime = trainOrderItem.trainBookingSnapshot.arrivalTime.toString,
+          seatInventoryId = trainOrderItem.trainBookingSnapshot.seatInventoryId.value,
+          seatClass = trainOrderItem.trainBookingSnapshot.seatClass.value,
+          travelerIds = trainOrderItem.trainBookingSnapshot.travelerIds.map(_.value),
+          saleStartsAt = trainOrderItem.trainBookingSnapshot.saleStartsAt.toString,
+          unitPriceAmount = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.amount,
+          unitPriceCurrency = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.currency.toString
+        ).asJson.noSpaces
 
   def decodeFlightBookingSnapshot(serializedValue: String): Either[Throwable, FlightBookingSnapshot] =
     decode[SerializedFlightBookingSnapshot](serializedValue).flatMap { serializedFlightBookingSnapshot =>
@@ -262,6 +303,36 @@ object DatabaseCodecs:
         unitPriceSnapshot = unitPriceSnapshot
       )
     }.left.map(error => new IllegalArgumentException(s"Could not decode hotel booking snapshot: ${error.getMessage}", error))
+
+  def decodeTrainBookingSnapshot(serializedValue: String): Either[Throwable, TrainBookingSnapshot] =
+    decode[SerializedTrainBookingSnapshot](serializedValue).flatMap { serializedTrainBookingSnapshot =>
+      for
+        trainNumber <- TrainNumber.create(serializedTrainBookingSnapshot.trainNumber)
+        fromStationCode <- TrainStationCode.create(serializedTrainBookingSnapshot.fromStationCode)
+        fromStationName <- TrainStationName.create(serializedTrainBookingSnapshot.fromStationName)
+        toStationCode <- TrainStationCode.create(serializedTrainBookingSnapshot.toStationCode)
+        toStationName <- TrainStationName.create(serializedTrainBookingSnapshot.toStationName)
+        seatClass <- TrainSeatClass.create(serializedTrainBookingSnapshot.seatClass)
+        unitPriceCurrency <- parseCurrency(serializedTrainBookingSnapshot.unitPriceCurrency)
+        unitPriceSnapshot <- Money.create(serializedTrainBookingSnapshot.unitPriceAmount, unitPriceCurrency)
+      yield TrainBookingSnapshot(
+        trainId = TrainId(serializedTrainBookingSnapshot.trainId),
+        trainNumber = trainNumber,
+        fromStopId = TrainStopId(serializedTrainBookingSnapshot.fromStopId),
+        fromStationCode = fromStationCode,
+        fromStationName = fromStationName,
+        toStopId = TrainStopId(serializedTrainBookingSnapshot.toStopId),
+        toStationCode = toStationCode,
+        toStationName = toStationName,
+        departureTime = Instant.parse(serializedTrainBookingSnapshot.departureTime),
+        arrivalTime = Instant.parse(serializedTrainBookingSnapshot.arrivalTime),
+        seatInventoryId = TrainSeatInventoryId(serializedTrainBookingSnapshot.seatInventoryId),
+        seatClass = seatClass,
+        travelerIds = serializedTrainBookingSnapshot.travelerIds.map(TravelerId.apply),
+        saleStartsAt = Instant.parse(serializedTrainBookingSnapshot.saleStartsAt),
+        unitPriceSnapshot = unitPriceSnapshot
+      )
+    }.left.map(error => new IllegalArgumentException(s"Could not decode train booking snapshot: ${error.getMessage}", error))
 
   def parseCurrency(currencyValue: String): Either[Throwable, Currency] =
     Either.catchNonFatal(Currency.valueOf(currencyValue))
