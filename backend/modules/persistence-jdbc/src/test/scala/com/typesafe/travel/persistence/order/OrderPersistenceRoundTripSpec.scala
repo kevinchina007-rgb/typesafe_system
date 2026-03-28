@@ -57,17 +57,15 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
         hotelLocation = HotelLocation.unsafe("Hangzhou"),
         roomTypeId = RoomTypeId("roomtype-westlake-family"),
         roomTypeName = RoomTypeName.unsafe("Family Suite"),
-        stayPeriod = StayPeriod.unsafe(LocalDate.parse("2026-04-06"), LocalDate.parse("2026-04-08")),
-        guestTravelerIds = Vector(TravelerId("traveler-typed-1"), TravelerId("traveler-typed-2")),
-        roomCount = RoomCount.unsafe(1),
-        unitPriceSnapshot = Money.unsafe(BigDecimal(1360), orderCurrency),
-        totalPriceSnapshot = Money.unsafe(BigDecimal(2720), orderCurrency)
-      )
+      stayPeriod = StayPeriod.unsafe(LocalDate.parse("2026-04-06"), LocalDate.parse("2026-04-08")),
+      guestTravelerIds = Vector(TravelerId("traveler-typed-1"), TravelerId("traveler-typed-2")),
+      roomCount = RoomCount.unsafe(1),
+      unitPriceSnapshot = Money.unsafe(BigDecimal(1360), orderCurrency)
+    )
 
     val flightOrderItem = FlightOrderItem.restorePersistedFlightOrderItem(
       orderItemId = OrderItemId("order-item-flight-typed"),
       flightBookingSnapshot = flightBookingSnapshot,
-      bookedMoney = Money.unsafe(BigDecimal(7200), orderCurrency),
       orderItemStatus = OrderItemStatus.Confirmed,
       supplierReviewStatus = SupplierReviewStatus.PendingSupplierConfirmation,
       supplierReviewDecision = None
@@ -76,7 +74,6 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
     val hotelOrderItem = HotelOrderItem.restorePersistedHotelOrderItem(
       orderItemId = OrderItemId("order-item-hotel-typed"),
       hotelBookingSnapshot = hotelBookingSnapshot,
-      bookedMoney = Money.unsafe(BigDecimal(2720), orderCurrency),
       orderItemStatus = OrderItemStatus.Confirmed,
       supplierReviewStatus = SupplierReviewStatus.PendingSupplierConfirmation,
       supplierReviewDecision = None
@@ -91,7 +88,7 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
       orderPayments = Vector(
         Payment.restorePersistedPayment(
           paymentId = PaymentId("payment-typed-1"),
-          paymentAmount = Money.unsafe(BigDecimal(9920), orderCurrency),
+          paymentAmount = Money.unsafe(BigDecimal(8560), orderCurrency),
           paymentMethod = PaymentMethod.Card,
           paymentStatus = PaymentStatus.Captured,
           authorizedAt = Instant.parse("2026-03-26T07:00:00Z"),
@@ -197,10 +194,10 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
     assertEquals(hotelRow.reviewReason, Some("maintenance block"))
     assertEquals(hotelRow.reviewedAt, Some(Instant.parse("2026-03-26T07:20:00Z")))
     assertEquals(hotelRow.reviewedByManagerId, Some("manager-hotel-westlake"))
-    assertEquals(hotelRow.bookedAmount, BigDecimal(2720))
+    assertEquals(hotelRow.bookedAmount, BigDecimal(1360))
     assert(hotelRow.snapshotJson.contains("roomTypeId"))
 
-    assertEquals(paymentRow, PaymentStructuredRow(BigDecimal(9920), "CNY", "Captured", Instant.parse("2026-03-26T07:00:00Z"), Some(Instant.parse("2026-03-26T07:05:00Z")), None))
+    assertEquals(paymentRow, PaymentStructuredRow(BigDecimal(8560), "CNY", "Captured", Instant.parse("2026-03-26T07:00:00Z"), Some(Instant.parse("2026-03-26T07:05:00Z")), None))
     assertEquals(refundRow, RefundStructuredRow(BigDecimal(1000), "CNY", "Settled", Instant.parse("2026-03-26T08:00:00Z"), Some(Instant.parse("2026-03-26T08:05:00Z")), Some(Instant.parse("2026-03-26T08:10:00Z")), None))
   }
 

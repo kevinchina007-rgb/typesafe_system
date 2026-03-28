@@ -1,6 +1,7 @@
 package com.typesafe.travel.api.dto
 
 import com.typesafe.travel.order.domain.*
+import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.shared.kernel.CabinClass
 
 final case class CreateOrderRequestDto(
@@ -34,6 +35,8 @@ final case class FlightItemDetailsResponseDto(
     arrivalTime: String,
     cabinClass: String,
     travelerIds: List[String],
+    reservationStatus: Option[String],
+    reservationExpiresAt: Option[String],
     unitPrice: String,
     currency: String
 )
@@ -48,6 +51,8 @@ final case class HotelItemDetailsResponseDto(
     checkOutDate: String,
     guestTravelerIds: List[String],
     roomCount: Int,
+    reservationStatus: Option[String],
+    reservationExpiresAt: Option[String],
     unitPrice: String,
     totalPrice: String,
     currency: String
@@ -112,7 +117,7 @@ final case class OrderListResponseDto(
 )
 
 object OrderResponseDto:
-  def fromDomain(order: Order): OrderResponseDto =
+  def fromDomain(order: Order, inventoryReservations: List[InventoryReservation] = Nil): OrderResponseDto =
     OrderResponseDto(
       orderId = order.orderId.value,
       buyerUserId = order.ownerUserId.value,
@@ -152,6 +157,10 @@ object OrderResponseDto:
                 arrivalTime = flightOrderItem.flightBookingSnapshot.flightSchedule.arrivalAt.toString,
                 cabinClass = flightOrderItem.flightBookingSnapshot.cabinClass.value,
                 travelerIds = flightOrderItem.flightBookingSnapshot.travelerIds.map(_.value).toList,
+                reservationStatus =
+                  inventoryReservations.find(_.orderItemId == flightOrderItem.orderItemId).map(_.reservationStatus.toString),
+                reservationExpiresAt =
+                  inventoryReservations.find(_.orderItemId == flightOrderItem.orderItemId).map(_.expiresAt.toString),
                 unitPrice = flightOrderItem.flightBookingSnapshot.unitPriceSnapshot.amount.toString,
                 currency = flightOrderItem.flightBookingSnapshot.unitPriceSnapshot.currency.toString
               )
@@ -181,9 +190,13 @@ object OrderResponseDto:
                 checkOutDate = hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkOut.toString,
                 guestTravelerIds = hotelOrderItem.hotelBookingSnapshot.guestTravelerIds.map(_.value).toList,
                 roomCount = hotelOrderItem.hotelBookingSnapshot.roomCount.value,
+                reservationStatus =
+                  inventoryReservations.find(_.orderItemId == hotelOrderItem.orderItemId).map(_.reservationStatus.toString),
+                reservationExpiresAt =
+                  inventoryReservations.find(_.orderItemId == hotelOrderItem.orderItemId).map(_.expiresAt.toString),
                 unitPrice = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.amount.toString,
-                totalPrice = hotelOrderItem.hotelBookingSnapshot.totalPriceSnapshot.amount.toString,
-                currency = hotelOrderItem.hotelBookingSnapshot.totalPriceSnapshot.currency.toString
+                totalPrice = hotelOrderItem.bookedMoney.amount.toString,
+                currency = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString
               )
             )
           )

@@ -8,8 +8,8 @@ import java.time.Instant
 trait OrderService[F[_]]:
   def createDraftOrder(ownerUserId: UserId, orderCurrency: Currency, createdAt: Instant): F[Order]
   def listOrdersForUser(ownerUserId: UserId): F[List[Order]]
-  def addFlightOrderItem(orderId: OrderId, flightBookingSnapshot: FlightBookingSnapshot, bookedMoney: Money): F[Order]
-  def addHotelOrderItem(orderId: OrderId, hotelBookingSnapshot: HotelBookingSnapshot, bookedMoney: Money): F[Order]
+  def addFlightOrderItem(orderId: OrderId, flightBookingSnapshot: FlightBookingSnapshot): F[Order]
+  def addHotelOrderItem(orderId: OrderId, hotelBookingSnapshot: HotelBookingSnapshot): F[Order]
   def submitOrderForPayment(orderId: OrderId): F[Order]
   def payOrder(orderId: OrderId, paymentMethod: PaymentMethod, paidAt: Instant): F[Order]
   def authorizeOrderPayment(orderId: OrderId, paymentAmount: Money, paymentMethod: PaymentMethod, authorizedAt: Instant): F[Order]
@@ -36,22 +36,20 @@ final class LiveOrderService[F[_]: MonadThrow](
 
   override def addFlightOrderItem(
       orderId: OrderId,
-      flightBookingSnapshot: FlightBookingSnapshot,
-      bookedMoney: Money
+      flightBookingSnapshot: FlightBookingSnapshot
   ): F[Order] =
     addOrderLineItem(
       orderId,
-      generatedOrderItemId => _.addFlightOrderItem(generatedOrderItemId, flightBookingSnapshot, bookedMoney)
+      generatedOrderItemId => _.addFlightOrderItem(generatedOrderItemId, flightBookingSnapshot)
     )
 
   override def addHotelOrderItem(
       orderId: OrderId,
-      hotelBookingSnapshot: HotelBookingSnapshot,
-      bookedMoney: Money
+      hotelBookingSnapshot: HotelBookingSnapshot
   ): F[Order] =
     addOrderLineItem(
       orderId,
-      generatedOrderItemId => _.addHotelOrderItem(generatedOrderItemId, hotelBookingSnapshot, bookedMoney)
+      generatedOrderItemId => _.addHotelOrderItem(generatedOrderItemId, hotelBookingSnapshot)
     )
 
   override def submitOrderForPayment(orderId: OrderId): F[Order] =

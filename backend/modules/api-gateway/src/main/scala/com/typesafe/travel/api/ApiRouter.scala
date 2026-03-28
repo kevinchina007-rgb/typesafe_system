@@ -9,6 +9,7 @@ import com.typesafe.travel.api.dto.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.identity.domain.*
+import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
@@ -27,6 +28,7 @@ final class ApiRouter[F[_]: Async](
     userService: UserService[F],
     travelerProfileService: TravelerProfileService[F],
     orderService: OrderService[F],
+    orderLifecycleApplicationService: OrderLifecycleApplicationService[F],
     flightBookingApplicationService: FlightBookingApplicationService[F],
     hotelBookingApplicationService: HotelBookingApplicationService[F],
     managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
@@ -34,6 +36,7 @@ final class ApiRouter[F[_]: Async](
     userRepository: UserRepository[F],
     travelerProfileRepository: TravelerProfileRepository[F],
     orderRepository: OrderRepository[F],
+    inventoryReservationRepository: InventoryReservationRepository[F],
     avatarUploadRootDirectoryPath: Path
 ) extends Http4sDsl[F]:
 
@@ -216,9 +219,10 @@ final class ApiRouter[F[_]: Async](
         .flatMap(_ => NoContent())
 
     case GET -> Root / "api" / "users" / userIdValue / "orders" =>
-      orderService
-        .listOrdersForUser(UserId(userIdValue))
-        .flatMap(orders => Ok(OrderListResponseDto(orders.map(OrderResponseDto.fromDomain)).asJson))
+      orderLifecycleApplicationService
+        .listOrdersForUser(UserId(userIdValue), Instant.now())
+        .flatMap(_.traverse(toOrderResponseDto))
+        .flatMap(orderResponses => Ok(OrderListResponseDto(orderResponses).asJson))
 
     case request @ PUT -> Root / "api" / "users" / userIdValue / "travelers" / travelerIdValue =>
       for
@@ -304,7 +308,8 @@ final class ApiRouter[F[_]: Async](
           travelerIds = addFlightItemRequestDto.travelerIds.map(TravelerId.apply),
           cabinClass = selectedCabinClass
         )
-        response <- Created(OrderResponseDto.fromDomain(updatedOrder).asJson)
+        orderResponseDto <- toOrderResponseDto(updatedOrder)
+        response <- Created(orderResponseDto.asJson)
       yield response
 
     case request @ POST -> Root / "api" / "hotels" / "book" =>
@@ -319,13 +324,15 @@ final class ApiRouter[F[_]: Async](
           checkOutDate = LocalDate.parse(addHotelItemRequestDto.checkOutDate),
           roomCount = roomCount
         )
-        response <- Created(OrderResponseDto.fromDomain(updatedOrder).asJson)
+        orderResponseDto <- toOrderResponseDto(updatedOrder)
+        response <- Created(orderResponseDto.asJson)
       yield response
 
     case GET -> Root / "api" / "orders" / orderIdValue =>
-      orderRepository.findOrderById(OrderId(orderIdValue)).flatMap {
-        case Some(foundOrder) => Ok(OrderResponseDto.fromDomain(foundOrder).asJson)
-        case None             => NotFound(ApiErrorResponseDto("order_not_found", s"Order '$orderIdValue' was not found").asJson)
+      orderLifecycleApplicationService.getOrder(OrderId(orderIdValue), Instant.now()).flatMap { foundOrder =>
+        toOrderResponseDto(foundOrder).flatMap(orderResponseDto => Ok(orderResponseDto.asJson))
+      }.handleErrorWith {
+        case throwable: Throwable => handleDomainError(throwable)
       }
 
     case GET -> Root / "api" / "manager" / "tasks" :? ManagerIdQueryParamMatcher(managerIdValue) +&
@@ -416,7 +423,8 @@ final class ApiRouter[F[_]: Async](
           note = managerDecisionRequestDto.note.map(_.trim).filter(_.nonEmpty),
           decidedAt = Instant.now()
         )
-        response <- Ok(OrderResponseDto.fromDomain(updatedOrder).asJson)
+        orderResponseDto <- toOrderResponseDto(updatedOrder)
+        response <- Ok(orderResponseDto.asJson)
       yield response
 
     case request @ POST -> Root / "api" / "manager" / "booking-items" / orderItemValue / "reject" =>
@@ -432,7 +440,8 @@ final class ApiRouter[F[_]: Async](
           reason = rejectReason,
           decidedAt = Instant.now()
         )
-        response <- Ok(OrderResponseDto.fromDomain(updatedOrder).asJson)
+        orderResponseDto <- toOrderResponseDto(updatedOrder)
+        response <- Ok(orderResponseDto.asJson)
       yield response
 
     case request @ POST -> Root / "api" / "manager" / "orders" / orderIdValue / "refund" / "approve" =>
@@ -445,7 +454,8 @@ final class ApiRouter[F[_]: Async](
           orderId = OrderId(orderIdValue),
           decidedAt = Instant.now()
         )
-        response <- Ok(OrderResponseDto.fromDomain(order).asJson)
+        orderResponseDto <- toOrderResponseDto(order)
+        response <- Ok(orderResponseDto.asJson)
       yield response
 
     case request @ POST -> Root / "api" / "manager" / "orders" / orderIdValue / "refund" / "reject" =>
@@ -457,35 +467,32 @@ final class ApiRouter[F[_]: Async](
           managerType = ManagerDtoMappers.toManagerType(managerTypeText),
           orderId = OrderId(orderIdValue)
         )
-        response <- Ok(OrderResponseDto.fromDomain(order).asJson)
+        orderResponseDto <- toOrderResponseDto(order)
+        response <- Ok(orderResponseDto.asJson)
       yield response
 
     case POST -> Root / "api" / "orders" / orderIdValue / "submit" =>
       orderService
         .submitOrderForPayment(OrderId(orderIdValue))
-        .flatMap(order => Ok(OrderResponseDto.fromDomain(order).asJson))
+        .flatMap(order => toOrderResponseDto(order).flatMap(orderResponseDto => Ok(orderResponseDto.asJson)))
 
     case request @ POST -> Root / "api" / "orders" / orderIdValue / "pay" =>
       for
         authorizePaymentRequestDto <- request.as[PayOrderRequestDto]
-        orderAfterPaymentAuthorization <- if authorizePaymentRequestDto.paymentSucceeded then
-          orderService.payOrder(
+        orderAfterPaymentAuthorization <- orderLifecycleApplicationService.payOrder(
           orderId = OrderId(orderIdValue),
           paymentMethod = OrderDtoMappers.toPaymentMethod(authorizePaymentRequestDto.paymentMethod),
-          paidAt = Instant.now()
+          paymentSucceeded = authorizePaymentRequestDto.paymentSucceeded,
+          currentTime = Instant.now()
         )
-        else
-          orderRepository.findOrderById(OrderId(orderIdValue)).flatMap(_.liftTo[F](OrderError.OrderWasNotFound(OrderId(orderIdValue))))
-        response <- Ok(OrderResponseDto.fromDomain(orderAfterPaymentAuthorization).asJson)
+        orderResponseDto <- toOrderResponseDto(orderAfterPaymentAuthorization)
+        response <- Ok(orderResponseDto.asJson)
       yield response
 
     case POST -> Root / "api" / "orders" / orderIdValue / "cancel" =>
-      orderRepository
-        .findOrderById(OrderId(orderIdValue))
-        .flatMap(_.liftTo[F](OrderError.OrderWasNotFound(OrderId(orderIdValue))))
-        .flatMap(_.cancelDraftOrder(Instant.now()).liftTo[F])
-        .flatMap(orderRepository.saveOrder)
-        .flatMap(order => Ok(OrderResponseDto.fromDomain(order).asJson))
+      orderLifecycleApplicationService
+        .cancelOrder(OrderId(orderIdValue), Instant.now())
+        .flatMap(order => toOrderResponseDto(order).flatMap(orderResponseDto => Ok(orderResponseDto.asJson)))
 
     case request @ POST -> Root / "api" / "orders" / orderIdValue / "refunds" =>
       for
@@ -495,18 +502,19 @@ final class ApiRouter[F[_]: Async](
           refundReason = requestRefundRequestDto.refundReason,
           requestedAt = Instant.now()
         )
-        response <- Ok(OrderResponseDto.fromDomain(updatedOrder).asJson)
+        orderResponseDto <- toOrderResponseDto(updatedOrder)
+        response <- Ok(orderResponseDto.asJson)
       yield response
 
     case POST -> Root / "api" / "orders" / orderIdValue / "refunds" / refundIdValue / "approve" =>
       orderService
         .approveRequestedRefund(OrderId(orderIdValue), RefundId(refundIdValue), Instant.now())
-        .flatMap(order => Ok(OrderResponseDto.fromDomain(order).asJson))
+        .flatMap(order => toOrderResponseDto(order).flatMap(orderResponseDto => Ok(orderResponseDto.asJson)))
 
     case POST -> Root / "api" / "orders" / orderIdValue / "refunds" / refundIdValue / "settle" =>
       orderService
         .settleApprovedRefund(OrderId(orderIdValue), RefundId(refundIdValue), Instant.now())
-        .flatMap(order => Ok(OrderResponseDto.fromDomain(order).asJson))
+        .flatMap(order => toOrderResponseDto(order).flatMap(orderResponseDto => Ok(orderResponseDto.asJson)))
   }
 
   val routes: HttpRoutes[F] =
@@ -577,6 +585,11 @@ final class ApiRouter[F[_]: Async](
   private def fromEither[A](value: Either[? <: Throwable, A]): F[A] =
     MonadThrow[F].fromEither(value.leftMap(identity))
 
+  private def toOrderResponseDto(order: Order): F[OrderResponseDto] =
+    inventoryReservationRepository
+      .findReservationsByOrderId(order.orderId)
+      .map(reservations => OrderResponseDto.fromDomain(order, reservations))
+
   private def handleDomainError(throwable: Throwable): F[Response[F]] =
     val (responseStatus, apiErrorResponseDto) =
       throwable match
@@ -594,6 +607,8 @@ final class ApiRouter[F[_]: Async](
           Status.BadRequest -> ApiErrorResponseDto("cabin_not_bookable", throwable.getMessage)
         case FlightBookingApplicationError.TravelerSelectionWasInvalid(_) =>
           Status.BadRequest -> ApiErrorResponseDto("invalid_traveler_selection", throwable.getMessage)
+        case InventoryReservationError.InventoryWasNotAvailable(_, _, _) =>
+          Status.Conflict -> ApiErrorResponseDto("inventory_not_available", throwable.getMessage)
         case HotelError.HotelWasNotFound(_) =>
           Status.NotFound -> ApiErrorResponseDto("hotel_not_found", throwable.getMessage)
         case HotelBookingApplicationError.RoomTypeWasNotFound(_) =>
@@ -650,6 +665,7 @@ object ApiRouter:
       userService: UserService[F],
       travelerProfileService: TravelerProfileService[F],
       orderService: OrderService[F],
+      orderLifecycleApplicationService: OrderLifecycleApplicationService[F],
       flightBookingApplicationService: FlightBookingApplicationService[F],
       hotelBookingApplicationService: HotelBookingApplicationService[F],
       managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
@@ -657,12 +673,14 @@ object ApiRouter:
       userRepository: UserRepository[F],
       travelerProfileRepository: TravelerProfileRepository[F],
       orderRepository: OrderRepository[F],
+      inventoryReservationRepository: InventoryReservationRepository[F],
       avatarUploadRootDirectoryPath: Path
   ): ApiRouter[F] =
     new ApiRouter[F](
       userService,
       travelerProfileService,
       orderService,
+      orderLifecycleApplicationService,
       flightBookingApplicationService,
       hotelBookingApplicationService,
       managerWorkflowApplicationService,
@@ -670,5 +688,6 @@ object ApiRouter:
       userRepository,
       travelerProfileRepository,
       orderRepository,
+      inventoryReservationRepository,
       avatarUploadRootDirectoryPath
     )

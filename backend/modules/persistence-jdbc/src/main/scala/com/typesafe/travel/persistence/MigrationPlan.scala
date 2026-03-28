@@ -12,7 +12,9 @@ object MigrationPlan:
   val defaultSteps: List[MigrationStep] = List(
     loadMigrationStep(1, "baseline", "db/migrations/V1__baseline.sql"),
     loadMigrationStep(2, "order_and_inventory_refinement", "db/migrations/V2__order_and_inventory_refinement.sql"),
-    loadMigrationStep(3, "manager_workflow_phase1", "db/migrations/V3__manager_workflow_phase1.sql")
+    loadMigrationStep(3, "manager_workflow_phase1", "db/migrations/V3__manager_workflow_phase1.sql"),
+    loadMigrationStep(5, "flight_inventory_reservations", "db/migrations/V5__flight_inventory_reservations.sql"),
+    loadMigrationStep(6, "hotel_inventory_locking", "db/migrations/V6__hotel_inventory_locking.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

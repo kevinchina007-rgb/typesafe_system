@@ -44,6 +44,12 @@ final class InMemoryOrderRepository[F[_]: Sync] private (
       order
     }
 
+  override def deleteOrder(orderId: OrderId): F[Unit] =
+    Sync[F].delay {
+      orderState.remove(orderId)
+      ()
+    }
+
 object InMemoryOrderRepository:
   def create[F[_]: Sync]: InMemoryOrderRepository[F] =
     new InMemoryOrderRepository[F](

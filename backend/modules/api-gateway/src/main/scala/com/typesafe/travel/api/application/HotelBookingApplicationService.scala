@@ -3,6 +3,7 @@ package com.typesafe.travel.api.application
 import cats.MonadThrow
 import cats.syntax.all.*
 import com.typesafe.travel.hotel.domain.*
+import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.TravelerProfileRepository
@@ -54,9 +55,9 @@ trait HotelBookingApplicationService[F[_]]:
 final class LiveHotelBookingApplicationService[F[_]: MonadThrow](
     hotelService: HotelService[F],
     hotelRepository: HotelRepository[F],
-    orderService: OrderService[F],
     orderRepository: OrderRepository[F],
-    travelerProfileRepository: TravelerProfileRepository[F]
+    travelerProfileRepository: TravelerProfileRepository[F],
+    hotelInventoryLockingService: HotelInventoryLockingService[F]
 ) extends HotelBookingApplicationService[F]:
   override def browseHotels(
       locationQuery: Option[String],
@@ -97,29 +98,49 @@ final class LiveHotelBookingApplicationService[F[_]: MonadThrow](
         case otherHotelError =>
           otherHotelError
       }.liftTo[F]
-      totalPriceSnapshot <- calculateTotalStayPrice(roomType.roomTypeId, roomInventories, roomCount, checkInDate, checkOutDate)
-      createdOrder <- orderService.createDraftOrder(
+      generatedOrderId <- orderRepository.nextOrderId
+      generatedOrderItemId <- orderRepository.nextOrderItemId
+      createdAt = java.time.Instant.now()
+      draftOrder = Order.createDraftOrder(
+        orderId = generatedOrderId,
         ownerUserId = actingUserId,
-        orderCurrency = totalPriceSnapshot.currency,
-        createdAt = java.time.Instant.now()
+        orderCurrency = roomInventories.headOption.map(_.unitPrice.currency).getOrElse(roomType.basePrice.currency),
+        createdAt = createdAt
       )
-      updatedOrder <- orderService.addHotelOrderItem(
-        orderId = createdOrder.orderId,
-        hotelBookingSnapshot = HotelBookingSnapshot(
-          hotelId = hotel.hotelId,
-          hotelName = hotel.hotelName,
-          hotelLocation = hotel.hotelLocation,
-          roomTypeId = roomType.roomTypeId,
-          roomTypeName = roomType.roomTypeName,
-          stayPeriod = stayPeriod,
-          guestTravelerIds = travelerProfiles.map(_.travelerId).toVector,
-          roomCount = roomCount,
-          unitPriceSnapshot = roomInventories.headOption.map(_.unitPrice).getOrElse(roomType.basePrice),
-          totalPriceSnapshot = totalPriceSnapshot
-        ),
-        bookedMoney = totalPriceSnapshot
-      )
-    yield updatedOrder
+      _ <- orderRepository.saveOrder(draftOrder)
+      savedOrder <- (
+        for
+          _ <- hotelInventoryLockingService.acquireHotelRoomReservation(
+            roomTypeId = roomType.roomTypeId,
+            orderId = generatedOrderId,
+            orderItemId = generatedOrderItemId,
+            roomCount = roomCount.value,
+            dailyCapacities = roomInventories.map(roomInventory => roomInventory.inventoryDate -> roomInventory.availableRooms.value),
+            stayPeriod = stayPeriod,
+            reservedAt = createdAt
+          )
+          orderWithItem <- draftOrder
+            .addHotelOrderItem(
+              orderItemId = generatedOrderItemId,
+              hotelBookingSnapshot = HotelBookingSnapshot(
+                hotelId = hotel.hotelId,
+                hotelName = hotel.hotelName,
+                hotelLocation = hotel.hotelLocation,
+                roomTypeId = roomType.roomTypeId,
+                roomTypeName = roomType.roomTypeName,
+                stayPeriod = stayPeriod,
+                guestTravelerIds = travelerProfiles.map(_.travelerId).toVector,
+                roomCount = roomCount,
+                unitPriceSnapshot = roomInventories.headOption.map(_.unitPrice).getOrElse(roomType.basePrice)
+              )
+            )
+            .liftTo[F]
+          persistedOrder <- orderRepository.saveOrder(orderWithItem)
+        yield persistedOrder
+      ).handleErrorWith { throwable =>
+        orderRepository.deleteOrder(generatedOrderId) *> MonadThrow[F].raiseError(throwable)
+      }
+    yield savedOrder
 
   private def validateTravelerSelection(guestTravelerIds: List[TravelerId]): F[List[TravelerId]] =
     if guestTravelerIds.isEmpty then
@@ -146,23 +167,6 @@ final class LiveHotelBookingApplicationService[F[_]: MonadThrow](
           )
         )
     }
-
-  private def calculateTotalStayPrice(
-      roomTypeId: RoomTypeId,
-      roomInventories: Vector[RoomInventory],
-      roomCount: RoomCount,
-      checkInDate: LocalDate,
-      checkOutDate: LocalDate
-  ): F[Money] =
-    roomInventories.toList
-      .traverse(_.unitPrice.multiply(roomCount.value).liftTo[F])
-      .flatMap {
-        case Nil => MonadThrow[F].raiseError(HotelBookingApplicationError.RoomInventoryWasNotBookable(roomTypeId, checkInDate, checkOutDate))
-        case firstNightPrice :: remainingNightPrices =>
-          remainingNightPrices.foldLeft(MonadThrow[F].pure(firstNightPrice)) { (accumulatedMoneyF, nextNightMoney) =>
-            accumulatedMoneyF.flatMap(_.add(nextNightMoney).liftTo[F])
-          }
-      }
 
   private def hotelMatchesSearch(hotel: Hotel, locationQuery: Option[String]): Boolean =
     locationQuery.forall(queryText => TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesHotelLocationQuery(hotel.hotelLocation, queryText))

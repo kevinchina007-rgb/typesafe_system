@@ -36,8 +36,7 @@ final class OrderSpec extends FunSuite:
       stayPeriod = StayPeriod.unsafe(LocalDate.parse("2026-04-05"), LocalDate.parse("2026-04-08")),
       guestTravelerIds = Vector(TravelerId("traveler-1"), TravelerId("traveler-2")),
       roomCount = RoomCount.unsafe(1),
-      unitPriceSnapshot = Money.unsafe(BigDecimal(100), Currency.USD),
-      totalPriceSnapshot = Money.unsafe(BigDecimal(300), Currency.USD)
+      unitPriceSnapshot = Money.unsafe(BigDecimal(100), Currency.USD)
     )
 
   test("draft order rejects mixed currencies") {
@@ -46,8 +45,7 @@ final class OrderSpec extends FunSuite:
         .createDraftOrder(OrderId("order-1"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
         .addFlightOrderItem(
           OrderItemId("item-1"),
-          testFlightBookingSnapshot,
-          Money.unsafe(BigDecimal(500), Currency.USD)
+          testFlightBookingSnapshot
         )
         .toOption
         .get
@@ -55,8 +53,7 @@ final class OrderSpec extends FunSuite:
     val result =
       draftOrder.addHotelOrderItem(
         OrderItemId("item-2"),
-        testHotelBookingSnapshot,
-        Money.unsafe(BigDecimal(300), Currency.CNY)
+        testHotelBookingSnapshot.copy(unitPriceSnapshot = Money.unsafe(BigDecimal(300), Currency.CNY))
       )
 
     assert(result.swap.exists(_.isInstanceOf[OrderError.OrderCurrencyDidNotMatch]))
@@ -68,18 +65,16 @@ final class OrderSpec extends FunSuite:
         .createDraftOrder(OrderId("order-2"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
         .addFlightOrderItem(
           OrderItemId("item-1"),
-          testFlightBookingSnapshot,
-          Money.unsafe(BigDecimal(500), Currency.USD)
+          testFlightBookingSnapshot
         )
         .flatMap(
           _.addHotelOrderItem(
             OrderItemId("item-2"),
-            testHotelBookingSnapshot,
-            Money.unsafe(BigDecimal(300), Currency.USD)
+            testHotelBookingSnapshot
           )
         )
 
-    assertEquals(draftOrder.map(_.totalBookedMoney.amount), Right(BigDecimal(800)))
+    assertEquals(draftOrder.map(_.totalBookedMoney.amount), Right(BigDecimal(600)))
   }
 
   test("capturing enough payment confirms order and order items") {
@@ -88,8 +83,10 @@ final class OrderSpec extends FunSuite:
         .createDraftOrder(OrderId("order-3"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
         .addFlightOrderItem(
           OrderItemId("item-1"),
-          testFlightBookingSnapshot,
-          Money.unsafe(BigDecimal(800), Currency.USD)
+          testFlightBookingSnapshot.copy(
+            travelerIds = Vector(TravelerId("traveler-1"), TravelerId("traveler-2")),
+            unitPriceSnapshot = Money.unsafe(BigDecimal(400), Currency.USD)
+          )
         )
         .flatMap(_.submitOrderForPayment)
         .flatMap(
@@ -119,8 +116,10 @@ final class OrderSpec extends FunSuite:
         .createDraftOrder(OrderId("order-3b"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
         .addFlightOrderItem(
           OrderItemId("item-1"),
-          testFlightBookingSnapshot,
-          Money.unsafe(BigDecimal(800), Currency.USD)
+          testFlightBookingSnapshot.copy(
+            travelerIds = Vector(TravelerId("traveler-1"), TravelerId("traveler-2")),
+            unitPriceSnapshot = Money.unsafe(BigDecimal(400), Currency.USD)
+          )
         )
         .flatMap(_.submitOrderForPayment)
         .flatMap(
@@ -157,8 +156,10 @@ final class OrderSpec extends FunSuite:
         .createDraftOrder(OrderId("order-3c"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
         .addFlightOrderItem(
           OrderItemId("item-1"),
-          testFlightBookingSnapshot,
-          Money.unsafe(BigDecimal(800), Currency.USD)
+          testFlightBookingSnapshot.copy(
+            travelerIds = Vector(TravelerId("traveler-1"), TravelerId("traveler-2")),
+            unitPriceSnapshot = Money.unsafe(BigDecimal(400), Currency.USD)
+          )
         )
         .flatMap(_.submitOrderForPayment)
         .flatMap(
@@ -188,21 +189,19 @@ final class OrderSpec extends FunSuite:
         .createDraftOrder(OrderId("order-3d"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
         .addFlightOrderItem(
           OrderItemId("item-flight"),
-          testFlightBookingSnapshot,
-          Money.unsafe(BigDecimal(500), Currency.USD)
+          testFlightBookingSnapshot
         )
         .flatMap(
           _.addHotelOrderItem(
             OrderItemId("item-hotel"),
-            testHotelBookingSnapshot,
-            Money.unsafe(BigDecimal(300), Currency.USD)
+            testHotelBookingSnapshot
           )
         )
         .flatMap(_.submitOrderForPayment)
         .flatMap(
           _.authorizeOrderPayment(
             paymentId = PaymentId("payment-1"),
-            paymentAmount = Money.unsafe(BigDecimal(800), Currency.USD),
+            paymentAmount = Money.unsafe(BigDecimal(600), Currency.USD),
             paymentMethod = PaymentMethod.Card,
             authorizedAt = orderCreatedAtInstant.plusSeconds(300)
           )
@@ -237,8 +236,7 @@ final class OrderSpec extends FunSuite:
         .createDraftOrder(OrderId("order-4"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
         .addFlightOrderItem(
           OrderItemId("item-1"),
-          testFlightBookingSnapshot,
-          Money.unsafe(BigDecimal(500), Currency.USD)
+          testFlightBookingSnapshot
         )
         .flatMap(_.submitOrderForPayment)
         .flatMap(
@@ -270,8 +268,7 @@ final class OrderSpec extends FunSuite:
         .createDraftOrder(OrderId("order-5"), UserId("user-1"), Currency.USD, orderCreatedAtInstant)
         .addFlightOrderItem(
           OrderItemId("item-1"),
-          testFlightBookingSnapshot,
-          Money.unsafe(BigDecimal(500), Currency.USD)
+          testFlightBookingSnapshot
         )
         .flatMap(_.submitOrderForPayment)
         .flatMap(

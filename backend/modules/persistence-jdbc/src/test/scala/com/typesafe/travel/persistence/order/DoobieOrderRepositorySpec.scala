@@ -56,20 +56,19 @@ final class DoobieOrderRepositorySpec extends FunSuite:
         hotelLocation = HotelLocation.unsafe("Hangzhou"),
         roomTypeId = RoomTypeId("roomtype-westlake-deluxe"),
         roomTypeName = RoomTypeName.unsafe("Deluxe Twin"),
-        stayPeriod = StayPeriod.unsafe(LocalDate.parse("2026-04-06"), LocalDate.parse("2026-04-08")),
-        guestTravelerIds = Vector(TravelerId("traveler-1"), TravelerId("traveler-2")),
-        roomCount = RoomCount.unsafe(1),
-        unitPriceSnapshot = Money.unsafe(BigDecimal(920), orderCurrency),
-        totalPriceSnapshot = Money.unsafe(BigDecimal(1870), orderCurrency)
-      )
+      stayPeriod = StayPeriod.unsafe(LocalDate.parse("2026-04-06"), LocalDate.parse("2026-04-08")),
+      guestTravelerIds = Vector(TravelerId("traveler-1"), TravelerId("traveler-2")),
+      roomCount = RoomCount.unsafe(1),
+      unitPriceSnapshot = Money.unsafe(BigDecimal(920), orderCurrency)
+    )
 
     val savedOrder =
       Order
         .createDraftOrder(OrderId("order-roundtrip"), UserId("user-order-owner"), orderCurrency, createdAt)
-        .addFlightOrderItem(OrderItemId("order-item-flight"), flightSnapshot, Money.unsafe(BigDecimal(3600), orderCurrency))
-        .flatMap(_.addHotelOrderItem(OrderItemId("order-item-hotel"), hotelSnapshot, Money.unsafe(BigDecimal(1870), orderCurrency)))
+        .addFlightOrderItem(OrderItemId("order-item-flight"), flightSnapshot)
+        .flatMap(_.addHotelOrderItem(OrderItemId("order-item-hotel"), hotelSnapshot))
         .flatMap(_.submitOrderForPayment)
-        .flatMap(_.authorizeOrderPayment(PaymentId("payment-1"), Money.unsafe(BigDecimal(5470), orderCurrency), PaymentMethod.Card, Instant.parse("2026-03-26T03:00:00Z")))
+        .flatMap(_.authorizeOrderPayment(PaymentId("payment-1"), Money.unsafe(BigDecimal(4520), orderCurrency), PaymentMethod.Card, Instant.parse("2026-03-26T03:00:00Z")))
         .flatMap(_.captureAuthorizedPayment(PaymentId("payment-1"), Instant.parse("2026-03-26T03:05:00Z")))
         .flatMap(_.requestOrderRefund(RefundId("refund-1"), Money.unsafe(BigDecimal(1000), orderCurrency), "schedule change", Instant.parse("2026-03-26T04:00:00Z")))
         .flatMap(_.approveRequestedRefund(RefundId("refund-1"), Instant.parse("2026-03-26T04:10:00Z")))

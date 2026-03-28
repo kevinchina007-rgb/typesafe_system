@@ -64,18 +64,20 @@ final case class HotelBookingSnapshot(
     stayPeriod: StayPeriod,
     guestTravelerIds: Vector[TravelerId],
     roomCount: RoomCount,
-    unitPriceSnapshot: Money,
-    totalPriceSnapshot: Money
+    unitPriceSnapshot: Money
 )
 
 final case class FlightOrderItem private (
     orderItemId: OrderItemId,
     flightBookingSnapshot: FlightBookingSnapshot,
-    bookedMoney: Money,
     orderItemStatus: OrderItemStatus,
     supplierReviewStatus: SupplierReviewStatus,
     supplierReviewDecision: Option[SupplierReviewDecision]
 ) extends OrderLineItem:
+  override def bookedMoney: Money =
+    flightBookingSnapshot.unitPriceSnapshot
+      .multiply(flightBookingSnapshot.travelerIds.size)
+      .fold(throw _, identity)
 
   def markConfirmedOrderItem: FlightOrderItem =
     copy(
@@ -136,13 +138,11 @@ final case class FlightOrderItem private (
 object FlightOrderItem:
   def createReservedFlightOrderItem(
       orderItemId: OrderItemId,
-      flightBookingSnapshot: FlightBookingSnapshot,
-      bookedMoney: Money
+      flightBookingSnapshot: FlightBookingSnapshot
   ): FlightOrderItem =
     FlightOrderItem(
       orderItemId,
       flightBookingSnapshot,
-      bookedMoney,
       OrderItemStatus.Reserved,
       SupplierReviewStatus.NotSubmitted,
       None
@@ -151,21 +151,23 @@ object FlightOrderItem:
   def restorePersistedFlightOrderItem(
       orderItemId: OrderItemId,
       flightBookingSnapshot: FlightBookingSnapshot,
-      bookedMoney: Money,
       orderItemStatus: OrderItemStatus,
       supplierReviewStatus: SupplierReviewStatus,
       supplierReviewDecision: Option[SupplierReviewDecision]
   ): FlightOrderItem =
-    FlightOrderItem(orderItemId, flightBookingSnapshot, bookedMoney, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
+    FlightOrderItem(orderItemId, flightBookingSnapshot, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
 
 final case class HotelOrderItem private (
     orderItemId: OrderItemId,
     hotelBookingSnapshot: HotelBookingSnapshot,
-    bookedMoney: Money,
     orderItemStatus: OrderItemStatus,
     supplierReviewStatus: SupplierReviewStatus,
     supplierReviewDecision: Option[SupplierReviewDecision]
 ) extends OrderLineItem:
+  override def bookedMoney: Money =
+    hotelBookingSnapshot.unitPriceSnapshot
+      .multiply(hotelBookingSnapshot.roomCount.value)
+      .fold(throw _, identity)
 
   def markConfirmedOrderItem: HotelOrderItem =
     copy(
@@ -226,13 +228,11 @@ final case class HotelOrderItem private (
 object HotelOrderItem:
   def createReservedHotelOrderItem(
       orderItemId: OrderItemId,
-      hotelBookingSnapshot: HotelBookingSnapshot,
-      bookedMoney: Money
+      hotelBookingSnapshot: HotelBookingSnapshot
   ): HotelOrderItem =
     HotelOrderItem(
       orderItemId,
       hotelBookingSnapshot,
-      bookedMoney,
       OrderItemStatus.Reserved,
       SupplierReviewStatus.NotSubmitted,
       None
@@ -241,12 +241,11 @@ object HotelOrderItem:
   def restorePersistedHotelOrderItem(
       orderItemId: OrderItemId,
       hotelBookingSnapshot: HotelBookingSnapshot,
-      bookedMoney: Money,
       orderItemStatus: OrderItemStatus,
       supplierReviewStatus: SupplierReviewStatus,
       supplierReviewDecision: Option[SupplierReviewDecision]
   ): HotelOrderItem =
-    HotelOrderItem(orderItemId, hotelBookingSnapshot, bookedMoney, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
+    HotelOrderItem(orderItemId, hotelBookingSnapshot, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
 
 final case class Payment private (
     paymentId: PaymentId,
@@ -357,55 +356,53 @@ final case class Order private (
       case hotelOrderItem: HotelOrderItem   => hotelOrderItem.supplierReviewStatus == SupplierReviewStatus.SupplierRejected
     }
 
-  val orderType: OrderType =
+  def orderType: OrderType =
     if orderLineItems.isEmpty then OrderType.PendingSelection
     else if orderLineItems.forall(_.isInstanceOf[FlightOrderItem]) then OrderType.FlightBooking
     else if orderLineItems.forall(_.isInstanceOf[HotelOrderItem]) then OrderType.HotelBooking
     else OrderType.MixedBooking
 
-  val totalBookedMoney: Money =
+  def totalBookedMoney: Money =
     orderLineItems.foldLeft(Money.zero(orderCurrency)) { (currentTotalMoney, orderLineItem) =>
       currentTotalMoney.add(orderLineItem.bookedMoney).fold(throw _, identity)
     }
 
-  val totalCapturedMoney: Money =
+  def totalCapturedMoney: Money =
     orderPayments
       .filter(_.paymentStatus == PaymentStatus.Captured)
       .foldLeft(Money.zero(orderCurrency)) { (currentCapturedMoney, payment) =>
         currentCapturedMoney.add(payment.paymentAmount).fold(throw _, identity)
       }
 
-  val totalSettledRefundMoney: Money =
+  def totalSettledRefundMoney: Money =
     orderRefunds
       .filter(_.refundStatus == RefundStatus.Settled)
       .foldLeft(Money.zero(orderCurrency)) { (currentRefundMoney, refund) =>
         currentRefundMoney.add(refund.refundAmount).fold(throw _, identity)
       }
 
-  val remainingRefundableMoney: Money =
+  def remainingRefundableMoney: Money =
     totalCapturedMoney.subtract(totalSettledRefundMoney).fold(throw _, identity)
 
   def addFlightOrderItem(
       orderItemId: OrderItemId,
-      flightBookingSnapshot: FlightBookingSnapshot,
-      bookedMoney: Money
+      flightBookingSnapshot: FlightBookingSnapshot
   ): Either[OrderError, Order] =
     for
       _ <- validateFlightBookingSnapshot(flightBookingSnapshot)
       orderWithLineItem <- addOrderLineItem(
-        FlightOrderItem.createReservedFlightOrderItem(orderItemId, flightBookingSnapshot, bookedMoney)
+        FlightOrderItem.createReservedFlightOrderItem(orderItemId, flightBookingSnapshot)
       )
     yield orderWithLineItem
 
   def addHotelOrderItem(
       orderItemId: OrderItemId,
-      hotelBookingSnapshot: HotelBookingSnapshot,
-      bookedMoney: Money
+      hotelBookingSnapshot: HotelBookingSnapshot
   ): Either[OrderError, Order] =
     for
       _ <- validateHotelBookingSnapshot(hotelBookingSnapshot)
       updatedOrder <- addOrderLineItem(
-        HotelOrderItem.createReservedHotelOrderItem(orderItemId, hotelBookingSnapshot, bookedMoney)
+        HotelOrderItem.createReservedHotelOrderItem(orderItemId, hotelBookingSnapshot)
       )
     yield updatedOrder
 
@@ -578,8 +575,6 @@ final case class Order private (
       Left(OrderError.HotelBookingRoomCountWasInvalid(orderId, hotelBookingSnapshot.roomTypeId, hotelBookingSnapshot.roomCount))
     else if hotelBookingSnapshot.unitPriceSnapshot.currency != orderCurrency then
       Left(OrderError.OrderCurrencyDidNotMatch(orderId, orderCurrency, hotelBookingSnapshot.unitPriceSnapshot.currency))
-    else if hotelBookingSnapshot.totalPriceSnapshot.currency != orderCurrency then
-      Left(OrderError.OrderCurrencyDidNotMatch(orderId, orderCurrency, hotelBookingSnapshot.totalPriceSnapshot.currency))
     else Right(())
 
   private def updatePayment(

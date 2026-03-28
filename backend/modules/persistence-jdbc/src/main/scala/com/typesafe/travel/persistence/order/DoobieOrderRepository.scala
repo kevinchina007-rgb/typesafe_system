@@ -246,6 +246,14 @@ final class DoobieOrderRepository[F[_]: Async](
 
     (upsertRootOrder *> replaceLineItems *> replacePayments *> replaceRefunds).transact(transactor).as(order)
 
+  override def deleteOrder(orderId: OrderId): F[Unit] =
+    (
+      sql"delete from order_refunds where order_id = ${orderId.value}".update.run *>
+        sql"delete from order_payments where order_id = ${orderId.value}".update.run *>
+        sql"delete from order_line_items where order_id = ${orderId.value}".update.run *>
+        sql"delete from orders where order_id = ${orderId.value}".update.run
+    ).transact(transactor).void
+
   private def loadOrders(orderQuery: Query0[OrderRow]): F[List[Order]] =
     orderQuery.to[List].transact(transactor).flatMap(_.traverse(buildOrder))
 
@@ -342,38 +350,33 @@ final class DoobieOrderRepository[F[_]: Async](
       .flatMap(_.traverse(buildRefund).map(_.toVector))
 
   private def buildOrderLineItem(orderLineItemRow: OrderLineItemRow): F[OrderLineItem] =
-    for
-      bookedCurrency <- Async[F].fromEither(DatabaseCodecs.parseCurrency(orderLineItemRow.bookedCurrency))
-      bookedMoney <- Async[F].fromEither(Money.create(orderLineItemRow.bookedAmount, bookedCurrency))
-      orderItemStatus = OrderItemStatus.valueOf(orderLineItemRow.itemStatus)
-      supplierReviewDecision = buildSupplierReviewDecision(orderLineItemRow)
-      supplierReviewStatus = SupplierReviewStatus.valueOf(orderLineItemRow.supplierReviewStatus)
-      orderLineItem <- orderLineItemRow.itemKind match
-        case "flight" =>
-          Async[F].fromEither(DatabaseCodecs.decodeFlightBookingSnapshot(orderLineItemRow.snapshotJson)).map { flightBookingSnapshot =>
-            FlightOrderItem.restorePersistedFlightOrderItem(
-              OrderItemId(orderLineItemRow.orderItemId),
-              flightBookingSnapshot,
-              bookedMoney,
-              orderItemStatus,
-              supplierReviewStatus,
-              supplierReviewDecision
-            )
-          }
-        case "hotel" =>
-          Async[F].fromEither(DatabaseCodecs.decodeHotelBookingSnapshot(orderLineItemRow.snapshotJson)).map { hotelBookingSnapshot =>
-            HotelOrderItem.restorePersistedHotelOrderItem(
-              OrderItemId(orderLineItemRow.orderItemId),
-              hotelBookingSnapshot,
-              bookedMoney,
-              orderItemStatus,
-              supplierReviewStatus,
-              supplierReviewDecision
-            )
-          }
-        case otherKind =>
-          Async[F].raiseError(new IllegalArgumentException(s"Unsupported order line item kind '$otherKind'"))
-    yield orderLineItem
+    val orderItemStatus = OrderItemStatus.valueOf(orderLineItemRow.itemStatus)
+    val supplierReviewDecision = buildSupplierReviewDecision(orderLineItemRow)
+    val supplierReviewStatus = SupplierReviewStatus.valueOf(orderLineItemRow.supplierReviewStatus)
+
+    orderLineItemRow.itemKind match
+      case "flight" =>
+        Async[F].fromEither(DatabaseCodecs.decodeFlightBookingSnapshot(orderLineItemRow.snapshotJson)).map { flightBookingSnapshot =>
+          FlightOrderItem.restorePersistedFlightOrderItem(
+            OrderItemId(orderLineItemRow.orderItemId),
+            flightBookingSnapshot,
+            orderItemStatus,
+            supplierReviewStatus,
+            supplierReviewDecision
+          )
+        }
+      case "hotel" =>
+        Async[F].fromEither(DatabaseCodecs.decodeHotelBookingSnapshot(orderLineItemRow.snapshotJson)).map { hotelBookingSnapshot =>
+          HotelOrderItem.restorePersistedHotelOrderItem(
+            OrderItemId(orderLineItemRow.orderItemId),
+            hotelBookingSnapshot,
+            orderItemStatus,
+            supplierReviewStatus,
+            supplierReviewDecision
+          )
+        }
+      case otherKind =>
+        Async[F].raiseError(new IllegalArgumentException(s"Unsupported order line item kind '$otherKind'"))
 
   private def buildPayment(row: (String, BigDecimal, String, String, String, Instant, Option[Instant])): F[Payment] =
     val (paymentIdValue, paymentAmountValue, paymentCurrencyValue, paymentMethodValue, paymentStatusValue, authorizedAtValue, capturedAtValue) =

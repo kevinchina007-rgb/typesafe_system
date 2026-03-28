@@ -49,6 +49,7 @@ lazy val root = (project in file("."))
     travelerDomain,
     flightDomain,
     hotelDomain,
+    inventoryDomain,
     orderDomain,
     operationsDomain,
     persistenceJdbc,
@@ -90,6 +91,12 @@ lazy val hotelDomain = module("hotel-domain")
     libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
   )
 
+lazy val inventoryDomain = module("inventory-domain")
+  .dependsOn(sharedKernel)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+  )
+
 lazy val orderDomain = module("order-domain")
   .dependsOn(sharedKernel, travelerDomain)
   .settings(
@@ -97,7 +104,7 @@ lazy val orderDomain = module("order-domain")
   )
 
 lazy val persistenceJdbc = module("persistence-jdbc")
-  .dependsOn(sharedKernel, identityDomain, travelerDomain, flightDomain, hotelDomain, orderDomain, operationsDomain)
+  .dependsOn(sharedKernel, identityDomain, travelerDomain, flightDomain, hotelDomain, inventoryDomain, orderDomain, operationsDomain)
   .settings(
     libraryDependencies ++= Seq(
       catsEffectDependency,
@@ -129,6 +136,7 @@ lazy val apiGateway = module("api-gateway")
     travelerDomain,
     flightDomain,
     hotelDomain,
+    inventoryDomain,
     orderDomain,
     operationsDomain,
     persistenceJdbc

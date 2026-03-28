@@ -8,12 +8,14 @@ import com.typesafe.travel.api.storage.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.identity.domain.*
+import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.*
 import com.typesafe.travel.persistence.flight.*
 import com.typesafe.travel.persistence.hotel.*
 import com.typesafe.travel.persistence.identity.*
+import com.typesafe.travel.persistence.inventory.*
 import com.typesafe.travel.persistence.operations.*
 import com.typesafe.travel.persistence.order.*
 import com.typesafe.travel.persistence.traveler.*
@@ -27,7 +29,10 @@ final case class ApplicationWiring[F[_]](
     travelerProfileService: TravelerProfileService[F],
     flightService: FlightService[F],
     hotelService: HotelService[F],
+    flightInventoryLockingService: FlightInventoryLockingService[F],
+    hotelInventoryLockingService: HotelInventoryLockingService[F],
     orderService: OrderService[F],
+    orderLifecycleApplicationService: OrderLifecycleApplicationService[F],
     managerService: ManagerService[F],
     flightBookingApplicationService: FlightBookingApplicationService[F],
     hotelBookingApplicationService: HotelBookingApplicationService[F],
@@ -38,6 +43,7 @@ final case class ApplicationWiring[F[_]](
     flightRepository: FlightRepository[F],
     hotelRepository: HotelRepository[F],
     orderRepository: OrderRepository[F],
+    inventoryReservationRepository: InventoryReservationRepository[F],
     managerRepository: ManagerRepository[F],
     httpApp: HttpApp[F]
 )
@@ -56,6 +62,7 @@ object ApplicationWiring:
     val inMemoryFlightRepository = InMemoryFlightRepository.create[F]
     val inMemoryHotelRepository = InMemoryHotelRepository.create[F]
     val inMemoryOrderRepository = InMemoryOrderRepository.create[F]
+    val inMemoryInventoryReservationRepository = InMemoryInventoryReservationRepository.create[F]
     val inMemoryManagerRepository = InMemoryManagerRepository.create[F]
     val avatarUploadRootDirectoryPath = Paths.get("uploads", "avatars").toAbsolutePath.normalize()
     val localAvatarStorage = LocalAvatarStorage.create[F](avatarUploadRootDirectoryPath)
@@ -65,13 +72,24 @@ object ApplicationWiring:
       LiveTravelerProfileService[F](inMemoryTravelerProfileRepository, inMemoryUserRepository)
     val liveFlightService = LiveFlightService[F](inMemoryFlightRepository)
     val liveHotelService = LiveHotelService[F](inMemoryHotelRepository)
+    val reservationLifecycle = LiveReservationLifecycle[F](inMemoryInventoryReservationRepository)
+    val liveFlightInventoryLockingService =
+      LiveFlightInventoryLockingService[F](inMemoryInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
+    val liveHotelInventoryLockingService =
+      LiveHotelInventoryLockingService[F](inMemoryInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
     val liveOrderService = LiveOrderService[F](inMemoryOrderRepository)
+    val liveOrderLifecycleApplicationService =
+        LiveOrderLifecycleApplicationService[F](
+          orderService = liveOrderService,
+          orderRepository = inMemoryOrderRepository,
+          reservationLifecycle = reservationLifecycle
+        )
     val liveManagerService = LiveManagerService[F](inMemoryManagerRepository)
     val liveFlightBookingApplicationService =
       LiveFlightBookingApplicationService[F](
         flightService = liveFlightService,
         flightRepository = inMemoryFlightRepository,
-        orderService = liveOrderService,
+        flightInventoryLockingService = liveFlightInventoryLockingService,
         orderRepository = inMemoryOrderRepository,
         travelerProfileRepository = inMemoryTravelerProfileRepository
       )
@@ -79,19 +97,20 @@ object ApplicationWiring:
       LiveHotelBookingApplicationService[F](
         hotelService = liveHotelService,
         hotelRepository = inMemoryHotelRepository,
-        orderService = liveOrderService,
         orderRepository = inMemoryOrderRepository,
-        travelerProfileRepository = inMemoryTravelerProfileRepository
+        travelerProfileRepository = inMemoryTravelerProfileRepository,
+        hotelInventoryLockingService = liveHotelInventoryLockingService
       )
     val liveManagerWorkflowApplicationService =
-      LiveManagerWorkflowApplicationService[F](
-        managerService = liveManagerService,
-        managerRepository = inMemoryManagerRepository,
-        orderRepository = inMemoryOrderRepository,
-        orderService = liveOrderService,
-        flightRepository = inMemoryFlightRepository,
-        hotelRepository = inMemoryHotelRepository
-      )
+        LiveManagerWorkflowApplicationService[F](
+          managerService = liveManagerService,
+          managerRepository = inMemoryManagerRepository,
+          orderRepository = inMemoryOrderRepository,
+          orderService = liveOrderService,
+          reservationLifecycle = reservationLifecycle,
+          flightRepository = inMemoryFlightRepository,
+          hotelRepository = inMemoryHotelRepository
+        )
     val liveAvatarApplicationService =
       LiveAvatarApplicationService[F](
         userService = liveUserService,
@@ -103,6 +122,7 @@ object ApplicationWiring:
         userService = liveUserService,
         travelerProfileService = liveTravelerProfileService,
         orderService = liveOrderService,
+        orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
         flightBookingApplicationService = liveFlightBookingApplicationService,
         hotelBookingApplicationService = liveHotelBookingApplicationService,
         managerWorkflowApplicationService = liveManagerWorkflowApplicationService,
@@ -110,6 +130,7 @@ object ApplicationWiring:
         userRepository = inMemoryUserRepository,
         travelerProfileRepository = inMemoryTravelerProfileRepository,
         orderRepository = inMemoryOrderRepository,
+        inventoryReservationRepository = inMemoryInventoryReservationRepository,
         avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath
       )
 
@@ -118,7 +139,10 @@ object ApplicationWiring:
       travelerProfileService = liveTravelerProfileService,
       flightService = liveFlightService,
       hotelService = liveHotelService,
+      flightInventoryLockingService = liveFlightInventoryLockingService,
+      hotelInventoryLockingService = liveHotelInventoryLockingService,
       orderService = liveOrderService,
+      orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
       managerService = liveManagerService,
       flightBookingApplicationService = liveFlightBookingApplicationService,
       hotelBookingApplicationService = liveHotelBookingApplicationService,
@@ -129,6 +153,7 @@ object ApplicationWiring:
       flightRepository = inMemoryFlightRepository,
       hotelRepository = inMemoryHotelRepository,
       orderRepository = inMemoryOrderRepository,
+      inventoryReservationRepository = inMemoryInventoryReservationRepository,
       managerRepository = inMemoryManagerRepository,
       httpApp = apiRouter.routes.orNotFound
     )
@@ -146,36 +171,49 @@ object ApplicationWiring:
       doobieFlightRepository = DoobieFlightRepository[F](databaseTransactor)
       doobieHotelRepository = DoobieHotelRepository[F](databaseTransactor)
       doobieOrderRepository = DoobieOrderRepository[F](databaseTransactor)
+      doobieInventoryReservationRepository = DoobieInventoryReservationRepository[F](databaseTransactor)
       doobieManagerRepository = DoobieManagerRepository[F](databaseTransactor)
       liveUserService = LiveUserService[F](doobieUserRepository)
       liveTravelerProfileService =
         LiveTravelerProfileService[F](doobieTravelerProfileRepository, doobieUserRepository)
       liveFlightService = LiveFlightService[F](doobieFlightRepository)
       liveHotelService = LiveHotelService[F](doobieHotelRepository)
+      reservationLifecycle = LiveReservationLifecycle[F](doobieInventoryReservationRepository)
+      liveFlightInventoryLockingService =
+        LiveFlightInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
+      liveHotelInventoryLockingService =
+        LiveHotelInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
       liveOrderService = LiveOrderService[F](doobieOrderRepository)
+      liveOrderLifecycleApplicationService =
+        LiveOrderLifecycleApplicationService[F](
+          orderService = liveOrderService,
+          orderRepository = doobieOrderRepository,
+          reservationLifecycle = reservationLifecycle
+        )
       liveManagerService = LiveManagerService[F](doobieManagerRepository)
       liveFlightBookingApplicationService =
         LiveFlightBookingApplicationService[F](
           flightService = liveFlightService,
           flightRepository = doobieFlightRepository,
-          orderService = liveOrderService,
+          flightInventoryLockingService = liveFlightInventoryLockingService,
           orderRepository = doobieOrderRepository,
           travelerProfileRepository = doobieTravelerProfileRepository
         )
       liveHotelBookingApplicationService =
         LiveHotelBookingApplicationService[F](
-          hotelService = liveHotelService,
-          hotelRepository = doobieHotelRepository,
-          orderService = liveOrderService,
-          orderRepository = doobieOrderRepository,
-          travelerProfileRepository = doobieTravelerProfileRepository
-        )
+        hotelService = liveHotelService,
+        hotelRepository = doobieHotelRepository,
+        orderRepository = doobieOrderRepository,
+        travelerProfileRepository = doobieTravelerProfileRepository,
+        hotelInventoryLockingService = liveHotelInventoryLockingService
+      )
       liveManagerWorkflowApplicationService =
         LiveManagerWorkflowApplicationService[F](
           managerService = liveManagerService,
           managerRepository = doobieManagerRepository,
           orderRepository = doobieOrderRepository,
           orderService = liveOrderService,
+          reservationLifecycle = reservationLifecycle,
           flightRepository = doobieFlightRepository,
           hotelRepository = doobieHotelRepository
         )
@@ -189,6 +227,7 @@ object ApplicationWiring:
           userService = liveUserService,
           travelerProfileService = liveTravelerProfileService,
           orderService = liveOrderService,
+          orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
           flightBookingApplicationService = liveFlightBookingApplicationService,
           hotelBookingApplicationService = liveHotelBookingApplicationService,
           managerWorkflowApplicationService = liveManagerWorkflowApplicationService,
@@ -196,6 +235,7 @@ object ApplicationWiring:
           userRepository = doobieUserRepository,
           travelerProfileRepository = doobieTravelerProfileRepository,
           orderRepository = doobieOrderRepository,
+          inventoryReservationRepository = doobieInventoryReservationRepository,
           avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath
         )
     yield ApplicationWiring(
@@ -203,7 +243,10 @@ object ApplicationWiring:
       travelerProfileService = liveTravelerProfileService,
       flightService = liveFlightService,
       hotelService = liveHotelService,
+      flightInventoryLockingService = liveFlightInventoryLockingService,
+      hotelInventoryLockingService = liveHotelInventoryLockingService,
       orderService = liveOrderService,
+      orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
       managerService = liveManagerService,
       flightBookingApplicationService = liveFlightBookingApplicationService,
       hotelBookingApplicationService = liveHotelBookingApplicationService,
@@ -214,6 +257,7 @@ object ApplicationWiring:
       flightRepository = doobieFlightRepository,
       hotelRepository = doobieHotelRepository,
       orderRepository = doobieOrderRepository,
+      inventoryReservationRepository = doobieInventoryReservationRepository,
       managerRepository = doobieManagerRepository,
       httpApp = apiRouter.routes.orNotFound
     )

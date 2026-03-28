@@ -12,3 +12,4 @@ trait OrderRepository[F[_]]:
   def findAllOrders: F[List[Order]]
   def findOrdersByOwnerUserId(ownerUserId: UserId): F[List[Order]]
   def saveOrder(order: Order): F[Order]
+  def deleteOrder(orderId: OrderId): F[Unit]

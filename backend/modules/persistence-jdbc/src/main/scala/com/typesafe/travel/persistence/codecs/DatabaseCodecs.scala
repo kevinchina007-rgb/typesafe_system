@@ -71,9 +71,7 @@ object DatabaseCodecs:
       guestTravelerIds: Vector[String],
       roomCount: Int,
       unitPriceAmount: BigDecimal,
-      unitPriceCurrency: String,
-      totalPriceAmount: BigDecimal,
-      totalPriceCurrency: String
+      unitPriceCurrency: String
   )
 
   final case class SerializedTravelerIds(
@@ -206,9 +204,7 @@ object DatabaseCodecs:
           guestTravelerIds = hotelOrderItem.hotelBookingSnapshot.guestTravelerIds.map(_.value),
           roomCount = hotelOrderItem.hotelBookingSnapshot.roomCount.value,
           unitPriceAmount = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.amount,
-          unitPriceCurrency = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString,
-          totalPriceAmount = hotelOrderItem.hotelBookingSnapshot.totalPriceSnapshot.amount,
-          totalPriceCurrency = hotelOrderItem.hotelBookingSnapshot.totalPriceSnapshot.currency.toString
+          unitPriceCurrency = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString
         ).asJson.noSpaces
 
   def decodeFlightBookingSnapshot(serializedValue: String): Either[Throwable, FlightBookingSnapshot] =
@@ -253,9 +249,7 @@ object DatabaseCodecs:
         )
         roomCount <- RoomCount.create(serializedHotelBookingSnapshot.roomCount)
         unitPriceCurrency <- parseCurrency(serializedHotelBookingSnapshot.unitPriceCurrency)
-        totalPriceCurrency <- parseCurrency(serializedHotelBookingSnapshot.totalPriceCurrency)
         unitPriceSnapshot <- Money.create(serializedHotelBookingSnapshot.unitPriceAmount, unitPriceCurrency)
-        totalPriceSnapshot <- Money.create(serializedHotelBookingSnapshot.totalPriceAmount, totalPriceCurrency)
       yield HotelBookingSnapshot(
         hotelId = HotelId(serializedHotelBookingSnapshot.hotelId),
         hotelName = hotelName,
@@ -265,8 +259,7 @@ object DatabaseCodecs:
         stayPeriod = stayPeriod,
         guestTravelerIds = serializedHotelBookingSnapshot.guestTravelerIds.map(TravelerId.apply),
         roomCount = roomCount,
-        unitPriceSnapshot = unitPriceSnapshot,
-        totalPriceSnapshot = totalPriceSnapshot
+        unitPriceSnapshot = unitPriceSnapshot
       )
     }.left.map(error => new IllegalArgumentException(s"Could not decode hotel booking snapshot: ${error.getMessage}", error))
 

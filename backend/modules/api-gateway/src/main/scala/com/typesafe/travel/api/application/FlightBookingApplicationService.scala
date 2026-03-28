@@ -3,6 +3,7 @@ package com.typesafe.travel.api.application
 import cats.MonadThrow
 import cats.syntax.all.*
 import com.typesafe.travel.flight.domain.*
+import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.TravelerProfileRepository
@@ -41,7 +42,7 @@ trait FlightBookingApplicationService[F[_]]:
 final class LiveFlightBookingApplicationService[F[_]: MonadThrow](
     flightService: FlightService[F],
     flightRepository: FlightRepository[F],
-    orderService: OrderService[F],
+    flightInventoryLockingService: FlightInventoryLockingService[F],
     orderRepository: OrderRepository[F],
     travelerProfileRepository: TravelerProfileRepository[F]
 ) extends FlightBookingApplicationService[F]:
@@ -72,30 +73,50 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow](
       flight <- flightService.getFlightDetails(flightId)
       airline <- flightRepository.findAirlineById(flight.airlineId).flatMap(_.liftTo[F](FlightError.AirlineWasNotFound(flight.airlineId)))
       cabinInventory <- flight.ensureBookableCabinInventory(cabinClass).leftMap(mapFlightError(_, cabinClass)).liftTo[F]
-      bookedMoney <- cabinInventory.unitPrice.multiply(travelerProfiles.size).liftTo[F]
-      createdOrder <- orderService.createDraftOrder(
+      generatedOrderId <- orderRepository.nextOrderId
+      generatedOrderItemId <- orderRepository.nextOrderItemId
+      createdAt = java.time.Instant.now()
+      draftOrder = Order.createDraftOrder(
+        orderId = generatedOrderId,
         ownerUserId = actingUserId,
         orderCurrency = cabinInventory.unitPrice.currency,
-        createdAt = java.time.Instant.now()
+        createdAt = createdAt
       )
-      updatedOrder <- orderService.addFlightOrderItem(
-        orderId = createdOrder.orderId,
-        flightBookingSnapshot = FlightBookingSnapshot(
-          airlineId = airline.airlineId,
-          airlineName = airline.airlineName,
-          airlineCode = airline.airlineCode,
-          flightId = flight.flightId,
-          flightNumber = flight.flightNumber,
-          flightSchedule = flight.flightSchedule,
-          departureAirportCode = flight.departureAirport,
-          arrivalAirportCode = flight.arrivalAirport,
-          cabinClass = cabinInventory.cabinClass,
-          travelerIds = travelerProfiles.map(_.travelerId).toVector,
-          unitPriceSnapshot = cabinInventory.unitPrice
-        ),
-        bookedMoney = bookedMoney
-      )
-    yield updatedOrder
+      _ <- orderRepository.saveOrder(draftOrder)
+      savedOrder <- (
+        for
+          _ <- flightInventoryLockingService.acquireFlightCabinReservation(
+            cabinInventoryId = cabinInventory.cabinInventoryId,
+            orderId = generatedOrderId,
+            orderItemId = generatedOrderItemId,
+            quantity = travelerProfiles.size,
+            capacityQuantity = cabinInventory.availableSeats.value,
+            reservedAt = createdAt
+          )
+          orderWithItem <- draftOrder
+            .addFlightOrderItem(
+              orderItemId = generatedOrderItemId,
+              flightBookingSnapshot = FlightBookingSnapshot(
+                airlineId = airline.airlineId,
+                airlineName = airline.airlineName,
+                airlineCode = airline.airlineCode,
+                flightId = flight.flightId,
+                flightNumber = flight.flightNumber,
+                flightSchedule = flight.flightSchedule,
+                departureAirportCode = flight.departureAirport,
+                arrivalAirportCode = flight.arrivalAirport,
+                cabinClass = cabinInventory.cabinClass,
+                travelerIds = travelerProfiles.map(_.travelerId).toVector,
+                unitPriceSnapshot = cabinInventory.unitPrice
+              )
+            )
+            .liftTo[F]
+          persistedOrder <- orderRepository.saveOrder(orderWithItem)
+        yield persistedOrder
+      ).handleErrorWith { throwable =>
+        orderRepository.deleteOrder(generatedOrderId) *> MonadThrow[F].raiseError(throwable)
+      }
+    yield savedOrder
 
   private def toAirlineFlightTuple(flight: Flight): F[(Airline, Flight)] =
     flightRepository
