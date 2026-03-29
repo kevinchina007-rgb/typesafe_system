@@ -33,7 +33,7 @@ object Main extends IOApp.Simple:
       .get("TRAVEL_BACKEND_PORT")
       .flatMap(_.trim.toIntOption)
       .flatMap(Port.fromInt)
-      .getOrElse(Port.fromInt(8080).get)
+      .getOrElse(Port.fromInt(19095).get)
 
   private def isBackendAlreadyHealthy(backendPort: Port): Boolean =
     val healthCheckUri = URI.create(s"http://${Host.fromString("127.0.0.1").get}:${backendPort.value}/api/health")

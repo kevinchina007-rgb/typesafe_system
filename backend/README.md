@@ -237,6 +237,41 @@ npm run dev
 - It is not a strict segment-level inventory model between arbitrary stop pairs.
 - Strict train segment inventory is explicitly a future enhancement beyond Train Ticket Phase 1.
 
+## Attraction Ticket Phase 1 Scope
+
+- Attraction tickets reuse the existing order shell and add an attraction item into `Order`; there is no separate attraction-only order aggregate.
+- Attraction managers configure:
+  - attractions
+  - ticket types
+  - simple eligibility rules
+- Eligibility rules are data-driven and stored in the database rather than hard-coded in the domain:
+  - age less than
+  - age between
+  - age at least
+  - document type equals
+  - document number prefix
+- Phase 1 combines multiple eligibility rules on one ticket type with `AND`.
+- `useDate` is required across DTOs, application services, snapshots, and persistence.
+- The eligibility service evaluates one traveler against one ticket type.
+- Multi-traveler validation is aggregated in the attraction booking application service:
+  - every traveler must pass
+  - one failure rejects the whole attraction item submission
+- Attraction ticket snapshots preserve:
+  - attraction and ticket type identity
+  - unit price
+  - `useDate`
+  - traveler ids
+  - human-readable eligibility rule summaries
+  - eligibility validation timestamp
+- Attraction tickets do not auto-settle after payment.
+- After payment succeeds, attraction items reuse the existing supplier review flow and enter manager review semantics.
+
+## Attraction Limits
+
+- Attraction Phase 1 does not add dedicated attraction inventory locking.
+- Attraction admin uses a minimal form-based rule configuration flow, not a full rule editor.
+- Eligibility preview endpoints are optional; the authoritative decision remains the server-side check performed when adding an attraction item to an order.
+
 ## Future Enhancements Still Not Done
 
 - No distributed locking or multi-instance strong consistency.

@@ -5,7 +5,7 @@ declare global {
 }
 
 export function getTravelBackendOrigin(): string {
-  return window.__TRAVEL_BACKEND_ORIGIN__ ?? import.meta.env.VITE_TRAVEL_BACKEND_ORIGIN ?? 'http://localhost:8080'
+  return window.__TRAVEL_BACKEND_ORIGIN__ ?? import.meta.env.VITE_TRAVEL_BACKEND_ORIGIN ?? 'http://localhost:19095'
 }
 
 export {}
