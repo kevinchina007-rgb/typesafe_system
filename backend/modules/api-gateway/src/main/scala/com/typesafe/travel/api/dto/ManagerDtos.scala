@@ -156,4 +156,5 @@ object ManagerDtoMappers:
   def toManagerType(managerTypeValue: String): ManagerType =
     managerTypeValue.trim.toLowerCase match
       case "hotel" => ManagerType.Hotel
+      case "attraction" => ManagerType.Attraction
       case _       => ManagerType.Airline

@@ -6,6 +6,7 @@ import cats.effect.kernel.Async
 import cats.syntax.all.*
 import com.typesafe.travel.api.application.*
 import com.typesafe.travel.api.dto.*
+import com.typesafe.travel.attraction.domain.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.identity.domain.*
@@ -34,13 +35,16 @@ final class ApiRouter[F[_]: Async](
     hotelBookingApplicationService: HotelBookingApplicationService[F],
     trainBookingApplicationService: TrainBookingApplicationService[F],
     trainAdminApplicationService: TrainAdminApplicationService[F],
+    attractionBookingApplicationService: AttractionBookingApplicationService[F],
+    attractionAdminApplicationService: AttractionAdminApplicationService[F],
     managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
     avatarApplicationService: AvatarApplicationService[F],
     userRepository: UserRepository[F],
     travelerProfileRepository: TravelerProfileRepository[F],
     orderRepository: OrderRepository[F],
     inventoryReservationRepository: InventoryReservationRepository[F],
-    avatarUploadRootDirectoryPath: Path
+    avatarUploadRootDirectoryPath: Path,
+    frontendDistRootDirectoryPath: Path
 ) extends Http4sDsl[F]:
 
   import JsonCodecs.given
@@ -58,6 +62,12 @@ final class ApiRouter[F[_]: Async](
   private given registerRailwayManagerDecoder: EntityDecoder[F, RegisterRailwayManagerRequestDto] = jsonOf[F, RegisterRailwayManagerRequestDto]
   private given trainAdminLoginDecoder: EntityDecoder[F, TrainAdminLoginRequestDto] = jsonOf[F, TrainAdminLoginRequestDto]
   private given createTrainJourneyDecoder: EntityDecoder[F, CreateTrainJourneyRequestDto] = jsonOf[F, CreateTrainJourneyRequestDto]
+  private given registerAttractionManagerDecoder: EntityDecoder[F, RegisterAttractionManagerRequestDto] = jsonOf[F, RegisterAttractionManagerRequestDto]
+  private given attractionAdminLoginDecoder: EntityDecoder[F, AttractionAdminLoginRequestDto] = jsonOf[F, AttractionAdminLoginRequestDto]
+  private given createAttractionDecoder: EntityDecoder[F, CreateAttractionRequestDto] = jsonOf[F, CreateAttractionRequestDto]
+  private given createTicketTypeDecoder: EntityDecoder[F, CreateTicketTypeRequestDto] = jsonOf[F, CreateTicketTypeRequestDto]
+  private given createTicketEligibilityRuleDecoder: EntityDecoder[F, CreateTicketEligibilityRuleRequestDto] = jsonOf[F, CreateTicketEligibilityRuleRequestDto]
+  private given addAttractionItemDecoder: EntityDecoder[F, BookAttractionItemRequestDto] = jsonOf[F, BookAttractionItemRequestDto]
   private given addFlightItemDecoder: EntityDecoder[F, BookFlightRequestDto] = jsonOf[F, BookFlightRequestDto]
   private given addHotelItemDecoder: EntityDecoder[F, BookHotelRequestDto] = jsonOf[F, BookHotelRequestDto]
   private given addTrainItemDecoder: EntityDecoder[F, BookTrainItemRequestDto] = jsonOf[F, BookTrainItemRequestDto]
@@ -95,7 +105,13 @@ final class ApiRouter[F[_]: Async](
           NotFound()
 
     case GET -> Root / "api" / "health" =>
-      Ok(HealthResponseDto(status = "ok", service = "travel-platform-backend", backendPort = 8080).asJson)
+      Ok(
+        HealthResponseDto(
+          status = "ok",
+          service = "travel-platform-backend",
+          backendPort = sys.env.get("TRAVEL_BACKEND_PORT").flatMap(_.trim.toIntOption).getOrElse(19095)
+        ).asJson
+      )
 
     case request @ POST -> Root / "api" / "users" =>
       for
@@ -314,6 +330,105 @@ final class ApiRouter[F[_]: Async](
         primaryEmailAddress <- fromEither(EmailAddress.create(trainAdminLoginRequestDto.email))
         managerSession <- trainAdminApplicationService.loginRailwayManager(primaryEmailAddress)
         response <- Ok(TrainAdminSessionResponseDto.fromApplication(managerSession).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "attraction-admin" / "managers" =>
+      for
+        registerAttractionManagerRequestDto <- request.as[RegisterAttractionManagerRequestDto]
+        primaryEmailAddress <- fromEither(EmailAddress.create(registerAttractionManagerRequestDto.email))
+        displayName <- fromEither(PersonName.create(registerAttractionManagerRequestDto.displayName))
+        adminSession <- attractionAdminApplicationService.registerAttractionManager(primaryEmailAddress, displayName, Instant.now())
+        response <- Created(AttractionAdminSessionResponseDto.fromApplication(adminSession).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "attraction-admin" / "session" / "login" =>
+      for
+        attractionAdminLoginRequestDto <- request.as[AttractionAdminLoginRequestDto]
+        primaryEmailAddress <- fromEither(EmailAddress.create(attractionAdminLoginRequestDto.email))
+        adminSession <- attractionAdminApplicationService.loginAttractionManager(primaryEmailAddress)
+        response <- Ok(AttractionAdminSessionResponseDto.fromApplication(adminSession).asJson)
+      yield response
+
+    case GET -> Root / "api" / "attraction-admin" / "attractions" :? ManagerIdQueryParamMatcher(managerIdValue) =>
+      for
+        managerIdText <- fromEither(managerIdValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
+        attractions <- attractionAdminApplicationService.listManagedAttractions(ManagerId(managerIdText))
+        response <- Ok(AttractionListResponseDto(attractions.map(AttractionResponseDto.fromDomain)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "attraction-admin" / "attractions" =>
+      for
+        createAttractionRequestDto <- request.as[CreateAttractionRequestDto]
+        attraction <- attractionAdminApplicationService.createAttraction(
+          managerId = ManagerId(createAttractionRequestDto.managerId),
+          attractionName = createAttractionRequestDto.attractionName,
+          city = createAttractionRequestDto.city,
+          location = createAttractionRequestDto.location,
+          description = createAttractionRequestDto.description,
+          createdAt = Instant.now()
+        )
+        response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "attraction-admin" / "ticket-types" =>
+      for
+        createTicketTypeRequestDto <- request.as[CreateTicketTypeRequestDto]
+        unitPrice <- fromEither(
+          Money.create(
+            amount = BigDecimal(createTicketTypeRequestDto.unitPrice),
+            currency = OrderDtoMappers.toCurrency(createTicketTypeRequestDto.currency)
+          )
+        )
+        attraction <- attractionAdminApplicationService.createTicketType(
+          managerId = ManagerId(createTicketTypeRequestDto.managerId),
+          attractionId = AttractionId(createTicketTypeRequestDto.attractionId),
+          ticketTypeName = createTicketTypeRequestDto.ticketTypeName,
+          description = createTicketTypeRequestDto.description,
+          unitPrice = unitPrice,
+          createdAt = Instant.now()
+        )
+        response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "attraction-admin" / "ticket-types" / "rules" =>
+      for
+        createTicketEligibilityRuleRequestDto <- request.as[CreateTicketEligibilityRuleRequestDto]
+        ruleConfig <- fromEither(AttractionDtoMappers.toRuleConfig(createTicketEligibilityRuleRequestDto))
+        attraction <- attractionAdminApplicationService.addTicketEligibilityRule(
+          managerId = ManagerId(createTicketEligibilityRuleRequestDto.managerId),
+          attractionId = AttractionId(createTicketEligibilityRuleRequestDto.attractionId),
+          ticketTypeId = TicketTypeId(createTicketEligibilityRuleRequestDto.ticketTypeId),
+          ruleType = AttractionDtoMappers.toRuleType(createTicketEligibilityRuleRequestDto.ruleType),
+          ruleConfig = ruleConfig,
+          createdAt = Instant.now()
+        )
+        response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
+      yield response
+
+    case GET -> Root / "api" / "attractions" :? AttractionCityQueryParamMatcher(cityValue) =>
+      attractionBookingApplicationService
+        .browseAttractions(cityValue)
+        .flatMap(attractions => Ok(AttractionListResponseDto(attractions.map(AttractionResponseDto.fromDomain)).asJson))
+
+    case GET -> Root / "api" / "attractions" / attractionIdValue =>
+      attractionBookingApplicationService
+        .getAttractionDetails(AttractionId(attractionIdValue))
+        .flatMap(attraction => Ok(AttractionResponseDto.fromDomain(attraction).asJson))
+
+    case request @ POST -> Root / "api" / "orders" / orderIdValue / "attraction-items" =>
+      for
+        bookAttractionItemRequestDto <- request.as[BookAttractionItemRequestDto]
+        updatedOrder <- attractionBookingApplicationService.addAttractionItemToOrder(
+          actingUserId = UserId(bookAttractionItemRequestDto.buyerUserId),
+          orderId = OrderId(orderIdValue),
+          attractionId = AttractionId(bookAttractionItemRequestDto.attractionId),
+          ticketTypeId = TicketTypeId(bookAttractionItemRequestDto.ticketTypeId),
+          travelerIds = bookAttractionItemRequestDto.travelerIds.map(TravelerId.apply),
+          useDate = LocalDate.parse(bookAttractionItemRequestDto.useDate),
+          now = Instant.now()
+        )
+        orderResponseDto <- toOrderResponseDto(updatedOrder)
+        response <- Ok(orderResponseDto.asJson)
       yield response
 
     case GET -> Root / "api" / "train-admin" / "trains" :? ManagerIdQueryParamMatcher(managerIdValue) =>
@@ -595,6 +710,9 @@ final class ApiRouter[F[_]: Async](
         response <- Ok(orderResponseDto.asJson)
       yield response
 
+    case request @ GET -> path =>
+      serveFrontendAsset(path.renderString)
+
     case POST -> Root / "api" / "orders" / orderIdValue / "submit" =>
       orderService
         .submitOrderForPayment(OrderId(orderIdValue))
@@ -653,6 +771,40 @@ final class ApiRouter[F[_]: Async](
         .flatMap(order => toOrderResponseDto(order).flatMap(orderResponseDto => Ok(orderResponseDto.asJson)))
   }
 
+  private def serveFrontendAsset(requestPath: String): F[Response[F]] =
+    val normalizedRequestPath = requestPath.stripPrefix("/")
+    val candidatePath =
+      if normalizedRequestPath.isEmpty then frontendDistRootDirectoryPath.resolve("index.html")
+      else frontendDistRootDirectoryPath.resolve(normalizedRequestPath).normalize()
+
+    val resolvedPath =
+      if candidatePath.startsWith(frontendDistRootDirectoryPath) && NioFiles.exists(candidatePath) && !NioFiles.isDirectory(candidatePath) then
+        candidatePath
+      else
+        frontendDistRootDirectoryPath.resolve("index.html").normalize()
+
+    Async[F].blocking(NioFiles.exists(resolvedPath)).flatMap {
+      case false =>
+        NotFound()
+      case true =>
+        Async[F].blocking(NioFiles.readAllBytes(resolvedPath)).flatMap { fileBytes =>
+          val mediaType =
+            resolvedPath.getFileName.toString.toLowerCase match
+              case name if name.endsWith(".html") => MediaType.text.html
+              case name if name.endsWith(".js")   => MediaType.text.javascript
+              case name if name.endsWith(".css")  => MediaType.text.css
+              case name if name.endsWith(".json") => MediaType.application.json
+              case name if name.endsWith(".svg")  => MediaType.unsafeParse("image/svg+xml")
+              case name if name.endsWith(".png")  => MediaType.image.png
+              case name if name.endsWith(".jpg")  => MediaType.image.jpeg
+              case name if name.endsWith(".jpeg") => MediaType.image.jpeg
+              case name if name.endsWith(".ico")  => MediaType.unsafeParse("image/x-icon")
+              case _                              => MediaType.application.`octet-stream`
+
+          Ok(fileBytes).map(_.putHeaders(headers.`Content-Type`(mediaType)))
+        }
+    }
+
   val routes: HttpRoutes[F] =
     Kleisli { request =>
       baseRoutes.run(request).handleErrorWith(throwable => OptionT.liftF(handleDomainError(throwable)))
@@ -662,6 +814,7 @@ final class ApiRouter[F[_]: Async](
   private object ArrivalAirportQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("arrivalAirport")
   private object DepartureDateQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("date")
   private object HotelLocationQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("location")
+  private object AttractionCityQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("city")
   private object FromStationQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("fromStation")
   private object ToStationQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("toStation")
   private object CheckInDateQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("checkInDate")
@@ -747,6 +900,16 @@ final class ApiRouter[F[_]: Async](
           Status.BadRequest -> ApiErrorResponseDto("invalid_traveler_selection", throwable.getMessage)
         case InventoryReservationError.InventoryWasNotAvailable(_, _, _) =>
           Status.Conflict -> ApiErrorResponseDto("inventory_not_available", throwable.getMessage)
+        case AttractionError.AttractionWasNotFound(_) =>
+          Status.NotFound -> ApiErrorResponseDto("attraction_not_found", throwable.getMessage)
+        case AttractionError.TicketTypeWasNotFound(_) =>
+          Status.NotFound -> ApiErrorResponseDto("ticket_type_not_found", throwable.getMessage)
+        case AttractionError.TicketTypeWasInactive(_) =>
+          Status.BadRequest -> ApiErrorResponseDto("ticket_type_inactive", throwable.getMessage)
+        case AttractionError.AttractionTravelerWasNotEligible(_, _, _) =>
+          Status.BadRequest -> ApiErrorResponseDto("traveler_not_eligible", throwable.getMessage)
+        case AttractionError.AttractionWasNotOwnedByManager(_, _) =>
+          Status.Forbidden -> ApiErrorResponseDto("manager_scope_mismatch", throwable.getMessage)
         case HotelError.HotelWasNotFound(_) =>
           Status.NotFound -> ApiErrorResponseDto("hotel_not_found", throwable.getMessage)
         case HotelBookingApplicationError.RoomTypeWasNotFound(_) =>
@@ -775,6 +938,8 @@ final class ApiRouter[F[_]: Async](
           Status.BadRequest -> ApiErrorResponseDto("train_price_not_defined", throwable.getMessage)
         case TrainBookingApplicationError.TravelerSelectionWasInvalid(_) =>
           Status.BadRequest -> ApiErrorResponseDto("invalid_traveler_selection", throwable.getMessage)
+        case AttractionBookingApplicationError.OrderWasNotOwnedByUser(_, _) =>
+          Status.Forbidden -> ApiErrorResponseDto("order_owner_mismatch", throwable.getMessage)
         case AvatarApplicationError.AvatarWasMissing =>
           Status.BadRequest -> ApiErrorResponseDto("avatar_missing", throwable.getMessage)
         case AvatarApplicationError.AvatarFileTypeWasInvalid(_) | AvatarApplicationError.AvatarFileExtensionWasInvalid(_) =>
@@ -822,13 +987,16 @@ object ApiRouter:
       hotelBookingApplicationService: HotelBookingApplicationService[F],
       trainBookingApplicationService: TrainBookingApplicationService[F],
       trainAdminApplicationService: TrainAdminApplicationService[F],
+      attractionBookingApplicationService: AttractionBookingApplicationService[F],
+      attractionAdminApplicationService: AttractionAdminApplicationService[F],
       managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
       avatarApplicationService: AvatarApplicationService[F],
       userRepository: UserRepository[F],
       travelerProfileRepository: TravelerProfileRepository[F],
       orderRepository: OrderRepository[F],
       inventoryReservationRepository: InventoryReservationRepository[F],
-      avatarUploadRootDirectoryPath: Path
+      avatarUploadRootDirectoryPath: Path,
+      frontendDistRootDirectoryPath: Path
   ): ApiRouter[F] =
     new ApiRouter[F](
       userService,
@@ -839,11 +1007,14 @@ object ApiRouter:
       hotelBookingApplicationService,
       trainBookingApplicationService,
       trainAdminApplicationService,
+      attractionBookingApplicationService,
+      attractionAdminApplicationService,
       managerWorkflowApplicationService,
       avatarApplicationService,
       userRepository,
       travelerProfileRepository,
       orderRepository,
       inventoryReservationRepository,
-      avatarUploadRootDirectoryPath
+      avatarUploadRootDirectoryPath,
+      frontendDistRootDirectoryPath
     )

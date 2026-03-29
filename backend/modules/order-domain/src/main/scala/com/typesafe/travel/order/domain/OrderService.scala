@@ -2,6 +2,7 @@ package com.typesafe.travel.order.domain
 
 import cats.MonadThrow
 import cats.syntax.all.*
+import com.typesafe.travel.attraction.domain.*
 import com.typesafe.travel.shared.kernel.*
 import java.time.Instant
 
@@ -11,6 +12,7 @@ trait OrderService[F[_]]:
   def addFlightOrderItem(orderId: OrderId, flightBookingSnapshot: FlightBookingSnapshot): F[Order]
   def addHotelOrderItem(orderId: OrderId, hotelBookingSnapshot: HotelBookingSnapshot): F[Order]
   def addTrainOrderItem(orderId: OrderId, trainBookingSnapshot: TrainBookingSnapshot): F[Order]
+  def addAttractionOrderItem(orderId: OrderId, attractionTicketSnapshot: AttractionTicketSnapshot): F[Order]
   def submitOrderForPayment(orderId: OrderId): F[Order]
   def payOrder(orderId: OrderId, paymentMethod: PaymentMethod, paidAt: Instant): F[Order]
   def authorizeOrderPayment(orderId: OrderId, paymentAmount: Money, paymentMethod: PaymentMethod, authorizedAt: Instant): F[Order]
@@ -60,6 +62,15 @@ final class LiveOrderService[F[_]: MonadThrow](
     addOrderLineItem(
       orderId,
       generatedOrderItemId => _.addTrainOrderItem(generatedOrderItemId, trainBookingSnapshot)
+    )
+
+  override def addAttractionOrderItem(
+      orderId: OrderId,
+      attractionTicketSnapshot: AttractionTicketSnapshot
+  ): F[Order] =
+    addOrderLineItem(
+      orderId,
+      generatedOrderItemId => _.addAttractionOrderItem(generatedOrderItemId, attractionTicketSnapshot)
     )
 
   override def submitOrderForPayment(orderId: OrderId): F[Order] =

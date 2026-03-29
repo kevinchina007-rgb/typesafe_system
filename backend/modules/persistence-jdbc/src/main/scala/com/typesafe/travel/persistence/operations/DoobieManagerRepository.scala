@@ -39,6 +39,17 @@ final class DoobieManagerRepository[F[_]: Async](
       .transact(transactor)
       .flatMap(_.traverse(buildHotelManager))
 
+  override def findAttractionManagerByEmail(primaryEmailAddress: EmailAddress): F[Option[AttractionManager]] =
+    sql"""
+      select manager_id, email, display_name, status, created_at
+      from attraction_managers
+      where email = ${primaryEmailAddress.value}
+    """
+      .query[(String, String, String, String, Instant)]
+      .option
+      .transact(transactor)
+      .flatMap(_.traverse(buildAttractionManager))
+
   override def findAirlineManagerById(managerId: ManagerId): F[Option[AirlineManager]] =
     sql"""
       select manager_id, airline_id, email, display_name, status, created_at
@@ -60,6 +71,17 @@ final class DoobieManagerRepository[F[_]: Async](
       .option
       .transact(transactor)
       .flatMap(_.traverse(buildHotelManager))
+
+  override def findAttractionManagerById(managerId: ManagerId): F[Option[AttractionManager]] =
+    sql"""
+      select manager_id, email, display_name, status, created_at
+      from attraction_managers
+      where manager_id = ${managerId.value}
+    """
+      .query[(String, String, String, String, Instant)]
+      .option
+      .transact(transactor)
+      .flatMap(_.traverse(buildAttractionManager))
 
   override def saveAirlineManager(airlineManager: AirlineManager): F[AirlineManager] =
     sql"""
@@ -87,6 +109,18 @@ final class DoobieManagerRepository[F[_]: Async](
       )
     """.update.run.transact(transactor).as(hotelManager)
 
+  override def saveAttractionManager(attractionManager: AttractionManager): F[AttractionManager] =
+    sql"""
+      insert into attraction_managers (manager_id, email, display_name, status, created_at)
+      values (
+        ${attractionManager.managerId.value},
+        ${attractionManager.primaryEmailAddress.value},
+        ${attractionManager.displayName.value},
+        ${attractionManager.managerStatus.toString},
+        ${attractionManager.createdAt}
+      )
+    """.update.run.transact(transactor).as(attractionManager)
+
   private def buildAirlineManager(row: (String, String, String, String, String, Instant)): F[AirlineManager] =
     val (managerIdValue, airlineIdValue, emailValue, displayNameValue, statusValue, createdAtValue) = row
     for
@@ -109,6 +143,19 @@ final class DoobieManagerRepository[F[_]: Async](
     yield HotelManager.restorePersistedHotelManager(
       managerId = ManagerId(managerIdValue),
       hotelId = HotelId(hotelIdValue),
+      primaryEmailAddress = primaryEmailAddress,
+      displayName = displayName,
+      managerStatus = ManagerStatus.valueOf(statusValue),
+      createdAt = createdAtValue
+    )
+
+  private def buildAttractionManager(row: (String, String, String, String, Instant)): F[AttractionManager] =
+    val (managerIdValue, emailValue, displayNameValue, statusValue, createdAtValue) = row
+    for
+      primaryEmailAddress <- Async[F].fromEither(EmailAddress.create(emailValue))
+      displayName <- Async[F].fromEither(PersonName.create(displayNameValue))
+    yield AttractionManager.restorePersistedAttractionManager(
+      managerId = ManagerId(managerIdValue),
       primaryEmailAddress = primaryEmailAddress,
       displayName = displayName,
       managerStatus = ManagerStatus.valueOf(statusValue),

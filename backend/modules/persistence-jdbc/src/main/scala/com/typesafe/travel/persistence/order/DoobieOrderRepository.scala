@@ -164,6 +164,7 @@ final class DoobieOrderRepository[F[_]: Async](
             insert into order_line_items (
               order_item_id, order_id, item_kind, item_status,
               flight_id, room_type_id, train_id, train_from_stop_id, train_to_stop_id, train_seat_inventory_id,
+              attraction_id, ticket_type_id, use_date,
               cabin_class, seat_class, check_in_date, check_out_date, room_count,
               traveler_ids_json, unit_amount, unit_currency,
               supplier_review_status, review_decision, review_reason, reviewed_at, reviewed_by_manager_id,
@@ -179,6 +180,9 @@ final class DoobieOrderRepository[F[_]: Async](
               ${lineItemPersistenceColumns.trainFromStopId},
               ${lineItemPersistenceColumns.trainToStopId},
               ${lineItemPersistenceColumns.trainSeatInventoryId},
+              ${lineItemPersistenceColumns.attractionId},
+              ${lineItemPersistenceColumns.ticketTypeId},
+              ${lineItemPersistenceColumns.useDate},
               ${lineItemPersistenceColumns.cabinClass},
               ${lineItemPersistenceColumns.seatClass},
               ${lineItemPersistenceColumns.checkInDate},
@@ -296,6 +300,9 @@ final class DoobieOrderRepository[F[_]: Async](
         train_from_stop_id,
         train_to_stop_id,
         train_seat_inventory_id,
+        attraction_id,
+        ticket_type_id,
+        use_date,
         cabin_class,
         seat_class,
         check_in_date,
@@ -396,6 +403,16 @@ final class DoobieOrderRepository[F[_]: Async](
             supplierReviewDecision
           )
         }
+      case "attraction" =>
+        Async[F].fromEither(DatabaseCodecs.decodeAttractionTicketSnapshot(orderLineItemRow.snapshotJson)).map { attractionTicketSnapshot =>
+          AttractionOrderItem.restorePersistedAttractionOrderItem(
+            OrderItemId(orderLineItemRow.orderItemId),
+            attractionTicketSnapshot,
+            orderItemStatus,
+            supplierReviewStatus,
+            supplierReviewDecision
+          )
+        }
       case otherKind =>
         Async[F].raiseError(new IllegalArgumentException(s"Unsupported order line item kind '$otherKind'"))
 
@@ -452,6 +469,9 @@ final class DoobieOrderRepository[F[_]: Async](
           trainFromStopId = None,
           trainToStopId = None,
           trainSeatInventoryId = None,
+          attractionId = None,
+          ticketTypeId = None,
+          useDate = None,
           cabinClass = Some(flightOrderItem.flightBookingSnapshot.cabinClass.value),
           seatClass = None,
           checkInDate = None,
@@ -470,6 +490,9 @@ final class DoobieOrderRepository[F[_]: Async](
           trainFromStopId = None,
           trainToStopId = None,
           trainSeatInventoryId = None,
+          attractionId = None,
+          ticketTypeId = None,
+          useDate = None,
           cabinClass = None,
           seatClass = None,
           checkInDate = Some(hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkIn),
@@ -488,6 +511,9 @@ final class DoobieOrderRepository[F[_]: Async](
           trainFromStopId = Some(trainOrderItem.trainBookingSnapshot.fromStopId.value),
           trainToStopId = Some(trainOrderItem.trainBookingSnapshot.toStopId.value),
           trainSeatInventoryId = Some(trainOrderItem.trainBookingSnapshot.seatInventoryId.value),
+          attractionId = None,
+          ticketTypeId = None,
+          useDate = None,
           cabinClass = None,
           seatClass = Some(trainOrderItem.trainBookingSnapshot.seatClass.value),
           checkInDate = None,
@@ -496,6 +522,27 @@ final class DoobieOrderRepository[F[_]: Async](
           travelerIdsJson = Some(DatabaseCodecs.encodeTravelerIds(trainOrderItem.trainBookingSnapshot.travelerIds)),
           unitAmount = Some(trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.amount),
           unitCurrency = Some(trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.currency.toString)
+        )
+      case attractionOrderItem: AttractionOrderItem =>
+        OrderLineItemPersistenceColumns(
+          itemKind = "attraction",
+          flightId = None,
+          roomTypeId = None,
+          trainId = None,
+          trainFromStopId = None,
+          trainToStopId = None,
+          trainSeatInventoryId = None,
+          attractionId = Some(attractionOrderItem.attractionTicketSnapshot.attractionId.value),
+          ticketTypeId = Some(attractionOrderItem.attractionTicketSnapshot.ticketTypeId.value),
+          useDate = Some(attractionOrderItem.attractionTicketSnapshot.useDate),
+          cabinClass = None,
+          seatClass = None,
+          checkInDate = None,
+          checkOutDate = None,
+          roomCount = None,
+          travelerIdsJson = Some(DatabaseCodecs.encodeTravelerIds(attractionOrderItem.attractionTicketSnapshot.travelerIds)),
+          unitAmount = Some(attractionOrderItem.attractionTicketSnapshot.unitPriceSnapshot.amount),
+          unitCurrency = Some(attractionOrderItem.attractionTicketSnapshot.unitPriceSnapshot.currency.toString)
         )
   private def buildSupplierReviewDecision(orderLineItemRow: OrderLineItemRow): Option[SupplierReviewDecision] =
     (orderLineItemRow.reviewDecision, orderLineItemRow.reviewedAt, orderLineItemRow.reviewedByManagerId) match
@@ -534,6 +581,9 @@ final class DoobieOrderRepository[F[_]: Async](
       trainFromStopId: Option[String],
       trainToStopId: Option[String],
       trainSeatInventoryId: Option[String],
+      attractionId: Option[String],
+      ticketTypeId: Option[String],
+      useDate: Option[java.time.LocalDate],
       cabinClass: Option[String],
       seatClass: Option[String],
       checkInDate: Option[java.time.LocalDate],
@@ -554,6 +604,9 @@ final class DoobieOrderRepository[F[_]: Async](
       trainFromStopId: Option[String],
       trainToStopId: Option[String],
       trainSeatInventoryId: Option[String],
+      attractionId: Option[String],
+      ticketTypeId: Option[String],
+      useDate: Option[java.time.LocalDate],
       cabinClass: Option[String],
       seatClass: Option[String],
       checkInDate: Option[java.time.LocalDate],

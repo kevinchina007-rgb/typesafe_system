@@ -46,7 +46,8 @@ final class ManagerSpec extends FunSuite:
 
 final class StubManagerRepository(
     airlineManagerOption: Option[AirlineManager],
-    hotelManagerOption: Option[HotelManager]
+    hotelManagerOption: Option[HotelManager],
+    attractionManagerOption: Option[AttractionManager] = None
 ) extends ManagerRepository[[A] =>> Either[Throwable, A]]:
   override def nextManagerId: Either[Throwable, ManagerId] =
     Right(ManagerId("manager-generated"))
@@ -63,8 +64,17 @@ final class StubManagerRepository(
   override def findHotelManagerById(managerId: ManagerId): Either[Throwable, Option[HotelManager]] =
     Right(hotelManagerOption.filter(_.managerId == managerId))
 
+  override def findAttractionManagerByEmail(primaryEmailAddress: EmailAddress): Either[Throwable, Option[AttractionManager]] =
+    Right(attractionManagerOption.filter(_.primaryEmailAddress == primaryEmailAddress))
+
+  override def findAttractionManagerById(managerId: ManagerId): Either[Throwable, Option[AttractionManager]] =
+    Right(attractionManagerOption.filter(_.managerId == managerId))
+
   override def saveAirlineManager(airlineManager: AirlineManager): Either[Throwable, AirlineManager] =
     Right(airlineManager)
 
   override def saveHotelManager(hotelManager: HotelManager): Either[Throwable, HotelManager] =
     Right(hotelManager)
+
+  override def saveAttractionManager(attractionManager: AttractionManager): Either[Throwable, AttractionManager] =
+    Right(attractionManager)

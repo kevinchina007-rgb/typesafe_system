@@ -3,6 +3,7 @@ package com.typesafe.travel.api.dto
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.shared.kernel.CabinClass
+import java.time.LocalDate
 
 final case class CreateOrderRequestDto(
     ownerUserId: String,
@@ -76,6 +77,19 @@ final case class TrainItemDetailsResponseDto(
     currency: String
 )
 
+final case class AttractionItemDetailsResponseDto(
+    attractionId: String,
+    attractionName: String,
+    ticketTypeId: String,
+    ticketTypeName: String,
+    useDate: String,
+    travelerIds: List[String],
+    unitPrice: String,
+    totalPrice: String,
+    currency: String,
+    ruleSummaries: List[String]
+)
+
 final case class OrderLineItemResponseDto(
     orderItemId: String,
     orderItemKind: String,
@@ -87,7 +101,8 @@ final case class OrderLineItemResponseDto(
     summaryLabel: String,
     flightDetails: Option[FlightItemDetailsResponseDto],
     hotelDetails: Option[HotelItemDetailsResponseDto],
-    trainDetails: Option[TrainItemDetailsResponseDto]
+    trainDetails: Option[TrainItemDetailsResponseDto],
+    attractionDetails: Option[AttractionItemDetailsResponseDto]
 )
 
 final case class PaymentResponseDto(
@@ -185,7 +200,8 @@ object OrderResponseDto:
               )
             ),
             hotelDetails = None,
-            trainDetails = None
+            trainDetails = None,
+            attractionDetails = None
           )
         case hotelOrderItem: HotelOrderItem =>
           OrderLineItemResponseDto(
@@ -219,7 +235,8 @@ object OrderResponseDto:
                 currency = hotelOrderItem.hotelBookingSnapshot.unitPriceSnapshot.currency.toString
               )
             ),
-            trainDetails = None
+            trainDetails = None,
+            attractionDetails = None
           )
         case trainOrderItem: TrainOrderItem =>
           OrderLineItemResponseDto(
@@ -251,6 +268,35 @@ object OrderResponseDto:
                 unitPrice = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.amount.toString,
                 totalPrice = trainOrderItem.bookedMoney.amount.toString,
                 currency = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.currency.toString
+              )
+            ),
+            attractionDetails = None
+          )
+        case attractionOrderItem: AttractionOrderItem =>
+          OrderLineItemResponseDto(
+            orderItemId = attractionOrderItem.orderItemId.value,
+            orderItemKind = "attraction",
+            orderItemStatus = attractionOrderItem.orderItemStatus.toString,
+            supplierReviewStatus = attractionOrderItem.supplierReviewStatus.toString,
+            supplierReviewDecision = attractionOrderItem.supplierReviewDecision.map(SupplierReviewDecisionResponseDto.fromDomain),
+            bookedAmount = attractionOrderItem.bookedMoney.amount.toString,
+            bookedCurrency = attractionOrderItem.bookedMoney.currency.toString,
+            summaryLabel = s"${attractionOrderItem.attractionTicketSnapshot.attractionName} ${attractionOrderItem.attractionTicketSnapshot.ticketTypeName}",
+            flightDetails = None,
+            hotelDetails = None,
+            trainDetails = None,
+            attractionDetails = Some(
+              AttractionItemDetailsResponseDto(
+                attractionId = attractionOrderItem.attractionTicketSnapshot.attractionId.value,
+                attractionName = attractionOrderItem.attractionTicketSnapshot.attractionName,
+                ticketTypeId = attractionOrderItem.attractionTicketSnapshot.ticketTypeId.value,
+                ticketTypeName = attractionOrderItem.attractionTicketSnapshot.ticketTypeName,
+                useDate = attractionOrderItem.attractionTicketSnapshot.useDate.toString,
+                travelerIds = attractionOrderItem.attractionTicketSnapshot.travelerIds.map(_.value).toList,
+                unitPrice = attractionOrderItem.attractionTicketSnapshot.unitPriceSnapshot.amount.toString,
+                totalPrice = attractionOrderItem.bookedMoney.amount.toString,
+                currency = attractionOrderItem.attractionTicketSnapshot.unitPriceSnapshot.currency.toString,
+                ruleSummaries = attractionOrderItem.attractionTicketSnapshot.ruleSummaries.toList
               )
             )
           )

@@ -11,6 +11,7 @@ import scala.collection.concurrent.TrieMap
 final class InMemoryManagerRepository[F[_]: Sync] private (
     airlineManagerState: TrieMap[ManagerId, AirlineManager],
     hotelManagerState: TrieMap[ManagerId, HotelManager],
+    attractionManagerState: TrieMap[ManagerId, AttractionManager],
     managerSequence: AtomicLong
 ) extends ManagerRepository[F]:
   override def nextManagerId: F[ManagerId] =
@@ -22,11 +23,17 @@ final class InMemoryManagerRepository[F[_]: Sync] private (
   override def findHotelManagerByEmail(primaryEmailAddress: EmailAddress): F[Option[HotelManager]] =
     Sync[F].delay(hotelManagerState.values.find(_.primaryEmailAddress == primaryEmailAddress))
 
+  override def findAttractionManagerByEmail(primaryEmailAddress: EmailAddress): F[Option[AttractionManager]] =
+    Sync[F].delay(attractionManagerState.values.find(_.primaryEmailAddress == primaryEmailAddress))
+
   override def findAirlineManagerById(managerId: ManagerId): F[Option[AirlineManager]] =
     Sync[F].delay(airlineManagerState.get(managerId))
 
   override def findHotelManagerById(managerId: ManagerId): F[Option[HotelManager]] =
     Sync[F].delay(hotelManagerState.get(managerId))
+
+  override def findAttractionManagerById(managerId: ManagerId): F[Option[AttractionManager]] =
+    Sync[F].delay(attractionManagerState.get(managerId))
 
   override def saveAirlineManager(airlineManager: AirlineManager): F[AirlineManager] =
     Sync[F].delay {
@@ -38,6 +45,12 @@ final class InMemoryManagerRepository[F[_]: Sync] private (
     Sync[F].delay {
       hotelManagerState.put(hotelManager.managerId, hotelManager)
       hotelManager
+    }
+
+  override def saveAttractionManager(attractionManager: AttractionManager): F[AttractionManager] =
+    Sync[F].delay {
+      attractionManagerState.put(attractionManager.managerId, attractionManager)
+      attractionManager
     }
 
 object InMemoryManagerRepository:
@@ -84,5 +97,6 @@ object InMemoryManagerRepository:
             createdAt = createdAtInstant
           )
       ),
+      attractionManagerState = TrieMap.empty,
       managerSequence = AtomicLong(100)
     )

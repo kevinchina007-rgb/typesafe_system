@@ -2,6 +2,7 @@ package com.typesafe.travel.api.application
 
 import cats.MonadThrow
 import cats.syntax.all.*
+import com.typesafe.travel.attraction.domain.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.inventory.domain.ReservationLifecycle
@@ -56,6 +57,11 @@ trait ManagerWorkflowApplicationService[F[_]]:
       displayName: PersonName,
       hotelName: HotelName,
       hotelLocation: HotelLocation,
+      createdAt: Instant
+  ): F[ManagerSession]
+  def registerAttractionManager(
+      primaryEmailAddress: EmailAddress,
+      displayName: PersonName,
       createdAt: Instant
   ): F[ManagerSession]
   def loginManager(managerType: ManagerType, primaryEmailAddress: EmailAddress): F[ManagerSession]
@@ -121,7 +127,8 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
     orderService: OrderService[F],
     reservationLifecycle: ReservationLifecycle[F],
     flightRepository: FlightRepository[F],
-    hotelRepository: HotelRepository[F]
+    hotelRepository: HotelRepository[F],
+    attractionRepository: AttractionRepository[F]
 ) extends ManagerWorkflowApplicationService[F]:
   override def registerAirlineManager(
       primaryEmailAddress: EmailAddress,
@@ -156,6 +163,13 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
       )
       hotelManager <- managerService.registerHotelManager(hotel.hotelId, primaryEmailAddress, displayName, createdAt)
     yield toSession(hotelManager)
+
+  override def registerAttractionManager(
+      primaryEmailAddress: EmailAddress,
+      displayName: PersonName,
+      createdAt: Instant
+  ): F[ManagerSession] =
+    managerService.registerAttractionManager(primaryEmailAddress, displayName, createdAt).map(toSession)
 
   override def loginManager(managerType: ManagerType, primaryEmailAddress: EmailAddress): F[ManagerSession] =
     managerType match
@@ -340,11 +354,22 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
           scopeId = hotelManager.hotelId.value,
           createdAt = hotelManager.createdAt
         )
+      case attractionManager: AttractionManager =>
+        ManagerSession(
+          managerId = attractionManager.managerId,
+          managerType = ManagerType.Attraction,
+          emailAddress = attractionManager.primaryEmailAddress,
+          displayName = attractionManager.displayName,
+          status = attractionManager.managerStatus,
+          scopeId = attractionManager.managerId.value,
+          createdAt = attractionManager.createdAt
+        )
 
   private def loadManagerContext(managerId: ManagerId, managerType: ManagerType): F[ManagerContext] =
     managerType match
       case ManagerType.Airline => managerService.loadAirlineManager(managerId).map(identity[ManagerContext])
       case ManagerType.Hotel   => managerService.loadHotelManager(managerId).map(identity[ManagerContext])
+      case ManagerType.Attraction => managerService.loadAttractionManager(managerId).map(identity[ManagerContext])
 
   private def buildTaskView(
       managerContext: ManagerContext,
@@ -389,6 +414,24 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
               )
             )
           case _ => None
+      case attractionOrderItem: AttractionOrderItem =>
+        managerContext match
+          case attractionManager: AttractionManager
+              if attractionOrderItem.attractionTicketSnapshot.managerId == attractionManager.managerId &&
+                requestedSupplierReviewStatuses.contains(attractionOrderItem.supplierReviewStatus) =>
+            Some(
+              ManagerBookingTaskView(
+                orderId = order.orderId,
+                orderItemId = attractionOrderItem.orderItemId,
+                buyerUserId = order.ownerUserId,
+                taskType = ManagerType.Attraction,
+                supplierReviewStatus = attractionOrderItem.supplierReviewStatus,
+                summaryLabel = s"${attractionOrderItem.attractionTicketSnapshot.attractionName} ${attractionOrderItem.attractionTicketSnapshot.ticketTypeName}",
+                detailLabel = s"Use on ${attractionOrderItem.attractionTicketSnapshot.useDate}",
+                reviewDecision = attractionOrderItem.supplierReviewDecision
+              )
+            )
+          case _ => None
 
   private def buildRefundTaskView(managerContext: ManagerContext, order: Order): Option[ManagerRefundTaskView] =
     order.orderRefunds.find(_.refundStatus == RefundStatus.Requested).flatMap { requestedRefund =>
@@ -425,6 +468,22 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
                 )
               )
             case _ => None
+        case attractionOrderItem: AttractionOrderItem =>
+          managerContext match
+            case attractionManager: AttractionManager if attractionOrderItem.attractionTicketSnapshot.managerId == attractionManager.managerId =>
+              Some(
+                ManagerRefundTaskView(
+                  orderId = order.orderId,
+                  buyerUserId = order.ownerUserId,
+                  taskType = ManagerType.Attraction,
+                  summaryLabel = s"${attractionOrderItem.attractionTicketSnapshot.attractionName} ${attractionOrderItem.attractionTicketSnapshot.ticketTypeName}",
+                  refundId = requestedRefund.refundId,
+                  refundReason = requestedRefund.refundReason,
+                  refundAmount = requestedRefund.refundAmount,
+                  requestedAt = requestedRefund.requestedAt
+                )
+              )
+            case _ => None
       }.toSeq.headOption
     }
 
@@ -443,6 +502,12 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
           case Some(hotelOrderItem: HotelOrderItem) =>
             managerContext match
               case hotelManager: HotelManager if hotelManager.hotelId == hotelOrderItem.hotelBookingSnapshot.hotelId =>
+                order.pure[F]
+              case _ =>
+                MonadThrow[F].raiseError(ManagerError.ManagerScopeDidNotMatch(managerContext.managerType, managerContext.managerId, orderItemId))
+          case Some(attractionOrderItem: AttractionOrderItem) =>
+            managerContext match
+              case attractionManager: AttractionManager if attractionOrderItem.attractionTicketSnapshot.managerId == attractionManager.managerId =>
                 order.pure[F]
               case _ =>
                 MonadThrow[F].raiseError(ManagerError.ManagerScopeDidNotMatch(managerContext.managerType, managerContext.managerId, orderItemId))

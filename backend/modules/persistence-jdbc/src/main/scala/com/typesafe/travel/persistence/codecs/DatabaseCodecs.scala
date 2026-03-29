@@ -1,6 +1,7 @@
 package com.typesafe.travel.persistence.codecs
 
 import cats.syntax.all.*
+import com.typesafe.travel.attraction.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.train.domain.*
@@ -94,6 +95,20 @@ object DatabaseCodecs:
       unitPriceCurrency: String
   )
 
+  final case class SerializedAttractionTicketSnapshot(
+      attractionId: String,
+      managerId: String,
+      attractionName: String,
+      ticketTypeId: String,
+      ticketTypeName: String,
+      useDate: String,
+      travelerIds: Vector[String],
+      unitPriceAmount: BigDecimal,
+      unitPriceCurrency: String,
+      ruleSummaries: Vector[String],
+      eligibilityValidatedAt: String
+  )
+
   final case class SerializedTravelerIds(
       travelerIds: Vector[String]
   )
@@ -112,6 +127,8 @@ object DatabaseCodecs:
   given Decoder[SerializedHotelBookingSnapshot] = deriveDecoder
   given Encoder[SerializedTrainBookingSnapshot] = deriveEncoder
   given Decoder[SerializedTrainBookingSnapshot] = deriveDecoder
+  given Encoder[SerializedAttractionTicketSnapshot] = deriveEncoder
+  given Decoder[SerializedAttractionTicketSnapshot] = deriveDecoder
   given Encoder[SerializedTravelerIds] = deriveEncoder
   given Decoder[SerializedTravelerIds] = deriveDecoder
 
@@ -247,6 +264,20 @@ object DatabaseCodecs:
           unitPriceAmount = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.amount,
           unitPriceCurrency = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.currency.toString
         ).asJson.noSpaces
+      case attractionOrderItem: AttractionOrderItem =>
+        SerializedAttractionTicketSnapshot(
+          attractionId = attractionOrderItem.attractionTicketSnapshot.attractionId.value,
+          managerId = attractionOrderItem.attractionTicketSnapshot.managerId.value,
+          attractionName = attractionOrderItem.attractionTicketSnapshot.attractionName,
+          ticketTypeId = attractionOrderItem.attractionTicketSnapshot.ticketTypeId.value,
+          ticketTypeName = attractionOrderItem.attractionTicketSnapshot.ticketTypeName,
+          useDate = attractionOrderItem.attractionTicketSnapshot.useDate.toString,
+          travelerIds = attractionOrderItem.attractionTicketSnapshot.travelerIds.map(_.value),
+          unitPriceAmount = attractionOrderItem.attractionTicketSnapshot.unitPriceSnapshot.amount,
+          unitPriceCurrency = attractionOrderItem.attractionTicketSnapshot.unitPriceSnapshot.currency.toString,
+          ruleSummaries = attractionOrderItem.attractionTicketSnapshot.ruleSummaries,
+          eligibilityValidatedAt = attractionOrderItem.attractionTicketSnapshot.eligibilityValidatedAt.toString
+        ).asJson.noSpaces
 
   def decodeFlightBookingSnapshot(serializedValue: String): Either[Throwable, FlightBookingSnapshot] =
     decode[SerializedFlightBookingSnapshot](serializedValue).flatMap { serializedFlightBookingSnapshot =>
@@ -333,6 +364,25 @@ object DatabaseCodecs:
         unitPriceSnapshot = unitPriceSnapshot
       )
     }.left.map(error => new IllegalArgumentException(s"Could not decode train booking snapshot: ${error.getMessage}", error))
+
+  def decodeAttractionTicketSnapshot(serializedValue: String): Either[Throwable, AttractionTicketSnapshot] =
+    decode[SerializedAttractionTicketSnapshot](serializedValue).flatMap { serializedAttractionTicketSnapshot =>
+      for
+        unitPriceCurrency <- parseCurrency(serializedAttractionTicketSnapshot.unitPriceCurrency)
+        unitPriceSnapshot <- Money.create(serializedAttractionTicketSnapshot.unitPriceAmount, unitPriceCurrency)
+      yield AttractionTicketSnapshot(
+        attractionId = AttractionId(serializedAttractionTicketSnapshot.attractionId),
+        managerId = ManagerId(serializedAttractionTicketSnapshot.managerId),
+        attractionName = serializedAttractionTicketSnapshot.attractionName,
+        ticketTypeId = TicketTypeId(serializedAttractionTicketSnapshot.ticketTypeId),
+        ticketTypeName = serializedAttractionTicketSnapshot.ticketTypeName,
+        useDate = LocalDate.parse(serializedAttractionTicketSnapshot.useDate),
+        travelerIds = serializedAttractionTicketSnapshot.travelerIds.map(TravelerId.apply),
+        unitPriceSnapshot = unitPriceSnapshot,
+        ruleSummaries = serializedAttractionTicketSnapshot.ruleSummaries,
+        eligibilityValidatedAt = Instant.parse(serializedAttractionTicketSnapshot.eligibilityValidatedAt)
+      )
+    }.left.map(error => new IllegalArgumentException(s"Could not decode attraction ticket snapshot: ${error.getMessage}", error))
 
   def parseCurrency(currencyValue: String): Either[Throwable, Currency] =
     Either.catchNonFatal(Currency.valueOf(currencyValue))

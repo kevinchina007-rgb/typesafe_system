@@ -50,6 +50,7 @@ lazy val root = (project in file("."))
     flightDomain,
     hotelDomain,
     trainDomain,
+    attractionDomain,
     inventoryDomain,
     orderDomain,
     operationsDomain,
@@ -98,6 +99,12 @@ lazy val trainDomain = module("train-domain")
     libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
   )
 
+lazy val attractionDomain = module("attraction-domain")
+  .dependsOn(sharedKernel, travelerDomain)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency, circeGenericDependency, circeParserDependency)
+  )
+
 lazy val inventoryDomain = module("inventory-domain")
   .dependsOn(sharedKernel)
   .settings(
@@ -105,13 +112,13 @@ lazy val inventoryDomain = module("inventory-domain")
   )
 
 lazy val orderDomain = module("order-domain")
-  .dependsOn(sharedKernel, travelerDomain, trainDomain)
+  .dependsOn(sharedKernel, travelerDomain, trainDomain, attractionDomain)
   .settings(
     libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
   )
 
 lazy val persistenceJdbc = module("persistence-jdbc")
-  .dependsOn(sharedKernel, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, inventoryDomain, orderDomain, operationsDomain)
+  .dependsOn(sharedKernel, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, inventoryDomain, orderDomain, operationsDomain)
   .settings(
     libraryDependencies ++= Seq(
       catsEffectDependency,
@@ -140,13 +147,14 @@ lazy val apiGateway = module("api-gateway")
   .dependsOn(
     sharedKernel,
     identityDomain,
-    travelerDomain,
-    flightDomain,
-    hotelDomain,
-    trainDomain,
-    inventoryDomain,
-    orderDomain,
-    operationsDomain,
+      travelerDomain,
+      flightDomain,
+      hotelDomain,
+      trainDomain,
+      attractionDomain,
+      inventoryDomain,
+      orderDomain,
+      operationsDomain,
     persistenceJdbc
   )
   .settings(

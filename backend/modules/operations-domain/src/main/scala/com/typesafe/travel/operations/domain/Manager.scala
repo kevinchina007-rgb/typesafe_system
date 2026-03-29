@@ -9,7 +9,7 @@ enum ManagerStatus:
   case Active, Inactive
 
 enum ManagerType:
-  case Airline, Hotel
+  case Airline, Hotel, Attraction
 
 sealed trait ManagerContext:
   def managerId: ManagerId
@@ -79,22 +79,55 @@ object HotelManager:
   ): HotelManager =
     HotelManager(managerId, hotelId, primaryEmailAddress, displayName, managerStatus, createdAt)
 
+final case class AttractionManager private (
+    managerId: ManagerId,
+    primaryEmailAddress: EmailAddress,
+    displayName: PersonName,
+    managerStatus: ManagerStatus,
+    createdAt: Instant
+) extends ManagerContext:
+  val managerType: ManagerType = ManagerType.Attraction
+
+object AttractionManager:
+  def registerNewAttractionManager(
+      managerId: ManagerId,
+      primaryEmailAddress: EmailAddress,
+      displayName: PersonName,
+      createdAt: Instant
+  ): AttractionManager =
+    AttractionManager(managerId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
+
+  def restorePersistedAttractionManager(
+      managerId: ManagerId,
+      primaryEmailAddress: EmailAddress,
+      displayName: PersonName,
+      managerStatus: ManagerStatus,
+      createdAt: Instant
+  ): AttractionManager =
+    AttractionManager(managerId, primaryEmailAddress, displayName, managerStatus, createdAt)
+
 trait ManagerRepository[F[_]]:
   def nextManagerId: F[ManagerId]
   def findAirlineManagerByEmail(primaryEmailAddress: EmailAddress): F[Option[AirlineManager]]
   def findHotelManagerByEmail(primaryEmailAddress: EmailAddress): F[Option[HotelManager]]
+  def findAttractionManagerByEmail(primaryEmailAddress: EmailAddress): F[Option[AttractionManager]]
   def findAirlineManagerById(managerId: ManagerId): F[Option[AirlineManager]]
   def findHotelManagerById(managerId: ManagerId): F[Option[HotelManager]]
+  def findAttractionManagerById(managerId: ManagerId): F[Option[AttractionManager]]
   def saveAirlineManager(airlineManager: AirlineManager): F[AirlineManager]
   def saveHotelManager(hotelManager: HotelManager): F[HotelManager]
+  def saveAttractionManager(attractionManager: AttractionManager): F[AttractionManager]
 
 trait ManagerService[F[_]]:
   def registerAirlineManager(airlineId: AirlineId, primaryEmailAddress: EmailAddress, displayName: PersonName, createdAt: Instant): F[AirlineManager]
   def registerHotelManager(hotelId: HotelId, primaryEmailAddress: EmailAddress, displayName: PersonName, createdAt: Instant): F[HotelManager]
+  def registerAttractionManager(primaryEmailAddress: EmailAddress, displayName: PersonName, createdAt: Instant): F[AttractionManager]
   def loginAirlineManager(primaryEmailAddress: EmailAddress): F[AirlineManager]
   def loginHotelManager(primaryEmailAddress: EmailAddress): F[HotelManager]
+  def loginAttractionManager(primaryEmailAddress: EmailAddress): F[AttractionManager]
   def loadAirlineManager(managerId: ManagerId): F[AirlineManager]
   def loadHotelManager(managerId: ManagerId): F[HotelManager]
+  def loadAttractionManager(managerId: ManagerId): F[AttractionManager]
 
 final class LiveManagerService[F[_]: MonadThrow](
     managerRepository: ManagerRepository[F]
@@ -125,6 +158,18 @@ final class LiveManagerService[F[_]: MonadThrow](
         )
       }
 
+  override def registerAttractionManager(
+      primaryEmailAddress: EmailAddress,
+      displayName: PersonName,
+      createdAt: Instant
+  ): F[AttractionManager] =
+    ensureManagerEmailAvailable(primaryEmailAddress) *>
+      managerRepository.nextManagerId.flatMap { managerId =>
+        managerRepository.saveAttractionManager(
+          AttractionManager.registerNewAttractionManager(managerId, primaryEmailAddress, displayName, createdAt)
+        )
+      }
+
   override def loginAirlineManager(primaryEmailAddress: EmailAddress): F[AirlineManager] =
     managerRepository
       .findAirlineManagerByEmail(primaryEmailAddress)
@@ -135,6 +180,12 @@ final class LiveManagerService[F[_]: MonadThrow](
     managerRepository
       .findHotelManagerByEmail(primaryEmailAddress)
       .flatMap(_.liftTo[F](ManagerError.ManagerWasNotFoundByEmail(ManagerType.Hotel, primaryEmailAddress)))
+      .flatMap(validateActiveManager)
+
+  override def loginAttractionManager(primaryEmailAddress: EmailAddress): F[AttractionManager] =
+    managerRepository
+      .findAttractionManagerByEmail(primaryEmailAddress)
+      .flatMap(_.liftTo[F](ManagerError.ManagerWasNotFoundByEmail(ManagerType.Attraction, primaryEmailAddress)))
       .flatMap(validateActiveManager)
 
   override def loadAirlineManager(managerId: ManagerId): F[AirlineManager] =
@@ -149,6 +200,12 @@ final class LiveManagerService[F[_]: MonadThrow](
       .flatMap(_.liftTo[F](ManagerError.ManagerWasNotFoundById(ManagerType.Hotel, managerId)))
       .flatMap(validateActiveManager)
 
+  override def loadAttractionManager(managerId: ManagerId): F[AttractionManager] =
+    managerRepository
+      .findAttractionManagerById(managerId)
+      .flatMap(_.liftTo[F](ManagerError.ManagerWasNotFoundById(ManagerType.Attraction, managerId)))
+      .flatMap(validateActiveManager)
+
   private def validateActiveManager[A <: ManagerContext](managerContext: A): F[A] =
     managerContext.managerStatus match
       case ManagerStatus.Active   => managerContext.pure[F]
@@ -157,9 +214,10 @@ final class LiveManagerService[F[_]: MonadThrow](
   private def ensureManagerEmailAvailable(primaryEmailAddress: EmailAddress): F[Unit] =
     (
       managerRepository.findAirlineManagerByEmail(primaryEmailAddress),
-      managerRepository.findHotelManagerByEmail(primaryEmailAddress)
-    ).mapN { (existingAirlineManager, existingHotelManager) =>
-      if existingAirlineManager.isDefined || existingHotelManager.isDefined then
+      managerRepository.findHotelManagerByEmail(primaryEmailAddress),
+      managerRepository.findAttractionManagerByEmail(primaryEmailAddress)
+    ).mapN { (existingAirlineManager, existingHotelManager, existingAttractionManager) =>
+      if existingAirlineManager.isDefined || existingHotelManager.isDefined || existingAttractionManager.isDefined then
         Left(ManagerError.ManagerEmailAlreadyExists(primaryEmailAddress))
       else Right(())
     }.flatMap(_.liftTo[F])
