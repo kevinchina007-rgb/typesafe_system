@@ -3,9 +3,13 @@ import { getTravelBackendOrigin } from './runtime-config'
 
 const travelBackendOrigin = getTravelBackendOrigin()
 
+function chooseLabel(language: AppLanguage, englishLabel: string, chineseLabel: string): string {
+  return language === 'zh' ? chineseLabel : englishLabel
+}
+
 export function deriveTravelerTypeLabelFromBirthDate(birthDateValue: string, language: AppLanguage): string {
   if (!birthDateValue) {
-    return language === 'zh' ? '待判断' : 'Pending'
+    return chooseLabel(language, 'Pending', '待判断')
   }
 
   const todayDate = new Date()
@@ -20,12 +24,12 @@ export function deriveTravelerTypeLabelFromBirthDate(birthDateValue: string, lan
   }
 
   if (ageInYears < 2) {
-    return language === 'zh' ? '婴儿' : 'Infant'
+    return chooseLabel(language, 'Infant', '婴儿')
   }
   if (ageInYears < 12) {
-    return language === 'zh' ? '儿童' : 'Child'
+    return chooseLabel(language, 'Child', '儿童')
   }
-  return language === 'zh' ? '成人' : 'Adult'
+  return chooseLabel(language, 'Adult', '成人')
 }
 
 export function mapBackendStatusToProductLabel(backendStatus: string, language: AppLanguage): string {
@@ -34,7 +38,7 @@ export function mapBackendStatusToProductLabel(backendStatus: string, language: 
     Active: 'Active',
     Suspended: 'Paused',
     Closed: 'Closed',
-    Draft: 'In progress',
+    Draft: 'Draft',
     Verified: 'Ready to travel',
     Archived: 'Archived',
     PendingPayment: 'Pending payment',
@@ -63,6 +67,9 @@ export function mapBackendStatusToProductLabel(backendStatus: string, language: 
     PendingRefund: 'Pending refund',
     Expired: 'Expired',
     Released: 'Released',
+    OnSale: 'On sale',
+    Published: 'Published',
+    Completed: 'Completed',
   }
 
   const chineseStatusLabels: Record<string, string> = {
@@ -70,7 +77,7 @@ export function mapBackendStatusToProductLabel(backendStatus: string, language: 
     Active: '正常',
     Suspended: '暂停',
     Closed: '已关闭',
-    Draft: '进行中',
+    Draft: '草稿',
     Verified: '可出行',
     Archived: '已归档',
     PendingPayment: '待支付',
@@ -87,18 +94,21 @@ export function mapBackendStatusToProductLabel(backendStatus: string, language: 
     OpenForBooking: '可预订',
     ClosedForBooking: '停止预订',
     SoldOut: '已售罄',
-    Open: '可售',
+    Open: '可用',
     Available: '可预订',
     Inactive: '已停用',
     NotSubmitted: '未提交',
-    PendingSupplierConfirmation: '待供应侧确认',
-    SupplierConfirmed: '供应侧已确认',
-    SupplierRejected: '供应侧已拒绝',
+    PendingSupplierConfirmation: '待供应方确认',
+    SupplierConfirmed: '供应方已确认',
+    SupplierRejected: '供应方已拒绝',
     Paid: '已支付',
     Booked: '已预订',
     PendingRefund: '待退款',
     Expired: '已过期',
     Released: '已释放',
+    OnSale: '已开售',
+    Published: '已发布',
+    Completed: '已完成',
   }
 
   const labelTable = language === 'zh' ? chineseStatusLabels : englishStatusLabels
@@ -110,85 +120,106 @@ export function mapTechnicalErrorToFriendlyMessage(backendMessage: string, langu
   const normalizedMessage = `${errorCode} ${messageBody}`.toLowerCase()
 
   if (normalizedMessage.includes('user_email_exists')) {
-    return language === 'zh' ? '这个邮箱已经注册过账户了。' : 'This email is already linked to an account.'
+    return chooseLabel(language, 'This email is already linked to an account.', '这个邮箱已经注册过账户了。')
   }
   if (normalizedMessage.includes('user_not_found') || normalizedMessage.includes('order_not_found')) {
-    return language === 'zh' ? '没有找到对应的数据。' : 'We could not find the requested record.'
+    return chooseLabel(language, 'We could not find the requested record.', '没有找到对应的数据。')
   }
   if (normalizedMessage.includes('flight_not_found')) {
-    return language === 'zh' ? '该航班已不可用。' : 'That flight is no longer available.'
+    return chooseLabel(language, 'That flight is no longer available.', '该航班当前不可用。')
   }
   if (normalizedMessage.includes('cabin_not_found')) {
-    return language === 'zh' ? '该航班没有这个舱位。' : 'That cabin is not offered on this flight.'
+    return chooseLabel(language, 'That cabin is not offered on this flight.', '该航班没有这个舱位。')
   }
   if (normalizedMessage.includes('cabin_not_bookable')) {
-    return language === 'zh' ? '这个舱位当前不可预订。' : 'That cabin is not bookable right now.'
+    return chooseLabel(language, 'That cabin is not bookable right now.', '这个舱位当前不可预订。')
   }
   if (normalizedMessage.includes('hotel_not_found')) {
-    return language === 'zh' ? '该酒店当前不可用。' : 'That hotel is no longer available.'
+    return chooseLabel(language, 'That hotel is no longer available.', '该酒店当前不可用。')
   }
   if (normalizedMessage.includes('room_type_not_found')) {
-    return language === 'zh' ? '这个房型当前不可用。' : 'That room type is not available.'
+    return chooseLabel(language, 'That room type is not available.', '这个房型当前不可用。')
   }
   if (normalizedMessage.includes('room_inventory_not_bookable')) {
-    return language === 'zh' ? '所选日期内这个房型暂时不可订。' : 'This room type is not bookable for the selected stay.'
+    return chooseLabel(language, 'This room type is not bookable for the selected stay.', '所选日期内这个房型暂时不可订。')
   }
   if (normalizedMessage.includes('stay_period_invalid')) {
-    return language === 'zh' ? '请检查入住和离店日期。' : 'Please check your check-in and check-out dates.'
+    return chooseLabel(language, 'Please check your check-in and check-out dates.', '请检查入住和离店日期。')
   }
   if (normalizedMessage.includes('room_capacity_exceeded')) {
-    return language === 'zh' ? '入住人数超过了当前房间数可容纳的人数。' : 'The selected guests exceed the room capacity for this booking.'
+    return chooseLabel(language, 'The selected guests exceed the room capacity for this booking.', '入住人数超过了当前房间数可容纳的人数。')
   }
   if (normalizedMessage.includes('invalid_traveler_selection')) {
-    return language === 'zh' ? '请选择你自己名下的有效出行人。' : 'Please choose valid travelers from your own list.'
+    return chooseLabel(language, 'Please choose valid travelers from your own list.', '请选择你自己名下的有效出行人。')
   }
   if (normalizedMessage.includes('traveler_document_exists')) {
-    return language === 'zh' ? '该证件号已经被其他出行人使用。' : 'That document number is already used by another traveler.'
+    return chooseLabel(language, 'That document number is already used by another traveler.', '该证件号已经被其他出行人使用。')
   }
   if (normalizedMessage.includes('avatar_missing')) {
-    return language === 'zh' ? '请先选择一张图片。' : 'Please choose an avatar image first.'
+    return chooseLabel(language, 'Please choose an avatar image first.', '请先选择一张图片。')
   }
   if (normalizedMessage.includes('avatar_type_invalid')) {
-    return language === 'zh' ? '头像只支持 PNG、JPG 或 JPEG。' : 'Avatars only support PNG, JPG, or JPEG images.'
+    return chooseLabel(language, 'Avatars only support PNG, JPG, or JPEG images.', '头像只支持 PNG、JPG 或 JPEG。')
   }
   if (normalizedMessage.includes('avatar_too_large')) {
-    return language === 'zh' ? '头像图片不能超过 2MB。' : 'Avatar images must be 2MB or smaller.'
+    return chooseLabel(language, 'Avatar images must be 2MB or smaller.', '头像图片不能超过 2MB。')
   }
   if (normalizedMessage.includes('avatar_upload_failed')) {
-    return language === 'zh' ? '头像上传失败，请稍后再试。' : 'Avatar upload failed. Please try again.'
+    return chooseLabel(language, 'Avatar upload failed. Please try again.', '头像上传失败，请稍后再试。')
   }
   if (normalizedMessage.includes('manager_not_found')) {
-    return language === 'zh' ? '没有找到这个管理者账号。' : 'We could not find that manager account.'
+    return chooseLabel(language, 'We could not find that manager account.', '没有找到这个管理者账号。')
   }
   if (normalizedMessage.includes('manager_scope_mismatch')) {
-    return language === 'zh' ? '你只能处理自己管理范围内的任务。' : 'You can only act on items inside your own manager scope.'
+    return chooseLabel(language, 'You can only act on items inside your own manager scope.', '你只能处理自己管理范围内的任务。')
   }
   if (normalizedMessage.includes('manager_email_exists')) {
-    return language === 'zh' ? '这个管理者邮箱已经被使用了。' : 'This manager email is already in use.'
+    return chooseLabel(language, 'This manager email is already in use.', '这个管理者邮箱已经被使用了。')
   }
   if (normalizedMessage.includes('decision_reason_required')) {
-    return language === 'zh' ? '拒绝时必须填写原因。' : 'A reject action requires a reason.'
+    return chooseLabel(language, 'A reject action requires a reason.', '拒绝时必须填写原因。')
   }
   if (normalizedMessage.includes('order_item_not_actionable')) {
-    return language === 'zh' ? '这个订单条目当前不能再处理。' : 'This booking item cannot be reviewed right now.'
+    return chooseLabel(language, 'This booking item cannot be reviewed right now.', '这个订单条目当前不能再处理。')
   }
   if (normalizedMessage.includes('currency_mismatch')) {
-    return language === 'zh' ? '订单币种与所选价格币种不一致。' : 'The booking currency does not match the selected price.'
+    return chooseLabel(language, 'The booking currency does not match the selected price.', '订单币种与所选价格币种不一致。')
   }
   if (normalizedMessage.includes('payment_already_completed')) {
-    return language === 'zh' ? '这个订单已经支付成功，不能重复支付。' : 'This order has already been paid.'
+    return chooseLabel(language, 'This order has already been paid.', '这个订单已经支付成功，不能重复支付。')
   }
   if (normalizedMessage.includes('inventory_not_available')) {
-    return language === 'zh' ? '当前库存已不足，请重新选择。' : 'The selected inventory is no longer available.'
+    return chooseLabel(language, 'The selected inventory is no longer available.', '当前库存已经不足，请重新选择。')
   }
   if (normalizedMessage.includes('reservation_expired')) {
-    return language === 'zh' ? '当前锁定已超时，请重新下单。' : 'This reservation has expired. Please book again.'
+    return chooseLabel(language, 'This reservation has expired. Please book again.', '当前锁定已超时，请重新下单。')
+  }
+  if (normalizedMessage.includes('traveler_not_eligible')) {
+    return chooseLabel(language, 'One or more travelers do not meet this ticket type eligibility.', '一个或多个出行人不符合该票型的购票条件。')
+  }
+  if (normalizedMessage.includes('ticket_type_inactive')) {
+    return chooseLabel(language, 'This ticket type is not available right now.', '这个票型当前不可用。')
+  }
+  if (normalizedMessage.includes('attraction_not_found')) {
+    return chooseLabel(language, 'That attraction is no longer available.', '该景点当前不可用。')
+  }
+  if (normalizedMessage.includes('train_not_found')) {
+    return chooseLabel(language, 'That train service is no longer available.', '该车次当前不可用。')
+  }
+  if (normalizedMessage.includes('train_not_on_sale')) {
+    return chooseLabel(language, 'This train service is not on sale yet.', '该车次还未开售。')
+  }
+  if (normalizedMessage.includes('train_station_invalid') || normalizedMessage.includes('train_station_order_invalid')) {
+    return chooseLabel(language, 'Please choose a valid station range on the same train.', '请选择同一车次上的有效区间。')
+  }
+  if (normalizedMessage.includes('train_inventory_not_available')) {
+    return chooseLabel(language, 'The selected train seats are no longer available.', '当前车票库存不足，请重新选择。')
   }
   if (normalizedMessage.includes('birth date') || normalizedMessage.includes('future') || normalizedMessage.includes('validation_error')) {
-    return language === 'zh' ? '请检查日期和输入内容后再试。' : 'Please check your dates and input values, then try again.'
+    return chooseLabel(language, 'Please check your dates and input values, then try again.', '请检查日期和输入内容后再试。')
   }
 
-  return language === 'zh' ? '操作未成功，请稍后再试。' : 'Something went wrong. Please try again.'
+  return chooseLabel(language, 'Something went wrong. Please try again.', '操作未成功，请稍后再试。')
 }
 
 export function formatIsoDateTime(isoDateTime: string | null, fallbackLabel: string): string {
@@ -231,16 +262,24 @@ export function localizeBookingKind(kindValue: string, language: AppLanguage): s
       ? {
           hotel: '酒店',
           flight: '航班',
+          train: '火车票',
+          attraction: '景点门票',
           HotelBooking: '酒店订单',
           FlightBooking: '航班订单',
+          TrainBooking: '火车票订单',
+          AttractionBooking: '景点门票订单',
           MixedBooking: '混合订单',
           PendingSelection: '待选择',
         }
       : {
           hotel: 'Hotel',
           flight: 'Flight',
+          train: 'Train',
+          attraction: 'Attraction',
           HotelBooking: 'Hotel booking',
           FlightBooking: 'Flight booking',
+          TrainBooking: 'Train booking',
+          AttractionBooking: 'Attraction booking',
           MixedBooking: 'Mixed booking',
           PendingSelection: 'Pending selection',
         }
@@ -309,7 +348,7 @@ export function localizeBedType(bedTypeValue: string, language: AppLanguage): st
           TWIN: '双床',
           QUEEN: '大床',
           KING: '特大床',
-          FAMILY: '家庭床型',
+          FAMILY: '家庭房',
         }
       : {
           SINGLE: 'Single bed',
@@ -337,14 +376,18 @@ export function localizeManagerTaskType(taskTypeValue: string, language: AppLang
       ? {
           Airline: '航班任务',
           Hotel: '酒店任务',
+          Attraction: '景点任务',
           airline: '航班任务',
           hotel: '酒店任务',
+          attraction: '景点任务',
         }
       : {
           Airline: 'Flight task',
           Hotel: 'Hotel task',
+          Attraction: 'Attraction task',
           airline: 'Flight task',
           hotel: 'Hotel task',
+          attraction: 'Attraction task',
         }
 
   return labels[taskTypeValue as keyof typeof labels] ?? taskTypeValue
@@ -355,12 +398,12 @@ export function localizeTrainSeatClass(seatClassValue: string, language: AppLang
   const labels =
     language === 'zh'
       ? {
-          'second-class': 'Second class',
-          'first-class': 'First class',
-          business: 'Business',
-          sleeper: 'Sleeper',
-          softsleeper: 'Soft sleeper',
-          hardsleeper: 'Hard sleeper',
+          'second-class': '二等座',
+          'first-class': '一等座',
+          business: '商务座',
+          sleeper: '卧铺',
+          softsleeper: '软卧',
+          hardsleeper: '硬卧',
         }
       : {
           'second-class': 'Second class',

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import { AppSidebar } from '../components/AppSidebar'
+import { AttractionAdminPanel } from '../components/AttractionAdminPanel'
+import { AttractionsPanel } from '../components/AttractionsPanel'
 import { FlightsPanel } from '../components/FlightsPanel'
 import { HotelsPanel } from '../components/HotelsPanel'
 import { ManagerPanel } from '../components/ManagerPanel'
@@ -17,6 +19,8 @@ import type {
   AppLanguage,
   AppNotice,
   AppViewKey,
+  AttractionAdminSessionResponse,
+  AttractionResponse,
   FlightResponse,
   HealthResponse,
   HotelResponse,
@@ -42,6 +46,7 @@ export function MvpApp() {
   const [orderResponses, setOrderResponses] = useState<OrderResponse[]>([])
   const [currentManagerSession, setCurrentManagerSession] = useState<ManagerSessionResponse | null>(null)
   const [currentTrainAdminSession, setCurrentTrainAdminSession] = useState<TrainAdminSessionResponse | null>(null)
+  const [currentAttractionAdminSession, setCurrentAttractionAdminSession] = useState<AttractionAdminSessionResponse | null>(null)
   const [managerTaskResponses, setManagerTaskResponses] = useState<ManagerTaskResponse[]>([])
   const [managerRefundTaskResponses, setManagerRefundTaskResponses] = useState<ManagerRefundTaskResponse[]>([])
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<OrderResponse | null>(null)
@@ -55,6 +60,18 @@ export function MvpApp() {
   useEffect(() => {
     void loadBackendHealth()
   }, [])
+
+  useEffect(() => {
+    if (currentViewKey === 'trainAdmin' || currentViewKey === 'attractionAdmin') {
+      setCurrentViewKey('manager')
+    }
+  }, [currentViewKey])
+
+  useEffect(() => {
+    if (isGuestMode && (currentViewKey === 'trains' || currentViewKey === 'attractions')) {
+      setCurrentViewKey('explore')
+    }
+  }, [currentViewKey, isGuestMode])
 
   function showNotice(kind: AppNotice['kind'], title: string, description: string, technicalMessage?: string) {
     setCurrentNotice({
@@ -204,6 +221,19 @@ export function MvpApp() {
     }
   }
 
+  async function searchAttractions(payload: {
+    city?: string
+  }): Promise<AttractionResponse[]> {
+    try {
+      const attractionListResponse = await travelMvpApiClient.listAttractions(payload)
+      return attractionListResponse.attractions
+    } catch (error) {
+      const technicalMessage = error instanceof Error ? error.message : 'Unknown error'
+      showNotice('error', translate('error.friendly.default'), mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage), technicalMessage)
+      return []
+    }
+  }
+
   async function reloadManagedTrains() {
     if (!currentTrainAdminSession) {
       return
@@ -215,6 +245,22 @@ export function MvpApp() {
         ? {
             ...currentSession,
             managedTrains: trainListResponse.trains,
+          }
+        : currentSession,
+    )
+  }
+
+  async function reloadManagedAttractions() {
+    if (!currentAttractionAdminSession) {
+      return
+    }
+
+    const attractionListResponse = await travelMvpApiClient.listManagedAttractions(currentAttractionAdminSession.managerId)
+    setCurrentAttractionAdminSession(currentSession =>
+      currentSession
+        ? {
+            ...currentSession,
+            managedAttractions: attractionListResponse.attractions,
           }
         : currentSession,
     )
@@ -426,6 +472,36 @@ export function MvpApp() {
           />
         ) : null}
 
+        {currentViewKey === 'attractions' ? (
+          <AttractionsPanel
+            currentLanguage={currentLanguage}
+            isBusy={isPageBusy}
+            isGuestMode={isGuestMode}
+            travelers={travelerResponses}
+            translate={translate}
+            onSearchAttractions={searchAttractions}
+            onBookAttraction={async payload => {
+              const signedInUser = requireSignedInUser()
+              await runPageAction(async () => {
+                const createdOrder = await travelMvpApiClient.createOrder({
+                  ownerUserId: signedInUser.userId,
+                  orderCurrency: payload.orderCurrency,
+                })
+                await travelMvpApiClient.addAttractionItemToOrder(createdOrder.orderId, {
+                  buyerUserId: signedInUser.userId,
+                  orderId: createdOrder.orderId,
+                  attractionId: payload.attractionId,
+                  ticketTypeId: payload.ticketTypeId,
+                  travelerIds: payload.travelerIds,
+                  useDate: payload.useDate,
+                })
+                await reloadOrders()
+                setCurrentViewKey('bookings')
+              }, translate('attractions.bookNow'), translate('notice.bookingCreated'))
+            }}
+          />
+        ) : null}
+
         {currentViewKey === 'bookings' ? (
           <OrderPanel
             currentLanguage={currentLanguage}
@@ -457,159 +533,225 @@ export function MvpApp() {
         ) : null}
 
         {currentViewKey === 'manager' ? (
-          <ManagerPanel
-            currentLanguage={currentLanguage}
-            isBusy={isPageBusy}
-            managerSession={currentManagerSession}
-            managerTasks={managerTaskResponses}
-            managerRefundTasks={managerRefundTaskResponses}
-            translate={translate}
-            onRegisterAirlineManager={async payload => {
-              await runPageAction(async () => {
-                const session = await travelMvpApiClient.registerAirlineManager(payload)
-                setCurrentManagerSession(session)
-                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
-              }, translate('manager.createAccount'), translate('notice.actionSuccess'))
-            }}
-            onRegisterHotelManager={async payload => {
-              await runPageAction(async () => {
-                const session = await travelMvpApiClient.registerHotelManager(payload)
-                setCurrentManagerSession(session)
-                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
-              }, translate('manager.createAccount'), translate('notice.actionSuccess'))
-            }}
-            onCreateManagerRoomType={async payload => {
-              await runPageAction(async () => {
-                await travelMvpApiClient.createManagerRoomType(payload)
-              }, translate('manager.createRoomType'), translate('notice.actionSuccess'))
-            }}
-            onLoginManager={async payload => {
-              await runPageAction(async () => {
-                const session = await travelMvpApiClient.loginManager(payload)
-                setCurrentManagerSession(session)
-                const [tasks, refundTasks] = await Promise.all([
-                  travelMvpApiClient.listManagerTasks({
-                    managerId: session.managerId,
-                    managerType: session.managerType.toLowerCase(),
-                    status: 'pending',
-                  }),
-                  travelMvpApiClient.listManagerRefundTasks({
-                    managerId: session.managerId,
-                    managerType: session.managerType.toLowerCase(),
-                  }),
-                ])
-                setManagerTaskResponses(tasks.tasks)
-                setManagerRefundTaskResponses(refundTasks.tasks)
-              }, translate('manager.login'), translate('notice.actionSuccess'))
-            }}
-            onReloadTasks={async status => {
-              await runPageAction(async () => {
-                await reloadManagerTasks(status)
-              }, translate('manager.refresh'), translate('notice.actionSuccess'))
-            }}
-            onReloadRefundTasks={async () => {
-              await runPageAction(async () => {
-                await reloadManagerRefundTasks()
-              }, translate('manager.refundTasks'), translate('notice.actionSuccess'))
-            }}
-            onCreateManagerFlight={async payload => {
-              const managerSession = requireManagerSession()
-              await runPageAction(async () => {
-                await travelMvpApiClient.createManagerFlight({
-                  managerId: managerSession.managerId,
-                  ...payload,
-                })
-              }, translate('manager.createFlight'), translate('notice.actionSuccess'))
-            }}
-            onConfirmTask={async payload => {
-              const managerSession = requireManagerSession()
-              await runPageAction(async () => {
-                await travelMvpApiClient.confirmManagerBookingItem(payload.orderItemId, {
-                  managerId: managerSession.managerId,
-                  managerType: managerSession.managerType.toLowerCase(),
-                  note: payload.note.trim() || null,
-                })
-                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
-              }, translate('manager.confirm'), translate('notice.actionSuccess'))
-            }}
-            onRejectTask={async payload => {
-              const managerSession = requireManagerSession()
-              await runPageAction(async () => {
-                await travelMvpApiClient.rejectManagerBookingItem(payload.orderItemId, {
-                  managerId: managerSession.managerId,
-                  managerType: managerSession.managerType.toLowerCase(),
-                  reason: payload.reason,
-                })
-                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
-              }, translate('manager.reject'), translate('notice.actionSuccess'))
-            }}
-            onApproveRefundTask={async payload => {
-              const managerSession = requireManagerSession()
-              await runPageAction(async () => {
-                await travelMvpApiClient.approveRefund(payload.orderId, managerSession.managerId, managerSession.managerType.toLowerCase())
-                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
-              }, translate('manager.approveRefund'), translate('notice.actionSuccess'))
-            }}
-            onRejectRefundTask={async payload => {
-              const managerSession = requireManagerSession()
-              await runPageAction(async () => {
-                await travelMvpApiClient.rejectRefund(payload.orderId, managerSession.managerId, managerSession.managerType.toLowerCase())
-                await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
-              }, translate('manager.rejectRefund'), translate('notice.actionSuccess'))
-            }}
-            onLogoutManager={() => {
-              setCurrentManagerSession(null)
-              setManagerTaskResponses([])
-              setManagerRefundTaskResponses([])
-            }}
-          />
-        ) : null}
+          <>
+            <ManagerPanel
+              currentLanguage={currentLanguage}
+              isBusy={isPageBusy}
+              managerSession={currentManagerSession}
+              managerTasks={managerTaskResponses}
+              managerRefundTasks={managerRefundTaskResponses}
+              translate={translate}
+              onRegisterAirlineManager={async payload => {
+                await runPageAction(async () => {
+                  const session = await travelMvpApiClient.registerAirlineManager(payload)
+                  setCurrentManagerSession(session)
+                  await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
+                }, translate('manager.createAccount'), translate('notice.actionSuccess'))
+              }}
+              onRegisterHotelManager={async payload => {
+                await runPageAction(async () => {
+                  const session = await travelMvpApiClient.registerHotelManager(payload)
+                  setCurrentManagerSession(session)
+                  await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
+                }, translate('manager.createAccount'), translate('notice.actionSuccess'))
+              }}
+              onCreateManagerRoomType={async payload => {
+                await runPageAction(async () => {
+                  await travelMvpApiClient.createManagerRoomType(payload)
+                }, translate('manager.createRoomType'), translate('notice.actionSuccess'))
+              }}
+              onLoginManager={async payload => {
+                await runPageAction(async () => {
+                  const session = await travelMvpApiClient.loginManager(payload)
+                  setCurrentManagerSession(session)
+                  const [tasks, refundTasks] = await Promise.all([
+                    travelMvpApiClient.listManagerTasks({
+                      managerId: session.managerId,
+                      managerType: session.managerType.toLowerCase(),
+                      status: 'pending',
+                    }),
+                    travelMvpApiClient.listManagerRefundTasks({
+                      managerId: session.managerId,
+                      managerType: session.managerType.toLowerCase(),
+                    }),
+                  ])
+                  setManagerTaskResponses(tasks.tasks)
+                  setManagerRefundTaskResponses(refundTasks.tasks)
+                }, translate('manager.login'), translate('notice.actionSuccess'))
+              }}
+              onReloadTasks={async status => {
+                await runPageAction(async () => {
+                  await reloadManagerTasks(status)
+                }, translate('manager.refresh'), translate('notice.actionSuccess'))
+              }}
+              onReloadRefundTasks={async () => {
+                await runPageAction(async () => {
+                  await reloadManagerRefundTasks()
+                }, translate('manager.refundTasks'), translate('notice.actionSuccess'))
+              }}
+              onCreateManagerFlight={async payload => {
+                const managerSession = requireManagerSession()
+                await runPageAction(async () => {
+                  await travelMvpApiClient.createManagerFlight({
+                    managerId: managerSession.managerId,
+                    ...payload,
+                  })
+                }, translate('manager.createFlight'), translate('notice.actionSuccess'))
+              }}
+              onConfirmTask={async payload => {
+                const managerSession = requireManagerSession()
+                await runPageAction(async () => {
+                  await travelMvpApiClient.confirmManagerBookingItem(payload.orderItemId, {
+                    managerId: managerSession.managerId,
+                    managerType: managerSession.managerType.toLowerCase(),
+                    note: payload.note.trim() || null,
+                  })
+                  await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
+                }, translate('manager.confirm'), translate('notice.actionSuccess'))
+              }}
+              onRejectTask={async payload => {
+                const managerSession = requireManagerSession()
+                await runPageAction(async () => {
+                  await travelMvpApiClient.rejectManagerBookingItem(payload.orderItemId, {
+                    managerId: managerSession.managerId,
+                    managerType: managerSession.managerType.toLowerCase(),
+                    reason: payload.reason,
+                  })
+                  await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
+                }, translate('manager.reject'), translate('notice.actionSuccess'))
+              }}
+              onApproveRefundTask={async payload => {
+                const managerSession = requireManagerSession()
+                await runPageAction(async () => {
+                  await travelMvpApiClient.approveRefund(payload.orderId, managerSession.managerId, managerSession.managerType.toLowerCase())
+                  await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
+                }, translate('manager.approveRefund'), translate('notice.actionSuccess'))
+              }}
+              onRejectRefundTask={async payload => {
+                const managerSession = requireManagerSession()
+                await runPageAction(async () => {
+                  await travelMvpApiClient.rejectRefund(payload.orderId, managerSession.managerId, managerSession.managerType.toLowerCase())
+                  await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks(), reloadOrders()])
+                }, translate('manager.rejectRefund'), translate('notice.actionSuccess'))
+              }}
+              onLogoutManager={() => {
+                setCurrentManagerSession(null)
+                setManagerTaskResponses([])
+                setManagerRefundTaskResponses([])
+              }}
+            />
 
-        {currentViewKey === 'trainAdmin' ? (
-          <TrainAdminPanel
-            currentLanguage={currentLanguage}
-            isBusy={isPageBusy}
-            trainAdminSession={currentTrainAdminSession}
-            translate={translate}
-            onRegisterRailwayManager={async payload => {
-              await runPageAction(async () => {
-                const session = await travelMvpApiClient.registerRailwayManager(payload)
-                setCurrentTrainAdminSession(session)
-              }, translate('trainAdmin.createAccount'), translate('notice.actionSuccess'))
-            }}
-            onLoginRailwayManager={async payload => {
-              await runPageAction(async () => {
-                const session = await travelMvpApiClient.loginRailwayManager(payload)
-                setCurrentTrainAdminSession(session)
-              }, translate('trainAdmin.login'), translate('notice.actionSuccess'))
-            }}
-            onReloadManagedTrains={async () => {
-              await runPageAction(async () => {
-                await reloadManagedTrains()
-              }, translate('trainAdmin.refresh'), translate('notice.actionSuccess'))
-            }}
-            onCreateTrainJourney={async payload => {
-              const currentSession = currentTrainAdminSession
-              if (!currentSession) {
-                throw new Error(translate('error.managerNotFound'))
-              }
-              await runPageAction(async () => {
-                await travelMvpApiClient.createTrainJourney({
-                  managerId: currentSession.managerId,
-                  trainNumber: payload.trainNumber,
-                  saleStartsAt: payload.saleStartsAt,
-                  stops: payload.stops,
-                  seatInventories: payload.seatInventories,
-                  segmentPrices: payload.segmentPrices,
-                  refundPolicies: payload.refundPolicies,
-                })
-                await reloadManagedTrains()
-              }, translate('trainAdmin.createTrain'), translate('notice.actionSuccess'))
-            }}
-            onLogoutRailwayManager={() => {
-              setCurrentTrainAdminSession(null)
-            }}
-          />
+            <TrainAdminPanel
+              currentLanguage={currentLanguage}
+              isBusy={isPageBusy}
+              trainAdminSession={currentTrainAdminSession}
+              translate={translate}
+              onRegisterRailwayManager={async payload => {
+                await runPageAction(async () => {
+                  const session = await travelMvpApiClient.registerRailwayManager(payload)
+                  setCurrentTrainAdminSession(session)
+                }, translate('trainAdmin.createAccount'), translate('notice.actionSuccess'))
+              }}
+              onLoginRailwayManager={async payload => {
+                await runPageAction(async () => {
+                  const session = await travelMvpApiClient.loginRailwayManager(payload)
+                  setCurrentTrainAdminSession(session)
+                }, translate('trainAdmin.login'), translate('notice.actionSuccess'))
+              }}
+              onReloadManagedTrains={async () => {
+                await runPageAction(async () => {
+                  await reloadManagedTrains()
+                }, translate('trainAdmin.refresh'), translate('notice.actionSuccess'))
+              }}
+              onCreateTrainJourney={async payload => {
+                const currentSession = currentTrainAdminSession
+                if (!currentSession) {
+                  throw new Error(translate('error.managerNotFound'))
+                }
+                await runPageAction(async () => {
+                  await travelMvpApiClient.createTrainJourney({
+                    managerId: currentSession.managerId,
+                    trainNumber: payload.trainNumber,
+                    saleStartsAt: payload.saleStartsAt,
+                    stops: payload.stops,
+                    seatInventories: payload.seatInventories,
+                    segmentPrices: payload.segmentPrices,
+                    refundPolicies: payload.refundPolicies,
+                  })
+                  await reloadManagedTrains()
+                }, translate('trainAdmin.createTrain'), translate('notice.actionSuccess'))
+              }}
+              onLogoutRailwayManager={() => {
+                setCurrentTrainAdminSession(null)
+              }}
+            />
+
+            <AttractionAdminPanel
+              currentLanguage={currentLanguage}
+              isBusy={isPageBusy}
+              attractionAdminSession={currentAttractionAdminSession}
+              translate={translate}
+              onRegisterAttractionManager={async payload => {
+                await runPageAction(async () => {
+                  const session = await travelMvpApiClient.registerAttractionManager(payload)
+                  setCurrentAttractionAdminSession(session)
+                }, translate('attractionAdmin.createAccount'), translate('notice.actionSuccess'))
+              }}
+              onLoginAttractionManager={async payload => {
+                await runPageAction(async () => {
+                  const session = await travelMvpApiClient.loginAttractionManager(payload)
+                  setCurrentAttractionAdminSession(session)
+                }, translate('attractionAdmin.login'), translate('notice.actionSuccess'))
+              }}
+              onReloadManagedAttractions={async () => {
+                await runPageAction(async () => {
+                  await reloadManagedAttractions()
+                }, translate('attractionAdmin.refresh'), translate('notice.actionSuccess'))
+              }}
+              onCreateAttraction={async payload => {
+                const currentSession = currentAttractionAdminSession
+                if (!currentSession) {
+                  throw new Error(translate('error.managerNotFound'))
+                }
+                await runPageAction(async () => {
+                  await travelMvpApiClient.createAttraction({
+                    managerId: currentSession.managerId,
+                    ...payload,
+                  })
+                  await reloadManagedAttractions()
+                }, translate('attractionAdmin.createAttraction'), translate('notice.actionSuccess'))
+              }}
+              onCreateTicketType={async payload => {
+                const currentSession = currentAttractionAdminSession
+                if (!currentSession) {
+                  throw new Error(translate('error.managerNotFound'))
+                }
+                await runPageAction(async () => {
+                  await travelMvpApiClient.createAttractionTicketType({
+                    managerId: currentSession.managerId,
+                    ...payload,
+                  })
+                  await reloadManagedAttractions()
+                }, translate('attractionAdmin.createTicketType'), translate('notice.actionSuccess'))
+              }}
+              onCreateRule={async payload => {
+                const currentSession = currentAttractionAdminSession
+                if (!currentSession) {
+                  throw new Error(translate('error.managerNotFound'))
+                }
+                await runPageAction(async () => {
+                  await travelMvpApiClient.createAttractionTicketRule({
+                    managerId: currentSession.managerId,
+                    ...payload,
+                  })
+                  await reloadManagedAttractions()
+                }, translate('attractionAdmin.createRule'), translate('notice.actionSuccess'))
+              }}
+              onLogoutAttractionManager={() => {
+                setCurrentAttractionAdminSession(null)
+              }}
+            />
+          </>
         ) : null}
       </section>
 

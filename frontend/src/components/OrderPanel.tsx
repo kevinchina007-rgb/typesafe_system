@@ -152,6 +152,24 @@ export function OrderPanel({
                               </p>
                             </>
                           ) : null}
+                          {orderLineItem.attractionDetails ? (
+                            <>
+                              <p>
+                                {`${translate('booking.attraction.ticketType')}: ${orderLineItem.attractionDetails.ticketTypeName} | ${translate('booking.attraction.travelers')}: ${orderLineItem.attractionDetails.travelerIds.length}`}
+                              </p>
+                              <p>
+                                {`${translate('booking.attraction.useDate')}: ${orderLineItem.attractionDetails.useDate}`}
+                              </p>
+                              <p>
+                                {`${translate('booking.attraction.unitPrice')}: ${orderLineItem.attractionDetails.unitPrice} ${orderLineItem.attractionDetails.currency} | ${translate('booking.attraction.totalPrice')}: ${orderLineItem.attractionDetails.totalPrice} ${orderLineItem.attractionDetails.currency}`}
+                              </p>
+                              {orderLineItem.attractionDetails.eligibilityRuleSummaries.length > 0 ? (
+                                <p>
+                                  {`${translate('booking.attraction.rules')}: ${orderLineItem.attractionDetails.eligibilityRuleSummaries.join(' | ')}`}
+                                </p>
+                              ) : null}
+                            </>
+                          ) : null}
                           {orderLineItem.supplierReviewDecision?.reason ? (
                             <p>{orderLineItem.supplierReviewDecision.reason}</p>
                           ) : null}

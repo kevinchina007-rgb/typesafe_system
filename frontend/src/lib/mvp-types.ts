@@ -127,6 +127,36 @@ export type TrainRefundPolicyResponse = {
   refundRate: string
 }
 
+export type AttractionTicketTypeRuleResponse = {
+  ruleId: string
+  ruleType: string
+  summary: string
+}
+
+export type AttractionTicketTypeResponse = {
+  ticketTypeId: string
+  ticketTypeName: string
+  description: string
+  priceAmount: string
+  priceCurrency: string
+  status: string
+  rules: AttractionTicketTypeRuleResponse[]
+}
+
+export type AttractionResponse = {
+  attractionId: string
+  attractionName: string
+  city: string
+  location: string
+  description: string
+  status: string
+  ticketTypes: AttractionTicketTypeResponse[]
+}
+
+export type AttractionListResponse = {
+  attractions: AttractionResponse[]
+}
+
 export type TrainResponse = {
   trainId: string
   trainNumber: string
@@ -194,6 +224,20 @@ export type TrainItemDetailsResponse = {
   currency: string
 }
 
+export type AttractionItemDetailsResponse = {
+  attractionId: string
+  attractionName: string
+  ticketTypeId: string
+  ticketTypeName: string
+  useDate: string
+  travelerIds: string[]
+  unitPrice: string
+  totalPrice: string
+  currency: string
+  eligibilityRuleSummaries: string[]
+  eligibilityValidatedAt: string
+}
+
 export type SupplierReviewDecisionResponse = {
   decision: string
   reason: string | null
@@ -213,6 +257,7 @@ export type OrderLineItemResponse = {
   flightDetails: FlightItemDetailsResponse | null
   hotelDetails: HotelItemDetailsResponse | null
   trainDetails: TrainItemDetailsResponse | null
+  attractionDetails: AttractionItemDetailsResponse | null
 }
 
 export type PaymentResponse = {
@@ -262,7 +307,7 @@ export type OrderListResponse = {
 
 export type AppLanguage = 'en' | 'zh'
 
-export type ManagerType = 'airline' | 'hotel'
+export type ManagerType = 'airline' | 'hotel' | 'attraction'
 
 export type TrainAdminSessionResponse = {
   managerId: string
@@ -271,6 +316,14 @@ export type TrainAdminSessionResponse = {
   displayName: string
   status: string
   managedTrains: TrainResponse[]
+}
+
+export type AttractionAdminSessionResponse = {
+  managerId: string
+  email: string
+  displayName: string
+  status: string
+  managedAttractions: AttractionResponse[]
 }
 
 export type ManagerSessionResponse = {
@@ -314,7 +367,18 @@ export type ManagerRefundTaskListResponse = {
   tasks: ManagerRefundTaskResponse[]
 }
 
-export type AppViewKey = 'explore' | 'account' | 'travelers' | 'flights' | 'hotels' | 'trains' | 'bookings' | 'manager' | 'trainAdmin'
+export type AppViewKey =
+  | 'explore'
+  | 'account'
+  | 'travelers'
+  | 'flights'
+  | 'hotels'
+  | 'trains'
+  | 'attractions'
+  | 'bookings'
+  | 'manager'
+  | 'trainAdmin'
+  | 'attractionAdmin'
 
 export type AppNotice = {
   id: number

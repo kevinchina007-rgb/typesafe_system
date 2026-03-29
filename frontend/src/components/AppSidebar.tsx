@@ -13,8 +13,8 @@ type AppSidebarProps = {
   translate: (translationKey: string) => string
 }
 
-const guestSidebarViews: AppViewKey[] = ['explore', 'trains', 'manager', 'trainAdmin']
-const signedInSidebarViews: AppViewKey[] = ['explore', 'account', 'travelers', 'flights', 'hotels', 'trains', 'bookings', 'manager', 'trainAdmin']
+const guestSidebarViews: AppViewKey[] = ['explore', 'manager']
+const signedInSidebarViews: AppViewKey[] = ['explore', 'account', 'travelers', 'flights', 'hotels', 'trains', 'attractions', 'bookings', 'manager']
 
 export function AppSidebar({
   currentLanguage,

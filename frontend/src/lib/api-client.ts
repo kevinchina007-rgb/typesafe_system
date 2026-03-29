@@ -1,4 +1,7 @@
 import type {
+  AttractionAdminSessionResponse,
+  AttractionListResponse,
+  AttractionResponse,
   ApiErrorResponse,
   FlightListResponse,
   FlightResponse,
@@ -212,6 +215,19 @@ export const travelMvpApiClient = {
 
   getTrain: (trainId: string): Promise<TrainResponse> => apiRequest(`/trains/${trainId}`),
 
+  listAttractions: (query?: {
+    city?: string
+  }): Promise<AttractionListResponse> => {
+    const searchParams = new URLSearchParams()
+    if (query?.city) {
+      searchParams.set('city', query.city)
+    }
+    const suffix = searchParams.toString() ? `?${searchParams.toString()}` : ''
+    return apiRequest(`/attractions${suffix}`)
+  },
+
+  getAttraction: (attractionId: string): Promise<AttractionResponse> => apiRequest(`/attractions/${attractionId}`),
+
   createOrder: (payload: { ownerUserId: string; orderCurrency: string }): Promise<OrderResponse> =>
     apiRequest('/orders', {
       method: 'POST',
@@ -231,6 +247,22 @@ export const travelMvpApiClient = {
     },
   ): Promise<OrderResponse> =>
     apiRequest(`/orders/${orderId}/train-items`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  addAttractionItemToOrder: (
+    orderId: string,
+    payload: {
+      buyerUserId: string
+      orderId: string
+      attractionId: string
+      ticketTypeId: string
+      travelerIds: string[]
+      useDate: string
+    },
+  ): Promise<OrderResponse> =>
+    apiRequest(`/orders/${orderId}/attraction-items`, {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -306,6 +338,65 @@ export const travelMvpApiClient = {
 
   loginRailwayManager: (payload: { email: string }): Promise<TrainAdminSessionResponse> =>
     apiRequest('/train-admin/session/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  registerAttractionManager: (payload: {
+    email: string
+    displayName: string
+  }): Promise<AttractionAdminSessionResponse> =>
+    apiRequest('/attraction-admin/managers', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  loginAttractionManager: (payload: { email: string }): Promise<AttractionAdminSessionResponse> =>
+    apiRequest('/attraction-admin/session/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listManagedAttractions: (managerId: string): Promise<AttractionListResponse> =>
+    apiRequest(`/attraction-admin/attractions?managerId=${encodeURIComponent(managerId)}`),
+
+  createAttraction: (payload: {
+    managerId: string
+    attractionName: string
+    city: string
+    location: string
+    description: string
+  }): Promise<AttractionResponse> =>
+    apiRequest('/attraction-admin/attractions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createAttractionTicketType: (payload: {
+    managerId: string
+    attractionId: string
+    ticketTypeName: string
+    description: string
+    unitPrice: string
+    currency: string
+  }): Promise<AttractionResponse> =>
+    apiRequest('/attraction-admin/ticket-types', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createAttractionTicketRule: (payload: {
+    managerId: string
+    attractionId: string
+    ticketTypeId: string
+    ruleType: string
+    ageValue?: number | null
+    minAge?: number | null
+    maxAge?: number | null
+    documentType?: string | null
+    documentNumberPrefix?: string | null
+  }): Promise<AttractionResponse> =>
+    apiRequest('/attraction-admin/ticket-types/rules', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

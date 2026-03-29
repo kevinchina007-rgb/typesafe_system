@@ -149,6 +149,29 @@ export function ManagerPanel({
               onSubmit={async event => {
                 event.preventDefault()
                 const formData = new FormData(event.currentTarget)
+                await onLoginManager({
+                  managerType: 'airline',
+                  email: String(formData.get('email') ?? ''),
+                })
+              }}
+            >
+              <h3>{translate('manager.loginAirline')}</h3>
+              <label>
+                {translate('manager.email')}
+                <input name="email" type="email" placeholder="ops@airline.example" required disabled={isBusy} />
+              </label>
+              <button type="submit" disabled={isBusy}>
+                {translate('manager.loginAirline')}
+              </button>
+            </form>
+          </div>
+
+          <div className="two-column-grid">
+            <form
+              className="stack-form panel-card"
+              onSubmit={async event => {
+                event.preventDefault()
+                const formData = new FormData(event.currentTarget)
                 await onRegisterHotelManager({
                   email: String(formData.get('email') ?? ''),
                   displayName: String(formData.get('displayName') ?? ''),
@@ -179,37 +202,28 @@ export function ManagerPanel({
                 {translate('manager.createAccount')}
               </button>
             </form>
-          </div>
 
-          <form
-            className="stack-form panel-card"
-            onSubmit={async event => {
-              event.preventDefault()
-              const formData = new FormData(event.currentTarget)
-              await onLoginManager({
-                managerType: String(formData.get('managerType') ?? 'airline') as ManagerType,
-                email: String(formData.get('email') ?? ''),
-              })
-            }}
-          >
-            <h3>{translate('manager.login')}</h3>
-            <div className="three-column-grid">
-              <label>
-                {translate('manager.type')}
-                <select name="managerType" defaultValue="airline" disabled={isBusy}>
-                  <option value="airline">{translate('manager.type.airline')}</option>
-                  <option value="hotel">{translate('manager.type.hotel')}</option>
-                </select>
-              </label>
+            <form
+              className="stack-form panel-card"
+              onSubmit={async event => {
+                event.preventDefault()
+                const formData = new FormData(event.currentTarget)
+                await onLoginManager({
+                  managerType: 'hotel',
+                  email: String(formData.get('email') ?? ''),
+                })
+              }}
+            >
+              <h3>{translate('manager.loginHotel')}</h3>
               <label>
                 {translate('manager.email')}
                 <input name="email" type="email" placeholder="ops@example.com" required disabled={isBusy} />
               </label>
-            </div>
-            <button type="submit" disabled={isBusy}>
-              {translate('manager.login')}
-            </button>
-          </form>
+              <button type="submit" disabled={isBusy}>
+                {translate('manager.loginHotel')}
+              </button>
+            </form>
+          </div>
         </>
       ) : (
         <>
