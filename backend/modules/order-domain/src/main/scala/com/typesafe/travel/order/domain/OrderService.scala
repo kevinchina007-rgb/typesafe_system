@@ -35,7 +35,7 @@ final class LiveOrderService[F[_]: MonadThrow](
     }
 
   override def listOrdersForUser(ownerUserId: UserId): F[List[Order]] =
-    orderRepository.findAllOrders.map(_.filter(_.ownerUserId == ownerUserId).sortBy(_.createdAt.toEpochMilli).reverse)
+    orderRepository.findOrdersByOwnerUserId(ownerUserId).map(_.sortBy(_.createdAt.toEpochMilli).reverse)
 
   override def addFlightOrderItem(
       orderId: OrderId,

@@ -14,12 +14,14 @@ $env:JAVA_HOME = 'E:\typesafe\template\backend\.jdks\temurin-21-unpacked\jdk-21.
 $env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 $env:TRAVEL_REPOSITORY_MODE = $RepositoryMode
 $env:TRAVEL_BACKEND_PORT = "$BackendPort"
+$launcherDatabasePath = (Join-Path $templateRoot 'backend\data\travel-platform-runtime').Replace('\', '/')
+$env:TRAVEL_DB_URL = "jdbc:h2:file:$launcherDatabasePath;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
 $env:SBT_OPTS = '-Dsbt.boot.directory=E:/typesafe/template/backend/.sbt-home/boot -Dsbt.global.base=E:/typesafe/template/backend/.sbt-home -Dsbt.ivy.home=E:/typesafe/template/backend/.ivy2 -Divy.home=E:/typesafe/template/backend/.ivy2 -Dcoursier.cache=E:/typesafe/template/backend/.coursier -Dsbt.coursier.home=E:/typesafe/template/backend/.coursier -Dsbt.repository.config=E:/typesafe/template/backend/project/repositories -Dsbt.override.build.repos=true -Dsbt.supershell=false -Dsbt.ci=true -Dsbt.server.autostart=false'
 $env:COURSIER_CACHE = 'E:/typesafe/template/backend/.coursier'
 $env:COURSIER_ARCHIVE_CACHE = 'E:/typesafe/template/backend/.coursier/archive'
 $env:COURSIER_JVM_CACHE = 'E:/typesafe/template/backend/.coursier/jvm'
 
-Add-Content -Path $backendScriptLog -Value "[backend] start script entered $(Get-Date -Format o) mode=$RepositoryMode port=$BackendPort"
+Add-Content -Path $backendScriptLog -Value "[backend] start script entered $(Get-Date -Format o) mode=$RepositoryMode port=$BackendPort db=$($env:TRAVEL_DB_URL)"
 Set-Location 'E:\typesafe\template\backend'
 & 'E:\typesafe\bin\sbt.bat' --batch run *>&1 | Tee-Object -FilePath $backendRunLog -Append | Out-Null
 $exitCode = if ($LASTEXITCODE -ne $null) { $LASTEXITCODE } else { 0 }
