@@ -14,7 +14,18 @@ type AppSidebarProps = {
 }
 
 const guestSidebarViews: AppViewKey[] = ['explore', 'manager']
-const signedInSidebarViews: AppViewKey[] = ['explore', 'account', 'travelers', 'flights', 'hotels', 'trains', 'attractions', 'bookings', 'manager']
+const signedInSidebarViews: AppViewKey[] = [
+  'explore',
+  'account',
+  'travelers',
+  'flights',
+  'hotels',
+  'trains',
+  'attractions',
+  'tourGroups',
+  'bookings',
+  'manager',
+]
 
 export function AppSidebar({
   currentLanguage,

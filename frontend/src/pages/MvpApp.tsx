@@ -11,6 +11,7 @@ import { PaymentModal } from '../components/PaymentModal'
 import { TrainAdminPanel } from '../components/TrainAdminPanel'
 import { TrainsPanel } from '../components/TrainsPanel'
 import { ToastNotice } from '../components/ToastNotice'
+import { TourGroupsPanel } from '../components/TourGroupsPanel'
 import { TravelerPanel } from '../components/TravelerPanel'
 import { UserPanel } from '../components/UserPanel'
 import { travelMvpApiClient } from '../lib/api-client'
@@ -28,6 +29,7 @@ import type {
   ManagerSessionResponse,
   ManagerTaskResponse,
   OrderResponse,
+  TourGroupSummaryResponse,
   TrainAdminSessionResponse,
   TrainResponse,
   TravelerResponse,
@@ -68,10 +70,16 @@ export function MvpApp() {
   }, [currentViewKey])
 
   useEffect(() => {
-    if (isGuestMode && (currentViewKey === 'trains' || currentViewKey === 'attractions')) {
+    if (isGuestMode && (currentViewKey === 'trains' || currentViewKey === 'attractions' || currentViewKey === 'tourGroups')) {
       setCurrentViewKey('explore')
     }
   }, [currentViewKey, isGuestMode])
+
+  useEffect(() => {
+    if (currentViewKey === 'bookings' && signedInUserResponse) {
+      void reloadOrders()
+    }
+  }, [currentViewKey, signedInUserResponse])
 
   function showNotice(kind: AppNotice['kind'], title: string, description: string, technicalMessage?: string) {
     setCurrentNotice({
@@ -226,7 +234,16 @@ export function MvpApp() {
   }): Promise<AttractionResponse[]> {
     try {
       const attractionListResponse = await travelMvpApiClient.listAttractions(payload)
-      return attractionListResponse.attractions
+      const detailedAttractions = await Promise.all(
+        attractionListResponse.attractions.map(async attractionSummary => {
+          try {
+            return await travelMvpApiClient.getAttraction(attractionSummary.attractionId)
+          } catch {
+            return attractionSummary
+          }
+        }),
+      )
+      return detailedAttractions
     } catch (error) {
       const technicalMessage = error instanceof Error ? error.message : 'Unknown error'
       showNotice('error', translate('error.friendly.default'), mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage), technicalMessage)
@@ -264,6 +281,30 @@ export function MvpApp() {
           }
         : currentSession,
     )
+  }
+
+  async function runPageActionWithResult<TValue>(
+    action: () => Promise<TValue>,
+    successTitle: string,
+    successDescription: string,
+  ): Promise<TValue> {
+    setIsPageBusy(true)
+    try {
+      const result = await action()
+      showNotice('success', successTitle, successDescription)
+      return result
+    } catch (error) {
+      const technicalMessage = error instanceof Error ? error.message : 'Unknown error'
+      showNotice(
+        'error',
+        translate('error.friendly.default'),
+        mapTechnicalErrorToFriendlyMessage(technicalMessage, currentLanguage),
+        technicalMessage,
+      )
+      throw error
+    } finally {
+      setIsPageBusy(false)
+    }
   }
 
   return (
@@ -498,6 +539,94 @@ export function MvpApp() {
                 await reloadOrders()
                 setCurrentViewKey('bookings')
               }, translate('attractions.bookNow'), translate('notice.bookingCreated'))
+            }}
+          />
+        ) : null}
+
+        {currentViewKey === 'tourGroups' ? (
+          <TourGroupsPanel
+            currentLanguage={currentLanguage}
+            isBusy={isPageBusy}
+            signedInUser={signedInUserResponse}
+            travelers={travelerResponses}
+            translate={translate}
+            onListGroups={async (): Promise<TourGroupSummaryResponse[]> => {
+              const response = await travelMvpApiClient.listTourGroups()
+              return response.groups
+            }}
+            onLoadGroupDetails={groupId => travelMvpApiClient.getTourGroup(groupId)}
+            onCreateGroup={payload =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.createTourGroup(payload),
+                translate('tourGroups.createGroup'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onJoinGroup={(groupId, payload) =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.joinTourGroup(groupId, payload),
+                translate('tourGroups.joinGroup'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onAddMembershipTraveler={(groupId, payload) =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.addTourGroupMembershipTraveler(groupId, payload),
+                translate('tourGroups.addMembershipTraveler'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onCreatePlanItem={(groupId, payload) =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.createTourGroupPlanItem(groupId, payload),
+                translate('tourGroups.createPlanItem'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onCreatePlanOption={(planItemId, groupId, payload) =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.createTourGroupPlanOption(planItemId, groupId, payload),
+                translate('tourGroups.createOption'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onCreateSelection={(planItemId, groupId, payload) =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.createTourGroupSelection(planItemId, groupId, payload),
+                translate('tourGroups.createSelection'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onSubmitSelection={(selectionId, payload) =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.submitTourGroupSelection(selectionId, payload),
+                translate('tourGroups.submitSelection'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onConfirmSelection={(selectionId, payload) =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.confirmTourGroupSelection(selectionId, payload),
+                translate('tourGroups.confirmSelection'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onRejectSelection={(selectionId, payload) =>
+              runPageActionWithResult(
+                () => travelMvpApiClient.rejectTourGroupSelection(selectionId, payload),
+                translate('tourGroups.rejectSelection'),
+                translate('notice.actionSuccess'),
+              )
+            }
+            onSearchFlights={searchFlights}
+            onSearchHotels={searchHotels}
+            onSearchTrains={searchTrains}
+            onSearchAttractions={searchAttractions}
+            onOpenBookings={async () => {
+              await runPageAction(async () => {
+                await reloadOrders()
+                setCurrentViewKey('bookings')
+              }, translate('nav.bookings'), translate('notice.actionSuccess'))
             }}
           />
         ) : null}

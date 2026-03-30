@@ -16,6 +16,9 @@ import type {
   ManagerTaskListResponse,
   OrderListResponse,
   OrderResponse,
+  TourGroupDetailsResponse,
+  TourGroupListResponse,
+  TourGroupPaySelectionResponse,
   TravelerListResponse,
   TravelerResponse,
   UserResponse,
@@ -227,6 +230,137 @@ export const travelMvpApiClient = {
   },
 
   getAttraction: (attractionId: string): Promise<AttractionResponse> => apiRequest(`/attractions/${attractionId}`),
+
+  createTourGroup: (payload: {
+    organizerUserId: string
+    title: string
+    description: string
+    destination: string
+    startDate: string
+    endDate: string
+    capacity: number
+  }): Promise<TourGroupDetailsResponse> =>
+    apiRequest('/tour-groups', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listTourGroups: (): Promise<TourGroupListResponse> => apiRequest('/tour-groups'),
+
+  getTourGroup: (groupId: string): Promise<TourGroupDetailsResponse> => apiRequest(`/tour-groups/${groupId}`),
+
+  joinTourGroup: (groupId: string, payload: { userId: string }): Promise<TourGroupDetailsResponse> =>
+    apiRequest(`/tour-groups/${groupId}/memberships`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  addTourGroupMembershipTraveler: (
+    groupId: string,
+    payload: {
+      userId: string
+      travelerId: string
+    },
+  ): Promise<TourGroupDetailsResponse> =>
+    apiRequest(`/tour-groups/${groupId}/membership-travelers`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createTourGroupPlanItem: (
+    groupId: string,
+    payload: {
+      organizerUserId: string
+      itemType: string
+      title: string
+      description: string
+      scheduledAt: string
+      endsAt?: string | null
+      sequenceNo: number
+    },
+  ): Promise<TourGroupDetailsResponse> =>
+    apiRequest(`/tour-groups/${groupId}/plan-items`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createTourGroupPlanOption: (
+    planItemId: string,
+    groupId: string,
+    payload: {
+      organizerUserId: string
+      resourceType: string
+      resourceId: string
+      resourceVariantCode?: string | null
+      resourceContext?: string | null
+      label: string
+      description: string
+      defaultQuantity: number
+    },
+  ): Promise<TourGroupDetailsResponse> =>
+    apiRequest(`/plan-items/${planItemId}/options?groupId=${encodeURIComponent(groupId)}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  createTourGroupSelection: (
+    planItemId: string,
+    groupId: string,
+    payload: {
+      userId: string
+      optionId: string
+      quantity: number
+      travelerIds: string[]
+    },
+  ): Promise<TourGroupDetailsResponse> =>
+    apiRequest(`/plan-items/${planItemId}/selections?groupId=${encodeURIComponent(groupId)}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  submitTourGroupSelection: (selectionId: string, payload: { userId: string }): Promise<TourGroupDetailsResponse> =>
+    apiRequest(`/selections/${selectionId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  confirmTourGroupSelection: (
+    selectionId: string,
+    payload: {
+      organizerUserId: string
+      reviewNote?: string | null
+    },
+  ): Promise<TourGroupDetailsResponse> =>
+    apiRequest(`/selections/${selectionId}/confirm`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  rejectTourGroupSelection: (
+    selectionId: string,
+    payload: {
+      organizerUserId: string
+      reviewNote: string
+    },
+  ): Promise<TourGroupDetailsResponse> =>
+    apiRequest(`/selections/${selectionId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  payTourGroupSelection: (
+    selectionId: string,
+    payload: {
+      userId: string
+      paymentMethod: string
+    },
+  ): Promise<TourGroupPaySelectionResponse> =>
+    apiRequest(`/selections/${selectionId}/pay`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listTourGroupBookings: (groupId: string): Promise<OrderListResponse> => apiRequest(`/tour-groups/${groupId}/bookings`),
 
   createOrder: (payload: { ownerUserId: string; orderCurrency: string }): Promise<OrderResponse> =>
     apiRequest('/orders', {

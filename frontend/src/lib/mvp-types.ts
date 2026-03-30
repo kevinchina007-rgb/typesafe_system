@@ -326,6 +326,101 @@ export type AttractionAdminSessionResponse = {
   managedAttractions: AttractionResponse[]
 }
 
+export type TourGroupSummaryResponse = {
+  groupId: string
+  organizerUserId: string
+  title: string
+  description: string
+  destination: string
+  startDate: string
+  endDate: string
+  capacity: number
+  usedCapacity: number
+  isFull: boolean
+  status: string
+  createdAt: string
+}
+
+export type TourGroupMembershipResponse = {
+  membershipId: string
+  userId: string
+  status: string
+  joinedAt: string
+}
+
+export type TourGroupMembershipTravelerResponse = {
+  membershipTravelerId: string
+  membershipId: string
+  travelerId: string
+  status: string
+  joinedAt: string
+}
+
+export type GroupPlanItemResponse = {
+  planItemId: string
+  itemType: string
+  title: string
+  description: string
+  scheduledAt: string
+  endsAt: string | null
+  sequenceNo: number
+  status: string
+}
+
+export type GroupPlanOptionResponse = {
+  optionId: string
+  planItemId: string
+  resourceType: string
+  resourceId: string
+  resourceVariantCode: string | null
+  resourceContext: string | null
+  label: string
+  description: string
+  defaultQuantity: number
+  status: string
+}
+
+export type GroupPlanSelectionResponse = {
+  selectionId: string
+  groupId: string
+  planItemId: string
+  optionId: string
+  membershipId: string
+  quantity: number
+  travelerIds: string[]
+  status: string
+  createdAt: string
+  confirmedAt: string | null
+  reviewedByOrganizerUserId: string | null
+  reviewNote: string | null
+}
+
+export type GroupSelectionOrderLinkResponse = {
+  selectionId: string
+  orderId: string
+  createdAt: string
+}
+
+export type TourGroupDetailsResponse = {
+  group: TourGroupSummaryResponse
+  memberships: TourGroupMembershipResponse[]
+  membershipTravelers: TourGroupMembershipTravelerResponse[]
+  planItems: GroupPlanItemResponse[]
+  planOptions: GroupPlanOptionResponse[]
+  selections: GroupPlanSelectionResponse[]
+  selectionOrderLinks: GroupSelectionOrderLinkResponse[]
+  bookings: OrderResponse[]
+}
+
+export type TourGroupListResponse = {
+  groups: TourGroupSummaryResponse[]
+}
+
+export type TourGroupPaySelectionResponse = {
+  group: TourGroupDetailsResponse
+  order: OrderResponse
+}
+
 export type ManagerSessionResponse = {
   managerId: string
   managerType: string
@@ -375,6 +470,7 @@ export type AppViewKey =
   | 'hotels'
   | 'trains'
   | 'attractions'
+  | 'tourGroups'
   | 'bookings'
   | 'manager'
   | 'trainAdmin'

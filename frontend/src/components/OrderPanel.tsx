@@ -84,7 +84,7 @@ export function OrderPanel({
                   </div>
 
                   <ul className="entity-list">
-                    {order.orderLineItems.map(orderLineItem => (
+                    {(order.orderLineItems ?? []).map(orderLineItem => (
                       <li key={orderLineItem.orderItemId}>
                         <div>
                           <strong>{orderLineItem.summaryLabel}</strong>
@@ -163,9 +163,9 @@ export function OrderPanel({
                               <p>
                                 {`${translate('booking.attraction.unitPrice')}: ${orderLineItem.attractionDetails.unitPrice} ${orderLineItem.attractionDetails.currency} | ${translate('booking.attraction.totalPrice')}: ${orderLineItem.attractionDetails.totalPrice} ${orderLineItem.attractionDetails.currency}`}
                               </p>
-                              {orderLineItem.attractionDetails.eligibilityRuleSummaries.length > 0 ? (
+                              {(orderLineItem.attractionDetails.eligibilityRuleSummaries ?? []).length > 0 ? (
                                 <p>
-                                  {`${translate('booking.attraction.rules')}: ${orderLineItem.attractionDetails.eligibilityRuleSummaries.join(' | ')}`}
+                                  {`${translate('booking.attraction.rules')}: ${(orderLineItem.attractionDetails.eligibilityRuleSummaries ?? []).join(' | ')}`}
                                 </p>
                               ) : null}
                             </>
@@ -179,22 +179,22 @@ export function OrderPanel({
                     ))}
                   </ul>
 
-                  {order.orderPayments.length > 0 ? (
+                  {(order.orderPayments ?? []).length > 0 ? (
                     <div className="compact-action-block">
                       <span className="detail-label">{translate('booking.section.payments')}</span>
                       <strong>
-                        {order.orderPayments
+                        {(order.orderPayments ?? [])
                           .map(payment => `${localizePaymentMethod(payment.paymentMethod, currentLanguage)} ${payment.paymentAmount} ${payment.paymentCurrency}`)
                           .join(' | ')}
                       </strong>
                     </div>
                   ) : null}
 
-                  {order.orderRefunds.length > 0 ? (
+                  {(order.orderRefunds ?? []).length > 0 ? (
                     <div className="compact-action-block">
                       <span className="detail-label">{translate('booking.section.refunds')}</span>
                       <strong>
-                        {order.orderRefunds
+                        {(order.orderRefunds ?? [])
                           .map(refund => `${refund.refundAmount} ${refund.refundCurrency} ${mapBackendStatusToProductLabel(refund.refundStatus, currentLanguage)}`)
                           .join(' | ')}
                       </strong>
