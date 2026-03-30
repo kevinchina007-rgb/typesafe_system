@@ -14,6 +14,7 @@ import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
+import com.typesafe.travel.tourgroup.domain.*
 import com.typesafe.travel.train.domain.*
 import com.typesafe.travel.traveler.domain.*
 import io.circe.syntax.*
@@ -37,6 +38,7 @@ final class ApiRouter[F[_]: Async](
     trainAdminApplicationService: TrainAdminApplicationService[F],
     attractionBookingApplicationService: AttractionBookingApplicationService[F],
     attractionAdminApplicationService: AttractionAdminApplicationService[F],
+    tourGroupApplicationService: TourGroupApplicationService[F],
     managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
     avatarApplicationService: AvatarApplicationService[F],
     userRepository: UserRepository[F],
@@ -73,6 +75,16 @@ final class ApiRouter[F[_]: Async](
   private given addTrainItemDecoder: EntityDecoder[F, BookTrainItemRequestDto] = jsonOf[F, BookTrainItemRequestDto]
   private given authorizePaymentDecoder: EntityDecoder[F, PayOrderRequestDto] = jsonOf[F, PayOrderRequestDto]
   private given requestRefundDecoder: EntityDecoder[F, RequestRefundRequestDto] = jsonOf[F, RequestRefundRequestDto]
+  private given createTourGroupDecoder: EntityDecoder[F, CreateTourGroupRequestDto] = jsonOf[F, CreateTourGroupRequestDto]
+  private given joinTourGroupDecoder: EntityDecoder[F, JoinTourGroupRequestDto] = jsonOf[F, JoinTourGroupRequestDto]
+  private given addMembershipTravelerDecoder: EntityDecoder[F, AddMembershipTravelerRequestDto] = jsonOf[F, AddMembershipTravelerRequestDto]
+  private given createGroupPlanItemDecoder: EntityDecoder[F, CreateGroupPlanItemRequestDto] = jsonOf[F, CreateGroupPlanItemRequestDto]
+  private given createGroupPlanOptionDecoder: EntityDecoder[F, CreateGroupPlanOptionRequestDto] = jsonOf[F, CreateGroupPlanOptionRequestDto]
+  private given createGroupPlanSelectionDecoder: EntityDecoder[F, CreateGroupPlanSelectionRequestDto] = jsonOf[F, CreateGroupPlanSelectionRequestDto]
+  private given submitGroupPlanSelectionDecoder: EntityDecoder[F, SubmitGroupPlanSelectionRequestDto] = jsonOf[F, SubmitGroupPlanSelectionRequestDto]
+  private given reviewGroupPlanSelectionDecoder: EntityDecoder[F, ReviewGroupPlanSelectionRequestDto] = jsonOf[F, ReviewGroupPlanSelectionRequestDto]
+  private given rejectGroupPlanSelectionDecoder: EntityDecoder[F, RejectGroupPlanSelectionRequestDto] = jsonOf[F, RejectGroupPlanSelectionRequestDto]
+  private given payGroupPlanSelectionDecoder: EntityDecoder[F, PayGroupPlanSelectionRequestDto] = jsonOf[F, PayGroupPlanSelectionRequestDto]
   private given multipartDecoder: EntityDecoder[F, Multipart[F]] = EntityDecoder.multipart[F]
 
   private val baseRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
@@ -574,6 +586,157 @@ final class ApiRouter[F[_]: Async](
         case throwable: Throwable => handleDomainError(throwable)
       }
 
+    case request @ POST -> Root / "api" / "tour-groups" =>
+      for
+        createTourGroupRequestDto <- request.as[CreateTourGroupRequestDto]
+        startDate <- MonadThrow[F].catchNonFatal(LocalDate.parse(createTourGroupRequestDto.startDate))
+        endDate <- MonadThrow[F].catchNonFatal(LocalDate.parse(createTourGroupRequestDto.endDate))
+        detailsView <- tourGroupApplicationService.createGroup(
+          organizerUserId = UserId(createTourGroupRequestDto.organizerUserId),
+          title = createTourGroupRequestDto.title,
+          description = createTourGroupRequestDto.description,
+          destination = createTourGroupRequestDto.destination,
+          startDate = startDate,
+          endDate = endDate,
+          capacity = createTourGroupRequestDto.capacity,
+          createdAt = Instant.now()
+        )
+        response <- Created(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case GET -> Root / "api" / "tour-groups" =>
+      tourGroupApplicationService.listGroups.flatMap(groups => Ok(TourGroupListResponseDto(groups.map(TourGroupSummaryResponseDto.fromView)).asJson))
+
+    case GET -> Root / "api" / "tour-groups" / groupIdValue =>
+      tourGroupApplicationService.getGroupDetails(TourGroupId(groupIdValue)).flatMap(view => Ok(TourGroupDetailsResponseDto.fromView(view).asJson))
+
+    case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "memberships" =>
+      for
+        joinRequest <- request.as[JoinTourGroupRequestDto]
+        detailsView <- tourGroupApplicationService.joinGroup(TourGroupId(groupIdValue), UserId(joinRequest.userId), Instant.now())
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "membership-travelers" =>
+      for
+        membershipTravelerRequest <- request.as[AddMembershipTravelerRequestDto]
+        detailsView <- tourGroupApplicationService.addMembershipTraveler(
+          groupId = TourGroupId(groupIdValue),
+          userId = UserId(membershipTravelerRequest.userId),
+          travelerId = TravelerId(membershipTravelerRequest.travelerId),
+          joinedAt = Instant.now()
+        )
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "plan-items" =>
+      for
+        planItemRequest <- request.as[CreateGroupPlanItemRequestDto]
+        scheduledAt <- MonadThrow[F].catchNonFatal(Instant.parse(planItemRequest.scheduledAt))
+        endsAt <- planItemRequest.endsAt.traverse(value => MonadThrow[F].catchNonFatal(Instant.parse(value)))
+        detailsView <- tourGroupApplicationService.createPlanItem(
+          groupId = TourGroupId(groupIdValue),
+          organizerUserId = UserId(planItemRequest.organizerUserId),
+          itemType = TourGroupDtoMappers.toPlanItemType(planItemRequest.itemType),
+          title = planItemRequest.title,
+          description = planItemRequest.description,
+          scheduledAt = scheduledAt,
+          endsAt = endsAt,
+          sequenceNo = planItemRequest.sequenceNo
+        )
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "plan-items" / planItemIdValue / "options" =>
+      for
+        groupIdText <- fromEither(request.params.get("groupId").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("groupId")))
+        optionRequest <- request.as[CreateGroupPlanOptionRequestDto]
+        detailsView <- tourGroupApplicationService.createPlanOption(
+          groupId = TourGroupId(groupIdText),
+          planItemId = GroupPlanItemId(planItemIdValue),
+          organizerUserId = UserId(optionRequest.organizerUserId),
+          resourceType = TourGroupDtoMappers.toResourceType(optionRequest.resourceType),
+          resourceId = optionRequest.resourceId,
+          resourceVariantCode = optionRequest.resourceVariantCode,
+          resourceContext = optionRequest.resourceContext,
+          label = optionRequest.label,
+          description = optionRequest.description,
+          defaultQuantity = optionRequest.defaultQuantity
+        )
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "plan-items" / planItemIdValue / "selections" =>
+      for
+        groupIdText <- fromEither(request.params.get("groupId").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("groupId")))
+        selectionRequest <- request.as[CreateGroupPlanSelectionRequestDto]
+        detailsView <- tourGroupApplicationService.createSelection(
+          groupId = TourGroupId(groupIdText),
+          actingUserId = UserId(selectionRequest.userId),
+          planItemId = GroupPlanItemId(planItemIdValue),
+          optionId = GroupPlanOptionId(selectionRequest.optionId),
+          quantity = selectionRequest.quantity,
+          travelerIds = selectionRequest.travelerIds.map(TravelerId.apply),
+          createdAt = Instant.now()
+        )
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "selections" / selectionIdValue / "submit" =>
+      for
+        submitRequest <- request.as[SubmitGroupPlanSelectionRequestDto]
+        detailsView <- tourGroupApplicationService.submitSelection(GroupPlanSelectionId(selectionIdValue), UserId(submitRequest.userId))
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "selections" / selectionIdValue / "confirm" =>
+      for
+        reviewRequest <- request.as[ReviewGroupPlanSelectionRequestDto]
+        detailsView <- tourGroupApplicationService.confirmSelection(
+          selectionId = GroupPlanSelectionId(selectionIdValue),
+          organizerUserId = UserId(reviewRequest.organizerUserId),
+          reviewNote = reviewRequest.reviewNote,
+          confirmedAt = Instant.now()
+        )
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "selections" / selectionIdValue / "reject" =>
+      for
+        rejectRequest <- request.as[RejectGroupPlanSelectionRequestDto]
+        detailsView <- tourGroupApplicationService.rejectSelection(
+          selectionId = GroupPlanSelectionId(selectionIdValue),
+          organizerUserId = UserId(rejectRequest.organizerUserId),
+          reviewNote = rejectRequest.reviewNote,
+          rejectedAt = Instant.now()
+        )
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "selections" / selectionIdValue / "pay" =>
+      for
+        payRequest <- request.as[PayGroupPlanSelectionRequestDto]
+        payResult <- tourGroupApplicationService.paySelection(
+          selectionId = GroupPlanSelectionId(selectionIdValue),
+          actingUserId = UserId(payRequest.userId),
+          paymentMethod = OrderDtoMappers.toPaymentMethod(payRequest.paymentMethod),
+          paidAt = Instant.now()
+        )
+        (detailsView, order) = payResult
+        orderResponseDto <- toOrderResponseDto(order)
+        response <- Ok(
+          Map(
+            "group" -> TourGroupDetailsResponseDto.fromView(detailsView).asJson,
+            "order" -> orderResponseDto.asJson
+          ).asJson
+        )
+      yield response
+
+    case GET -> Root / "api" / "tour-groups" / groupIdValue / "bookings" =>
+      tourGroupApplicationService.listGroupBookings(TourGroupId(groupIdValue)).flatMap { orders =>
+        orders.traverse(toOrderResponseDto).flatMap(orderDtos => Ok(OrderListResponseDto(orderDtos).asJson))
+      }
+
     case GET -> Root / "api" / "manager" / "tasks" :? ManagerIdQueryParamMatcher(managerIdValue) +&
         ManagerTypeQueryParamMatcher(managerTypeValue) +&
         TaskStatusQueryParamMatcher(taskStatusValue) =>
@@ -970,6 +1133,10 @@ final class ApiRouter[F[_]: Async](
           Status.BadRequest -> ApiErrorResponseDto("payment_already_completed", throwable.getMessage)
         case OrderError.OrderWasNotFound(_) =>
           Status.NotFound -> ApiErrorResponseDto("order_not_found", throwable.getMessage)
+        case tourGroupError: TourGroupError =>
+          Status.BadRequest -> ApiErrorResponseDto("tour_group_error", tourGroupError.message)
+        case tourGroupAppError: TourGroupApplicationError =>
+          Status.BadRequest -> ApiErrorResponseDto("tour_group_error", tourGroupAppError.message)
         case sharedValidationError: SharedValidationError =>
           Status.BadRequest -> ApiErrorResponseDto("validation_error", sharedValidationError.message)
         case _ =>
@@ -989,6 +1156,7 @@ object ApiRouter:
       trainAdminApplicationService: TrainAdminApplicationService[F],
       attractionBookingApplicationService: AttractionBookingApplicationService[F],
       attractionAdminApplicationService: AttractionAdminApplicationService[F],
+      tourGroupApplicationService: TourGroupApplicationService[F],
       managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
       avatarApplicationService: AvatarApplicationService[F],
       userRepository: UserRepository[F],
@@ -1009,6 +1177,7 @@ object ApiRouter:
       trainAdminApplicationService,
       attractionBookingApplicationService,
       attractionAdminApplicationService,
+      tourGroupApplicationService,
       managerWorkflowApplicationService,
       avatarApplicationService,
       userRepository,

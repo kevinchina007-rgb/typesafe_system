@@ -42,6 +42,16 @@ object JsonCodecs:
   given Decoder[BookHotelRequestDto] = deriveDecoder
   given Decoder[PayOrderRequestDto] = deriveDecoder
   given Decoder[RequestRefundRequestDto] = deriveDecoder
+  given Decoder[CreateTourGroupRequestDto] = deriveDecoder
+  given Decoder[JoinTourGroupRequestDto] = deriveDecoder
+  given Decoder[AddMembershipTravelerRequestDto] = deriveDecoder
+  given Decoder[CreateGroupPlanItemRequestDto] = deriveDecoder
+  given Decoder[CreateGroupPlanOptionRequestDto] = deriveDecoder
+  given Decoder[CreateGroupPlanSelectionRequestDto] = deriveDecoder
+  given Decoder[SubmitGroupPlanSelectionRequestDto] = deriveDecoder
+  given Decoder[ReviewGroupPlanSelectionRequestDto] = deriveDecoder
+  given Decoder[RejectGroupPlanSelectionRequestDto] = deriveDecoder
+  given Decoder[PayGroupPlanSelectionRequestDto] = deriveDecoder
 
   given Encoder[CabinInventoryResponseDto] = deriveEncoder
   given Encoder[FlightResponseDto] = deriveEncoder
@@ -76,3 +86,12 @@ object JsonCodecs:
   given Encoder[RefundResponseDto] = deriveEncoder
   given Encoder[OrderResponseDto] = deriveEncoder
   given Encoder[OrderListResponseDto] = deriveEncoder
+  given Encoder[TourGroupSummaryResponseDto] = deriveEncoder
+  given Encoder[TourGroupMembershipResponseDto] = deriveEncoder
+  given Encoder[TourGroupMembershipTravelerResponseDto] = deriveEncoder
+  given Encoder[GroupPlanItemResponseDto] = deriveEncoder
+  given Encoder[GroupPlanOptionResponseDto] = deriveEncoder
+  given Encoder[GroupPlanSelectionResponseDto] = deriveEncoder
+  given Encoder[GroupSelectionOrderLinkResponseDto] = deriveEncoder
+  given Encoder[TourGroupDetailsResponseDto] = deriveEncoder
+  given Encoder[TourGroupListResponseDto] = deriveEncoder

@@ -25,6 +25,13 @@ final case class RefundId(value: String) extends AnyVal
 final case class ReviewId(value: String) extends AnyVal
 final case class BlogId(value: String) extends AnyVal
 final case class TourGroupId(value: String) extends AnyVal
+final case class TourGroupMembershipId(value: String) extends AnyVal
+final case class TourGroupMembershipTravelerId(value: String) extends AnyVal
+final case class GroupPlanItemId(value: String) extends AnyVal
+final case class GroupPlanOptionId(value: String) extends AnyVal
+final case class GroupPlanSelectionId(value: String) extends AnyVal
+final case class GroupPlanSelectionTravelerId(value: String) extends AnyVal
+final case class GroupSelectionOrderLinkId(value: String) extends AnyVal
 final case class StaffId(value: String) extends AnyVal
 final case class AuditTaskId(value: String) extends AnyVal
 final case class SupportTicketId(value: String) extends AnyVal
