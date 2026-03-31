@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import type {
   AppLanguage,
+  FlightResponse,
   ManagerRefundTaskResponse,
   ManagerSessionResponse,
   ManagerTaskResponse,
@@ -9,14 +10,31 @@ import type {
 } from '../lib/mvp-types'
 import {
   formatIsoDateTime,
+  localizeCabinClass,
   localizeManagerTaskType,
   localizeSupplierReviewStatus,
+  mapBackendStatusToProductLabel,
 } from '../lib/view-models'
+
+function normalizeDateTimeInput(rawValue: string): string {
+  const trimmedValue = rawValue.trim()
+  if (!trimmedValue) {
+    return trimmedValue
+  }
+
+  const parsedDate = new Date(trimmedValue)
+  if (Number.isNaN(parsedDate.getTime())) {
+    return trimmedValue
+  }
+
+  return parsedDate.toISOString()
+}
 
 type ManagerPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
   managerSession: ManagerSessionResponse | null
+  managedFlights: FlightResponse[]
   managerTasks: ManagerTaskResponse[]
   managerRefundTasks: ManagerRefundTaskResponse[]
   translate: (translationKey: string) => string
@@ -69,6 +87,7 @@ export function ManagerPanel({
   currentLanguage,
   isBusy,
   managerSession,
+  managedFlights,
   managerTasks,
   managerRefundTasks,
   translate,
@@ -247,77 +266,100 @@ export function ManagerPanel({
           </div>
 
           {managerSession.managerType === 'Airline' ? (
-            <form
-              className="stack-form panel-card"
-              onSubmit={async event => {
-                event.preventDefault()
-                const formData = new FormData(event.currentTarget)
-                await onCreateManagerFlight({
-                  flightNumber: String(formData.get('flightNumber') ?? ''),
-                  departureAirport: String(formData.get('departureAirport') ?? ''),
-                  arrivalAirport: String(formData.get('arrivalAirport') ?? ''),
-                  departureTime: String(formData.get('departureTime') ?? ''),
-                  arrivalTime: String(formData.get('arrivalTime') ?? ''),
-                  economySeatCount: Number(formData.get('economySeatCount') ?? 20),
-                  economyPrice: String(formData.get('economyPrice') ?? '880'),
-                  businessSeatCount: Number(formData.get('businessSeatCount') ?? 6),
-                  businessPrice: String(formData.get('businessPrice') ?? '1880'),
-                  currency: String(formData.get('currency') ?? 'CNY'),
-                })
-                event.currentTarget.reset()
-              }}
-            >
-              <h3>{translate('manager.createFlight')}</h3>
-              <div className="three-column-grid">
-                <label>
-                  {translate('manager.flightNumber')}
-                  <input name="flightNumber" placeholder="MU5123" required />
-                </label>
-                <label>
-                  {translate('manager.departureAirport')}
-                  <input name="departureAirport" placeholder="PVG" required />
-                </label>
-                <label>
-                  {translate('manager.arrivalAirport')}
-                  <input name="arrivalAirport" placeholder="HND" required />
-                </label>
-                <label>
-                  {translate('manager.departureTime')}
-                  <input name="departureTime" type="datetime-local" required />
-                </label>
-                <label>
-                  {translate('manager.arrivalTime')}
-                  <input name="arrivalTime" type="datetime-local" required />
-                </label>
-                <label>
-                  {translate('manager.economySeatCount')}
-                  <input name="economySeatCount" type="number" min={1} defaultValue={20} required />
-                </label>
-                <label>
-                  {translate('manager.economyPrice')}
-                  <input name="economyPrice" type="number" min={1} defaultValue={880} required />
-                </label>
-                <label>
-                  {translate('manager.businessSeatCount')}
-                  <input name="businessSeatCount" type="number" min={1} defaultValue={6} required />
-                </label>
-                <label>
-                  {translate('manager.businessPrice')}
-                  <input name="businessPrice" type="number" min={1} defaultValue={1880} required />
-                </label>
-                <label>
-                  {translate('manager.currency')}
-                  <select name="currency" defaultValue="CNY">
-                    <option value="CNY">CNY</option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                  </select>
-                </label>
+            <>
+              <form
+                className="stack-form panel-card"
+                onSubmit={async event => {
+                  event.preventDefault()
+                  const formData = new FormData(event.currentTarget)
+                  await onCreateManagerFlight({
+                    flightNumber: String(formData.get('flightNumber') ?? ''),
+                    departureAirport: String(formData.get('departureAirport') ?? ''),
+                    arrivalAirport: String(formData.get('arrivalAirport') ?? ''),
+                    departureTime: normalizeDateTimeInput(String(formData.get('departureTime') ?? '')),
+                    arrivalTime: normalizeDateTimeInput(String(formData.get('arrivalTime') ?? '')),
+                    economySeatCount: Number(formData.get('economySeatCount') ?? 20),
+                    economyPrice: String(formData.get('economyPrice') ?? '880'),
+                    businessSeatCount: Number(formData.get('businessSeatCount') ?? 6),
+                    businessPrice: String(formData.get('businessPrice') ?? '1880'),
+                    currency: String(formData.get('currency') ?? 'CNY'),
+                  })
+                  event.currentTarget.reset()
+                }}
+              >
+                <h3>{translate('manager.createFlight')}</h3>
+                <div className="three-column-grid">
+                  <label>
+                    {translate('manager.flightNumber')}
+                    <input name="flightNumber" placeholder="MU5123" required />
+                  </label>
+                  <label>
+                    {translate('manager.departureAirport')}
+                    <input name="departureAirport" placeholder="PVG" required />
+                  </label>
+                  <label>
+                    {translate('manager.arrivalAirport')}
+                    <input name="arrivalAirport" placeholder="HND" required />
+                  </label>
+                  <label>
+                    {translate('manager.departureTime')}
+                    <input name="departureTime" type="datetime-local" required />
+                  </label>
+                  <label>
+                    {translate('manager.arrivalTime')}
+                    <input name="arrivalTime" type="datetime-local" required />
+                  </label>
+                  <label>
+                    {translate('manager.economySeatCount')}
+                    <input name="economySeatCount" type="number" min={1} defaultValue={20} required />
+                  </label>
+                  <label>
+                    {translate('manager.economyPrice')}
+                    <input name="economyPrice" type="number" min={1} defaultValue={880} required />
+                  </label>
+                  <label>
+                    {translate('manager.businessSeatCount')}
+                    <input name="businessSeatCount" type="number" min={1} defaultValue={6} required />
+                  </label>
+                  <label>
+                    {translate('manager.businessPrice')}
+                    <input name="businessPrice" type="number" min={1} defaultValue={1880} required />
+                  </label>
+                  <label>
+                    {translate('manager.currency')}
+                    <select name="currency" defaultValue="CNY">
+                      <option value="CNY">CNY</option>
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                    </select>
+                  </label>
+                </div>
+                <button type="submit" disabled={isBusy}>
+                  {translate('manager.createFlight')}
+                </button>
+              </form>
+
+              <div className="list-surface">
+                <h3>{translate('manager.createFlight')}</h3>
+                {managedFlights.length === 0 ? (
+                  <p className="empty-state">{translate('manager.empty')}</p>
+                ) : (
+                  <ul className="entity-list">
+                    {managedFlights.map(flight => (
+                      <li key={flight.flightId}>
+                        <div>
+                          <strong>{`${flight.airlineName} ${flight.flightNumber}`}</strong>
+                          <p>{`${flight.departureAirport} -> ${flight.arrivalAirport}`}</p>
+                          <p>{`${formatIsoDateTime(flight.departureTime, '-')} -> ${formatIsoDateTime(flight.arrivalTime, '-')}`}</p>
+                          <p>{mapBackendStatusToProductLabel(flight.status, currentLanguage)}</p>
+                        </div>
+                        <span className="tag-chip">{flight.cabinInventories.map(cabin => localizeCabinClass(cabin.cabinClass, currentLanguage)).join(' | ')}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              <button type="submit" disabled={isBusy}>
-                {translate('manager.createFlight')}
-              </button>
-            </form>
+            </>
           ) : null}
 
           {managerSession.managerType === 'Hotel' ? (

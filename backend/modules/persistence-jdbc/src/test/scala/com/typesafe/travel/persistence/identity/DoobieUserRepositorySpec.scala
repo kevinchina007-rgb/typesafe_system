@@ -15,7 +15,7 @@ final class DoobieUserRepositorySpec extends FunSuite:
 
     val repository = DoobieUserRepository[cats.effect.IO](transactor)
     val savedUser =
-      User.restorePersistedUser(
+      restorePersistedUser(
         userId = UserId("user-roundtrip"),
         primaryEmailAddress = EmailAddress.unsafe("roundtrip@example.com"),
         userDisplayName = PersonName.unsafe("Round Trip"),
@@ -33,3 +33,4 @@ final class DoobieUserRepositorySpec extends FunSuite:
 
     assertEquals(loadedUser, Some(savedUser))
   }
+

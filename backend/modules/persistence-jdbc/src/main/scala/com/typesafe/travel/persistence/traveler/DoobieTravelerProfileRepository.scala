@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.traveler
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
@@ -16,7 +16,7 @@ final class DoobieTravelerProfileRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends TravelerProfileRepository[F]:
   override def nextTravelerId: F[TravelerId] =
-    Async[F].delay(TravelerId(s"traveler-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(TravelerId(s"traveler-${UUID.randomUUID().toString.take(12)}"))
 
   override def findTravelerProfileById(travelerId: TravelerId): F[Option[TravelerProfile]] =
     selectTravelerProfiles(
@@ -164,7 +164,7 @@ final class DoobieTravelerProfileRepository[F[_]: Async](
       travelerEmergencyContact <- Async[F].fromEither(DatabaseCodecs.decodeTravelerEmergencyContact(travelerRow.emergencyContactJson))
       travelerIdentityDocuments <- Async[F].fromEither(DatabaseCodecs.decodeTravelerIdentityDocuments(travelerRow.identityDocumentsJson))
       travelerLoyaltyMemberships <- Async[F].fromEither(DatabaseCodecs.decodeTravelerLoyaltyMemberships(travelerRow.loyaltyMembershipsJson))
-    yield TravelerProfile.restorePersistedTravelerProfile(
+    yield restoreTravelerProfile(
       travelerId = TravelerId(travelerRow.travelerId),
       ownerUserId = UserId(travelerRow.ownerUserId),
       travelerFullName = travelerFullName,
@@ -197,3 +197,4 @@ final class DoobieTravelerProfileRepository[F[_]: Async](
       identityDocumentsJson: String,
       loyaltyMembershipsJson: String
   )
+

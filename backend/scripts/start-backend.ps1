@@ -9,9 +9,9 @@ $logDir = Join-Path $templateRoot '.launcher-logs'
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $backendScriptLog = Join-Path $logDir 'backend-script.log'
 $backendRunLog = Join-Path $logDir 'backend-run.log'
+$backendErrorLog = Join-Path $logDir 'backend-error.log'
 
 $env:JAVA_HOME = 'E:\typesafe\template\backend\.jdks\temurin-21-unpacked\jdk-21.0.10+7'
-$env:Path = "$env:JAVA_HOME\bin;" + $env:Path
 $env:TRAVEL_REPOSITORY_MODE = $RepositoryMode
 $env:TRAVEL_BACKEND_PORT = "$BackendPort"
 $launcherDatabasePath = (Join-Path $templateRoot 'backend\data\travel-platform-runtime').Replace('\', '/')
@@ -23,7 +23,31 @@ $env:COURSIER_JVM_CACHE = 'E:/typesafe/template/backend/.coursier/jvm'
 
 Add-Content -Path $backendScriptLog -Value "[backend] start script entered $(Get-Date -Format o) mode=$RepositoryMode port=$BackendPort db=$($env:TRAVEL_DB_URL)"
 Set-Location 'E:\typesafe\template\backend'
-& 'E:\typesafe\bin\sbt.bat' --batch run *>&1 | Tee-Object -FilePath $backendRunLog -Append | Out-Null
-$exitCode = if ($LASTEXITCODE -ne $null) { $LASTEXITCODE } else { 0 }
-Add-Content -Path $backendScriptLog -Value "[backend] sbt exited $(Get-Date -Format o) code=$exitCode"
-exit $exitCode
+$classpathExport = 'E:\typesafe\template\backend\modules\api-gateway\target\streams\runtime\fullClasspathAsJars\_global\streams\export'
+if (-not (Test-Path $classpathExport)) {
+  Add-Content -Path $backendScriptLog -Value "[backend] classpath export missing at $classpathExport"
+  Write-Host "[travel-platform] Backend runtime classpath was not found. Compile the backend once before using the shortcut."
+  exit 1
+}
+
+$runtimeClasspathEntries =
+  (Get-Content -Path $classpathExport -Raw).Trim().Split(';', [System.StringSplitOptions]::RemoveEmptyEntries) |
+  ForEach-Object {
+    if ($_ -match '^(.*\\modules\\[^\\]+\\target\\scala-3\.3\.3)\\[^\\]+_3-[^\\]+\.jar$') {
+      $classesDir = Join-Path $matches[1] 'classes'
+      if (Test-Path $classesDir) {
+        $classesDir
+      } else {
+        $_
+      }
+    } else {
+      $_
+    }
+  }
+
+$runtimeClasspath = $runtimeClasspathEntries -join ';'
+
+Remove-Item $backendRunLog, $backendErrorLog -Force -ErrorAction SilentlyContinue
+$javaProcess = Start-Process -FilePath "$env:JAVA_HOME\bin\java.exe" -ArgumentList @('-classpath', $runtimeClasspath, 'com.typesafe.travel.api.Main') -RedirectStandardOutput $backendRunLog -RedirectStandardError $backendErrorLog -WindowStyle Hidden -PassThru
+Add-Content -Path $backendScriptLog -Value "[backend] java launched $(Get-Date -Format o) pid=$($javaProcess.Id)"
+exit 0

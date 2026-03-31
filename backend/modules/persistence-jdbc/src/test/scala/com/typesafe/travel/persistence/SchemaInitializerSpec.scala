@@ -19,7 +19,7 @@ final class SchemaInitializerSpec extends FunSuite:
     SchemaInitializer.initialize(firstTransactor).unsafeRunSync()
 
     val userRepository = DoobieUserRepository[cats.effect.IO](firstTransactor)
-    val savedUser = User.restorePersistedUser(
+    val savedUser = restorePersistedUser(
       userId = UserId("user-file-roundtrip"),
       primaryEmailAddress = EmailAddress.unsafe("file-roundtrip@example.com"),
       userDisplayName = PersonName.unsafe("File Roundtrip"),
@@ -72,3 +72,4 @@ final class SchemaInitializerSpec extends FunSuite:
     assert(failedResult.isLeft)
     assertEquals(appliedMigrationVersions, Nil)
   }
+

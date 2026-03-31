@@ -3,6 +3,20 @@ import { useMemo } from 'react'
 import type { AppLanguage, TrainAdminSessionResponse } from '../lib/mvp-types'
 import { formatIsoDateTime, localizeTrainSeatClass, mapBackendStatusToProductLabel } from '../lib/view-models'
 
+function normalizeDateTimeInput(rawValue: string): string {
+  const trimmedValue = rawValue.trim()
+  if (!trimmedValue) {
+    return trimmedValue
+  }
+
+  const parsedDate = new Date(trimmedValue)
+  if (Number.isNaN(parsedDate.getTime())) {
+    return trimmedValue
+  }
+
+  return parsedDate.toISOString()
+}
+
 type TrainAdminPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
@@ -170,8 +184,8 @@ export function TrainAdminPanel({
                 return {
                   stationCode: parts[0],
                   stationName: parts[1],
-                  arrivalTime: parts[2] || null,
-                  departureTime: parts[3] || null,
+                  arrivalTime: parts[2] ? normalizeDateTimeInput(parts[2]) : null,
+                  departureTime: parts[3] ? normalizeDateTimeInput(parts[3]) : null,
                 }
               })
               const seatInventories = parsePipeSeparatedLines(String(formData.get('seatInventories') ?? ''), (parts, lineNumber) => {
@@ -210,7 +224,7 @@ export function TrainAdminPanel({
 
               await onCreateTrainJourney({
                 trainNumber: String(formData.get('trainNumber') ?? '').trim(),
-                saleStartsAt: String(formData.get('saleStartsAt') ?? '').trim(),
+                saleStartsAt: normalizeDateTimeInput(String(formData.get('saleStartsAt') ?? '').trim()),
                 stops,
                 seatInventories,
                 segmentPrices,
@@ -226,7 +240,7 @@ export function TrainAdminPanel({
               </label>
               <label>
                 {translate('trainAdmin.saleStartsAt')}
-                <input name="saleStartsAt" placeholder="2026-04-01T00:00:00Z" required />
+                <input name="saleStartsAt" type="datetime-local" required />
               </label>
             </div>
             <label>

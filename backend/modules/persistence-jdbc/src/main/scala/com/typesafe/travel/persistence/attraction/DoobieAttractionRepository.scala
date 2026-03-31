@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.attraction
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.attraction.domain.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
@@ -15,13 +15,13 @@ final class DoobieAttractionRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends AttractionRepository[F]:
   override def nextAttractionId: F[AttractionId] =
-    Async[F].delay(AttractionId(s"attraction-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(AttractionId(s"attraction-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextTicketTypeId: F[TicketTypeId] =
-    Async[F].delay(TicketTypeId(s"ticket-type-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(TicketTypeId(s"ticket-type-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextTicketEligibilityRuleId: F[TicketEligibilityRuleId] =
-    Async[F].delay(TicketEligibilityRuleId(s"ticket-rule-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(TicketEligibilityRuleId(s"ticket-rule-${UUID.randomUUID().toString.take(12)}"))
 
   override def findAttractionById(attractionId: AttractionId): F[Option[Attraction]] =
     sql"""
@@ -112,7 +112,7 @@ final class DoobieAttractionRepository[F[_]: Async](
   private def buildAttraction(row: (String, String, String, String, String, String, String, Instant)): F[Attraction] =
     val (attractionIdValue, managerIdValue, nameValue, cityValue, locationValue, descriptionValue, statusValue, createdAtValue) = row
     loadTicketTypes(AttractionId(attractionIdValue)).map { ticketTypes =>
-      Attraction.restorePersistedAttraction(
+      restorePersistedAttraction(
         attractionId = AttractionId(attractionIdValue),
         managerId = ManagerId(managerIdValue),
         attractionName = nameValue,
@@ -137,7 +137,7 @@ final class DoobieAttractionRepository[F[_]: Async](
           currency <- Async[F].fromEither(Either.catchNonFatal(Currency.valueOf(currencyValue)))
           unitPrice <- Async[F].fromEither(Money.create(amountValue, currency))
           rules <- loadRules(TicketTypeId(ticketTypeIdValue))
-        yield TicketType.restorePersistedTicketType(
+        yield restorePersistedTicketType(
           ticketTypeId = TicketTypeId(ticketTypeIdValue),
           attractionId = attractionId,
           ticketTypeName = nameValue,
@@ -158,7 +158,7 @@ final class DoobieAttractionRepository[F[_]: Async](
       order by created_at, rule_id
     """.query[(String, String, String, Instant)].to[List].transact(transactor).map(
       _.map { case (ruleIdValue, ruleTypeValue, ruleConfigJsonValue, createdAtValue) =>
-        TicketEligibilityRule.restorePersistedRule(
+        restorePersistedTicketEligibilityRule(
           ruleId = TicketEligibilityRuleId(ruleIdValue),
           ticketTypeId = ticketTypeId,
           ruleType = TicketEligibilityRuleType.valueOf(ruleTypeValue),
@@ -167,3 +167,4 @@ final class DoobieAttractionRepository[F[_]: Async](
         )
       }.toVector
     )
+

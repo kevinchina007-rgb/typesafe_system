@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.hotel
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
@@ -15,13 +15,13 @@ final class DoobieHotelRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends HotelRepository[F]:
   override def nextHotelId: F[HotelId] =
-    Async[F].delay(HotelId(s"hotel-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(HotelId(s"hotel-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextRoomTypeId: F[RoomTypeId] =
-    Async[F].delay(RoomTypeId(s"room-type-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(RoomTypeId(s"room-type-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextRoomInventoryId: F[RoomInventoryId] =
-    Async[F].delay(RoomInventoryId(s"room-inventory-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(RoomInventoryId(s"room-inventory-${UUID.randomUUID().toString.take(12)}"))
 
   def saveHotel(hotel: Hotel): F[Hotel] =
     val upsertHotel =
@@ -140,7 +140,7 @@ final class DoobieHotelRepository[F[_]: Async](
       hotelName <- Async[F].fromEither(HotelName.create(hotelNameValue))
       hotelLocation <- Async[F].fromEither(HotelLocation.create(hotelLocationValue))
       roomTypes <- loadRoomTypes(HotelId(hotelIdValue))
-    yield Hotel.restorePersistedHotel(
+    yield restorePersistedHotel(
       hotelId = HotelId(hotelIdValue),
       hotelName = hotelName,
       hotelLocation = hotelLocation,
@@ -171,7 +171,7 @@ final class DoobieHotelRepository[F[_]: Async](
       basePriceCurrency <- Async[F].fromEither(Either.catchNonFatal(Currency.valueOf(basePriceCurrencyValue)))
       basePrice <- Async[F].fromEither(Money.create(basePriceAmountValue, basePriceCurrency))
       roomInventories <- loadRoomInventories(RoomTypeId(roomTypeIdValue))
-    yield RoomType.restorePersistedRoomType(
+    yield restorePersistedRoomType(
       roomTypeId = RoomTypeId(roomTypeIdValue),
       hotelId = HotelId(hotelIdValue),
       roomTypeName = roomTypeName,
@@ -200,7 +200,7 @@ final class DoobieHotelRepository[F[_]: Async](
       availableRooms <- Async[F].fromEither(RoomCount.create(availableRoomsValue))
       unitPriceCurrency <- Async[F].fromEither(Either.catchNonFatal(Currency.valueOf(unitPriceCurrencyValue)))
       unitPrice <- Async[F].fromEither(Money.create(unitPriceAmountValue, unitPriceCurrency))
-    yield RoomInventory.createRoomInventory(
+    yield createRoomInventory(
       roomInventoryId = RoomInventoryId(inventoryIdValue),
       roomTypeId = RoomTypeId(roomTypeIdValue),
       inventoryDate = inventoryDateValue,
@@ -208,3 +208,4 @@ final class DoobieHotelRepository[F[_]: Async](
       unitPrice = unitPrice,
       roomInventoryStatus = RoomInventoryStatus.valueOf(statusValue)
     )
+

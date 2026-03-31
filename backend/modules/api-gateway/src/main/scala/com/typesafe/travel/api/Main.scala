@@ -10,22 +10,26 @@ import java.net.{BindException, HttpURLConnection, URI}
 object Main extends IOApp.Simple:
   override def run: IO[Unit] =
     val backendPort = configuredBackendPort
-    ApplicationWiring.create[IO].flatMap { applicationWiring =>
+    serverResource(backendPort).useForever.handleErrorWith {
+      case _: BindException =>
+        isBackendAlreadyHealthy(backendPort).flatMap { backendAlreadyHealthy =>
+          if backendAlreadyHealthy then
+            IO.println(s"travel-backend is already running on port ${backendPort.value}; startup skipped.")
+          else
+            IO.println(s"Port ${backendPort.value} is already in use. Stop the existing process or set TRAVEL_BACKEND_PORT to another port.")
+        }
+      case throwable =>
+        IO.raiseError(throwable)
+    }
+
+  private def serverResource(backendPort: Port) =
+    ApplicationWiring.resource[IO].flatMap { applicationWiring =>
       EmberServerBuilder
         .default[IO]
         .withHost(host"0.0.0.0")
         .withPort(backendPort)
         .withHttpApp(CORS.policy.withAllowOriginAll(applicationWiring.httpApp))
         .build
-        .useForever
-    }.handleErrorWith {
-      case _: BindException =>
-        if isBackendAlreadyHealthy(backendPort) then
-          IO.println(s"travel-backend is already running on port ${backendPort.value}; startup skipped.")
-        else
-          IO.println(s"Port ${backendPort.value} is already in use. Stop the existing process or set TRAVEL_BACKEND_PORT to another port.")
-      case throwable =>
-        IO.raiseError(throwable)
     }
 
   private def configuredBackendPort: Port =
@@ -35,13 +39,12 @@ object Main extends IOApp.Simple:
       .flatMap(Port.fromInt)
       .getOrElse(Port.fromInt(19095).get)
 
-  private def isBackendAlreadyHealthy(backendPort: Port): Boolean =
-    val healthCheckUri = URI.create(s"http://${Host.fromString("127.0.0.1").get}:${backendPort.value}/api/health")
-    try
+  private def isBackendAlreadyHealthy(backendPort: Port): IO[Boolean] =
+    IO.blocking {
+      val healthCheckUri = URI.create(s"http://${Host.fromString("127.0.0.1").get}:${backendPort.value}/api/health")
       val connection = healthCheckUri.toURL.openConnection().asInstanceOf[HttpURLConnection]
       connection.setConnectTimeout(1000)
       connection.setReadTimeout(1000)
       connection.setRequestMethod("GET")
       connection.getResponseCode == 200
-    catch
-      case _: Throwable => false
+    }.handleError(_ => false)

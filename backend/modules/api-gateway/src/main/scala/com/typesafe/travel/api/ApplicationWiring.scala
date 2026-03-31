@@ -2,6 +2,8 @@ package com.typesafe.travel.api
 
 import com.typesafe.travel.api.application.*
 import cats.effect.kernel.Async
+import cats.effect.kernel.Clock
+import cats.effect.kernel.Resource
 import cats.syntax.all.*
 import com.typesafe.travel.api.memory.*
 import com.typesafe.travel.api.storage.*
@@ -67,9 +69,12 @@ final case class ApplicationWiring[F[_]](
 
 object ApplicationWiring:
   def create[F[_]: Async]: F[ApplicationWiring[F]] =
+    resource[F].use(wiring => Async[F].pure(wiring))
+
+  def resource[F[_]: Async]: Resource[F, ApplicationWiring[F]] =
     DatabaseConfig.loadFromEnvironment.repositoryMode match
       case RepositoryMode.InMemory =>
-        Async[F].pure(createInMemory[F])
+        Resource.pure(createInMemory[F])
       case RepositoryMode.Database =>
         createPersistence[F]
 
@@ -90,7 +95,11 @@ object ApplicationWiring:
 
     val liveUserService = LiveUserService[F](inMemoryUserRepository)
     val liveTravelerProfileService =
-      LiveTravelerProfileService[F](inMemoryTravelerProfileRepository, inMemoryUserRepository)
+      LiveTravelerProfileService[F](
+        inMemoryTravelerProfileRepository,
+        inMemoryUserRepository,
+        () => Clock[F].realTimeInstant.map(_.atZone(java.time.ZoneId.systemDefault()).toLocalDate)
+      )
     val liveFlightService = LiveFlightService[F](inMemoryFlightRepository)
     val liveHotelService = LiveHotelService[F](inMemoryHotelRepository)
     val liveTrainService = TrainService[F](inMemoryTrainRepository)
@@ -239,170 +248,175 @@ object ApplicationWiring:
       httpApp = apiRouter.routes.orNotFound
     )
 
-  private def createPersistence[F[_]: Async]: F[ApplicationWiring[F]] =
+  private def createPersistence[F[_]: Async]: Resource[F, ApplicationWiring[F]] =
     val databaseConfig = DatabaseConfig.loadFromEnvironment
-    val databaseTransactor = DatabaseTransactor.create[F](databaseConfig)
     val avatarUploadRootDirectoryPath = Paths.get("uploads", "avatars").toAbsolutePath.normalize()
     val frontendDistRootDirectoryPath = Paths.get("..", "frontend", "dist").toAbsolutePath.normalize()
     val localAvatarStorage = LocalAvatarStorage.create[F](avatarUploadRootDirectoryPath)
 
-    for
-      _ <- SchemaInitializer.initialize(databaseTransactor)
-      doobieUserRepository = DoobieUserRepository[F](databaseTransactor)
-      doobieTravelerProfileRepository = DoobieTravelerProfileRepository[F](databaseTransactor)
-      doobieFlightRepository = DoobieFlightRepository[F](databaseTransactor)
-      doobieHotelRepository = DoobieHotelRepository[F](databaseTransactor)
-      doobieTrainRepository = DoobieTrainRepository[F](databaseTransactor)
-      doobieAttractionRepository = DoobieAttractionRepository[F](databaseTransactor)
-      doobieTourGroupRepository = DoobieTourGroupRepository[F](databaseTransactor)
-      doobieOrderRepository = DoobieOrderRepository[F](databaseTransactor)
-      doobieInventoryReservationRepository = DoobieInventoryReservationRepository[F](databaseTransactor)
-      doobieManagerRepository = DoobieManagerRepository[F](databaseTransactor)
-      liveUserService = LiveUserService[F](doobieUserRepository)
-      liveTravelerProfileService =
-        LiveTravelerProfileService[F](doobieTravelerProfileRepository, doobieUserRepository)
-      liveFlightService = LiveFlightService[F](doobieFlightRepository)
-      liveHotelService = LiveHotelService[F](doobieHotelRepository)
-      liveTrainService = TrainService[F](doobieTrainRepository)
-      liveTicketEligibilityService = TicketEligibilityService[F]()
-      reservationLifecycle = LiveReservationLifecycle[F](doobieInventoryReservationRepository)
-      liveFlightInventoryLockingService =
-        LiveFlightInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
-      liveHotelInventoryLockingService =
-        LiveHotelInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
-      liveTrainInventoryLockingService =
-        LiveTrainInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
-      liveOrderService = LiveOrderService[F](doobieOrderRepository)
-      liveOrderLifecycleApplicationService =
-        LiveOrderLifecycleApplicationService[F](
-          orderService = liveOrderService,
-          orderRepository = doobieOrderRepository,
-          reservationLifecycle = reservationLifecycle
-        )
-      liveManagerService = LiveManagerService[F](doobieManagerRepository)
-      liveFlightBookingApplicationService =
-        LiveFlightBookingApplicationService[F](
-          flightService = liveFlightService,
-          flightRepository = doobieFlightRepository,
-          flightInventoryLockingService = liveFlightInventoryLockingService,
-          orderRepository = doobieOrderRepository,
-          travelerProfileRepository = doobieTravelerProfileRepository
-        )
-      liveHotelBookingApplicationService =
-        LiveHotelBookingApplicationService[F](
+    DatabaseTransactor.resource[F](databaseConfig).evalMap { databaseTransactor =>
+      for
+        _ <- SchemaInitializer.initialize(databaseTransactor)
+        doobieUserRepository = DoobieUserRepository[F](databaseTransactor)
+        doobieTravelerProfileRepository = DoobieTravelerProfileRepository[F](databaseTransactor)
+        doobieFlightRepository = DoobieFlightRepository[F](databaseTransactor)
+        doobieHotelRepository = DoobieHotelRepository[F](databaseTransactor)
+        doobieTrainRepository = DoobieTrainRepository[F](databaseTransactor)
+        doobieAttractionRepository = DoobieAttractionRepository[F](databaseTransactor)
+        doobieTourGroupRepository = DoobieTourGroupRepository[F](databaseTransactor)
+        doobieOrderRepository = DoobieOrderRepository[F](databaseTransactor)
+        doobieInventoryReservationRepository = DoobieInventoryReservationRepository[F](databaseTransactor)
+        doobieManagerRepository = DoobieManagerRepository[F](databaseTransactor)
+        liveUserService = LiveUserService[F](doobieUserRepository)
+        liveTravelerProfileService =
+          LiveTravelerProfileService[F](
+            doobieTravelerProfileRepository,
+            doobieUserRepository,
+            () => Clock[F].realTimeInstant.map(_.atZone(java.time.ZoneId.systemDefault()).toLocalDate)
+          )
+        liveFlightService = LiveFlightService[F](doobieFlightRepository)
+        liveHotelService = LiveHotelService[F](doobieHotelRepository)
+        liveTrainService = TrainService[F](doobieTrainRepository)
+        liveTicketEligibilityService = TicketEligibilityService[F]()
+        reservationLifecycle = LiveReservationLifecycle[F](doobieInventoryReservationRepository)
+        liveFlightInventoryLockingService =
+          LiveFlightInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
+        liveHotelInventoryLockingService =
+          LiveHotelInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
+        liveTrainInventoryLockingService =
+          LiveTrainInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
+        liveOrderService = LiveOrderService[F](doobieOrderRepository)
+        liveOrderLifecycleApplicationService =
+          LiveOrderLifecycleApplicationService[F](
+            orderService = liveOrderService,
+            orderRepository = doobieOrderRepository,
+            reservationLifecycle = reservationLifecycle
+          )
+        liveManagerService = LiveManagerService[F](doobieManagerRepository)
+        liveFlightBookingApplicationService =
+          LiveFlightBookingApplicationService[F](
+            flightService = liveFlightService,
+            flightRepository = doobieFlightRepository,
+            flightInventoryLockingService = liveFlightInventoryLockingService,
+            orderRepository = doobieOrderRepository,
+            travelerProfileRepository = doobieTravelerProfileRepository
+          )
+        liveHotelBookingApplicationService =
+          LiveHotelBookingApplicationService[F](
+            hotelService = liveHotelService,
+            hotelRepository = doobieHotelRepository,
+            orderRepository = doobieOrderRepository,
+            travelerProfileRepository = doobieTravelerProfileRepository,
+            hotelInventoryLockingService = liveHotelInventoryLockingService
+          )
+        liveTrainBookingApplicationService =
+          LiveTrainBookingApplicationService[F](
+            trainService = liveTrainService,
+            trainRepository = doobieTrainRepository,
+            trainInventoryLockingService = liveTrainInventoryLockingService,
+            orderRepository = doobieOrderRepository,
+            travelerProfileRepository = doobieTravelerProfileRepository
+          )
+        liveAttractionBookingApplicationService =
+          LiveAttractionBookingApplicationService[F](
+            attractionRepository = doobieAttractionRepository,
+            ticketEligibilityService = liveTicketEligibilityService,
+            orderRepository = doobieOrderRepository,
+            orderService = liveOrderService,
+            travelerProfileRepository = doobieTravelerProfileRepository
+          )
+        liveTourGroupApplicationService =
+          LiveTourGroupApplicationService[F](
+            tourGroupRepository = doobieTourGroupRepository,
+            travelerProfileRepository = doobieTravelerProfileRepository,
+            orderService = liveOrderService,
+            orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
+            orderRepository = doobieOrderRepository,
+            flightBookingApplicationService = liveFlightBookingApplicationService,
+            hotelBookingApplicationService = liveHotelBookingApplicationService,
+            trainBookingApplicationService = liveTrainBookingApplicationService,
+            attractionBookingApplicationService = liveAttractionBookingApplicationService
+          )
+        liveTrainAdminApplicationService =
+          LiveTrainAdminApplicationService[F](
+            trainService = liveTrainService,
+            trainRepository = doobieTrainRepository
+          )
+        liveAttractionAdminApplicationService =
+          LiveAttractionAdminApplicationService[F](
+            managerService = liveManagerService,
+            attractionRepository = doobieAttractionRepository
+          )
+        liveManagerWorkflowApplicationService =
+          LiveManagerWorkflowApplicationService[F](
+            managerService = liveManagerService,
+            managerRepository = doobieManagerRepository,
+            orderRepository = doobieOrderRepository,
+            orderService = liveOrderService,
+            reservationLifecycle = reservationLifecycle,
+            flightRepository = doobieFlightRepository,
+            hotelRepository = doobieHotelRepository,
+            attractionRepository = doobieAttractionRepository
+          )
+        liveAvatarApplicationService =
+          LiveAvatarApplicationService[F](
+            userService = liveUserService,
+            avatarStorage = localAvatarStorage
+          )
+        apiRouter =
+          ApiRouter[F](
+            userService = liveUserService,
+            travelerProfileService = liveTravelerProfileService,
+            orderService = liveOrderService,
+            orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
+            flightBookingApplicationService = liveFlightBookingApplicationService,
+            hotelBookingApplicationService = liveHotelBookingApplicationService,
+            trainBookingApplicationService = liveTrainBookingApplicationService,
+            attractionBookingApplicationService = liveAttractionBookingApplicationService,
+            tourGroupApplicationService = liveTourGroupApplicationService,
+            trainAdminApplicationService = liveTrainAdminApplicationService,
+            attractionAdminApplicationService = liveAttractionAdminApplicationService,
+            managerWorkflowApplicationService = liveManagerWorkflowApplicationService,
+            avatarApplicationService = liveAvatarApplicationService,
+            userRepository = doobieUserRepository,
+            travelerProfileRepository = doobieTravelerProfileRepository,
+            orderRepository = doobieOrderRepository,
+            inventoryReservationRepository = doobieInventoryReservationRepository,
+            avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
+            frontendDistRootDirectoryPath = frontendDistRootDirectoryPath
+          )
+      yield ApplicationWiring(
+        userService = liveUserService,
+        travelerProfileService = liveTravelerProfileService,
+        flightService = liveFlightService,
         hotelService = liveHotelService,
-        hotelRepository = doobieHotelRepository,
-        orderRepository = doobieOrderRepository,
+        trainService = liveTrainService,
+        ticketEligibilityService = liveTicketEligibilityService,
+        flightInventoryLockingService = liveFlightInventoryLockingService,
+        hotelInventoryLockingService = liveHotelInventoryLockingService,
+        trainInventoryLockingService = liveTrainInventoryLockingService,
+        orderService = liveOrderService,
+        orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
+        managerService = liveManagerService,
+        flightBookingApplicationService = liveFlightBookingApplicationService,
+        hotelBookingApplicationService = liveHotelBookingApplicationService,
+        trainBookingApplicationService = liveTrainBookingApplicationService,
+        attractionBookingApplicationService = liveAttractionBookingApplicationService,
+        tourGroupApplicationService = liveTourGroupApplicationService,
+        trainAdminApplicationService = liveTrainAdminApplicationService,
+        attractionAdminApplicationService = liveAttractionAdminApplicationService,
+        managerWorkflowApplicationService = liveManagerWorkflowApplicationService,
+        avatarApplicationService = liveAvatarApplicationService,
+        userRepository = doobieUserRepository,
         travelerProfileRepository = doobieTravelerProfileRepository,
-        hotelInventoryLockingService = liveHotelInventoryLockingService
+        flightRepository = doobieFlightRepository,
+        hotelRepository = doobieHotelRepository,
+        trainRepository = doobieTrainRepository,
+        attractionRepository = doobieAttractionRepository,
+        tourGroupRepository = doobieTourGroupRepository,
+        orderRepository = doobieOrderRepository,
+        inventoryReservationRepository = doobieInventoryReservationRepository,
+        managerRepository = doobieManagerRepository,
+        httpApp = apiRouter.routes.orNotFound
       )
-      liveTrainBookingApplicationService =
-        LiveTrainBookingApplicationService[F](
-          trainService = liveTrainService,
-          trainRepository = doobieTrainRepository,
-          trainInventoryLockingService = liveTrainInventoryLockingService,
-          orderRepository = doobieOrderRepository,
-          travelerProfileRepository = doobieTravelerProfileRepository
-        )
-      liveAttractionBookingApplicationService =
-        LiveAttractionBookingApplicationService[F](
-          attractionRepository = doobieAttractionRepository,
-          ticketEligibilityService = liveTicketEligibilityService,
-          orderRepository = doobieOrderRepository,
-          orderService = liveOrderService,
-          travelerProfileRepository = doobieTravelerProfileRepository
-        )
-      liveTourGroupApplicationService =
-        LiveTourGroupApplicationService[F](
-          tourGroupRepository = doobieTourGroupRepository,
-          travelerProfileRepository = doobieTravelerProfileRepository,
-          orderService = liveOrderService,
-          orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
-          orderRepository = doobieOrderRepository,
-          flightBookingApplicationService = liveFlightBookingApplicationService,
-          hotelBookingApplicationService = liveHotelBookingApplicationService,
-          trainBookingApplicationService = liveTrainBookingApplicationService,
-          attractionBookingApplicationService = liveAttractionBookingApplicationService
-        )
-      liveTrainAdminApplicationService =
-        LiveTrainAdminApplicationService[F](
-          trainService = liveTrainService,
-          trainRepository = doobieTrainRepository
-        )
-      liveAttractionAdminApplicationService =
-        LiveAttractionAdminApplicationService[F](
-          managerService = liveManagerService,
-          attractionRepository = doobieAttractionRepository
-        )
-      liveManagerWorkflowApplicationService =
-        LiveManagerWorkflowApplicationService[F](
-          managerService = liveManagerService,
-          managerRepository = doobieManagerRepository,
-          orderRepository = doobieOrderRepository,
-          orderService = liveOrderService,
-          reservationLifecycle = reservationLifecycle,
-          flightRepository = doobieFlightRepository,
-          hotelRepository = doobieHotelRepository,
-          attractionRepository = doobieAttractionRepository
-        )
-      liveAvatarApplicationService =
-        LiveAvatarApplicationService[F](
-          userService = liveUserService,
-          avatarStorage = localAvatarStorage
-        )
-      apiRouter =
-        ApiRouter[F](
-          userService = liveUserService,
-          travelerProfileService = liveTravelerProfileService,
-          orderService = liveOrderService,
-          orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
-          flightBookingApplicationService = liveFlightBookingApplicationService,
-          hotelBookingApplicationService = liveHotelBookingApplicationService,
-          trainBookingApplicationService = liveTrainBookingApplicationService,
-          attractionBookingApplicationService = liveAttractionBookingApplicationService,
-          tourGroupApplicationService = liveTourGroupApplicationService,
-          trainAdminApplicationService = liveTrainAdminApplicationService,
-          attractionAdminApplicationService = liveAttractionAdminApplicationService,
-          managerWorkflowApplicationService = liveManagerWorkflowApplicationService,
-          avatarApplicationService = liveAvatarApplicationService,
-          userRepository = doobieUserRepository,
-          travelerProfileRepository = doobieTravelerProfileRepository,
-          orderRepository = doobieOrderRepository,
-          inventoryReservationRepository = doobieInventoryReservationRepository,
-          avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
-          frontendDistRootDirectoryPath = frontendDistRootDirectoryPath
-        )
-    yield ApplicationWiring(
-      userService = liveUserService,
-      travelerProfileService = liveTravelerProfileService,
-      flightService = liveFlightService,
-      hotelService = liveHotelService,
-      trainService = liveTrainService,
-      ticketEligibilityService = liveTicketEligibilityService,
-      flightInventoryLockingService = liveFlightInventoryLockingService,
-      hotelInventoryLockingService = liveHotelInventoryLockingService,
-      trainInventoryLockingService = liveTrainInventoryLockingService,
-      orderService = liveOrderService,
-      orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
-      managerService = liveManagerService,
-      flightBookingApplicationService = liveFlightBookingApplicationService,
-      hotelBookingApplicationService = liveHotelBookingApplicationService,
-      trainBookingApplicationService = liveTrainBookingApplicationService,
-      attractionBookingApplicationService = liveAttractionBookingApplicationService,
-      tourGroupApplicationService = liveTourGroupApplicationService,
-      trainAdminApplicationService = liveTrainAdminApplicationService,
-      attractionAdminApplicationService = liveAttractionAdminApplicationService,
-      managerWorkflowApplicationService = liveManagerWorkflowApplicationService,
-      avatarApplicationService = liveAvatarApplicationService,
-      userRepository = doobieUserRepository,
-      travelerProfileRepository = doobieTravelerProfileRepository,
-      flightRepository = doobieFlightRepository,
-      hotelRepository = doobieHotelRepository,
-      trainRepository = doobieTrainRepository,
-      attractionRepository = doobieAttractionRepository,
-      tourGroupRepository = doobieTourGroupRepository,
-      orderRepository = doobieOrderRepository,
-      inventoryReservationRepository = doobieInventoryReservationRepository,
-      managerRepository = doobieManagerRepository,
-      httpApp = apiRouter.routes.orNotFound
-    )
+    }

@@ -25,7 +25,7 @@ class DoobieInventoryReservationRepositorySpec extends FunSuite:
           orderRepository = DoobieOrderRepository[IO](transactor)
           repository = DoobieInventoryReservationRepository[IO](transactor)
           savedUser <- userRepository.saveUser(
-            User.restorePersistedUser(
+            restorePersistedUser(
               userId = UserId("user-reservation-roundtrip"),
               primaryEmailAddress = EmailAddress.unsafe("reservation-roundtrip@example.com"),
               userDisplayName = PersonName.unsafe("Reservation Roundtrip"),
@@ -39,7 +39,7 @@ class DoobieInventoryReservationRepositorySpec extends FunSuite:
             )
           )
           savedOrder <- orderRepository.saveOrder(
-            Order.createDraftOrder(
+            newDraftOrder(
               orderId = OrderId("order-roundtrip"),
               ownerUserId = savedUser.userId,
               orderCurrency = Currency.CNY,
@@ -48,7 +48,7 @@ class DoobieInventoryReservationRepositorySpec extends FunSuite:
           )
           reservationId <- repository.nextReservationId
           reservation <- IO.fromEither(
-            InventoryReservation.createActiveReservation(
+            createActiveReservation(
               reservationId = reservationId,
               resourceType = ReservationResourceType.FlightCabinInventory,
               resourceId = "inventory-roundtrip",
@@ -66,3 +66,4 @@ class DoobieInventoryReservationRepositorySpec extends FunSuite:
 
     assertEquals(loaded._3, Some(loaded._2))
   }
+

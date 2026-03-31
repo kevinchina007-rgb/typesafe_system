@@ -59,7 +59,7 @@ final class ReferenceRepositorySpec extends FunSuite:
 
     val flightRepository = DoobieFlightRepository[cats.effect.IO](transactor)
     val airline =
-      Airline.restorePersistedAirline(
+      restorePersistedAirline(
         airlineId = AirlineId("airline-roundtrip"),
         airlineName = AirlineName.unsafe("Roundtrip Air"),
         airlineCode = AirlineCode.unsafe("RA"),
@@ -67,7 +67,7 @@ final class ReferenceRepositorySpec extends FunSuite:
         createdAt = Instant.parse("2026-03-26T09:00:00Z")
       )
     val flight =
-      Flight.restorePersistedFlight(
+      restorePersistedFlight(
         flightId = FlightId("flight-roundtrip"),
         airlineId = airline.airlineId,
         flightNumber = FlightNumber.unsafe("RA1001"),
@@ -80,7 +80,7 @@ final class ReferenceRepositorySpec extends FunSuite:
         flightStatus = FlightStatus.OpenForBooking,
         basePrice = Money.unsafe(BigDecimal(1800), Currency.CNY),
         cabinInventories = Vector(
-          CabinInventory.createCabinInventory(
+      createCabinInventory(
             cabinInventoryId = CabinInventoryId("inventory-roundtrip-economy"),
             flightId = FlightId("flight-roundtrip"),
             cabinClass = CabinClass.unsafe("economy"),
@@ -88,7 +88,7 @@ final class ReferenceRepositorySpec extends FunSuite:
             unitPrice = Money.unsafe(BigDecimal(1800), Currency.CNY),
             inventoryStatus = InventoryStatus.Open
           ),
-          CabinInventory.createCabinInventory(
+      createCabinInventory(
             cabinInventoryId = CabinInventoryId("inventory-roundtrip-business"),
             flightId = FlightId("flight-roundtrip"),
             cabinClass = CabinClass.unsafe("business"),
@@ -125,13 +125,13 @@ final class ReferenceRepositorySpec extends FunSuite:
 
     val hotelRepository = DoobieHotelRepository[cats.effect.IO](transactor)
     val hotel =
-      Hotel.restorePersistedHotel(
+      restorePersistedHotel(
         hotelId = HotelId("hotel-roundtrip"),
         hotelName = HotelName.unsafe("Roundtrip Suites"),
         hotelLocation = HotelLocation.unsafe("Shanghai"),
         hotelStatus = HotelStatus.Active,
         roomTypes = Vector(
-          RoomType.restorePersistedRoomType(
+      restorePersistedRoomType(
             roomTypeId = RoomTypeId("roomtype-roundtrip"),
             hotelId = HotelId("hotel-roundtrip"),
             roomTypeName = RoomTypeName.unsafe("Harbor View Suite"),
@@ -140,7 +140,7 @@ final class ReferenceRepositorySpec extends FunSuite:
             basePrice = Money.unsafe(BigDecimal(1260), Currency.CNY),
             roomTypeStatus = RoomTypeStatus.OpenForBooking,
             roomInventories = Vector(
-              RoomInventory.createRoomInventory(
+      createRoomInventory(
                 roomInventoryId = RoomInventoryId("room-inventory-roundtrip-1"),
                 roomTypeId = RoomTypeId("roomtype-roundtrip"),
                 inventoryDate = LocalDate.parse("2026-04-09"),
@@ -148,7 +148,7 @@ final class ReferenceRepositorySpec extends FunSuite:
                 unitPrice = Money.unsafe(BigDecimal(1300), Currency.CNY),
                 roomInventoryStatus = RoomInventoryStatus.Available
               ),
-              RoomInventory.createRoomInventory(
+      createRoomInventory(
                 roomInventoryId = RoomInventoryId("room-inventory-roundtrip-2"),
                 roomTypeId = RoomTypeId("roomtype-roundtrip"),
                 inventoryDate = LocalDate.parse("2026-04-10"),
@@ -167,3 +167,4 @@ final class ReferenceRepositorySpec extends FunSuite:
 
     assertEquals(loadedHotel, Some(hotel))
   }
+

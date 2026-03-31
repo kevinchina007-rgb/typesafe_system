@@ -113,6 +113,7 @@ export function TourGroupPlanComposer({
 }: TourGroupPlanComposerProps) {
   const [itemType, setItemType] = useState('Flight')
   const [date, setDate] = useState('')
+  const [hotelCheckOutDate, setHotelCheckOutDate] = useState('')
   const [location, setLocation] = useState('')
   const [searchMessage, setSearchMessage] = useState('')
   const [flightResults, setFlightResults] = useState<FlightResponse[]>([])
@@ -148,7 +149,12 @@ export function TourGroupPlanComposer({
     }
 
     if (itemType === 'Hotel') {
-      setHotelResults(await onSearchHotels({ location, checkInDate: date, checkOutDate: nextDay(date) }))
+      const effectiveCheckOutDate = hotelCheckOutDate || nextDay(date)
+      if (effectiveCheckOutDate <= date) {
+        setSearchMessage(translate('tourGroups.hotelDateRangeHint'))
+        return
+      }
+      setHotelResults(await onSearchHotels({ location, checkInDate: date, checkOutDate: effectiveCheckOutDate }))
       return
     }
 
@@ -213,7 +219,7 @@ export function TourGroupPlanComposer({
           await runSearch()
         }}
       >
-        <div className="three-column-grid">
+        <div className={itemType === 'Hotel' ? 'four-column-grid' : 'three-column-grid'}>
           <label>
             {translate('tourGroups.itemType')}
             <select value={itemType} onChange={event => setItemType(event.target.value)}>
@@ -224,9 +230,20 @@ export function TourGroupPlanComposer({
             </select>
           </label>
           <label>
-            {translate('tourGroups.search.date')}
+            {translate(itemType === 'Hotel' ? 'tourGroups.hotelCheckInDate' : 'tourGroups.search.date')}
             <input type="date" value={date} onChange={event => setDate(event.target.value)} required />
           </label>
+          {itemType === 'Hotel' ? (
+            <label>
+              {translate('tourGroups.hotelCheckOutDate')}
+              <input
+                type="date"
+                value={hotelCheckOutDate}
+                onChange={event => setHotelCheckOutDate(event.target.value)}
+                required
+              />
+            </label>
+          ) : null}
           <label>
             {translate('tourGroups.search.locationLabel')}
             <input
@@ -313,7 +330,7 @@ export function TourGroupPlanComposer({
                             title: `${hotel.location} stay`,
                             description: hotel.hotelName,
                             scheduledAt: atUtc(date, '15:00'),
-                            endsAt: atUtc(nextDay(date), '12:00'),
+                            endsAt: atUtc(hotelCheckOutDate || nextDay(date), '12:00'),
                           },
                           {
                             resourceType: 'HotelRoomType',

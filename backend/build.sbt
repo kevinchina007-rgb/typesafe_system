@@ -42,6 +42,9 @@ lazy val doobieHikariDependency =
 lazy val doobieH2Dependency =
   "org.tpolecat" %% "doobie-h2" % "1.0.0-RC5"
 
+lazy val postgresqlDependency =
+  "org.postgresql" % "postgresql" % "42.7.4"
+
 lazy val root = (project in file("."))
   .aggregate(
     sharedKernel,
@@ -134,6 +137,7 @@ lazy val persistenceJdbc = module("persistence-jdbc")
       doobieCoreDependency,
       doobieHikariDependency,
       doobieH2Dependency,
+      postgresqlDependency,
       munitDependency
     )
   )
@@ -163,6 +167,32 @@ lazy val apiGateway = module("api-gateway")
     persistenceJdbc
   )
   .settings(
+    Compile / unmanagedSourceDirectories ++= Seq(
+      baseDirectory.value.getParentFile / "identity-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "traveler-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "flight-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "hotel-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "train-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "attraction-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "tour-group-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "inventory-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "order-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "operations-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "shared-kernel" / "src" / "api"
+    ),
+    Test / unmanagedSourceDirectories ++= Seq(
+      baseDirectory.value.getParentFile / "identity-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "traveler-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "flight-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "hotel-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "train-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "attraction-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "tour-group-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "inventory-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "order-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "operations-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "shared-kernel" / "src" / "api-test"
+    ),
     libraryDependencies ++= Seq(
       catsEffectDependency,
       http4sDslDependency,
@@ -181,5 +211,7 @@ def module(moduleName: String) =
   Project(id = moduleName, base = file(s"modules/$moduleName"))
     .settings(commonSettings)
     .settings(
-      name := moduleName
+      name := moduleName,
+      Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main",
+      Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test"
     )

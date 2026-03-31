@@ -20,7 +20,7 @@ final class DoobieTravelerProfileRepositorySpec extends FunSuite:
 
     userRepository
       .saveUser(
-        User.registerNewUser(
+        registerNewUser(
           userId = UserId("user-traveler-owner"),
           primaryEmailAddress = EmailAddress.unsafe("traveler-owner@example.com"),
           userDisplayName = PersonName.unsafe("Traveler Owner"),
@@ -31,7 +31,7 @@ final class DoobieTravelerProfileRepositorySpec extends FunSuite:
       .unsafeRunSync()
 
     val savedTravelerProfile =
-      TravelerProfile.restorePersistedTravelerProfile(
+      restoreTravelerProfile(
         travelerId = TravelerId("traveler-roundtrip"),
         ownerUserId = UserId("user-traveler-owner"),
         travelerFullName = PersonName.unsafe("Round Trip Traveler"),
@@ -70,3 +70,4 @@ final class DoobieTravelerProfileRepositorySpec extends FunSuite:
 
     assertEquals(loadedTraveler, Some(savedTravelerProfile))
   }
+

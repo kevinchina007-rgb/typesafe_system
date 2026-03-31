@@ -582,6 +582,9 @@ export const travelMvpApiClient = {
     return apiRequest(`/manager/tasks?${searchParams.toString()}`)
   },
 
+  listManagerFlights: (managerId: string): Promise<FlightListResponse> =>
+    apiRequest(`/manager/flights?managerId=${encodeURIComponent(managerId)}`),
+
   listManagerRefundTasks: (query: {
     managerId: string
     managerType: string

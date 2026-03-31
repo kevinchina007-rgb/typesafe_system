@@ -1,13 +1,12 @@
 package com.typesafe.travel.persistence.flight
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
 import com.typesafe.travel.shared.kernel.*
 import doobie.*
 import doobie.implicits.*
-
 import java.time.{Instant, OffsetDateTime}
 import java.util.UUID
 
@@ -15,13 +14,13 @@ final class DoobieFlightRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends FlightRepository[F]:
   override def nextAirlineId: F[AirlineId] =
-    Async[F].delay(AirlineId(s"airline-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(AirlineId(s"airline-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextFlightId: F[FlightId] =
-    Async[F].delay(FlightId(s"flight-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(FlightId(s"flight-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextCabinInventoryId: F[CabinInventoryId] =
-    Async[F].delay(CabinInventoryId(s"inventory-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(CabinInventoryId(s"inventory-${UUID.randomUUID().toString.take(12)}"))
 
   def saveAirline(airline: Airline): F[Airline] =
     val upsertAirline =
@@ -137,27 +136,33 @@ final class DoobieFlightRepository[F[_]: Async](
       .flatMap(_.traverse(buildFlight))
 
   override def searchFlights(flightSearchCriteria: FlightSearchCriteria): F[List[Flight]] =
-    sql"""
-      select
-        flight_id, airline_id, flight_number, departure_airport, arrival_airport,
-        departure_time, arrival_time, status, base_price_amount, base_price_currency, created_at
-      from flights
-      where (${flightSearchCriteria.departureAirport.map(_.value)} is null or departure_airport = ${flightSearchCriteria.departureAirport.map(_.value)})
-        and (${flightSearchCriteria.arrivalAirport.map(_.value)} is null or arrival_airport = ${flightSearchCriteria.arrivalAirport.map(_.value)})
-        and (${flightSearchCriteria.departureDate} is null or cast(departure_time as date) = ${flightSearchCriteria.departureDate})
-      order by departure_time, flight_id
-    """
-      .query[FlightRow]
-      .to[List]
-      .transact(transactor)
-      .flatMap(_.traverse(buildFlight))
+    val conditions = List(
+      flightSearchCriteria.departureAirport.map(airportCode => fr"departure_airport = ${airportCode.value}"),
+      flightSearchCriteria.arrivalAirport.map(airportCode => fr"arrival_airport = ${airportCode.value}"),
+      flightSearchCriteria.departureDate.map(departureDate => fr"cast(departure_time as date) = $departureDate")
+    ).flatten
+
+    val whereFragment =
+      conditions match
+        case Nil => Fragment.empty
+        case head :: tail => fr"where" ++ (head ++ tail.foldLeft(Fragment.empty)((accumulator, fragment) => accumulator ++ fr"and" ++ fragment))
+
+    val query =
+      (fr"""
+        select
+          flight_id, airline_id, flight_number, departure_airport, arrival_airport,
+          departure_time, arrival_time, status, base_price_amount, base_price_currency, created_at
+        from flights
+      """ ++ whereFragment ++ fr"order by departure_time, flight_id")
+
+    query.query[FlightRow].to[List].transact(transactor).flatMap(_.traverse(buildFlight))
 
   private def buildAirline(row: (String, String, String, String, Instant)): F[Airline] =
     val (airlineIdValue, airlineNameValue, airlineCodeValue, airlineStatusValue, createdAtValue) = row
     for
       airlineName <- Async[F].fromEither(AirlineName.create(airlineNameValue))
       airlineCode <- Async[F].fromEither(AirlineCode.create(airlineCodeValue))
-    yield Airline.restorePersistedAirline(
+    yield restorePersistedAirline(
       airlineId = AirlineId(airlineIdValue),
       airlineName = airlineName,
       airlineCode = airlineCode,
@@ -174,7 +179,7 @@ final class DoobieFlightRepository[F[_]: Async](
       basePrice <- Async[F].fromEither(Money.create(flightRow.basePriceAmount, basePriceCurrency))
       cabinInventories <- loadCabinInventories(FlightId(flightRow.flightId))
       flightSchedule <- Async[F].fromEither(FlightSchedule.create(flightRow.departureTime, flightRow.arrivalTime))
-      builtFlight = Flight.restorePersistedFlight(
+      builtFlight = restorePersistedFlight(
         flightId = FlightId(flightRow.flightId),
         airlineId = AirlineId(flightRow.airlineId),
         flightNumber = flightNumber,
@@ -207,7 +212,7 @@ final class DoobieFlightRepository[F[_]: Async](
       availableSeats <- Async[F].fromEither(SeatCount.create(availableSeatsValue))
       unitPriceCurrency <- Async[F].fromEither(Either.catchNonFatal(Currency.valueOf(unitPriceCurrencyValue)))
       unitPrice <- Async[F].fromEither(Money.create(unitPriceAmountValue, unitPriceCurrency))
-    yield CabinInventory.createCabinInventory(
+    yield createCabinInventory(
       cabinInventoryId = CabinInventoryId(inventoryIdValue),
       flightId = FlightId(flightIdValue),
       cabinClass = cabinClass,
@@ -229,3 +234,4 @@ final class DoobieFlightRepository[F[_]: Async](
       basePriceCurrency: String,
       createdAt: Instant
   )
+

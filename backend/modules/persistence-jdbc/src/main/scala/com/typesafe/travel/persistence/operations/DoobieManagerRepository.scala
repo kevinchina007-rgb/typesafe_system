@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.operations
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
@@ -15,7 +15,7 @@ final class DoobieManagerRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends ManagerRepository[F]:
   override def nextManagerId: F[ManagerId] =
-    Async[F].delay(ManagerId(s"manager-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(ManagerId(s"manager-${UUID.randomUUID().toString.take(12)}"))
 
   override def findAirlineManagerByEmail(primaryEmailAddress: EmailAddress): F[Option[AirlineManager]] =
     sql"""
@@ -126,7 +126,7 @@ final class DoobieManagerRepository[F[_]: Async](
     for
       primaryEmailAddress <- Async[F].fromEither(EmailAddress.create(emailValue))
       displayName <- Async[F].fromEither(PersonName.create(displayNameValue))
-    yield AirlineManager.restorePersistedAirlineManager(
+    yield restorePersistedAirlineManager(
       managerId = ManagerId(managerIdValue),
       airlineId = AirlineId(airlineIdValue),
       primaryEmailAddress = primaryEmailAddress,
@@ -140,7 +140,7 @@ final class DoobieManagerRepository[F[_]: Async](
     for
       primaryEmailAddress <- Async[F].fromEither(EmailAddress.create(emailValue))
       displayName <- Async[F].fromEither(PersonName.create(displayNameValue))
-    yield HotelManager.restorePersistedHotelManager(
+    yield restorePersistedHotelManager(
       managerId = ManagerId(managerIdValue),
       hotelId = HotelId(hotelIdValue),
       primaryEmailAddress = primaryEmailAddress,
@@ -154,10 +154,11 @@ final class DoobieManagerRepository[F[_]: Async](
     for
       primaryEmailAddress <- Async[F].fromEither(EmailAddress.create(emailValue))
       displayName <- Async[F].fromEither(PersonName.create(displayNameValue))
-    yield AttractionManager.restorePersistedAttractionManager(
+    yield restorePersistedAttractionManager(
       managerId = ManagerId(managerIdValue),
       primaryEmailAddress = primaryEmailAddress,
       displayName = displayName,
       managerStatus = ManagerStatus.valueOf(statusValue),
       createdAt = createdAtValue
     )
+

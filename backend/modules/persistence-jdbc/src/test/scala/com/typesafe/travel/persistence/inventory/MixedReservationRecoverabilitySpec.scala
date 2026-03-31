@@ -31,7 +31,7 @@ final class MixedReservationRecoverabilitySpec extends FunSuite:
         reservationRepository = DoobieInventoryReservationRepository[IO](firstTransactor)
         lifecycle = LiveReservationLifecycle[IO](reservationRepository)
         _ <- userRepository.saveUser(
-          User.registerNewUser(
+          registerNewUser(
             userId = UserId("user-mixed-recovery"),
             primaryEmailAddress = EmailAddress.unsafe("mixed-recovery@example.com"),
             userDisplayName = PersonName.unsafe("Mixed Recovery"),
@@ -40,7 +40,7 @@ final class MixedReservationRecoverabilitySpec extends FunSuite:
           )
         )
         _ <- orderRepository.saveOrder(
-          Order.createDraftOrder(
+          newDraftOrder(
             orderId = OrderId("order-mixed-recovery"),
             ownerUserId = UserId("user-mixed-recovery"),
             orderCurrency = Currency.CNY,
@@ -48,7 +48,7 @@ final class MixedReservationRecoverabilitySpec extends FunSuite:
           )
         )
         flightReservation <- IO.fromEither(
-          InventoryReservation.createActiveReservation(
+          createActiveReservation(
             reservationId = ReservationId("reservation-flight-recovery"),
             resourceType = ReservationResourceType.FlightCabinInventory,
             resourceId = "cabin-inventory-recovery",
@@ -60,7 +60,7 @@ final class MixedReservationRecoverabilitySpec extends FunSuite:
           )
         )
         hotelReservation <- IO.fromEither(
-          InventoryReservation.createActiveReservation(
+          createActiveReservation(
             reservationId = ReservationId("reservation-hotel-recovery"),
             resourceType = ReservationResourceType.HotelRoomType,
             resourceId = "room-type-recovery",
@@ -94,3 +94,4 @@ final class MixedReservationRecoverabilitySpec extends FunSuite:
     assertEquals(reloadedReservations.last.checkInDate, Some(LocalDate.parse("2026-04-20")))
     assertEquals(reloadedReservations.last.checkOutDate, Some(LocalDate.parse("2026-04-22")))
   }
+

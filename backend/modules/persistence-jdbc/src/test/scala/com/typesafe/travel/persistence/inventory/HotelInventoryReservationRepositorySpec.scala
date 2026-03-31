@@ -29,7 +29,7 @@ final class HotelInventoryReservationRepositorySpec extends FunSuite:
           orderRepository = DoobieOrderRepository[IO](firstTransactor)
           reservationRepository = DoobieInventoryReservationRepository[IO](firstTransactor)
           _ <- userRepository.saveUser(
-            User.registerNewUser(
+            registerNewUser(
               userId = UserId("user-hotel-reservation"),
               primaryEmailAddress = EmailAddress.unsafe("hotel-reservation@example.com"),
               userDisplayName = PersonName.unsafe("Hotel Reservation"),
@@ -38,7 +38,7 @@ final class HotelInventoryReservationRepositorySpec extends FunSuite:
             )
           )
           _ <- orderRepository.saveOrder(
-            Order.createDraftOrder(
+            newDraftOrder(
               orderId = OrderId("order-hotel-reservation"),
               ownerUserId = UserId("user-hotel-reservation"),
               orderCurrency = Currency.CNY,
@@ -47,7 +47,7 @@ final class HotelInventoryReservationRepositorySpec extends FunSuite:
           )
           reservationId <- reservationRepository.nextReservationId
           reservation <- IO.fromEither(
-            InventoryReservation.createActiveReservation(
+            createActiveReservation(
               reservationId = reservationId,
               resourceType = ReservationResourceType.HotelRoomType,
               resourceId = "room-type-westlake",
@@ -85,7 +85,7 @@ final class HotelInventoryReservationRepositorySpec extends FunSuite:
           orderRepository = DoobieOrderRepository[IO](transactor)
           reservationRepository = DoobieInventoryReservationRepository[IO](transactor)
           _ <- userRepository.saveUser(
-            User.registerNewUser(
+            registerNewUser(
               userId = UserId("user-mixed-reservation"),
               primaryEmailAddress = EmailAddress.unsafe("mixed-reservation@example.com"),
               userDisplayName = PersonName.unsafe("Mixed Reservation"),
@@ -94,7 +94,7 @@ final class HotelInventoryReservationRepositorySpec extends FunSuite:
             )
           )
           _ <- orderRepository.saveOrder(
-            Order.createDraftOrder(
+            newDraftOrder(
               orderId = OrderId("order-mixed-reservation"),
               ownerUserId = UserId("user-mixed-reservation"),
               orderCurrency = Currency.CNY,
@@ -104,7 +104,7 @@ final class HotelInventoryReservationRepositorySpec extends FunSuite:
           flightReservationId <- reservationRepository.nextReservationId
           hotelReservationId <- reservationRepository.nextReservationId
           flightReservation <- IO.fromEither(
-            InventoryReservation.createActiveReservation(
+            createActiveReservation(
               reservationId = flightReservationId,
               resourceType = ReservationResourceType.FlightCabinInventory,
               resourceId = "cabin-inventory-1",
@@ -116,7 +116,7 @@ final class HotelInventoryReservationRepositorySpec extends FunSuite:
             )
           )
           hotelReservation <- IO.fromEither(
-            InventoryReservation.createActiveReservation(
+            createActiveReservation(
               reservationId = hotelReservationId,
               resourceType = ReservationResourceType.HotelRoomType,
               resourceId = "room-type-1",
@@ -138,3 +138,4 @@ final class HotelInventoryReservationRepositorySpec extends FunSuite:
     assertEquals(loadedReservations.last.checkInDate, Some(LocalDate.parse("2026-04-15")))
     assertEquals(loadedReservations.last.checkOutDate, Some(LocalDate.parse("2026-04-17")))
   }
+

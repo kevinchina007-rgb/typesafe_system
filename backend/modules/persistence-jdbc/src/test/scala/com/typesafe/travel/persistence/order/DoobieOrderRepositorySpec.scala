@@ -17,7 +17,7 @@ final class DoobieOrderRepositorySpec extends FunSuite:
 
     DoobieUserRepository[cats.effect.IO](transactor)
       .saveUser(
-        User.registerNewUser(
+        registerNewUser(
           userId = UserId("user-order-owner"),
           primaryEmailAddress = EmailAddress.unsafe("order-owner@example.com"),
           userDisplayName = PersonName.unsafe("Order Owner"),
@@ -63,8 +63,7 @@ final class DoobieOrderRepositorySpec extends FunSuite:
     )
 
     val savedOrder =
-      Order
-        .createDraftOrder(OrderId("order-roundtrip"), UserId("user-order-owner"), orderCurrency, createdAt)
+      newDraftOrder(OrderId("order-roundtrip"), UserId("user-order-owner"), orderCurrency, createdAt)
         .addFlightOrderItem(OrderItemId("order-item-flight"), flightSnapshot)
         .flatMap(_.addHotelOrderItem(OrderItemId("order-item-hotel"), hotelSnapshot))
         .flatMap(_.submitOrderForPayment)
@@ -81,3 +80,4 @@ final class DoobieOrderRepositorySpec extends FunSuite:
 
     assertEquals(loadedOrder, Some(savedOrder))
   }
+

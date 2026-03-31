@@ -4,7 +4,7 @@ alter table order_line_items add cabin_class varchar(40);
 alter table order_line_items add check_in_date date;
 alter table order_line_items add check_out_date date;
 alter table order_line_items add room_count integer;
-alter table order_line_items add traveler_ids_json clob;
+alter table order_line_items add traveler_ids_json text;
 alter table order_line_items add unit_amount decimal(18, 2);
 alter table order_line_items add unit_currency varchar(10);
 
@@ -13,12 +13,12 @@ create index idx_order_line_items_flight on order_line_items(flight_id);
 create index idx_order_line_items_room_type on order_line_items(room_type_id);
 
 alter table order_payments add created_at timestamp with time zone;
-alter table order_payments add metadata_json clob;
+alter table order_payments add metadata_json text;
 update order_payments set created_at = authorized_at where created_at is null;
 create index idx_order_payments_order_created on order_payments(order_id, created_at);
 
 alter table order_refunds add created_at timestamp with time zone;
-alter table order_refunds add metadata_json clob;
+alter table order_refunds add metadata_json text;
 update order_refunds set created_at = requested_at where created_at is null;
 create index idx_order_refunds_order_created on order_refunds(order_id, created_at);
 

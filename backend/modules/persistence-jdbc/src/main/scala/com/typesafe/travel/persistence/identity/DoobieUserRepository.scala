@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.identity
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.identity.domain.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
@@ -15,7 +15,7 @@ final class DoobieUserRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends UserRepository[F]:
   override def nextUserId: F[UserId] =
-    Async[F].delay(UserId(s"user-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(UserId(s"user-${UUID.randomUUID().toString.take(12)}"))
 
   override def findByUserId(userId: UserId): F[Option[User]] =
     sql"""
@@ -121,7 +121,7 @@ final class DoobieUserRepository[F[_]: Async](
       userPhoneNumber <- Async[F].fromEither(ContactNumber.create(phoneValue))
       avatarUrl <- avatarUrlValue.traverse(avatarUrlText => Async[F].fromEither(AvatarUrl.create(avatarUrlText)))
       loyaltyPoints <- Async[F].fromEither(Points.create(pointsValue))
-    yield User.restorePersistedUser(
+    yield restorePersistedUser(
       userId = UserId(userIdValue),
       primaryEmailAddress = primaryEmailAddress,
       userDisplayName = userDisplayName,
@@ -133,3 +133,4 @@ final class DoobieUserRepository[F[_]: Async](
       defaultTravelerProfileId = defaultTravelerIdValue.map(TravelerId.apply),
       registeredAt = createdAtValue
     )
+

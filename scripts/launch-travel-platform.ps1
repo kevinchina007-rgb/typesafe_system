@@ -6,6 +6,8 @@ param(
 $templateRoot = Split-Path -Parent $PSScriptRoot
 $logDir = Join-Path $templateRoot '.launcher-logs'
 $launcherLog = Join-Path $logDir 'frontend-launcher.log'
+$backendScript = Join-Path $templateRoot 'backend\scripts\start-backend.ps1'
+$frontendScript = Join-Path $templateRoot 'frontend\scripts\serve-frontend.ps1'
 
 function Test-HttpReady {
   param(
@@ -27,7 +29,41 @@ Set-Content -Path $launcherLog -Value "[travel-platform] launcher started $(Get-
 $backendOrigin = "http://localhost:$BackendPort"
 $frontendOrigin = "http://localhost:$FrontendPort"
 
-for ($attempt = 0; $attempt -lt 120; $attempt++) {
+if (-not (Test-HttpReady "$backendOrigin/api/health")) {
+  Add-Content -Path $launcherLog -Value "[travel-platform] starting backend process"
+  Start-Process powershell.exe -WindowStyle Minimized -ArgumentList @(
+    '-NoProfile',
+    '-ExecutionPolicy',
+    'Bypass',
+    '-File',
+    $backendScript,
+    '-RepositoryMode',
+    'database',
+    '-BackendPort',
+    "$BackendPort"
+  ) | Out-Null
+} else {
+  Add-Content -Path $launcherLog -Value "[travel-platform] backend already healthy"
+}
+
+if (-not (Test-HttpReady $frontendOrigin)) {
+  Add-Content -Path $launcherLog -Value "[travel-platform] starting frontend process"
+  Start-Process powershell.exe -WindowStyle Minimized -ArgumentList @(
+    '-NoProfile',
+    '-ExecutionPolicy',
+    'Bypass',
+    '-File',
+    $frontendScript,
+    '-Port',
+    "$FrontendPort",
+    '-BackendOrigin',
+    $backendOrigin
+  ) | Out-Null
+} else {
+  Add-Content -Path $launcherLog -Value "[travel-platform] frontend already healthy"
+}
+
+for ($attempt = 0; $attempt -lt 150; $attempt++) {
   $frontendReady = Test-HttpReady $frontendOrigin
   $backendReady = Test-HttpReady "$backendOrigin/api/health"
 

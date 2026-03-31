@@ -32,7 +32,7 @@ create table if not exists ticket_type_rules (
   rule_id varchar(64) primary key,
   ticket_type_id varchar(64) not null,
   rule_type varchar(64) not null,
-  rule_config_json clob not null,
+  rule_config_json text not null,
   created_at timestamp not null
 );
 

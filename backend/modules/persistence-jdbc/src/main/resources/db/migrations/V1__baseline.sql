@@ -22,10 +22,10 @@ create table if not exists traveler_profiles (
   traveler_type varchar(80) not null,
   status varchar(40) not null,
   is_default boolean not null,
-  preferences_json clob not null,
-  emergency_contact_json clob,
-  identity_documents_json clob not null,
-  loyalty_memberships_json clob not null,
+  preferences_json text not null,
+  emergency_contact_json text,
+  identity_documents_json text not null,
+  loyalty_memberships_json text not null,
   constraint fk_traveler_owner_user foreign key (owner_user_id) references users(user_id),
   constraint uq_traveler_document_identity unique (document_type, document_number)
 );
@@ -53,7 +53,7 @@ create table if not exists order_line_items (
   item_status varchar(40) not null,
   booked_amount decimal(18, 2) not null,
   booked_currency varchar(10) not null,
-  snapshot_json clob not null,
+  snapshot_json text not null,
   sort_index integer not null,
   constraint fk_order_line_item_order foreign key (order_id) references orders(order_id)
 );

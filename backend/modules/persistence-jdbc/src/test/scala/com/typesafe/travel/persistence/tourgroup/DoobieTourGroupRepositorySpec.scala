@@ -15,7 +15,7 @@ final class DoobieTourGroupRepositorySpec extends FunSuite:
     val repository = DoobieTourGroupRepository[cats.effect.IO](transactor)
 
     val createdAt = Instant.parse("2026-03-30T09:00:00Z")
-    val group = TourGroup.create(
+    val group = createTourGroup(
       groupId = TourGroupId("group-rt-1"),
       organizerUserId = UserId("user-1"),
       title = "Yangtze Tour",
@@ -26,9 +26,9 @@ final class DoobieTourGroupRepositorySpec extends FunSuite:
       capacity = 6,
       createdAt = createdAt
     ).toOption.get
-    val membership = TourGroupMembership.createOrganizerMembership(TourGroupMembershipId("membership-1"), group.groupId, group.organizerUserId, createdAt)
+    val membership = createOrganizerMembership(TourGroupMembershipId("membership-1"), group.groupId, group.organizerUserId, createdAt)
     val membershipTraveler = TourGroupMembershipTraveler(TourGroupMembershipTravelerId("membership-traveler-1"), membership.membershipId, TravelerId("traveler-1"), createdAt, TourGroupMembershipTravelerStatus.Active)
-    val planItem = GroupPlanItem.create(
+    val planItem = createGroupPlanItem(
       planItemId = GroupPlanItemId("plan-item-1"),
       groupId = group.groupId,
       itemType = GroupPlanItemType.Flight,
@@ -38,7 +38,7 @@ final class DoobieTourGroupRepositorySpec extends FunSuite:
       endsAt = Some(createdAt.plusSeconds(3600)),
       sequenceNo = 1
     ).toOption.get
-    val option = GroupPlanOption.create(
+    val option = createGroupPlanOption(
       optionId = GroupPlanOptionId("option-1"),
       planItemId = planItem.planItemId,
       resourceType = GroupPlanOptionResourceType.Flight,
@@ -49,7 +49,7 @@ final class DoobieTourGroupRepositorySpec extends FunSuite:
       description = "Morning flight",
       defaultQuantity = 1
     ).toOption.get
-    val selection = GroupPlanSelection.create(
+    val selection = createGroupPlanSelection(
       selectionId = GroupPlanSelectionId("selection-1"),
       groupId = group.groupId,
       planItemId = planItem.planItemId,
@@ -77,3 +77,4 @@ final class DoobieTourGroupRepositorySpec extends FunSuite:
     assertEquals(restored.get.selections.head.status, GroupPlanSelectionStatus.OrganizerConfirmed)
     assertEquals(restored.get.selectionOrderLinks.head.orderId, OrderId("order-1"))
   }
+

@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.inventory
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
@@ -15,7 +15,7 @@ final class DoobieInventoryReservationRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends InventoryReservationRepository[F]:
   override def nextReservationId: F[ReservationId] =
-    Async[F].delay(ReservationId(s"reservation-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(ReservationId(s"reservation-${UUID.randomUUID().toString.take(12)}"))
 
   override def findReservationById(reservationId: ReservationId): F[Option[InventoryReservation]] =
     sql"""
@@ -120,7 +120,7 @@ final class DoobieInventoryReservationRepository[F[_]: Async](
 
   private def buildReservation(reservationRow: ReservationRow): F[InventoryReservation] =
     Async[F].pure(
-      InventoryReservation.restorePersistedReservation(
+      restorePersistedReservation(
         reservationId = ReservationId(reservationRow.reservationId),
         resourceType = ReservationResourceType.valueOf(reservationRow.resourceType),
         resourceId = reservationRow.resourceId,
@@ -152,3 +152,4 @@ final class DoobieInventoryReservationRepository[F[_]: Async](
       checkInDate: Option[LocalDate],
       checkOutDate: Option[LocalDate]
   )
+

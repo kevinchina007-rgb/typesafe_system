@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.train
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
@@ -16,22 +16,22 @@ final class DoobieTrainRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends TrainRepository[F]:
   override def nextManagerId: F[ManagerId] =
-    Async[F].delay(ManagerId(s"train-manager-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(ManagerId(s"train-manager-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextTrainId: F[TrainId] =
-    Async[F].delay(TrainId(s"train-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(TrainId(s"train-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextTrainStopId: F[TrainStopId] =
-    Async[F].delay(TrainStopId(s"train-stop-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(TrainStopId(s"train-stop-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextTrainSeatInventoryId: F[TrainSeatInventoryId] =
-    Async[F].delay(TrainSeatInventoryId(s"train-seat-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(TrainSeatInventoryId(s"train-seat-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextTrainSegmentPriceId: F[TrainSegmentPriceId] =
-    Async[F].delay(TrainSegmentPriceId(s"train-segment-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(TrainSegmentPriceId(s"train-segment-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextTrainRefundPolicySegmentId: F[TrainRefundPolicySegmentId] =
-    Async[F].delay(TrainRefundPolicySegmentId(s"train-policy-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(TrainRefundPolicySegmentId(s"train-policy-${UUID.randomUUID().toString.take(12)}"))
 
   override def findRailwayManagerByEmail(emailAddress: EmailAddress): F[Option[RailwayManager]] =
     sql"""
@@ -192,7 +192,7 @@ final class DoobieTrainRepository[F[_]: Async](
     for
       emailAddress <- Async[F].fromEither(EmailAddress.create(emailValue))
       displayName <- Async[F].fromEither(PersonName.create(displayNameValue))
-    yield RailwayManager.restorePersistedRailwayManager(
+    yield restorePersistedRailwayManager(
       managerId = ManagerId(managerIdValue),
       operatorCode = operatorCodeValue,
       primaryEmailAddress = emailAddress,
@@ -209,7 +209,7 @@ final class DoobieTrainRepository[F[_]: Async](
       seatInventories <- loadSeatInventories(TrainId(trainIdValue))
       segmentPrices <- loadSegmentPrices(TrainId(trainIdValue))
       refundPolicies <- loadRefundPolicies(TrainId(trainIdValue))
-    yield TrainJourney.restorePersistedTrainJourney(
+    yield restorePersistedTrainJourney(
       trainId = TrainId(trainIdValue),
       managerId = ManagerId(managerIdValue),
       trainNumber = trainNumber,
@@ -313,3 +313,4 @@ final class DoobieTrainRepository[F[_]: Async](
     ((fromStopOpt, toStopOpt) match
       case (Some(fromStop), Some(toStop)) => fromStop.sequenceNo < toStop.sequenceNo
       case _                              => true)
+

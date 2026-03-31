@@ -47,6 +47,7 @@ export function MvpApp() {
   const [travelerResponses, setTravelerResponses] = useState<TravelerResponse[]>([])
   const [orderResponses, setOrderResponses] = useState<OrderResponse[]>([])
   const [currentManagerSession, setCurrentManagerSession] = useState<ManagerSessionResponse | null>(null)
+  const [managedFlightResponses, setManagedFlightResponses] = useState<FlightResponse[]>([])
   const [currentTrainAdminSession, setCurrentTrainAdminSession] = useState<TrainAdminSessionResponse | null>(null)
   const [currentAttractionAdminSession, setCurrentAttractionAdminSession] = useState<AttractionAdminSessionResponse | null>(null)
   const [managerTaskResponses, setManagerTaskResponses] = useState<ManagerTaskResponse[]>([])
@@ -168,6 +169,16 @@ export function MvpApp() {
       managerType: currentManagerSession.managerType.toLowerCase(),
     })
     setManagerRefundTaskResponses(refundTaskListResponse.tasks)
+  }
+
+  async function reloadManagedFlights() {
+    if (!currentManagerSession || currentManagerSession.managerType !== 'Airline') {
+      setManagedFlightResponses([])
+      return
+    }
+
+    const flightListResponse = await travelMvpApiClient.listManagerFlights(currentManagerSession.managerId)
+    setManagedFlightResponses(flightListResponse.flights)
   }
 
   function requireSignedInUser() {
@@ -667,6 +678,7 @@ export function MvpApp() {
               currentLanguage={currentLanguage}
               isBusy={isPageBusy}
               managerSession={currentManagerSession}
+              managedFlights={managedFlightResponses}
               managerTasks={managerTaskResponses}
               managerRefundTasks={managerRefundTaskResponses}
               translate={translate}
@@ -674,13 +686,28 @@ export function MvpApp() {
                 await runPageAction(async () => {
                   const session = await travelMvpApiClient.registerAirlineManager(payload)
                   setCurrentManagerSession(session)
-                  await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
+                  const [tasks, refundTasks, flights] = await Promise.all([
+                    travelMvpApiClient.listManagerTasks({
+                      managerId: session.managerId,
+                      managerType: session.managerType.toLowerCase(),
+                      status: 'pending',
+                    }),
+                    travelMvpApiClient.listManagerRefundTasks({
+                      managerId: session.managerId,
+                      managerType: session.managerType.toLowerCase(),
+                    }),
+                    travelMvpApiClient.listManagerFlights(session.managerId),
+                  ])
+                  setManagerTaskResponses(tasks.tasks)
+                  setManagerRefundTaskResponses(refundTasks.tasks)
+                  setManagedFlightResponses(flights.flights)
                 }, translate('manager.createAccount'), translate('notice.actionSuccess'))
               }}
               onRegisterHotelManager={async payload => {
                 await runPageAction(async () => {
                   const session = await travelMvpApiClient.registerHotelManager(payload)
                   setCurrentManagerSession(session)
+                  setManagedFlightResponses([])
                   await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
                 }, translate('manager.createAccount'), translate('notice.actionSuccess'))
               }}
@@ -706,11 +733,18 @@ export function MvpApp() {
                   ])
                   setManagerTaskResponses(tasks.tasks)
                   setManagerRefundTaskResponses(refundTasks.tasks)
+                  if (session.managerType === 'Airline') {
+                    const flights = await travelMvpApiClient.listManagerFlights(session.managerId)
+                    setManagedFlightResponses(flights.flights)
+                  } else {
+                    setManagedFlightResponses([])
+                  }
                 }, translate('manager.login'), translate('notice.actionSuccess'))
               }}
               onReloadTasks={async status => {
                 await runPageAction(async () => {
                   await reloadManagerTasks(status)
+                  await reloadManagedFlights()
                 }, translate('manager.refresh'), translate('notice.actionSuccess'))
               }}
               onReloadRefundTasks={async () => {
@@ -725,6 +759,7 @@ export function MvpApp() {
                     managerId: managerSession.managerId,
                     ...payload,
                   })
+                  await reloadManagedFlights()
                 }, translate('manager.createFlight'), translate('notice.actionSuccess'))
               }}
               onConfirmTask={async payload => {
@@ -765,6 +800,7 @@ export function MvpApp() {
               }}
               onLogoutManager={() => {
                 setCurrentManagerSession(null)
+                setManagedFlightResponses([])
                 setManagerTaskResponses([])
                 setManagerRefundTaskResponses([])
               }}

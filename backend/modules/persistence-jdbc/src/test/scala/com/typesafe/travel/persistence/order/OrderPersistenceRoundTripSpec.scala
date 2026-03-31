@@ -19,7 +19,7 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
 
     DoobieUserRepository[cats.effect.IO](transactor)
       .saveUser(
-        User.registerNewUser(
+        registerNewUser(
           userId = UserId("user-order-structure"),
           primaryEmailAddress = EmailAddress.unsafe("order-structure@example.com"),
           userDisplayName = PersonName.unsafe("Order Structure"),
@@ -63,7 +63,7 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
       unitPriceSnapshot = Money.unsafe(BigDecimal(1360), orderCurrency)
     )
 
-    val flightOrderItem = FlightOrderItem.restorePersistedFlightOrderItem(
+    val flightOrderItem = restorePersistedFlightOrderItem(
       orderItemId = OrderItemId("order-item-flight-typed"),
       flightBookingSnapshot = flightBookingSnapshot,
       orderItemStatus = OrderItemStatus.Confirmed,
@@ -71,7 +71,7 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
       supplierReviewDecision = None
     )
 
-    val hotelOrderItem = HotelOrderItem.restorePersistedHotelOrderItem(
+    val hotelOrderItem = restorePersistedHotelOrderItem(
       orderItemId = OrderItemId("order-item-hotel-typed"),
       hotelBookingSnapshot = hotelBookingSnapshot,
       orderItemStatus = OrderItemStatus.Confirmed,
@@ -79,14 +79,14 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
       supplierReviewDecision = None
     )
 
-    val savedOrder = Order.restorePersistedOrder(
+    val savedOrder = restoreOrder(
       orderId = OrderId("order-typed-columns"),
       ownerUserId = UserId("user-order-structure"),
       orderStatus = OrderStatus.Confirmed,
       orderCurrency = orderCurrency,
       orderLineItems = Vector(flightOrderItem, hotelOrderItem),
       orderPayments = Vector(
-        Payment.restorePersistedPayment(
+        restorePersistedPayment(
           paymentId = PaymentId("payment-typed-1"),
           paymentAmount = Money.unsafe(BigDecimal(8560), orderCurrency),
           paymentMethod = PaymentMethod.Card,
@@ -96,7 +96,7 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
         )
       ),
       orderRefunds = Vector(
-        Refund.restorePersistedRefund(
+        restorePersistedRefund(
           refundId = RefundId("refund-typed-1"),
           refundAmount = Money.unsafe(BigDecimal(1000), orderCurrency),
           refundReason = "fare adjustment",
@@ -240,3 +240,4 @@ final class OrderPersistenceRoundTripSpec extends FunSuite:
       settledAt: Option[Instant],
       metadataJson: Option[String]
   )
+

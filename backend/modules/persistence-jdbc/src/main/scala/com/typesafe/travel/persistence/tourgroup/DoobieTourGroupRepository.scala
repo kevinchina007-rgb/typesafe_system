@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.tourgroup
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
 import com.typesafe.travel.shared.kernel.*
@@ -366,7 +366,7 @@ final class DoobieTourGroupRepository[F[_]: Async](transactor: Transactor[F]) ex
     }
 
   private def nextId[A](prefix: String, build: String => A): F[A] =
-    Async[F].delay(build(s"$prefix-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(build(s"$prefix-${UUID.randomUUID().toString.take(12)}"))
 
   private def upsertGroup(group: TourGroup): ConnectionIO[Int] =
     sql"""

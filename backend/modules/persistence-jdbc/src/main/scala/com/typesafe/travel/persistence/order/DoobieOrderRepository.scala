@@ -1,6 +1,6 @@
 package com.typesafe.travel.persistence.order
 
-import cats.effect.kernel.Async
+import cats.effect.kernel.{Async, Sync}
 import cats.syntax.all.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs
@@ -16,16 +16,16 @@ final class DoobieOrderRepository[F[_]: Async](
     transactor: Transactor[F]
 ) extends OrderRepository[F]:
   override def nextOrderId: F[OrderId] =
-    Async[F].delay(OrderId(s"order-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(OrderId(s"order-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextOrderItemId: F[OrderItemId] =
-    Async[F].delay(OrderItemId(s"order-item-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(OrderItemId(s"order-item-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextPaymentId: F[PaymentId] =
-    Async[F].delay(PaymentId(s"payment-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(PaymentId(s"payment-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextRefundId: F[RefundId] =
-    Async[F].delay(RefundId(s"refund-${UUID.randomUUID().toString.take(12)}"))
+    Sync[F].delay(RefundId(s"refund-${UUID.randomUUID().toString.take(12)}"))
 
   override def findOrderById(orderId: OrderId): F[Option[Order]] =
     loadOrders(
@@ -273,7 +273,7 @@ final class DoobieOrderRepository[F[_]: Async](
       orderLineItems <- loadOrderLineItems(OrderId(orderRow.orderId))
       orderPayments <- loadOrderPayments(OrderId(orderRow.orderId))
       orderRefunds <- loadOrderRefunds(OrderId(orderRow.orderId))
-    yield Order.restorePersistedOrder(
+    yield restoreOrder(
       orderId = OrderId(orderRow.orderId),
       ownerUserId = UserId(orderRow.buyerUserId),
       orderStatus = OrderStatus.valueOf(orderRow.status),
@@ -375,7 +375,7 @@ final class DoobieOrderRepository[F[_]: Async](
     orderLineItemRow.itemKind match
       case "flight" =>
         Async[F].fromEither(DatabaseCodecs.decodeFlightBookingSnapshot(orderLineItemRow.snapshotJson)).map { flightBookingSnapshot =>
-          FlightOrderItem.restorePersistedFlightOrderItem(
+          restorePersistedFlightOrderItem(
             OrderItemId(orderLineItemRow.orderItemId),
             flightBookingSnapshot,
             orderItemStatus,
@@ -385,7 +385,7 @@ final class DoobieOrderRepository[F[_]: Async](
         }
       case "hotel" =>
         Async[F].fromEither(DatabaseCodecs.decodeHotelBookingSnapshot(orderLineItemRow.snapshotJson)).map { hotelBookingSnapshot =>
-          HotelOrderItem.restorePersistedHotelOrderItem(
+          restorePersistedHotelOrderItem(
             OrderItemId(orderLineItemRow.orderItemId),
             hotelBookingSnapshot,
             orderItemStatus,
@@ -395,7 +395,7 @@ final class DoobieOrderRepository[F[_]: Async](
         }
       case "train" =>
         Async[F].fromEither(DatabaseCodecs.decodeTrainBookingSnapshot(orderLineItemRow.snapshotJson)).map { trainBookingSnapshot =>
-          TrainOrderItem.restorePersistedTrainOrderItem(
+          restorePersistedTrainOrderItem(
             OrderItemId(orderLineItemRow.orderItemId),
             trainBookingSnapshot,
             orderItemStatus,
@@ -405,7 +405,7 @@ final class DoobieOrderRepository[F[_]: Async](
         }
       case "attraction" =>
         Async[F].fromEither(DatabaseCodecs.decodeAttractionTicketSnapshot(orderLineItemRow.snapshotJson)).map { attractionTicketSnapshot =>
-          AttractionOrderItem.restorePersistedAttractionOrderItem(
+          restorePersistedAttractionOrderItem(
             OrderItemId(orderLineItemRow.orderItemId),
             attractionTicketSnapshot,
             orderItemStatus,
@@ -422,7 +422,7 @@ final class DoobieOrderRepository[F[_]: Async](
     for
       paymentCurrency <- Async[F].fromEither(DatabaseCodecs.parseCurrency(paymentCurrencyValue))
       paymentAmount <- Async[F].fromEither(Money.create(paymentAmountValue, paymentCurrency))
-    yield Payment.restorePersistedPayment(
+    yield restorePersistedPayment(
       paymentId = PaymentId(paymentIdValue),
       paymentAmount = paymentAmount,
       paymentMethod = PaymentMethod.valueOf(paymentMethodValue),
@@ -448,7 +448,7 @@ final class DoobieOrderRepository[F[_]: Async](
     for
       refundCurrency <- Async[F].fromEither(DatabaseCodecs.parseCurrency(refundCurrencyValue))
       refundAmount <- Async[F].fromEither(Money.create(refundAmountValue, refundCurrency))
-    yield Refund.restorePersistedRefund(
+    yield restorePersistedRefund(
       refundId = RefundId(refundIdValue),
       refundAmount = refundAmount,
       refundReason = refundReasonValue,
@@ -624,3 +624,4 @@ final class DoobieOrderRepository[F[_]: Async](
       bookedCurrency: String,
       snapshotJson: String
   )
+
