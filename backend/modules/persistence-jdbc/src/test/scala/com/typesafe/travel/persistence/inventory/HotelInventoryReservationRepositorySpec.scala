@@ -2,9 +2,9 @@ package com.typesafe.travel.persistence.inventory
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import com.typesafe.travel.identity.domain.User
+import com.typesafe.travel.identity.domain.*
 import com.typesafe.travel.inventory.domain.*
-import com.typesafe.travel.order.domain.Order
+import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.PersistenceTestSupport
 import com.typesafe.travel.persistence.SchemaInitializer
 import com.typesafe.travel.persistence.identity.DoobieUserRepository

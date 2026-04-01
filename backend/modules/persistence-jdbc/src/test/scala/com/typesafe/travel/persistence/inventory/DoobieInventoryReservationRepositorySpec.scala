@@ -2,13 +2,13 @@ package com.typesafe.travel.persistence.inventory
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import com.typesafe.travel.identity.domain.{User, UserAccountStatus, UserMembershipLevel}
+import com.typesafe.travel.identity.domain.*
 import com.typesafe.travel.inventory.domain.*
+import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.PersistenceTestSupport
 import com.typesafe.travel.persistence.SchemaInitializer
 import com.typesafe.travel.persistence.identity.DoobieUserRepository
 import com.typesafe.travel.persistence.order.DoobieOrderRepository
-import com.typesafe.travel.order.domain.Order
 import com.typesafe.travel.shared.kernel.*
 import munit.FunSuite
 
@@ -38,7 +38,7 @@ class DoobieInventoryReservationRepositorySpec extends FunSuite:
               registeredAt = Instant.parse("2026-03-27T11:59:00Z")
             )
           )
-          savedOrder <- orderRepository.saveOrder(
+          _ <- orderRepository.saveOrder(
             newDraftOrder(
               orderId = OrderId("order-roundtrip"),
               ownerUserId = savedUser.userId,
@@ -61,7 +61,7 @@ class DoobieInventoryReservationRepositorySpec extends FunSuite:
           )
           _ <- repository.saveReservation(reservation)
           loadedReservation <- repository.findReservationById(reservationId)
-        yield (savedOrder, reservation, loadedReservation)
+        yield (savedUser, reservation, loadedReservation)
       ).unsafeRunSync()
 
     assertEquals(loaded._3, Some(loaded._2))

@@ -8,6 +8,7 @@ import cats.syntax.all.*
 import com.typesafe.travel.api.memory.*
 import com.typesafe.travel.api.storage.*
 import com.typesafe.travel.attraction.domain.*
+import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.identity.domain.*
@@ -16,6 +17,7 @@ import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.*
 import com.typesafe.travel.persistence.attraction.*
+import com.typesafe.travel.persistence.content.*
 import com.typesafe.travel.persistence.flight.*
 import com.typesafe.travel.persistence.hotel.*
 import com.typesafe.travel.persistence.identity.*
@@ -49,6 +51,8 @@ final case class ApplicationWiring[F[_]](
     hotelBookingApplicationService: HotelBookingApplicationService[F],
     trainBookingApplicationService: TrainBookingApplicationService[F],
     attractionBookingApplicationService: AttractionBookingApplicationService[F],
+    blogApplicationService: BlogApplicationService[F],
+    reviewApplicationService: ReviewApplicationService[F],
     tourGroupApplicationService: TourGroupApplicationService[F],
     trainAdminApplicationService: TrainAdminApplicationService[F],
     attractionAdminApplicationService: AttractionAdminApplicationService[F],
@@ -60,6 +64,8 @@ final case class ApplicationWiring[F[_]](
     hotelRepository: HotelRepository[F],
     trainRepository: TrainRepository[F],
     attractionRepository: AttractionRepository[F],
+    blogRepository: BlogRepository[F],
+    reviewRepository: ReviewRepository[F],
     tourGroupRepository: TourGroupRepository[F],
     orderRepository: OrderRepository[F],
     inventoryReservationRepository: InventoryReservationRepository[F],
@@ -85,13 +91,17 @@ object ApplicationWiring:
     val inMemoryHotelRepository = InMemoryHotelRepository.create[F]
     val inMemoryTrainRepository = InMemoryTrainRepository.create[F]
     val inMemoryAttractionRepository = InMemoryAttractionRepository.create[F]
+    val inMemoryBlogRepository = InMemoryBlogRepository.create[F]
+    val inMemoryReviewRepository = InMemoryReviewRepository.create[F]
     val inMemoryTourGroupRepository = InMemoryTourGroupRepository.create[F]
     val inMemoryOrderRepository = InMemoryOrderRepository.create[F]
     val inMemoryInventoryReservationRepository = InMemoryInventoryReservationRepository.create[F]
     val inMemoryManagerRepository = InMemoryManagerRepository.create[F]
     val avatarUploadRootDirectoryPath = Paths.get("uploads", "avatars").toAbsolutePath.normalize()
+    val contentUploadRootDirectoryPath = Paths.get("uploads", "content").toAbsolutePath.normalize()
     val frontendDistRootDirectoryPath = Paths.get("..", "frontend", "dist").toAbsolutePath.normalize()
     val localAvatarStorage = LocalAvatarStorage.create[F](avatarUploadRootDirectoryPath)
+    val localContentImageStorage = LocalContentImageStorage.create[F](contentUploadRootDirectoryPath)
 
     val liveUserService = LiveUserService[F](inMemoryUserRepository)
     val liveTravelerProfileService =
@@ -151,6 +161,19 @@ object ApplicationWiring:
         orderService = liveOrderService,
         travelerProfileRepository = inMemoryTravelerProfileRepository
       )
+    val liveBlogApplicationService =
+      LiveBlogApplicationService[F](
+        blogRepository = inMemoryBlogRepository,
+        userRepository = inMemoryUserRepository,
+        contentImageStorage = localContentImageStorage
+      )
+    val liveReviewApplicationService =
+      LiveReviewApplicationService[F](
+        reviewRepository = inMemoryReviewRepository,
+        orderRepository = inMemoryOrderRepository,
+        userRepository = inMemoryUserRepository,
+        contentImageStorage = localContentImageStorage
+      )
     val liveTourGroupApplicationService =
       LiveTourGroupApplicationService[F](
         tourGroupRepository = inMemoryTourGroupRepository,
@@ -200,18 +223,21 @@ object ApplicationWiring:
         hotelBookingApplicationService = liveHotelBookingApplicationService,
         trainBookingApplicationService = liveTrainBookingApplicationService,
         attractionBookingApplicationService = liveAttractionBookingApplicationService,
+        blogApplicationService = liveBlogApplicationService,
+        reviewApplicationService = liveReviewApplicationService,
         tourGroupApplicationService = liveTourGroupApplicationService,
         trainAdminApplicationService = liveTrainAdminApplicationService,
         attractionAdminApplicationService = liveAttractionAdminApplicationService,
         managerWorkflowApplicationService = liveManagerWorkflowApplicationService,
         avatarApplicationService = liveAvatarApplicationService,
-        userRepository = inMemoryUserRepository,
-        travelerProfileRepository = inMemoryTravelerProfileRepository,
-        orderRepository = inMemoryOrderRepository,
-        inventoryReservationRepository = inMemoryInventoryReservationRepository,
-        avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
-        frontendDistRootDirectoryPath = frontendDistRootDirectoryPath
-      )
+            userRepository = inMemoryUserRepository,
+            travelerProfileRepository = inMemoryTravelerProfileRepository,
+            orderRepository = inMemoryOrderRepository,
+            inventoryReservationRepository = inMemoryInventoryReservationRepository,
+            avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
+            contentUploadRootDirectoryPath = contentUploadRootDirectoryPath,
+            frontendDistRootDirectoryPath = frontendDistRootDirectoryPath
+          )
 
     ApplicationWiring(
       userService = liveUserService,
@@ -230,6 +256,8 @@ object ApplicationWiring:
       hotelBookingApplicationService = liveHotelBookingApplicationService,
       trainBookingApplicationService = liveTrainBookingApplicationService,
       attractionBookingApplicationService = liveAttractionBookingApplicationService,
+      blogApplicationService = liveBlogApplicationService,
+      reviewApplicationService = liveReviewApplicationService,
       tourGroupApplicationService = liveTourGroupApplicationService,
       trainAdminApplicationService = liveTrainAdminApplicationService,
       attractionAdminApplicationService = liveAttractionAdminApplicationService,
@@ -241,6 +269,8 @@ object ApplicationWiring:
       hotelRepository = inMemoryHotelRepository,
       trainRepository = inMemoryTrainRepository,
       attractionRepository = inMemoryAttractionRepository,
+      blogRepository = inMemoryBlogRepository,
+      reviewRepository = inMemoryReviewRepository,
       tourGroupRepository = inMemoryTourGroupRepository,
       orderRepository = inMemoryOrderRepository,
       inventoryReservationRepository = inMemoryInventoryReservationRepository,
@@ -251,8 +281,10 @@ object ApplicationWiring:
   private def createPersistence[F[_]: Async]: Resource[F, ApplicationWiring[F]] =
     val databaseConfig = DatabaseConfig.loadFromEnvironment
     val avatarUploadRootDirectoryPath = Paths.get("uploads", "avatars").toAbsolutePath.normalize()
+    val contentUploadRootDirectoryPath = Paths.get("uploads", "content").toAbsolutePath.normalize()
     val frontendDistRootDirectoryPath = Paths.get("..", "frontend", "dist").toAbsolutePath.normalize()
     val localAvatarStorage = LocalAvatarStorage.create[F](avatarUploadRootDirectoryPath)
+    val localContentImageStorage = LocalContentImageStorage.create[F](contentUploadRootDirectoryPath)
 
     DatabaseTransactor.resource[F](databaseConfig).evalMap { databaseTransactor =>
       for
@@ -263,6 +295,8 @@ object ApplicationWiring:
         doobieHotelRepository = DoobieHotelRepository[F](databaseTransactor)
         doobieTrainRepository = DoobieTrainRepository[F](databaseTransactor)
         doobieAttractionRepository = DoobieAttractionRepository[F](databaseTransactor)
+        doobieBlogRepository = DoobieBlogRepository[F](databaseTransactor)
+        doobieReviewRepository = DoobieReviewRepository[F](databaseTransactor)
         doobieTourGroupRepository = DoobieTourGroupRepository[F](databaseTransactor)
         doobieOrderRepository = DoobieOrderRepository[F](databaseTransactor)
         doobieInventoryReservationRepository = DoobieInventoryReservationRepository[F](databaseTransactor)
@@ -325,6 +359,19 @@ object ApplicationWiring:
             orderService = liveOrderService,
             travelerProfileRepository = doobieTravelerProfileRepository
           )
+        liveBlogApplicationService =
+          LiveBlogApplicationService[F](
+            blogRepository = doobieBlogRepository,
+            userRepository = doobieUserRepository,
+            contentImageStorage = localContentImageStorage
+          )
+        liveReviewApplicationService =
+          LiveReviewApplicationService[F](
+            reviewRepository = doobieReviewRepository,
+            orderRepository = doobieOrderRepository,
+            userRepository = doobieUserRepository,
+            contentImageStorage = localContentImageStorage
+          )
         liveTourGroupApplicationService =
           LiveTourGroupApplicationService[F](
             tourGroupRepository = doobieTourGroupRepository,
@@ -373,6 +420,8 @@ object ApplicationWiring:
             hotelBookingApplicationService = liveHotelBookingApplicationService,
             trainBookingApplicationService = liveTrainBookingApplicationService,
             attractionBookingApplicationService = liveAttractionBookingApplicationService,
+            blogApplicationService = liveBlogApplicationService,
+            reviewApplicationService = liveReviewApplicationService,
             tourGroupApplicationService = liveTourGroupApplicationService,
             trainAdminApplicationService = liveTrainAdminApplicationService,
             attractionAdminApplicationService = liveAttractionAdminApplicationService,
@@ -383,6 +432,7 @@ object ApplicationWiring:
             orderRepository = doobieOrderRepository,
             inventoryReservationRepository = doobieInventoryReservationRepository,
             avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
+            contentUploadRootDirectoryPath = contentUploadRootDirectoryPath,
             frontendDistRootDirectoryPath = frontendDistRootDirectoryPath
           )
       yield ApplicationWiring(
@@ -402,6 +452,8 @@ object ApplicationWiring:
         hotelBookingApplicationService = liveHotelBookingApplicationService,
         trainBookingApplicationService = liveTrainBookingApplicationService,
         attractionBookingApplicationService = liveAttractionBookingApplicationService,
+        blogApplicationService = liveBlogApplicationService,
+        reviewApplicationService = liveReviewApplicationService,
         tourGroupApplicationService = liveTourGroupApplicationService,
         trainAdminApplicationService = liveTrainAdminApplicationService,
         attractionAdminApplicationService = liveAttractionAdminApplicationService,
@@ -413,6 +465,8 @@ object ApplicationWiring:
         hotelRepository = doobieHotelRepository,
         trainRepository = doobieTrainRepository,
         attractionRepository = doobieAttractionRepository,
+        blogRepository = doobieBlogRepository,
+        reviewRepository = doobieReviewRepository,
         tourGroupRepository = doobieTourGroupRepository,
         orderRepository = doobieOrderRepository,
         inventoryReservationRepository = doobieInventoryReservationRepository,

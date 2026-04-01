@@ -52,6 +52,15 @@ object JsonCodecs:
   given Decoder[ReviewGroupPlanSelectionRequestDto] = deriveDecoder
   given Decoder[RejectGroupPlanSelectionRequestDto] = deriveDecoder
   given Decoder[PayGroupPlanSelectionRequestDto] = deriveDecoder
+  given Decoder[ContentImageResponseDto] = deriveDecoder
+  given Decoder[CreateBlogPostRequestDto] = deriveDecoder
+  given Decoder[UpdateBlogPostRequestDto] = deriveDecoder
+  given Decoder[CreateBlogCommentRequestDto] = deriveDecoder
+  given Decoder[BlogLikeRequestDto] = deriveDecoder
+  given Decoder[DeleteBlogCommentRequestDto] = deriveDecoder
+  given Decoder[CreateReviewRequestDto] = deriveDecoder
+  given Decoder[UpdateReviewRequestDto] = deriveDecoder
+  given Decoder[DeleteReviewRequestDto] = deriveDecoder
 
   given Encoder[CabinInventoryResponseDto] = deriveEncoder
   given Encoder[FlightResponseDto] = deriveEncoder
@@ -95,3 +104,12 @@ object JsonCodecs:
   given Encoder[GroupSelectionOrderLinkResponseDto] = deriveEncoder
   given Encoder[TourGroupDetailsResponseDto] = deriveEncoder
   given Encoder[TourGroupListResponseDto] = deriveEncoder
+  given Encoder[BlogCommentResponseDto] = deriveEncoder
+  given Encoder[ContentImageResponseDto] = deriveEncoder
+  given Encoder[BlogPostSummaryResponseDto] = deriveEncoder
+  given Encoder[BlogPostResponseDto] = deriveEncoder
+  given Encoder[BlogPostListResponseDto] = deriveEncoder
+  given Encoder[ReviewEligibilityResponseDto] = deriveEncoder
+  given Encoder[ResourceReviewSummaryResponseDto] = deriveEncoder
+  given Encoder[ReviewResponseDto] = deriveEncoder
+  given Encoder[ReviewListResponseDto] = deriveEncoder

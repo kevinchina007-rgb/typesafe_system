@@ -3,11 +3,17 @@ import type {
   AttractionListResponse,
   AttractionResponse,
   ApiErrorResponse,
+  BlogPostListResponse,
+  BlogPostResponse,
+  ResourceReviewSummaryResponse,
   FlightListResponse,
   FlightResponse,
   HealthResponse,
   HotelListResponse,
   HotelResponse,
+  ReviewEligibilityResponse,
+  ReviewListResponse,
+  ReviewResponse,
   TrainAdminSessionResponse,
   TrainListResponse,
   TrainResponse,
@@ -72,6 +78,226 @@ async function apiRequest<TResponse>(path: string, options?: RequestInit): Promi
 
 export const travelMvpApiClient = {
   getHealth: (): Promise<HealthResponse> => apiRequest('/health'),
+
+  listBlogPosts: (scope: 'latest' | 'mine' = 'latest', userId?: string, q?: string): Promise<BlogPostListResponse> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('scope', scope)
+    if (userId) {
+      searchParams.set('userId', userId)
+    }
+    if (q?.trim()) {
+      searchParams.set('q', q.trim())
+    }
+    const suffix = `?${searchParams.toString()}`
+    return apiRequest(`/blog/posts${suffix}`)
+  },
+
+  uploadBlogImage: (userId: string, imageFile: File) => {
+    const formData = new FormData()
+    formData.set('image', imageFile)
+    return apiRequest<import('./mvp-types').ContentImageResponse>(`/blog/images?userId=${encodeURIComponent(userId)}`, {
+      method: 'POST',
+      body: formData,
+    })
+  },
+
+  getBlogPost: (postId: string, userId?: string): Promise<BlogPostResponse> => {
+    const suffix = userId ? `?userId=${encodeURIComponent(userId)}` : ''
+    return apiRequest(`/blog/posts/${postId}${suffix}`)
+  },
+
+  createBlogPost: (payload: {
+    userId: string
+    title: string
+    summary: string
+    content: string
+    images: Array<{
+      imageId: string
+      publicUrl: string
+      originalFileName: string
+      sortOrder: number
+      createdAt: string
+    }>
+  }): Promise<BlogPostResponse> =>
+    apiRequest('/blog/posts', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateBlogPost: (
+    postId: string,
+    payload: {
+      userId: string
+      title: string
+      summary: string
+      content: string
+      images: Array<{
+        imageId: string
+        publicUrl: string
+        originalFileName: string
+        sortOrder: number
+        createdAt: string
+      }>
+    },
+  ): Promise<BlogPostResponse> =>
+    apiRequest(`/blog/posts/${postId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  archiveBlogPost: (
+    postId: string,
+    payload: {
+      userId: string
+    },
+  ): Promise<BlogPostResponse> =>
+    apiRequest(`/blog/posts/${postId}/archive`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  addBlogComment: (
+    postId: string,
+    payload: {
+      userId: string
+      content: string
+    },
+  ): Promise<BlogPostResponse> =>
+    apiRequest(`/blog/posts/${postId}/comments`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteBlogComment: (
+    commentId: string,
+    payload: {
+      userId: string
+    },
+  ): Promise<BlogPostResponse> =>
+    apiRequest(`/blog/comments/${commentId}`, {
+      method: 'DELETE',
+      body: JSON.stringify(payload),
+    }),
+
+  likeBlogPost: (
+    postId: string,
+    payload: {
+      userId: string
+    },
+  ): Promise<BlogPostResponse> =>
+    apiRequest(`/blog/posts/${postId}/likes`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  unlikeBlogPost: (
+    postId: string,
+    payload: {
+      userId: string
+    },
+  ): Promise<BlogPostResponse> =>
+    apiRequest(`/blog/posts/${postId}/unlike`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listMyReviews: (userId: string): Promise<ReviewListResponse> =>
+    apiRequest(`/reviews/mine?userId=${encodeURIComponent(userId)}`),
+
+  listReviewsByResource: (payload: {
+    userId: string
+    resourceType: string
+    resourceId: string
+  }): Promise<ReviewListResponse> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('userId', payload.userId)
+    searchParams.set('resourceType', payload.resourceType)
+    searchParams.set('resourceId', payload.resourceId)
+    return apiRequest(`/reviews?${searchParams.toString()}`)
+  },
+
+  getReviewResourceSummary: (payload: {
+    userId: string
+    resourceType: string
+    resourceId: string
+  }): Promise<ResourceReviewSummaryResponse> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('userId', payload.userId)
+    searchParams.set('resourceType', payload.resourceType)
+    searchParams.set('resourceId', payload.resourceId)
+    return apiRequest(`/reviews/summary?${searchParams.toString()}`)
+  },
+
+  getReviewEligibility: (payload: {
+    userId: string
+    orderItemId: string
+  }): Promise<ReviewEligibilityResponse> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('userId', payload.userId)
+    searchParams.set('orderItemId', payload.orderItemId)
+    return apiRequest(`/reviews/eligibility?${searchParams.toString()}`)
+  },
+
+  createReview: (payload: {
+    userId: string
+    orderId: string
+    orderItemId: string
+    rating: number
+    title: string
+    content: string
+    images: Array<{
+      imageId: string
+      publicUrl: string
+      originalFileName: string
+      sortOrder: number
+      createdAt: string
+    }>
+  }): Promise<ReviewResponse> =>
+    apiRequest('/reviews', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  updateReview: (
+    reviewId: string,
+    payload: {
+      userId: string
+      rating: number
+      title: string
+      content: string
+      images: Array<{
+        imageId: string
+        publicUrl: string
+        originalFileName: string
+        sortOrder: number
+        createdAt: string
+      }>
+    },
+  ): Promise<ReviewResponse> =>
+    apiRequest(`/reviews/${reviewId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  uploadReviewImage: (userId: string, imageFile: File) => {
+    const formData = new FormData()
+    formData.set('image', imageFile)
+    return apiRequest<import('./mvp-types').ContentImageResponse>(`/reviews/images?userId=${encodeURIComponent(userId)}`, {
+      method: 'POST',
+      body: formData,
+    })
+  },
+
+  deleteReview: (
+    reviewId: string,
+    payload: {
+      userId: string
+    },
+  ): Promise<void> =>
+    apiRequest(`/reviews/${reviewId}`, {
+      method: 'DELETE',
+      body: JSON.stringify(payload),
+    }),
 
   createUser: (payload: {
     email: string

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
-import type { AppLanguage, TrainResponse, TravelerResponse } from '../lib/mvp-types'
+import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainResponse, TravelerResponse } from '../lib/mvp-types'
+import { ResourceReviewSummaryLoader } from './ResourceReviewSummaryLoader'
 import { formatIsoDateTime, localizeTrainSeatClass, mapBackendStatusToProductLabel } from '../lib/view-models'
 
 type TrainsPanelProps = {
@@ -22,6 +23,8 @@ type TrainsPanelProps = {
     seatClass: string
     orderCurrency: string
   }) => Promise<void>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
 function renderTravelerOptionLabel(traveler: TravelerResponse): string {
@@ -81,6 +84,8 @@ export function TrainsPanel({
   translate,
   onSearchTrains,
   onBookTrain,
+  onLoadReviewSummary,
+  onLoadReviews,
 }: TrainsPanelProps) {
   const [trainResponses, setTrainResponses] = useState<TrainResponse[]>([])
   const [hasSearchedTrains, setHasSearchedTrains] = useState(false)
@@ -151,6 +156,17 @@ export function TrainsPanel({
                   <div>
                     <strong>{trainResponse.trainNumber}</strong>
                     <p>{renderStopSummary(trainResponse)}</p>
+                    <ResourceReviewSummaryLoader
+                      currentLanguage={currentLanguage}
+                      isBusy={isBusy}
+                      isEnabled={!isGuestMode}
+                      resourceType="Train"
+                      resourceId={trainResponse.trainId}
+                      title={trainResponse.trainNumber}
+                      translate={translate}
+                      onLoadSummary={onLoadReviewSummary}
+                      onLoadReviews={onLoadReviews}
+                    />
                   </div>
                   <span className="tag-chip">{mapBackendStatusToProductLabel(trainResponse.status, currentLanguage)}</span>
                 </div>

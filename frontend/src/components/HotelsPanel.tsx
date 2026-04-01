@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
-import type { AppLanguage, HotelResponse, TravelerResponse } from '../lib/mvp-types'
+import type { AppLanguage, HotelResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse } from '../lib/mvp-types'
+import { ResourceReviewSummaryLoader } from './ResourceReviewSummaryLoader'
 import { formatIsoDateTime, localizeBedType, mapBackendStatusToProductLabel } from '../lib/view-models'
 
 type HotelsPanelProps = {
@@ -21,6 +22,8 @@ type HotelsPanelProps = {
     checkOutDate: string
     roomCount: number
   }) => Promise<void>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
 function renderTravelerOptionLabel(traveler: TravelerResponse): string {
@@ -35,6 +38,8 @@ export function HotelsPanel({
   translate,
   onSearchHotels,
   onBookHotel,
+  onLoadReviewSummary,
+  onLoadReviews,
 }: HotelsPanelProps) {
   const [hotelResponses, setHotelResponses] = useState<HotelResponse[]>([])
   const [hasSearchedHotels, setHasSearchedHotels] = useState(false)
@@ -102,6 +107,17 @@ export function HotelsPanel({
                   <div>
                     <strong>{hotelResponse.hotelName}</strong>
                     <p>{hotelResponse.location}</p>
+                    <ResourceReviewSummaryLoader
+                      currentLanguage={currentLanguage}
+                      isBusy={isBusy}
+                      isEnabled={!isGuestMode}
+                      resourceType="Hotel"
+                      resourceId={hotelResponse.hotelId}
+                      title={hotelResponse.hotelName}
+                      translate={translate}
+                      onLoadSummary={onLoadReviewSummary}
+                      onLoadReviews={onLoadReviews}
+                    />
                   </div>
                   <span className="tag-chip">{mapBackendStatusToProductLabel(hotelResponse.status, currentLanguage)}</span>
                 </div>

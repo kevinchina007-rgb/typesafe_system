@@ -25,15 +25,13 @@ final class UserSpec extends FunSuite:
 
   test("accruing points upgrades membership level") {
     val activeUser =
-      User
-        .registerNewUser(
+      registerNewUser(
           userId = UserId("user-2"),
           primaryEmailAddress = EmailAddress.unsafe("grace@example.com"),
           userDisplayName = PersonName.unsafe("Grace Hopper"),
           userPhoneNumber = ContactNumber.unsafe("+15550000002"),
           registeredAt = registeredAtInstant
-        )
-        .activateUserAccount
+        ).activateUserAccount
         .toOption
         .get
 
@@ -44,15 +42,13 @@ final class UserSpec extends FunSuite:
 
   test("closed user cannot assign default traveler") {
     val closedUser =
-      User
-        .registerNewUser(
+      registerNewUser(
           userId = UserId("user-3"),
           primaryEmailAddress = EmailAddress.unsafe("linus@example.com"),
           userDisplayName = PersonName.unsafe("Linus Torvalds"),
           userPhoneNumber = ContactNumber.unsafe("+15550000003"),
           registeredAt = registeredAtInstant
-        )
-        .closeUserAccount
+        ).closeUserAccount
         .toOption
         .get
 
@@ -63,15 +59,13 @@ final class UserSpec extends FunSuite:
 
   test("active user can update avatar url") {
     val activeUser =
-      User
-        .registerNewUser(
+      registerNewUser(
           userId = UserId("user-4"),
           primaryEmailAddress = EmailAddress.unsafe("margaret@example.com"),
           userDisplayName = PersonName.unsafe("Margaret Hamilton"),
           userPhoneNumber = ContactNumber.unsafe("+15550000004"),
           registeredAt = registeredAtInstant
-        )
-        .activateUserAccount
+        ).activateUserAccount
         .toOption
         .get
 

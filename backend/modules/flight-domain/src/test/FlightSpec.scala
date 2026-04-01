@@ -41,8 +41,7 @@ final class FlightSpec extends FunSuite:
 
   test("open flight can return a bookable cabin inventory") {
     val createdFlight =
-      FlightFactory
-        .createFlight(
+      createFlight(
           flightId = testFlightId,
           airlineId = AirlineId("airline-1"),
           flightNumber = FlightNumber.unsafe("MU5123"),
@@ -55,9 +54,7 @@ final class FlightSpec extends FunSuite:
           basePrice = Money.unsafe(BigDecimal(1000), Currency.CNY),
           cabinInventories = Vector(economyCabinInventory),
           createdAt = createdAt
-        )
-        .toOption
-        .get
+        ).toOption.get
 
     val result = createdFlight.ensureBookableCabinInventory(CabinClass.unsafe("economy"))
 
@@ -66,8 +63,7 @@ final class FlightSpec extends FunSuite:
 
   test("sold out cabin inventory is not bookable") {
     val soldOutFlight =
-      FlightFactory
-        .createFlight(
+      createFlight(
           flightId = testFlightId,
           airlineId = AirlineId("airline-1"),
           flightNumber = FlightNumber.unsafe("MU5123"),
@@ -89,9 +85,7 @@ final class FlightSpec extends FunSuite:
             )
           ),
           createdAt = createdAt
-        )
-        .toOption
-        .get
+        ).toOption.get
 
     val result = soldOutFlight.ensureBookableCabinInventory(CabinClass.unsafe("economy"))
 

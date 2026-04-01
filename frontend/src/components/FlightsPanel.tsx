@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
-import type { AppLanguage, FlightResponse, TravelerResponse } from '../lib/mvp-types'
+import type { AppLanguage, FlightResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse } from '../lib/mvp-types'
+import { ResourceReviewSummaryLoader } from './ResourceReviewSummaryLoader'
 import { formatIsoDateTime, localizeCabinClass, mapBackendStatusToProductLabel } from '../lib/view-models'
 
 type FlightsPanelProps = {
@@ -19,6 +20,8 @@ type FlightsPanelProps = {
     travelerIds: string[]
     cabinClass: string
   }) => Promise<void>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
 function renderTravelerOptionLabel(traveler: TravelerResponse): string {
@@ -33,6 +36,8 @@ export function FlightsPanel({
   translate,
   onSearchFlights,
   onBookFlight,
+  onLoadReviewSummary,
+  onLoadReviews,
 }: FlightsPanelProps) {
   const [flightResponses, setFlightResponses] = useState<FlightResponse[]>([])
   const [hasSearchedFlights, setHasSearchedFlights] = useState(false)
@@ -97,6 +102,17 @@ export function FlightsPanel({
                   <div>
                     <strong>{`${flightResponse.airlineName} ${flightResponse.flightNumber}`}</strong>
                     <p>{`${flightResponse.departureAirport} -> ${flightResponse.arrivalAirport}`}</p>
+                    <ResourceReviewSummaryLoader
+                      currentLanguage={currentLanguage}
+                      isBusy={isBusy}
+                      isEnabled={!isGuestMode}
+                      resourceType="Flight"
+                      resourceId={flightResponse.flightId}
+                      title={`${flightResponse.airlineName} ${flightResponse.flightNumber}`}
+                      translate={translate}
+                      onLoadSummary={onLoadReviewSummary}
+                      onLoadReviews={onLoadReviews}
+                    />
                   </div>
                   <span className="tag-chip">{mapBackendStatusToProductLabel(flightResponse.status, currentLanguage)}</span>
                 </div>

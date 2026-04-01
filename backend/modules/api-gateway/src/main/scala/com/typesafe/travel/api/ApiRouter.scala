@@ -8,6 +8,7 @@ import com.typesafe.travel.api.application.*
 import com.typesafe.travel.api.dto.*
 import com.typesafe.travel.api.routes.*
 import com.typesafe.travel.attraction.domain.*
+import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.flight.domain.*
 import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.identity.domain.*
@@ -38,6 +39,8 @@ final class ApiRouter[F[_]: Async: Clock](
     protected val trainBookingApplicationService: TrainBookingApplicationService[F],
     protected val trainAdminApplicationService: TrainAdminApplicationService[F],
     protected val attractionBookingApplicationService: AttractionBookingApplicationService[F],
+    protected val blogApplicationService: BlogApplicationService[F],
+    protected val reviewApplicationService: ReviewApplicationService[F],
     protected val attractionAdminApplicationService: AttractionAdminApplicationService[F],
     protected val tourGroupApplicationService: TourGroupApplicationService[F],
     protected val managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
@@ -47,6 +50,7 @@ final class ApiRouter[F[_]: Async: Clock](
     protected val orderRepository: OrderRepository[F],
     protected val inventoryReservationRepository: InventoryReservationRepository[F],
     protected val avatarUploadRootDirectoryPath: Path,
+    protected val contentUploadRootDirectoryPath: Path,
     protected val frontendDistRootDirectoryPath: Path
 ) extends Http4sDsl[F]
     with IdentityApiRoutes[F]
@@ -55,6 +59,8 @@ final class ApiRouter[F[_]: Async: Clock](
     with HotelApiRoutes[F]
     with TrainApiRoutes[F]
     with AttractionApiRoutes[F]
+    with BlogApiRoutes[F]
+    with ReviewApiRoutes[F]
     with ManagerApiRoutes[F]
     with OrderApiRoutes[F]
     with TourGroupApiRoutes[F]:
@@ -110,6 +116,8 @@ final class ApiRouter[F[_]: Async: Clock](
       hotelRoutes <+>
       trainRoutes <+>
       attractionRoutes <+>
+      blogRoutes <+>
+      reviewRoutes <+>
       managerRoutes <+>
       orderRoutes <+>
       tourGroupRoutes <+>
@@ -142,6 +150,37 @@ final class ApiRouter[F[_]: Async: Clock](
                             case name if name.endsWith(".png")  => MediaType.image.png
                             case name if name.endsWith(".jpg")  => MediaType.image.jpeg
                             case name if name.endsWith(".jpeg") => MediaType.image.jpeg
+                            case _                              => MediaType.application.`octet-stream`
+                        )
+                      )
+                    )
+                  }
+              }
+            else
+              NotFound()
+
+        case GET -> Root / "uploads" / "content" / collectionValue / fileNameValue =>
+          val normalizedCollection = collectionValue.trim.toLowerCase
+          val normalizedFileName = fileNameValue.trim
+          if normalizedCollection.isEmpty || normalizedFileName.isEmpty || normalizedFileName.contains("\\") || normalizedFileName.contains("/") then
+            NotFound()
+          else
+            val collectionDirectoryPath = contentUploadRootDirectoryPath.resolve(normalizedCollection).normalize()
+            val contentFilePath = collectionDirectoryPath.resolve(normalizedFileName).normalize()
+            if contentFilePath.startsWith(collectionDirectoryPath) then
+              Async[F].blocking(NioFiles.exists(contentFilePath)).flatMap {
+                case false =>
+                  NotFound()
+                case true =>
+                  Async[F].blocking(NioFiles.readAllBytes(contentFilePath)).flatMap { fileBytes =>
+                    Ok(fileBytes).map(
+                      _.putHeaders(
+                        headers.`Content-Type`(
+                          normalizedFileName.toLowerCase match
+                            case name if name.endsWith(".png")  => MediaType.image.png
+                            case name if name.endsWith(".jpg")  => MediaType.image.jpeg
+                            case name if name.endsWith(".jpeg") => MediaType.image.jpeg
+                            case name if name.endsWith(".webp") => MediaType.unsafeParse("image/webp")
                             case _                              => MediaType.application.`octet-stream`
                         )
                       )
@@ -273,6 +312,8 @@ final class ApiRouter[F[_]: Async: Clock](
         case AttractionError.TicketTypeWasInactive(_) => Status.BadRequest -> ApiErrorResponseDto("ticket_type_inactive", throwable.getMessage)
         case AttractionError.AttractionTravelerWasNotEligible(_, _, _) => Status.BadRequest -> ApiErrorResponseDto("traveler_not_eligible", throwable.getMessage)
         case AttractionError.AttractionWasNotOwnedByManager(_, _) => Status.Forbidden -> ApiErrorResponseDto("manager_scope_mismatch", throwable.getMessage)
+        case blogError: BlogError => Status.BadRequest -> ApiErrorResponseDto("blog_error", blogError.message)
+        case reviewError: ReviewError => Status.BadRequest -> ApiErrorResponseDto("review_error", reviewError.message)
         case HotelError.HotelWasNotFound(_) => Status.NotFound -> ApiErrorResponseDto("hotel_not_found", throwable.getMessage)
         case HotelBookingApplicationError.RoomTypeWasNotFound(_) => Status.BadRequest -> ApiErrorResponseDto("room_type_not_found", throwable.getMessage)
         case HotelBookingApplicationError.StayPeriodWasInvalid(_, _) => Status.BadRequest -> ApiErrorResponseDto("stay_period_invalid", throwable.getMessage)
@@ -292,6 +333,12 @@ final class ApiRouter[F[_]: Async: Clock](
         case AvatarApplicationError.AvatarFileTypeWasInvalid(_) | AvatarApplicationError.AvatarFileExtensionWasInvalid(_) => Status.BadRequest -> ApiErrorResponseDto("avatar_type_invalid", throwable.getMessage)
         case AvatarApplicationError.AvatarFileWasTooLarge(_, _) => Status.BadRequest -> ApiErrorResponseDto("avatar_too_large", throwable.getMessage)
         case AvatarApplicationError.AvatarUploadFailed(_) => Status.BadRequest -> ApiErrorResponseDto("avatar_upload_failed", throwable.getMessage)
+        case BlogImageUploadError.ImageWasMissing => Status.BadRequest -> ApiErrorResponseDto("blog_image_missing", throwable.getMessage)
+        case BlogImageUploadError.ImageFileTypeWasInvalid(_) | BlogImageUploadError.ImageFileExtensionWasInvalid(_) => Status.BadRequest -> ApiErrorResponseDto("blog_image_type_invalid", throwable.getMessage)
+        case BlogImageUploadError.ImageFileWasTooLarge(_, _) => Status.BadRequest -> ApiErrorResponseDto("blog_image_too_large", throwable.getMessage)
+        case ReviewImageUploadError.ImageWasMissing => Status.BadRequest -> ApiErrorResponseDto("review_image_missing", throwable.getMessage)
+        case ReviewImageUploadError.ImageFileTypeWasInvalid(_) | ReviewImageUploadError.ImageFileExtensionWasInvalid(_) => Status.BadRequest -> ApiErrorResponseDto("review_image_type_invalid", throwable.getMessage)
+        case ReviewImageUploadError.ImageFileWasTooLarge(_, _) => Status.BadRequest -> ApiErrorResponseDto("review_image_too_large", throwable.getMessage)
         case ManagerError.ManagerWasNotFoundByEmail(_, _) | ManagerError.ManagerWasNotFoundById(_, _) => Status.NotFound -> ApiErrorResponseDto("manager_not_found", throwable.getMessage)
         case ManagerError.ManagerEmailAlreadyExists(_) => Status.Conflict -> ApiErrorResponseDto("manager_email_exists", throwable.getMessage)
         case ManagerError.ManagerWasInactive(_, _) => Status.Forbidden -> ApiErrorResponseDto("manager_inactive", throwable.getMessage)
@@ -321,6 +368,8 @@ object ApiRouter:
       trainBookingApplicationService: TrainBookingApplicationService[F],
       trainAdminApplicationService: TrainAdminApplicationService[F],
       attractionBookingApplicationService: AttractionBookingApplicationService[F],
+      blogApplicationService: BlogApplicationService[F],
+      reviewApplicationService: ReviewApplicationService[F],
       attractionAdminApplicationService: AttractionAdminApplicationService[F],
       tourGroupApplicationService: TourGroupApplicationService[F],
       managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
@@ -330,6 +379,7 @@ object ApiRouter:
       orderRepository: OrderRepository[F],
       inventoryReservationRepository: InventoryReservationRepository[F],
       avatarUploadRootDirectoryPath: Path,
+      contentUploadRootDirectoryPath: Path,
       frontendDistRootDirectoryPath: Path
   ): ApiRouter[F] =
     new ApiRouter[F](
@@ -342,6 +392,8 @@ object ApiRouter:
       trainBookingApplicationService,
       trainAdminApplicationService,
       attractionBookingApplicationService,
+      blogApplicationService,
+      reviewApplicationService,
       attractionAdminApplicationService,
       tourGroupApplicationService,
       managerWorkflowApplicationService,
@@ -351,5 +403,6 @@ object ApiRouter:
       orderRepository,
       inventoryReservationRepository,
       avatarUploadRootDirectoryPath,
+      contentUploadRootDirectoryPath,
       frontendDistRootDirectoryPath
     )

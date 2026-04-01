@@ -17,7 +17,9 @@ object MigrationPlan:
     loadMigrationStep(6, "hotel_inventory_locking", "db/migrations/V6__hotel_inventory_locking.sql"),
     loadMigrationStep(7, "train_ticket_phase1", "db/migrations/V7__train_ticket_phase1.sql"),
     loadMigrationStep(8, "attraction_ticket_phase1", "db/migrations/V8__attraction_ticket_phase1.sql"),
-    loadMigrationStep(9, "tour_group_phase1", "db/migrations/V9__tour_group_phase1.sql")
+    loadMigrationStep(9, "tour_group_phase1", "db/migrations/V9__tour_group_phase1.sql"),
+    loadMigrationStep(10, "blog_and_review_phase1", "db/migrations/V10__blog_and_review_phase1.sql"),
+    loadMigrationStep(11, "blog_review_phase3", "db/migrations/V11__blog_review_phase3.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

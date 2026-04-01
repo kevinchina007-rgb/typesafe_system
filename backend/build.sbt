@@ -54,6 +54,7 @@ lazy val root = (project in file("."))
     hotelDomain,
     trainDomain,
     attractionDomain,
+    contentDomain,
     tourGroupDomain,
     inventoryDomain,
     orderDomain,
@@ -128,7 +129,7 @@ lazy val orderDomain = module("order-domain")
   )
 
 lazy val persistenceJdbc = module("persistence-jdbc")
-  .dependsOn(sharedKernel, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, tourGroupDomain, inventoryDomain, orderDomain, operationsDomain)
+  .dependsOn(sharedKernel, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, contentDomain, tourGroupDomain, inventoryDomain, orderDomain, operationsDomain)
   .settings(
     libraryDependencies ++= Seq(
       catsEffectDependency,
@@ -144,6 +145,9 @@ lazy val persistenceJdbc = module("persistence-jdbc")
 
 lazy val contentDomain = module("content-domain")
   .dependsOn(sharedKernel, orderDomain)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+  )
 
 lazy val operationsDomain = module("operations-domain")
   .dependsOn(sharedKernel)
@@ -160,6 +164,7 @@ lazy val apiGateway = module("api-gateway")
       hotelDomain,
       trainDomain,
       attractionDomain,
+      contentDomain,
       tourGroupDomain,
       inventoryDomain,
       orderDomain,
@@ -174,6 +179,7 @@ lazy val apiGateway = module("api-gateway")
       baseDirectory.value.getParentFile / "hotel-domain" / "src" / "api",
       baseDirectory.value.getParentFile / "train-domain" / "src" / "api",
       baseDirectory.value.getParentFile / "attraction-domain" / "src" / "api",
+      baseDirectory.value.getParentFile / "content-domain" / "src" / "api",
       baseDirectory.value.getParentFile / "tour-group-domain" / "src" / "api",
       baseDirectory.value.getParentFile / "inventory-domain" / "src" / "api",
       baseDirectory.value.getParentFile / "order-domain" / "src" / "api",
@@ -187,6 +193,7 @@ lazy val apiGateway = module("api-gateway")
       baseDirectory.value.getParentFile / "hotel-domain" / "src" / "api-test",
       baseDirectory.value.getParentFile / "train-domain" / "src" / "api-test",
       baseDirectory.value.getParentFile / "attraction-domain" / "src" / "api-test",
+      baseDirectory.value.getParentFile / "content-domain" / "src" / "api-test",
       baseDirectory.value.getParentFile / "tour-group-domain" / "src" / "api-test",
       baseDirectory.value.getParentFile / "inventory-domain" / "src" / "api-test",
       baseDirectory.value.getParentFile / "order-domain" / "src" / "api-test",

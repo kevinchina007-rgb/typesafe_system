@@ -24,6 +24,10 @@ final case class PaymentId(value: String) extends AnyVal
 final case class RefundId(value: String) extends AnyVal
 final case class ReviewId(value: String) extends AnyVal
 final case class BlogId(value: String) extends AnyVal
+final case class BlogCommentId(value: String) extends AnyVal
+final case class BlogLikeId(value: String) extends AnyVal
+final case class BlogImageId(value: String) extends AnyVal
+final case class ReviewImageId(value: String) extends AnyVal
 final case class TourGroupId(value: String) extends AnyVal
 final case class TourGroupMembershipId(value: String) extends AnyVal
 final case class TourGroupMembershipTravelerId(value: String) extends AnyVal

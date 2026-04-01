@@ -1,4 +1,7 @@
-import type { AppLanguage, OrderResponse } from '../lib/mvp-types'
+import { useState } from 'react'
+
+import type { AppLanguage, OrderResponse, ReviewEligibilityResponse, ReviewResponse } from '../lib/mvp-types'
+import { ReviewComposerDialog } from './ReviewComposerDialog'
 import {
   formatIsoDateTime,
   localizeBookingKind,
@@ -15,11 +18,17 @@ type OrderPanelProps = {
   isBusy: boolean
   isGuestMode: boolean
   orders: OrderResponse[]
+  reviews: ReviewResponse[]
   translate: (translationKey: string) => string
   onReloadOrders: () => Promise<void>
   onOpenPayment: (order: OrderResponse) => void
   onCancelOrder: (orderId: string) => Promise<void>
   onRequestRefund: (orderId: string, refundReason: string) => Promise<void>
+  onLoadReviewEligibility: (orderItemId: string) => Promise<ReviewEligibilityResponse>
+  onUploadReviewImage: (imageFile: File) => Promise<import('../lib/mvp-types').ContentImageResponse>
+  onCreateReview: (payload: { orderId: string; orderItemId: string; rating: number; title: string; content: string; images: import('../lib/mvp-types').ContentImageResponse[] }) => Promise<void>
+  onUpdateReview: (reviewId: string, payload: { rating: number; title: string; content: string; images: import('../lib/mvp-types').ContentImageResponse[] }) => Promise<void>
+  onDeleteReview: (reviewId: string) => Promise<void>
 }
 
 export function OrderPanel({
@@ -27,12 +36,35 @@ export function OrderPanel({
   isBusy,
   isGuestMode,
   orders,
+  reviews,
   translate,
   onReloadOrders,
   onOpenPayment,
   onCancelOrder,
   onRequestRefund,
+  onLoadReviewEligibility,
+  onUploadReviewImage,
+  onCreateReview,
+  onUpdateReview,
+  onDeleteReview,
 }: OrderPanelProps) {
+  const [pendingReviewTarget, setPendingReviewTarget] = useState<{ orderId: string; orderItemId: string; title: string } | null>(null)
+  const [pendingReviewEligibility, setPendingReviewEligibility] = useState<ReviewEligibilityResponse | null>(null)
+  const [editingReview, setEditingReview] = useState<ReviewResponse | null>(null)
+
+  async function openReviewDialog(orderId: string, orderItemId: string, title: string) {
+    const existingReview = reviews.find(review => review.orderItemId === orderItemId)
+    if (existingReview) {
+      setEditingReview(existingReview)
+      setPendingReviewEligibility(null)
+      setPendingReviewTarget({ orderId, orderItemId, title })
+      return
+    }
+    setPendingReviewTarget({ orderId, orderItemId, title })
+    const eligibility = await onLoadReviewEligibility(orderItemId)
+    setPendingReviewEligibility(eligibility)
+  }
+
   return (
     <section className="page-card">
       <div className="panel-heading">
@@ -84,7 +116,9 @@ export function OrderPanel({
                   </div>
 
                   <ul className="entity-list">
-                    {(order.orderLineItems ?? []).map(orderLineItem => (
+                    {(order.orderLineItems ?? []).map(orderLineItem => {
+                      const existingReview = reviews.find(review => review.orderItemId === orderLineItem.orderItemId)
+                      return (
                       <li key={orderLineItem.orderItemId}>
                         <div>
                           <strong>{orderLineItem.summaryLabel}</strong>
@@ -173,10 +207,36 @@ export function OrderPanel({
                           {orderLineItem.supplierReviewDecision?.reason ? (
                             <p>{orderLineItem.supplierReviewDecision.reason}</p>
                           ) : null}
+                          {existingReview ? (
+                            <p>{`${translate('reviews.alreadyWritten')}: ${existingReview.title}`}</p>
+                          ) : null}
                         </div>
-                        <span className="tag-chip">{`${orderLineItem.bookedAmount} ${orderLineItem.bookedCurrency}`}</span>
+                        <div className="compact-action-block">
+                          <span className="tag-chip">{`${orderLineItem.bookedAmount} ${orderLineItem.bookedCurrency}`}</span>
+                          {!isGuestMode ? (
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              disabled={isBusy}
+                              onClick={() => void openReviewDialog(order.orderId, orderLineItem.orderItemId, orderLineItem.summaryLabel)}
+                            >
+                              {existingReview ? translate('reviews.viewOrEdit') : translate('reviews.write')}
+                            </button>
+                          ) : null}
+                          {existingReview?.canDelete ? (
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              disabled={isBusy}
+                              onClick={() => void onDeleteReview(existingReview.reviewId)}
+                            >
+                              {translate('reviews.delete')}
+                            </button>
+                          ) : null}
+                        </div>
                       </li>
-                    ))}
+                      )
+                    })}
                   </ul>
 
                   {(order.orderPayments ?? []).length > 0 ? (
@@ -227,6 +287,51 @@ export function OrderPanel({
           </ul>
         ) : null}
       </div>
+
+      <ReviewComposerDialog
+        isOpen={pendingReviewTarget !== null}
+        isBusy={isBusy}
+        eligibility={editingReview ? null : pendingReviewEligibility}
+        mode={editingReview ? 'edit' : 'create'}
+        initialValue={
+          editingReview
+            ? {
+                rating: editingReview.rating,
+                title: editingReview.title,
+                content: editingReview.content,
+                images: editingReview.images,
+              }
+            : null
+        }
+        title={pendingReviewTarget?.title ?? ''}
+        translate={translate}
+        onClose={() => {
+          setPendingReviewTarget(null)
+          setPendingReviewEligibility(null)
+          setEditingReview(null)
+        }}
+        onUploadImage={onUploadReviewImage}
+        onSubmit={async payload => {
+          if (!pendingReviewTarget) {
+            return
+          }
+          if (editingReview) {
+            await onUpdateReview(editingReview.reviewId, payload)
+          } else {
+            await onCreateReview({
+              orderId: pendingReviewTarget.orderId,
+                orderItemId: pendingReviewTarget.orderItemId,
+              rating: payload.rating,
+              title: payload.title,
+              content: payload.content,
+              images: payload.images,
+            })
+          }
+          setPendingReviewTarget(null)
+          setPendingReviewEligibility(null)
+          setEditingReview(null)
+        }}
+      />
     </section>
   )
 }

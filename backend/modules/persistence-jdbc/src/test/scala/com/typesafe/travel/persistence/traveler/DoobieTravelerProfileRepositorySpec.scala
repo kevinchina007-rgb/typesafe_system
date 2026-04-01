@@ -1,7 +1,7 @@
 package com.typesafe.travel.persistence.traveler
 
 import cats.effect.unsafe.implicits.global
-import com.typesafe.travel.identity.domain.User
+import com.typesafe.travel.identity.domain.*
 import com.typesafe.travel.persistence.*
 import com.typesafe.travel.persistence.identity.DoobieUserRepository
 import com.typesafe.travel.shared.kernel.*

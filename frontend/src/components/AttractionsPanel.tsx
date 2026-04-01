@@ -1,6 +1,7 @@
 import { useState } from 'react'
 
-import type { AppLanguage, AttractionResponse, TravelerResponse } from '../lib/mvp-types'
+import type { AppLanguage, AttractionResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse } from '../lib/mvp-types'
+import { ResourceReviewSummaryLoader } from './ResourceReviewSummaryLoader'
 import { mapBackendStatusToProductLabel } from '../lib/view-models'
 
 type AttractionsPanelProps = {
@@ -17,6 +18,8 @@ type AttractionsPanelProps = {
     useDate: string
     orderCurrency: string
   }) => Promise<void>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
 function renderTravelerOptionLabel(traveler: TravelerResponse): string {
@@ -31,6 +34,8 @@ export function AttractionsPanel({
   translate,
   onSearchAttractions,
   onBookAttraction,
+  onLoadReviewSummary,
+  onLoadReviews,
 }: AttractionsPanelProps) {
   const [attractionResponses, setAttractionResponses] = useState<AttractionResponse[]>([])
   const [hasSearchedAttractions, setHasSearchedAttractions] = useState(false)
@@ -95,6 +100,17 @@ export function AttractionsPanel({
                   <div>
                     <strong>{attractionResponse.attractionName}</strong>
                     <p>{`${attractionResponse.city} | ${attractionResponse.location}`}</p>
+                    <ResourceReviewSummaryLoader
+                      currentLanguage={currentLanguage}
+                      isBusy={isBusy}
+                      isEnabled={!isGuestMode}
+                      resourceType="Attraction"
+                      resourceId={attractionResponse.attractionId}
+                      title={attractionResponse.attractionName}
+                      translate={translate}
+                      onLoadSummary={onLoadReviewSummary}
+                      onLoadReviews={onLoadReviews}
+                    />
                   </div>
                   <span className="tag-chip">{mapBackendStatusToProductLabel(attractionResponse.status, currentLanguage)}</span>
                 </div>

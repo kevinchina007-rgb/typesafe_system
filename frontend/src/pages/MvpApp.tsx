@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react'
 import { AppSidebar } from '../components/AppSidebar'
 import { AttractionAdminPanel } from '../components/AttractionAdminPanel'
 import { AttractionsPanel } from '../components/AttractionsPanel'
+import { BlogPanel } from '../components/BlogPanel'
 import { FlightsPanel } from '../components/FlightsPanel'
 import { HotelsPanel } from '../components/HotelsPanel'
 import { ManagerPanel } from '../components/ManagerPanel'
+import { MyReviewsPanel } from '../components/MyReviewsPanel'
 import { OrderPanel } from '../components/OrderPanel'
 import { PaymentModal } from '../components/PaymentModal'
 import { TrainAdminPanel } from '../components/TrainAdminPanel'
@@ -22,6 +24,8 @@ import type {
   AppViewKey,
   AttractionAdminSessionResponse,
   AttractionResponse,
+  BlogPostResponse,
+  BlogPostSummaryResponse,
   FlightResponse,
   HealthResponse,
   HotelResponse,
@@ -29,6 +33,9 @@ import type {
   ManagerSessionResponse,
   ManagerTaskResponse,
   OrderResponse,
+  ResourceReviewSummaryResponse,
+  ReviewEligibilityResponse,
+  ReviewResponse,
   TourGroupSummaryResponse,
   TrainAdminSessionResponse,
   TrainResponse,
@@ -40,12 +47,13 @@ import { ExplorePage } from './ExplorePage'
 
 export function MvpApp() {
   const [currentLanguage, setCurrentLanguage] = useState<AppLanguage>('en')
-  const [currentViewKey, setCurrentViewKey] = useState<AppViewKey>('explore')
+  const [currentViewKey, setCurrentViewKey] = useState<AppViewKey>('blog')
   const [accountEntryMode, setAccountEntryMode] = useState<'register' | 'login'>('login')
   const [backendHealthResponse, setBackendHealthResponse] = useState<HealthResponse | null>(null)
   const [signedInUserResponse, setSignedInUserResponse] = useState<UserResponse | null>(null)
   const [travelerResponses, setTravelerResponses] = useState<TravelerResponse[]>([])
   const [orderResponses, setOrderResponses] = useState<OrderResponse[]>([])
+  const [reviewResponses, setReviewResponses] = useState<ReviewResponse[]>([])
   const [currentManagerSession, setCurrentManagerSession] = useState<ManagerSessionResponse | null>(null)
   const [managedFlightResponses, setManagedFlightResponses] = useState<FlightResponse[]>([])
   const [currentTrainAdminSession, setCurrentTrainAdminSession] = useState<TrainAdminSessionResponse | null>(null)
@@ -71,14 +79,20 @@ export function MvpApp() {
   }, [currentViewKey])
 
   useEffect(() => {
-    if (isGuestMode && (currentViewKey === 'trains' || currentViewKey === 'attractions' || currentViewKey === 'tourGroups')) {
-      setCurrentViewKey('explore')
+    if (isGuestMode && currentViewKey !== 'blog' && currentViewKey !== 'account') {
+      setCurrentViewKey('blog')
     }
   }, [currentViewKey, isGuestMode])
 
   useEffect(() => {
     if (currentViewKey === 'bookings' && signedInUserResponse) {
       void reloadOrders()
+    }
+  }, [currentViewKey, signedInUserResponse])
+
+  useEffect(() => {
+    if ((currentViewKey === 'reviews' || currentViewKey === 'bookings') && signedInUserResponse) {
+      void reloadReviews()
     }
   }, [currentViewKey, signedInUserResponse])
 
@@ -144,6 +158,15 @@ export function MvpApp() {
 
     const orderListResponse = await travelMvpApiClient.listOrders(signedInUserResponse.userId)
     setOrderResponses(orderListResponse.orders)
+  }
+
+  async function reloadReviews() {
+    if (!signedInUserResponse) {
+      return
+    }
+
+    const reviewListResponse = await travelMvpApiClient.listMyReviews(signedInUserResponse.userId)
+    setReviewResponses(reviewListResponse.reviews)
   }
 
   async function reloadManagerTasks(taskStatus: 'pending' | 'all' | 'confirmed' | 'rejected' = 'pending') {
@@ -262,6 +285,54 @@ export function MvpApp() {
     }
   }
 
+  async function listBlogPosts(scope: 'latest' | 'mine', query?: string): Promise<BlogPostSummaryResponse[]> {
+    const response = await travelMvpApiClient.listBlogPosts(scope, signedInUserResponse?.userId, query)
+    return response.posts
+  }
+
+  async function loadBlogPost(postId: string): Promise<BlogPostResponse> {
+    return travelMvpApiClient.getBlogPost(postId, signedInUserResponse?.userId)
+  }
+
+  async function listMyReviews(): Promise<ReviewResponse[]> {
+    const signedInUser = requireSignedInUser()
+    const response = await travelMvpApiClient.listMyReviews(signedInUser.userId)
+    return response.reviews
+  }
+
+  async function loadReviewSummary(payload: {
+    resourceType: string
+    resourceId: string
+  }): Promise<ResourceReviewSummaryResponse> {
+    const signedInUser = requireSignedInUser()
+    return travelMvpApiClient.getReviewResourceSummary({
+      userId: signedInUser.userId,
+      resourceType: payload.resourceType,
+      resourceId: payload.resourceId,
+    })
+  }
+
+  async function loadReviewsByResource(payload: {
+    resourceType: string
+    resourceId: string
+  }): Promise<ReviewResponse[]> {
+    const signedInUser = requireSignedInUser()
+    const response = await travelMvpApiClient.listReviewsByResource({
+      userId: signedInUser.userId,
+      resourceType: payload.resourceType,
+      resourceId: payload.resourceId,
+    })
+    return response.reviews
+  }
+
+  async function loadReviewEligibility(orderItemId: string): Promise<ReviewEligibilityResponse> {
+    const signedInUser = requireSignedInUser()
+    return travelMvpApiClient.getReviewEligibility({
+      userId: signedInUser.userId,
+      orderItemId,
+    })
+  }
+
   async function reloadManagedTrains() {
     if (!currentTrainAdminSession) {
       return
@@ -335,6 +406,154 @@ export function MvpApp() {
       />
 
       <section className="content-shell">
+        {currentViewKey === 'blog' ? (
+          <BlogPanel
+              currentLanguage={currentLanguage}
+              isBusy={isPageBusy}
+              signedInUser={signedInUserResponse}
+              translate={translate}
+              onListPosts={(scope, query) => listBlogPosts(scope, query)}
+              onLoadPost={postId => loadBlogPost(postId)}
+              onUploadImage={async imageFile => {
+                const signedInUser = requireSignedInUser()
+                return runPageActionWithResult(
+                  () => travelMvpApiClient.uploadBlogImage(signedInUser.userId, imageFile),
+                  translate('content.imagesUpload'),
+                  translate('notice.actionSuccess'),
+                )
+              }}
+              onCreatePost={async payload => {
+                const signedInUser = requireSignedInUser()
+                return runPageActionWithResult(
+                  () =>
+                    travelMvpApiClient.createBlogPost({
+                      userId: signedInUser.userId,
+                      title: payload.title,
+                      summary: payload.summary,
+                      content: payload.content,
+                      images: payload.images,
+                    }),
+                  translate('blog.publish'),
+                  translate('notice.actionSuccess'),
+                )
+              }}
+            onUpdatePost={async (postId, payload) => {
+              const signedInUser = requireSignedInUser()
+              return runPageActionWithResult(
+                () =>
+                    travelMvpApiClient.updateBlogPost(postId, {
+                      userId: signedInUser.userId,
+                      title: payload.title,
+                      summary: payload.summary,
+                      content: payload.content,
+                      images: payload.images,
+                    }),
+                translate('blog.save'),
+                translate('notice.actionSuccess'),
+              )
+            }}
+            onArchivePost={async postId => {
+              const signedInUser = requireSignedInUser()
+              return runPageActionWithResult(
+                () =>
+                  travelMvpApiClient.archiveBlogPost(postId, {
+                    userId: signedInUser.userId,
+                  }),
+                translate('blog.archive'),
+                translate('notice.actionSuccess'),
+              )
+            }}
+            onCommentPost={async (postId, content) => {
+              const signedInUser = requireSignedInUser()
+              return runPageActionWithResult(
+                () =>
+                  travelMvpApiClient.addBlogComment(postId, {
+                    userId: signedInUser.userId,
+                    content,
+                  }),
+                translate('blog.submitComment'),
+                translate('notice.actionSuccess'),
+              )
+            }}
+            onDeleteComment={async commentId => {
+              const signedInUser = requireSignedInUser()
+              return runPageActionWithResult(
+                () =>
+                  travelMvpApiClient.deleteBlogComment(commentId, {
+                    userId: signedInUser.userId,
+                  }),
+                translate('blog.deleteComment'),
+                translate('notice.actionSuccess'),
+              )
+            }}
+            onLikePost={async postId => {
+              const signedInUser = requireSignedInUser()
+              return runPageActionWithResult(
+                () =>
+                  travelMvpApiClient.likeBlogPost(postId, {
+                    userId: signedInUser.userId,
+                  }),
+                translate('blog.like'),
+                translate('notice.actionSuccess'),
+              )
+            }}
+            onUnlikePost={async postId => {
+              const signedInUser = requireSignedInUser()
+              return runPageActionWithResult(
+                () =>
+                  travelMvpApiClient.unlikeBlogPost(postId, {
+                    userId: signedInUser.userId,
+                  }),
+                translate('blog.unlike'),
+                translate('notice.actionSuccess'),
+              )
+            }}
+          />
+        ) : null}
+
+        {currentViewKey === 'reviews' ? (
+          <MyReviewsPanel
+              currentLanguage={currentLanguage}
+              isBusy={isPageBusy}
+              signedInUser={signedInUserResponse}
+              translate={translate}
+              onListMyReviews={listMyReviews}
+              onUploadImage={async imageFile => {
+                const signedInUser = requireSignedInUser()
+                return runPageActionWithResult(
+                  () => travelMvpApiClient.uploadReviewImage(signedInUser.userId, imageFile),
+                  translate('content.imagesUpload'),
+                  translate('notice.actionSuccess'),
+                )
+              }}
+              onUpdateReview={async (reviewId, payload) => {
+                const signedInUser = requireSignedInUser()
+                return runPageActionWithResult(
+                  async () => {
+                    const updatedReview = await travelMvpApiClient.updateReview(reviewId, {
+                      userId: signedInUser.userId,
+                      rating: payload.rating,
+                      title: payload.title,
+                      content: payload.content,
+                      images: payload.images,
+                    })
+                    await reloadReviews()
+                    return updatedReview
+                  },
+                translate('reviews.save'),
+                translate('notice.actionSuccess'),
+              )
+            }}
+            onDeleteReview={async reviewId => {
+              const signedInUser = requireSignedInUser()
+              await runPageAction(async () => {
+                await travelMvpApiClient.deleteReview(reviewId, { userId: signedInUser.userId })
+                await reloadReviews()
+              }, translate('reviews.delete'), translate('notice.actionSuccess'))
+            }}
+          />
+        ) : null}
+
         {currentViewKey === 'explore' ? <ExplorePage translate={translate} /> : null}
 
         {currentViewKey === 'account' ? (
@@ -364,6 +583,8 @@ export function MvpApp() {
                 ])
                 setTravelerResponses(travelerListResponse.travelers)
                 setOrderResponses(orderListResponse.orders)
+                const reviewListResponse = await travelMvpApiClient.listMyReviews(signedInAccount.userId)
+                setReviewResponses(reviewListResponse.reviews)
                 setCurrentViewKey('travelers')
               }, translate('account.login'), translate('notice.loginSuccess'))
             }}
@@ -386,7 +607,8 @@ export function MvpApp() {
               setSignedInUserResponse(null)
               setTravelerResponses([])
               setOrderResponses([])
-              setCurrentViewKey('explore')
+              setReviewResponses([])
+              setCurrentViewKey('blog')
               showNotice('info', translate('guest.badge'), translate('notice.logoutSuccess'))
             }}
           />
@@ -464,6 +686,8 @@ export function MvpApp() {
                 setCurrentViewKey('bookings')
               }, translate('flights.bookNow'), translate('notice.bookingCreated'))
             }}
+            onLoadReviewSummary={loadReviewSummary}
+            onLoadReviews={loadReviewsByResource}
           />
         ) : null}
 
@@ -490,6 +714,8 @@ export function MvpApp() {
                 setCurrentViewKey('bookings')
               }, translate('hotels.bookNow'), translate('notice.bookingCreated'))
             }}
+            onLoadReviewSummary={loadReviewSummary}
+            onLoadReviews={loadReviewsByResource}
           />
         ) : null}
 
@@ -521,6 +747,8 @@ export function MvpApp() {
                 setCurrentViewKey('bookings')
               }, translate('trains.bookNow'), translate('notice.bookingCreated'))
             }}
+            onLoadReviewSummary={loadReviewSummary}
+            onLoadReviews={loadReviewsByResource}
           />
         ) : null}
 
@@ -551,6 +779,8 @@ export function MvpApp() {
                 setCurrentViewKey('bookings')
               }, translate('attractions.bookNow'), translate('notice.bookingCreated'))
             }}
+            onLoadReviewSummary={loadReviewSummary}
+            onLoadReviews={loadReviewsByResource}
           />
         ) : null}
 
@@ -648,6 +878,7 @@ export function MvpApp() {
             isBusy={isPageBusy}
             isGuestMode={isGuestMode}
             orders={orderResponses}
+            reviews={reviewResponses}
             translate={translate}
             onReloadOrders={async () => {
               await runPageAction(async () => {
@@ -668,6 +899,50 @@ export function MvpApp() {
                 await travelMvpApiClient.requestRefund(orderId, { refundReason })
                 await reloadOrders()
               }, translate('bookings.requestRefund'), translate('notice.actionSuccess'))
+            }}
+              onLoadReviewEligibility={loadReviewEligibility}
+              onUploadReviewImage={async imageFile => {
+                const signedInUser = requireSignedInUser()
+                return runPageActionWithResult(
+                  () => travelMvpApiClient.uploadReviewImage(signedInUser.userId, imageFile),
+                  translate('content.imagesUpload'),
+                  translate('notice.actionSuccess'),
+                )
+              }}
+              onCreateReview={async payload => {
+                const signedInUser = requireSignedInUser()
+                await runPageAction(async () => {
+                  await travelMvpApiClient.createReview({
+                    userId: signedInUser.userId,
+                    orderId: payload.orderId,
+                    orderItemId: payload.orderItemId,
+                    rating: payload.rating,
+                    title: payload.title,
+                    content: payload.content,
+                    images: payload.images,
+                  })
+                  await reloadReviews()
+                }, translate('reviews.submit'), translate('notice.actionSuccess'))
+              }}
+            onUpdateReview={async (reviewId, payload) => {
+              const signedInUser = requireSignedInUser()
+              await runPageAction(async () => {
+                  await travelMvpApiClient.updateReview(reviewId, {
+                    userId: signedInUser.userId,
+                    rating: payload.rating,
+                    title: payload.title,
+                    content: payload.content,
+                    images: payload.images,
+                  })
+                  await reloadReviews()
+                }, translate('reviews.save'), translate('notice.actionSuccess'))
+              }}
+            onDeleteReview={async reviewId => {
+              const signedInUser = requireSignedInUser()
+              await runPageAction(async () => {
+                await travelMvpApiClient.deleteReview(reviewId, { userId: signedInUser.userId })
+                await reloadReviews()
+              }, translate('reviews.delete'), translate('notice.actionSuccess'))
             }}
           />
         ) : null}

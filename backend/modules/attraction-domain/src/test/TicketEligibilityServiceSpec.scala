@@ -20,24 +20,20 @@ final class TicketEligibilityServiceSpec extends FunSuite:
     )
     val ticketType = sampleTicketType(
       Vector(
-        TicketEligibilityRule
-          .create(
+        createTicketEligibilityRule(
             TicketEligibilityRuleId("rule-1"),
             TicketTypeId("ticket-1"),
             TicketEligibilityRuleType.AgeLessThan,
             TicketEligibilityRuleConfig.AgeLessThan(18),
             createdAt
-          )
-          .fold(throw _, identity),
-        TicketEligibilityRule
-          .create(
+          ).fold(throw _, identity),
+        createTicketEligibilityRule(
             TicketEligibilityRuleId("rule-2"),
             TicketTypeId("ticket-1"),
             TicketEligibilityRuleType.DocumentTypeEquals,
             TicketEligibilityRuleConfig.DocumentTypeEquals(TravelerDocumentType.NationalIdentityCard),
             createdAt
-          )
-          .fold(throw _, identity)
+          ).fold(throw _, identity)
       )
     )
 
@@ -55,24 +51,20 @@ final class TicketEligibilityServiceSpec extends FunSuite:
     )
     val ticketType = sampleTicketType(
       Vector(
-        TicketEligibilityRule
-          .create(
+        createTicketEligibilityRule(
             TicketEligibilityRuleId("rule-3"),
             TicketTypeId("ticket-1"),
             TicketEligibilityRuleType.AgeBetween,
             TicketEligibilityRuleConfig.AgeBetween(60, 70),
             createdAt
-          )
-          .fold(throw _, identity),
-        TicketEligibilityRule
-          .create(
+          ).fold(throw _, identity),
+        createTicketEligibilityRule(
             TicketEligibilityRuleId("rule-4"),
             TicketTypeId("ticket-1"),
             TicketEligibilityRuleType.DocumentNumberPrefix,
             TicketEligibilityRuleConfig.DocumentNumberPrefix("310"),
             createdAt
-          )
-          .fold(throw _, identity)
+          ).fold(throw _, identity)
       )
     )
 

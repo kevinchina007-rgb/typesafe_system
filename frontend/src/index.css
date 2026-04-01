@@ -535,6 +535,37 @@ textarea {
   width: 100%;
 }
 
+.blog-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 420px) 1fr;
+  gap: 1rem;
+}
+
+.blog-content-body {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  z-index: 30;
+}
+
+.dialog-card {
+  width: min(640px, 100%);
+  background: #ffffff;
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
+  display: grid;
+  gap: 1rem;
+}
+
 @media (max-width: 1100px) {
   .layout-shell {
     grid-template-columns: 1fr;
@@ -545,7 +576,47 @@ textarea {
   .three-column-grid,
   .four-column-grid,
   .detail-grid,
-  .tour-group-layout {
+  .tour-group-layout,
+  .blog-layout {
     grid-template-columns: 1fr;
   }
+}
+
+.file-upload-button input {
+  display: none;
+}
+
+.content-image-uploader {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(110, 132, 180, 0.2);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.content-image-gallery {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.content-image-card {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.content-image-card figcaption {
+  font-size: 0.8rem;
+  color: #5f6f87;
+  word-break: break-word;
+}
+
+.content-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(110, 132, 180, 0.18);
+  background: #f3f6fb;
 }

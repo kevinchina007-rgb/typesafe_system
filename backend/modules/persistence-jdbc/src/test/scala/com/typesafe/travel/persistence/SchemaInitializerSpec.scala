@@ -1,7 +1,7 @@
 package com.typesafe.travel.persistence
 
 import cats.effect.unsafe.implicits.global
-import com.typesafe.travel.identity.domain.User
+import com.typesafe.travel.identity.domain.*
 import com.typesafe.travel.persistence.identity.DoobieUserRepository
 import com.typesafe.travel.shared.kernel.*
 import doobie.implicits.*
@@ -41,7 +41,7 @@ final class SchemaInitializerSpec extends FunSuite:
       sql"select version from schema_migrations order by version".query[Int].to[List].transact(secondTransactor).unsafeRunSync()
 
     assertEquals(reloadedUser, Some(savedUser))
-    assertEquals(appliedMigrationVersions, List(1, 2, 3, 5, 6, 7, 8, 9))
+    assertEquals(appliedMigrationVersions, List(1, 2, 3, 5, 6, 7, 8, 9, 10, 11))
   }
 
   test("failed migration is not recorded in schema_migrations") {

@@ -62,8 +62,7 @@ final class ReservationLifecycleSpec extends FunSuite:
     val activeReservedAt = Instant.parse("2026-03-27T10:00:00Z")
 
     val flightReservation =
-      InventoryReservation
-        .createActiveReservation(
+      createActiveReservation(
           reservationId = ReservationId("reservation-flight"),
           resourceType = ReservationResourceType.FlightCabinInventory,
           resourceId = "inventory-flight",
@@ -72,13 +71,10 @@ final class ReservationLifecycleSpec extends FunSuite:
           quantity = 1,
           reservedAt = activeReservedAt,
           expiresAt = activeReservedAt.plusSeconds(900)
-        )
-        .toOption
-        .get
+        ).toOption.get
 
     val hotelReservation =
-      InventoryReservation
-        .createActiveReservation(
+      createActiveReservation(
           reservationId = ReservationId("reservation-hotel"),
           resourceType = ReservationResourceType.HotelRoomType,
           resourceId = "room-type-1",
@@ -87,9 +83,7 @@ final class ReservationLifecycleSpec extends FunSuite:
           quantity = 1,
           reservedAt = activeReservedAt.plusSeconds(10),
           expiresAt = activeReservedAt.plusSeconds(910)
-        )
-        .toOption
-        .get
+        ).toOption.get
 
     val repository = StubInventoryReservationRepository()
     val lifecycle = LiveReservationLifecycle[TestResult](repository)
@@ -111,8 +105,7 @@ final class ReservationLifecycleSpec extends FunSuite:
     val reservedAt = Instant.parse("2026-03-27T10:00:00Z")
 
     val confirmedReservation =
-      InventoryReservation
-        .restorePersistedReservation(
+      restorePersistedReservation(
           reservationId = ReservationId("reservation-confirmed"),
           resourceType = ReservationResourceType.FlightCabinInventory,
           resourceId = "inventory-confirmed",
