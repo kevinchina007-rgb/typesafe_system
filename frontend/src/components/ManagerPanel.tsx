@@ -43,12 +43,14 @@ type ManagerPanelProps = {
     displayName: string
     airlineName: string
     airlineCode: string
+    password: string
   }) => Promise<void>
   onRegisterHotelManager: (payload: {
     email: string
     displayName: string
     hotelName: string
     location: string
+    password: string
   }) => Promise<void>
   onCreateManagerRoomType: (payload: {
     managerId: string
@@ -61,7 +63,8 @@ type ManagerPanelProps = {
     inventoryStartDate: string
     inventoryEndDate: string
   }) => Promise<void>
-  onLoginManager: (payload: { managerType: ManagerType; email: string }) => Promise<void>
+  onLoginManager: (payload: { managerType: ManagerType; email: string; password: string }) => Promise<void>
+  onValidationError: (message: string) => void
   onReloadTasks: (status: 'pending' | 'all' | 'confirmed' | 'rejected') => Promise<void>
   onReloadRefundTasks: () => Promise<void>
   onCreateManagerFlight: (payload: {
@@ -95,6 +98,7 @@ export function ManagerPanel({
   onRegisterHotelManager,
   onCreateManagerRoomType,
   onLoginManager,
+  onValidationError,
   onReloadTasks,
   onReloadRefundTasks,
   onCreateManagerFlight,
@@ -132,11 +136,18 @@ export function ManagerPanel({
               onSubmit={async event => {
                 event.preventDefault()
                 const formData = new FormData(event.currentTarget)
+                const password = String(formData.get('password') ?? '')
+                const confirmPassword = String(formData.get('confirmPassword') ?? '')
+                if (password !== confirmPassword) {
+                  onValidationError(translate('error.passwordMismatch'))
+                  return
+                }
                 await onRegisterAirlineManager({
                   email: String(formData.get('email') ?? ''),
                   displayName: String(formData.get('displayName') ?? ''),
                   airlineName: String(formData.get('airlineName') ?? ''),
                   airlineCode: String(formData.get('airlineCode') ?? ''),
+                  password,
                 })
                 event.currentTarget.reset()
               }}
@@ -158,6 +169,14 @@ export function ManagerPanel({
                 {translate('manager.airlineCode')}
                 <input name="airlineCode" placeholder="MU" required />
               </label>
+              <label>
+                {translate('account.password')}
+                <input name="password" type="password" placeholder={translate('account.password')} required />
+              </label>
+              <label>
+                {translate('account.confirmPassword')}
+                <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+              </label>
               <button type="submit" disabled={isBusy}>
                 {translate('manager.createAccount')}
               </button>
@@ -171,6 +190,7 @@ export function ManagerPanel({
                 await onLoginManager({
                   managerType: 'airline',
                   email: String(formData.get('email') ?? ''),
+                  password: String(formData.get('password') ?? ''),
                 })
               }}
             >
@@ -178,6 +198,10 @@ export function ManagerPanel({
               <label>
                 {translate('manager.email')}
                 <input name="email" type="email" placeholder="ops@airline.example" required disabled={isBusy} />
+              </label>
+              <label>
+                {translate('account.password')}
+                <input name="password" type="password" placeholder={translate('account.password')} required disabled={isBusy} />
               </label>
               <button type="submit" disabled={isBusy}>
                 {translate('manager.loginAirline')}
@@ -191,11 +215,18 @@ export function ManagerPanel({
               onSubmit={async event => {
                 event.preventDefault()
                 const formData = new FormData(event.currentTarget)
+                const password = String(formData.get('password') ?? '')
+                const confirmPassword = String(formData.get('confirmPassword') ?? '')
+                if (password !== confirmPassword) {
+                  onValidationError(translate('error.passwordMismatch'))
+                  return
+                }
                 await onRegisterHotelManager({
                   email: String(formData.get('email') ?? ''),
                   displayName: String(formData.get('displayName') ?? ''),
                   hotelName: String(formData.get('hotelName') ?? ''),
                   location: String(formData.get('location') ?? ''),
+                  password,
                 })
                 event.currentTarget.reset()
               }}
@@ -217,6 +248,14 @@ export function ManagerPanel({
                 {translate('manager.hotelLocation')}
                 <input name="location" placeholder={translate('manager.hotelLocation')} required />
               </label>
+              <label>
+                {translate('account.password')}
+                <input name="password" type="password" placeholder={translate('account.password')} required />
+              </label>
+              <label>
+                {translate('account.confirmPassword')}
+                <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+              </label>
               <button type="submit" disabled={isBusy}>
                 {translate('manager.createAccount')}
               </button>
@@ -230,6 +269,7 @@ export function ManagerPanel({
                 await onLoginManager({
                   managerType: 'hotel',
                   email: String(formData.get('email') ?? ''),
+                  password: String(formData.get('password') ?? ''),
                 })
               }}
             >
@@ -237,6 +277,10 @@ export function ManagerPanel({
               <label>
                 {translate('manager.email')}
                 <input name="email" type="email" placeholder="ops@example.com" required disabled={isBusy} />
+              </label>
+              <label>
+                {translate('account.password')}
+                <input name="password" type="password" placeholder={translate('account.password')} required disabled={isBusy} />
               </label>
               <button type="submit" disabled={isBusy}>
                 {translate('manager.loginHotel')}

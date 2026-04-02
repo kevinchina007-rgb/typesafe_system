@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 import type { AppLanguage, AttractionAdminSessionResponse } from '../lib/mvp-types'
 
 type AttractionAdminPanelProps = {
@@ -8,8 +10,10 @@ type AttractionAdminPanelProps = {
   onRegisterAttractionManager: (payload: {
     email: string
     displayName: string
+    password: string
   }) => Promise<void>
-  onLoginAttractionManager: (payload: { email: string }) => Promise<void>
+  onLoginAttractionManager: (payload: { email: string; password: string }) => Promise<void>
+  onValidationError: (message: string) => void
   onReloadManagedAttractions: () => Promise<void>
   onCreateAttraction: (payload: {
     attractionName: string
@@ -23,6 +27,10 @@ type AttractionAdminPanelProps = {
     description: string
     unitPrice: string
     currency: string
+    availableFromDate: string
+    availableToDate: string
+    totalQuantity: number
+    validWeekdays: string[]
   }) => Promise<void>
   onCreateRule: (payload: {
     attractionId: string
@@ -43,12 +51,26 @@ export function AttractionAdminPanel({
   translate,
   onRegisterAttractionManager,
   onLoginAttractionManager,
+  onValidationError,
   onReloadManagedAttractions,
   onCreateAttraction,
   onCreateTicketType,
   onCreateRule,
   onLogoutAttractionManager,
 }: AttractionAdminPanelProps) {
+  const allWeekdayValues = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+  const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>(allWeekdayValues)
+
+  function toggleWeekdaySelection(weekday: string) {
+    setSelectedWeekdays(currentWeekdays =>
+      currentWeekdays.includes(weekday) ? currentWeekdays.filter(currentWeekday => currentWeekday !== weekday) : [...currentWeekdays, weekday],
+    )
+  }
+
+  function setAllWeekdays(enabled: boolean) {
+    setSelectedWeekdays(enabled ? allWeekdayValues : [])
+  }
+
   return (
     <section className="page-card">
       <div className="panel-heading">
@@ -72,9 +94,16 @@ export function AttractionAdminPanel({
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
+              const password = String(formData.get('password') ?? '')
+              const confirmPassword = String(formData.get('confirmPassword') ?? '')
+              if (password !== confirmPassword) {
+                onValidationError(translate('error.passwordMismatch'))
+                return
+              }
               await onRegisterAttractionManager({
                 email: String(formData.get('email') ?? '').trim(),
                 displayName: String(formData.get('displayName') ?? '').trim(),
+                password,
               })
             }}
           >
@@ -86,6 +115,14 @@ export function AttractionAdminPanel({
             <label>
               {translate('attractionAdmin.displayName')}
               <input name="displayName" placeholder={translate('attractionAdmin.displayNamePlaceholder')} required />
+            </label>
+            <label>
+              {translate('account.password')}
+              <input name="password" type="password" placeholder={translate('account.password')} required />
+            </label>
+            <label>
+              {translate('account.confirmPassword')}
+              <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
             </label>
             <button type="submit" disabled={isBusy}>
               {translate('attractionAdmin.createAccount')}
@@ -99,6 +136,7 @@ export function AttractionAdminPanel({
               const formData = new FormData(event.currentTarget)
               await onLoginAttractionManager({
                 email: String(formData.get('email') ?? '').trim(),
+                password: String(formData.get('password') ?? ''),
               })
             }}
           >
@@ -106,6 +144,10 @@ export function AttractionAdminPanel({
             <label>
               {translate('attractionAdmin.email')}
               <input name="email" type="email" placeholder="attraction@example.com" required />
+            </label>
+            <label>
+              {translate('account.password')}
+              <input name="password" type="password" placeholder={translate('account.password')} required />
             </label>
             <button type="submit" disabled={isBusy}>
               {translate('attractionAdmin.login')}
@@ -174,8 +216,13 @@ export function AttractionAdminPanel({
                   description: String(formData.get('description') ?? '').trim(),
                   unitPrice: String(formData.get('unitPrice') ?? '').trim(),
                   currency: String(formData.get('currency') ?? '').trim(),
+                  availableFromDate: String(formData.get('availableFromDate') ?? '').trim(),
+                  availableToDate: String(formData.get('availableToDate') ?? '').trim(),
+                  totalQuantity: Number(formData.get('totalQuantity') ?? 0),
+                  validWeekdays: selectedWeekdays,
                 })
                 event.currentTarget.reset()
+                setSelectedWeekdays(allWeekdayValues)
               }}
             >
               <h3>{translate('attractionAdmin.createTicketType')}</h3>
@@ -208,6 +255,41 @@ export function AttractionAdminPanel({
                 {translate('attractionAdmin.currency')}
                 <input name="currency" placeholder="CNY" defaultValue="CNY" required />
               </label>
+              <label>
+                {translate('attractionAdmin.availableFromDate')}
+                <input name="availableFromDate" type="date" defaultValue="2026-04-05" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.availableToDate')}
+                <input name="availableToDate" type="date" defaultValue="2026-04-30" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.totalQuantity')}
+                <input name="totalQuantity" type="number" min="1" step="1" defaultValue="100" required />
+              </label>
+              <div className="checkbox-list">
+                <p className="detail-label">{translate('attractionAdmin.validWeekdays')}</p>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={selectedWeekdays.length === allWeekdayValues.length}
+                    onChange={event => setAllWeekdays(event.target.checked)}
+                  />
+                  {translate('attractionAdmin.allWeekdays')}
+                </label>
+                <div className="three-column-grid">
+                  {allWeekdayValues.map(weekday => (
+                    <label key={weekday} className="checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={selectedWeekdays.includes(weekday)}
+                        onChange={() => toggleWeekdaySelection(weekday)}
+                      />
+                      {translate(`weekdays.${weekday.toLowerCase()}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <button type="submit" disabled={isBusy}>
                 {translate('attractionAdmin.createTicketType')}
               </button>
@@ -299,6 +381,9 @@ export function AttractionAdminPanel({
                       <div>
                         <strong>{`${ticketType.ticketTypeName} (${ticketType.ticketTypeId})`}</strong>
                         <p>{`${ticketType.priceAmount} ${ticketType.priceCurrency}`}</p>
+                        <p>{`${translate('attractionAdmin.availableDateRange')}: ${ticketType.availableFromDate} - ${ticketType.availableToDate}`}</p>
+                        <p>{`${translate('attractionAdmin.totalQuantity')}: ${ticketType.totalQuantity}`}</p>
+                        <p>{`${translate('attractionAdmin.validWeekdays')}: ${ticketType.validWeekdays.map(weekday => translate(`weekdays.${weekday.toLowerCase()}`)).join(' / ')}`}</p>
                         <p>{ticketType.rules.length > 0 ? ticketType.rules.map(rule => rule.summary).join(' | ') : translate('attractionAdmin.noRules')}</p>
                       </div>
                     </li>

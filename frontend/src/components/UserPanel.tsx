@@ -16,10 +16,12 @@ type UserPanelProps = {
     email: string
     nickname: string
     phone: string
+    password: string
   }) => Promise<void>
-  onLoginAccount: (payload: { email: string }) => Promise<void>
+  onLoginAccount: (payload: { email: string; password: string }) => Promise<void>
   onUploadAvatar: (avatarFile: File) => Promise<void>
   onAvatarValidationError: (message: string) => void
+  onValidationError: (message: string) => void
   onRefreshAccount: () => Promise<void>
   onLogout: () => void
 }
@@ -37,6 +39,7 @@ export function UserPanel({
   onLoginAccount,
   onUploadAvatar,
   onAvatarValidationError,
+  onValidationError,
   onRefreshAccount,
   onLogout,
 }: UserPanelProps) {
@@ -86,10 +89,17 @@ export function UserPanel({
           onSubmit={async event => {
             event.preventDefault()
             const formData = new FormData(event.currentTarget)
+            const password = String(formData.get('password') ?? '')
+            const confirmPassword = String(formData.get('confirmPassword') ?? '')
+            if (password !== confirmPassword) {
+              onValidationError(translate('error.passwordMismatch'))
+              return
+            }
             await onRegisterAccount({
               email: String(formData.get('email') ?? ''),
               nickname: String(formData.get('nickname') ?? ''),
               phone: String(formData.get('phone') ?? ''),
+              password,
             })
             event.currentTarget.reset()
           }}
@@ -107,6 +117,14 @@ export function UserPanel({
             {translate('account.phone')}
             <input name="phone" placeholder="+8613812345678" required />
           </label>
+          <label>
+            {translate('account.password')}
+            <input name="password" type="password" placeholder="At least 8 characters" required />
+          </label>
+          <label>
+            {translate('account.confirmPassword')}
+            <input name="confirmPassword" type="password" placeholder="Repeat password" required />
+          </label>
           <button type="submit" disabled={isBusy}>
             {translate('account.create')}
           </button>
@@ -116,7 +134,11 @@ export function UserPanel({
           className="stack-form panel-card"
           onSubmit={async event => {
             event.preventDefault()
-            await onLoginAccount({ email: loginEmailDraft })
+            const formData = new FormData(event.currentTarget)
+            await onLoginAccount({
+              email: loginEmailDraft,
+              password: String(formData.get('password') ?? ''),
+            })
           }}
         >
           <h3>{translate('account.loginTitle')}</h3>
@@ -130,6 +152,10 @@ export function UserPanel({
               onChange={event => onChangeLoginEmailDraft(event.target.value)}
               required
             />
+          </label>
+          <label>
+            {translate('account.password')}
+            <input name="password" type="password" placeholder="Password" required />
           </label>
           <button type="submit" disabled={isBusy}>
             {translate('account.login')}

@@ -10,7 +10,7 @@ type AttractionsPanelProps = {
   isGuestMode: boolean
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
-  onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
+  onSearchAttractions: (payload: { city?: string; useDate?: string }) => Promise<AttractionResponse[]>
   onBookAttraction: (payload: {
     attractionId: string
     ticketTypeId: string
@@ -62,6 +62,7 @@ export function AttractionsPanel({
           setSearchCity(nextCity)
           const nextAttractions = await onSearchAttractions({
             city: nextCity || undefined,
+            useDate: useDateDraft || undefined,
           })
           setHasSearchedAttractions(true)
           setAttractionResponses(nextAttractions)
@@ -124,6 +125,11 @@ export function AttractionsPanel({
                         <strong>{ticketType.ticketTypeName}</strong>
                         <p>{ticketType.description}</p>
                         <p>{`${translate('attractions.ticketPrice')}: ${ticketType.priceAmount} ${ticketType.priceCurrency}`}</p>
+                        <p>{`${translate('attractions.availableDateRange')}: ${ticketType.availableFromDate} - ${ticketType.availableToDate}`}</p>
+                        <p>{`${translate('attractions.totalQuantity')}: ${ticketType.totalQuantity}`}</p>
+                        <p>{`${translate('attractions.remainingTickets')}: ${ticketType.availableQuantityForRequestedDate ?? '-'}`}</p>
+                        <p>{`${translate('attractions.validWeekdays')}: ${ticketType.validWeekdays.map(weekday => translate(`weekdays.${weekday.toLowerCase()}`)).join(' / ')}`}</p>
+                        {!ticketType.isAvailableForRequestedDate ? <p>{translate('attractions.unavailableForDate')}</p> : null}
                         <p>{`${translate('attractions.ticketRules')}: ${ticketType.rules.length > 0 ? ticketType.rules.map(rule => rule.summary).join(' | ') : translate('attractions.noRules')}`}</p>
                       </div>
 
@@ -159,7 +165,10 @@ export function AttractionsPanel({
                           ))}
                         </div>
 
-                        <button type="submit" disabled={isGuestMode || isBusy}>
+                        <button
+                          type="submit"
+                          disabled={isGuestMode || isBusy || !ticketType.isAvailableForRequestedDate || (ticketType.availableQuantityForRequestedDate ?? 0) <= 0}
+                        >
                           {translate('attractions.bookNow')}
                         </button>
                       </form>

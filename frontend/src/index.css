@@ -36,7 +36,12 @@ button {
   background: linear-gradient(135deg, #1767ff, #1d8cff);
   color: #ffffff;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: start;
   padding: 0.8rem 1.2rem;
+  width: auto;
 }
 
 button:disabled {
@@ -119,6 +124,8 @@ textarea {
 }
 
 .sidebar-nav-button {
+  width: 100%;
+  justify-self: stretch;
   text-align: left;
   background: #f2f6fb;
   color: #203145;
@@ -181,6 +188,16 @@ textarea {
 .inline-form {
   display: grid;
   gap: 0.85rem;
+}
+
+.stack-form > button,
+.inline-form > button,
+.panel-card > button,
+.dialog-card > button,
+.modal-card > button,
+.manager-task-actions > button {
+  justify-self: start;
+  width: auto;
 }
 
 .stack-form label,
@@ -386,7 +403,8 @@ textarea {
 .manager-task-actions {
   display: grid;
   gap: 0.75rem;
-  min-width: 260px;
+  min-width: 0;
+  justify-items: start;
 }
 
 .manager-task-actions input {
@@ -497,6 +515,7 @@ textarea {
 
 .tour-group-list-button {
   width: 100%;
+  justify-self: stretch;
   display: flex;
   justify-content: space-between;
   gap: 0.75rem;
@@ -537,7 +556,6 @@ textarea {
 
 .blog-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 420px) 1fr;
   gap: 1rem;
 }
 

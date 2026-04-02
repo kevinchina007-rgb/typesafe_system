@@ -26,8 +26,10 @@ type TrainAdminPanelProps = {
     operatorCode: string
     email: string
     displayName: string
+    password: string
   }) => Promise<void>
-  onLoginRailwayManager: (payload: { email: string }) => Promise<void>
+  onLoginRailwayManager: (payload: { email: string; password: string }) => Promise<void>
+  onValidationError: (message: string) => void
   onReloadManagedTrains: () => Promise<void>
   onCreateTrainJourney: (payload: {
     trainNumber: string
@@ -55,6 +57,7 @@ export function TrainAdminPanel({
   translate,
   onRegisterRailwayManager,
   onLoginRailwayManager,
+  onValidationError,
   onReloadManagedTrains,
   onCreateTrainJourney,
   onLogoutRailwayManager,
@@ -105,10 +108,17 @@ export function TrainAdminPanel({
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
+              const password = String(formData.get('password') ?? '')
+              const confirmPassword = String(formData.get('confirmPassword') ?? '')
+              if (password !== confirmPassword) {
+                onValidationError(translate('error.passwordMismatch'))
+                return
+              }
               await onRegisterRailwayManager({
                 operatorCode: String(formData.get('operatorCode') ?? '').trim(),
                 email: String(formData.get('email') ?? '').trim(),
                 displayName: String(formData.get('displayName') ?? '').trim(),
+                password,
               })
               event.currentTarget.reset()
             }}
@@ -120,11 +130,19 @@ export function TrainAdminPanel({
             </label>
             <label>
               {translate('trainAdmin.displayName')}
-              <input name="displayName" placeholder="Rail Ops" required />
+              <input name="displayName" placeholder={translate('trainAdmin.displayName')} required />
             </label>
             <label>
               {translate('trainAdmin.email')}
               <input name="email" type="email" placeholder="ops@rail.example" required />
+            </label>
+            <label>
+              {translate('account.password')}
+              <input name="password" type="password" placeholder={translate('account.password')} required />
+            </label>
+            <label>
+              {translate('account.confirmPassword')}
+              <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
             </label>
             <button type="submit" disabled={isBusy}>
               {translate('trainAdmin.createAccount')}
@@ -138,6 +156,7 @@ export function TrainAdminPanel({
               const formData = new FormData(event.currentTarget)
               await onLoginRailwayManager({
                 email: String(formData.get('email') ?? '').trim(),
+                password: String(formData.get('password') ?? ''),
               })
             }}
           >
@@ -145,6 +164,10 @@ export function TrainAdminPanel({
             <label>
               {translate('trainAdmin.email')}
               <input name="email" type="email" placeholder="ops@rail.example" required />
+            </label>
+            <label>
+              {translate('account.password')}
+              <input name="password" type="password" placeholder={translate('account.password')} required />
             </label>
             <button type="submit" disabled={isBusy}>
               {translate('trainAdmin.login')}

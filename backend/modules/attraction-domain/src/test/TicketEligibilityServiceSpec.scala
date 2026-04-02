@@ -4,7 +4,7 @@ import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.*
 import munit.FunSuite
 
-import java.time.{Instant, LocalDate}
+import java.time.{DayOfWeek, Instant, LocalDate}
 
 final class TicketEligibilityServiceSpec extends FunSuite:
   private type TestResult[A] = Either[Throwable, A]
@@ -74,12 +74,16 @@ final class TicketEligibilityServiceSpec extends FunSuite:
   }
 
   private def sampleTicketType(rules: Vector[TicketEligibilityRule]): TicketType =
-      restorePersistedTicketType(
+    restorePersistedTicketType(
       ticketTypeId = TicketTypeId("ticket-1"),
       attractionId = AttractionId("attraction-1"),
       ticketTypeName = "Student Ticket",
       description = "Student offer",
       unitPrice = Money.unsafe(80, Currency.CNY),
+      availableFromDate = LocalDate.parse("2026-04-01"),
+      availableToDate = LocalDate.parse("2026-04-30"),
+      totalQuantity = 100,
+      validWeekdays = DayOfWeek.values().toSet,
       ticketTypeStatus = TicketTypeStatus.Active,
       eligibilityRules = rules,
       createdAt = createdAt

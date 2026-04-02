@@ -2,6 +2,8 @@ ThisBuild / scalaVersion := "3.3.3"
 ThisBuild / organization := "com.typesafe.travel"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
+lazy val backendSourceRoot = file("src/main/scala")
+
 lazy val commonSettings = Seq(
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
 )
@@ -48,6 +50,7 @@ lazy val postgresqlDependency =
 lazy val root = (project in file("."))
   .aggregate(
     sharedKernel,
+    authDomain,
     identityDomain,
     travelerDomain,
     flightDomain,
@@ -73,6 +76,12 @@ lazy val root = (project in file("."))
   )
 
 lazy val sharedKernel = module("shared-kernel")
+
+lazy val authDomain = module("auth-domain")
+  .dependsOn(sharedKernel, identityDomain, operationsDomain, trainDomain)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, catsEffectDependency, munitDependency)
+  )
 
 lazy val identityDomain = module("identity-domain")
   .dependsOn(sharedKernel)
@@ -129,8 +138,24 @@ lazy val orderDomain = module("order-domain")
   )
 
 lazy val persistenceJdbc = module("persistence-jdbc")
-  .dependsOn(sharedKernel, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, contentDomain, tourGroupDomain, inventoryDomain, orderDomain, operationsDomain)
+  .dependsOn(sharedKernel, authDomain, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, contentDomain, tourGroupDomain, inventoryDomain, orderDomain, operationsDomain)
   .settings(
+    Compile / unmanagedSourceDirectories ++= Seq(
+      backendSourceRoot / "database",
+      backendSourceRoot / "auth-domain" / "tables",
+      backendSourceRoot / "identity-domain" / "tables",
+      backendSourceRoot / "traveler-domain" / "tables",
+      backendSourceRoot / "flight-domain" / "tables",
+      backendSourceRoot / "hotel-domain" / "tables",
+      backendSourceRoot / "train-domain" / "tables",
+      backendSourceRoot / "attraction-domain" / "tables",
+      backendSourceRoot / "content-domain" / "tables",
+      backendSourceRoot / "tour-group-domain" / "tables",
+      backendSourceRoot / "inventory-domain" / "tables",
+      backendSourceRoot / "order-domain" / "tables",
+      backendSourceRoot / "operations-domain" / "tables"
+    ),
+    Compile / unmanagedResourceDirectories += backendSourceRoot / "database" / "migrations",
     libraryDependencies ++= Seq(
       catsEffectDependency,
       circeGenericDependency,
@@ -158,6 +183,7 @@ lazy val operationsDomain = module("operations-domain")
 lazy val apiGateway = module("api-gateway")
   .dependsOn(
     sharedKernel,
+    authDomain,
     identityDomain,
       travelerDomain,
       flightDomain,
@@ -173,18 +199,20 @@ lazy val apiGateway = module("api-gateway")
   )
   .settings(
     Compile / unmanagedSourceDirectories ++= Seq(
-      baseDirectory.value.getParentFile / "identity-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "traveler-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "flight-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "hotel-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "train-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "attraction-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "content-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "tour-group-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "inventory-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "order-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "operations-domain" / "src" / "api",
-      baseDirectory.value.getParentFile / "shared-kernel" / "src" / "api"
+      backendSourceRoot / "routes",
+      backendSourceRoot / "auth-domain" / "api",
+      backendSourceRoot / "identity-domain" / "api",
+      backendSourceRoot / "traveler-domain" / "api",
+      backendSourceRoot / "flight-domain" / "api",
+      backendSourceRoot / "hotel-domain" / "api",
+      backendSourceRoot / "train-domain" / "api",
+      backendSourceRoot / "attraction-domain" / "api",
+      backendSourceRoot / "content-domain" / "api",
+      backendSourceRoot / "tour-group-domain" / "api",
+      backendSourceRoot / "inventory-domain" / "api",
+      backendSourceRoot / "order-domain" / "api",
+      backendSourceRoot / "operations-domain" / "api",
+      backendSourceRoot / "shared-kernel" / "api"
     ),
     Test / unmanagedSourceDirectories ++= Seq(
       baseDirectory.value.getParentFile / "identity-domain" / "src" / "api-test",
@@ -219,6 +247,9 @@ def module(moduleName: String) =
     .settings(commonSettings)
     .settings(
       name := moduleName,
-      Compile / unmanagedSourceDirectories += baseDirectory.value / "src" / "main",
+      Compile / unmanagedSourceDirectories ++= Seq(
+        backendSourceRoot / moduleName / "objects",
+        backendSourceRoot / moduleName / "utils"
+      ),
       Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test"
     )

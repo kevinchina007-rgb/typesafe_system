@@ -116,6 +116,11 @@ export type UserResponse = {
   createdAt: string
 }
 
+export type CurrentUserSessionResponse = {
+  user: UserResponse
+  expiresAt: string
+}
+
 export type TravelerResponse = {
   travelerId: string
   ownerUserId: string
@@ -234,6 +239,12 @@ export type AttractionTicketTypeResponse = {
   priceAmount: string
   priceCurrency: string
   status: string
+  availableFromDate: string
+  availableToDate: string
+  totalQuantity: number
+  validWeekdays: string[]
+  availableQuantityForRequestedDate: number | null
+  isAvailableForRequestedDate: boolean
   rules: AttractionTicketTypeRuleResponse[]
 }
 
@@ -401,7 +412,7 @@ export type OrderListResponse = {
 
 export type AppLanguage = 'en' | 'zh'
 
-export type ManagerType = 'airline' | 'hotel' | 'attraction'
+export type ManagerType = 'airline' | 'hotel' | 'train' | 'attraction'
 
 export type TrainAdminSessionResponse = {
   managerId: string
@@ -523,6 +534,17 @@ export type ManagerSessionResponse = {
   status: string
   scopeId: string
   createdAt: string
+}
+
+export type CurrentManagerSessionResponse = {
+  managerId: string
+  managerType: string
+  email: string
+  displayName: string
+  status: string
+  scopeId: string
+  createdAt: string
+  expiresAt: string
 }
 
 export type ManagerTaskResponse = {

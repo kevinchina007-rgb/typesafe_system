@@ -1,4 +1,4 @@
-import type { AppLanguage, AppViewKey, HealthResponse, UserResponse } from '../lib/mvp-types'
+import type { AppLanguage, AppViewKey, CurrentManagerSessionResponse, HealthResponse, UserResponse } from '../lib/mvp-types'
 
 type AccountEntryMode = 'register' | 'login'
 
@@ -6,6 +6,7 @@ type AppSidebarProps = {
   currentLanguage: AppLanguage
   currentViewKey: AppViewKey
   health: HealthResponse | null
+  signedInManager: CurrentManagerSessionResponse | null
   signedInUser: UserResponse | null
   onChangeLanguage: (language: AppLanguage) => void
   onSelectView: (viewKey: AppViewKey) => void
@@ -14,33 +15,28 @@ type AppSidebarProps = {
 }
 
 const guestSidebarViews: AppViewKey[] = ['blog', 'account']
-const signedInSidebarViews: AppViewKey[] = [
-  'blog',
-  'reviews',
-  'explore',
-  'account',
-  'travelers',
-  'flights',
-  'hotels',
-  'trains',
-  'attractions',
-  'tourGroups',
-  'bookings',
-  'manager',
-]
+const signedInUserSidebarViews: AppViewKey[] = ['blog', 'reviews', 'explore', 'account', 'travelers', 'flights', 'hotels', 'trains', 'attractions', 'tourGroups', 'bookings']
+const signedInManagerSidebarViews: AppViewKey[] = ['blog', 'account', 'manager']
 
 export function AppSidebar({
   currentLanguage,
   currentViewKey,
   health,
+  signedInManager,
   signedInUser,
   onChangeLanguage,
   onSelectView,
   onOpenAccountEntryMode,
   translate,
 }: AppSidebarProps) {
-  const isGuestMode = signedInUser === null
-  const sidebarViews = isGuestMode ? guestSidebarViews : signedInSidebarViews
+  const isGuestMode = signedInUser === null && signedInManager === null
+  const sidebarViews: AppViewKey[] = isGuestMode
+    ? guestSidebarViews
+    : signedInUser
+      ? signedInManager
+        ? [...signedInUserSidebarViews, 'manager' as AppViewKey]
+        : signedInUserSidebarViews
+      : signedInManagerSidebarViews
 
   return (
     <aside className="app-sidebar">
@@ -66,6 +62,8 @@ export function AppSidebar({
         </span>
         {signedInUser ? (
           <p>{`${signedInUser.nickname} · ${signedInUser.email}`}</p>
+        ) : signedInManager ? (
+          <p>{`${signedInManager.displayName} · ${signedInManager.email}`}</p>
         ) : (
           <>
             <p>{translate('guest.badge')}</p>

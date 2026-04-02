@@ -1106,6 +1106,16 @@ Object.assign(chineseTranslations, {
   'content.imagesUpload': '上传图片',
 })
 
+
+Object.assign(englishTranslations, {
+  'account.confirmPassword': 'Confirm password',
+  'error.passwordMismatch': 'The two password fields must match.',
+})
+
+Object.assign(chineseTranslations, {
+  'account.confirmPassword': '确认密码',
+  'error.passwordMismatch': '两次输入的密码必须一致。',
+})
 export function createTranslator(language: AppLanguage) {
   return (translationKey: string): string =>
     translationTable[language][translationKey] ?? translationTable.en[translationKey] ?? translationKey

@@ -41,10 +41,12 @@ export function BlogPanel({
   onUnlikePost,
 }: BlogPanelProps) {
   const [scope, setScope] = useState<BlogScope>('latest')
+  const [searchDraft, setSearchDraft] = useState('')
   const [searchText, setSearchText] = useState('')
   const [postSummaries, setPostSummaries] = useState<BlogPostSummaryResponse[]>([])
   const [selectedPost, setSelectedPost] = useState<BlogPostResponse | null>(null)
   const [editingPost, setEditingPost] = useState<BlogPostResponse | null>(null)
+  const [isComposerOpen, setIsComposerOpen] = useState(false)
 
   useEffect(() => {
     const nextScope = signedInUser ? scope : 'latest'
@@ -69,16 +71,23 @@ export function BlogPanel({
   }
 
   return (
-    <section className="content-grid blog-layout">
-      <div className="page-card">
+    <section className="page-card">
+      <div className="panel-card">
         <div className="panel-heading">
           <div>
             <p className="eyebrow-label">{translate('nav.blog')}</p>
             <h2>{translate('blog.title')}</h2>
           </div>
-          <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void reloadPosts()}>
-            {translate('blog.refresh')}
-          </button>
+          <div className="action-row">
+            {signedInUser ? (
+              <button type="button" disabled={isBusy} onClick={() => setIsComposerOpen(true)}>
+                {translate('blog.publish')}
+              </button>
+            ) : null}
+            <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void reloadPosts()}>
+              {translate('blog.refresh')}
+            </button>
+          </div>
         </div>
 
         <p className="hero-copy">{translate('blog.description')}</p>
@@ -94,29 +103,36 @@ export function BlogPanel({
           ) : null}
         </div>
 
-        <label>
-          {translate('blog.search')}
-          <input
-            value={searchText}
-            onChange={event => setSearchText(event.target.value)}
-            placeholder={translate('blog.searchHint')}
-          />
-        </label>
+        <div className="stack-form">
+          <label>
+            {translate('blog.search')}
+            <input
+              value={searchDraft}
+              onChange={event => setSearchDraft(event.target.value)}
+              placeholder={translate('blog.searchHint')}
+            />
+          </label>
+          <button type="button" disabled={isBusy} onClick={() => setSearchText(searchDraft)}>
+            {translate('blog.search')}
+          </button>
+        </div>
 
-        {signedInUser ? (
+        {signedInUser && isComposerOpen ? (
           <BlogEditor
             isBusy={isBusy}
             translate={translate}
             onUploadImage={onUploadImage}
             onSubmit={async payload => {
               const created = await onCreatePost(payload)
+              setIsComposerOpen(false)
               setEditingPost(null)
               await reloadPosts(scope, created.post.postId)
             }}
+            onCancel={() => setIsComposerOpen(false)}
           />
-        ) : (
+        ) : !signedInUser ? (
           <p className="empty-state">{translate('blog.guestHint')}</p>
-        )}
+        ) : null}
 
         <div className="list-surface">
           {postSummaries.length === 0 ? <p className="empty-state">{translate(scope === 'mine' ? 'blog.mineEmpty' : 'blog.empty')}</p> : null}
@@ -137,75 +153,75 @@ export function BlogPanel({
             </ul>
           ) : null}
         </div>
-      </div>
 
-      {editingPost ? (
-        <BlogEditor
-          isBusy={isBusy}
-          mode="edit"
-          initialValue={{
-            title: editingPost.post.title,
-            summary: editingPost.post.summary,
-            content: editingPost.content,
-            images: editingPost.post.images,
-          }}
-          translate={translate}
-          onUploadImage={onUploadImage}
-          onSubmit={async payload => {
-            const updated = await onUpdatePost(editingPost.post.postId, payload)
-            setEditingPost(null)
-            setSelectedPost(updated)
-            await reloadPosts(scope, updated.post.postId)
-          }}
-          onCancel={() => setEditingPost(null)}
-        />
-      ) : selectedPost ? (
-        <BlogDetail
-          currentLanguage={currentLanguage}
-          isBusy={isBusy}
-          isGuestMode={signedInUser === null}
-          post={selectedPost}
-          translate={translate}
-          onComment={async content => {
-            const updated = await onCommentPost(selectedPost.post.postId, content)
-            setSelectedPost(updated)
-            setPostSummaries(currentPosts =>
-              currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
-            )
-          }}
-          onDeleteComment={async commentId => {
-            const updated = await onDeleteComment(commentId)
-            setSelectedPost(updated)
-            setPostSummaries(currentPosts =>
-              currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
-            )
-          }}
-          onLike={async () => {
-            const updated = await onLikePost(selectedPost.post.postId)
-            setSelectedPost(updated)
-            setPostSummaries(currentPosts =>
-              currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
-            )
-          }}
-          onUnlike={async () => {
-            const updated = await onUnlikePost(selectedPost.post.postId)
-            setSelectedPost(updated)
-            setPostSummaries(currentPosts =>
-              currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
-            )
-          }}
-          onStartEdit={() => setEditingPost(selectedPost)}
-          onArchive={async () => {
-            const updated = await onArchivePost(selectedPost.post.postId)
-            setSelectedPost(updated)
-            await reloadPosts(scope, updated.post.postId)
-          }}
-        />
-      ) : (
-        <section className="page-card">
-          <p className="empty-state">{translate('blog.empty')}</p>
-        </section>
-      )}
+        {editingPost ? (
+          <BlogEditor
+            isBusy={isBusy}
+            mode="edit"
+            initialValue={{
+              title: editingPost.post.title,
+              summary: editingPost.post.summary,
+              content: editingPost.content,
+              images: editingPost.post.images,
+            }}
+            translate={translate}
+            onUploadImage={onUploadImage}
+            onSubmit={async payload => {
+              const updated = await onUpdatePost(editingPost.post.postId, payload)
+              setEditingPost(null)
+              setSelectedPost(updated)
+              await reloadPosts(scope, updated.post.postId)
+            }}
+            onCancel={() => setEditingPost(null)}
+          />
+        ) : selectedPost ? (
+          <BlogDetail
+            currentLanguage={currentLanguage}
+            isBusy={isBusy}
+            isGuestMode={signedInUser === null}
+            post={selectedPost}
+            translate={translate}
+            onComment={async content => {
+              const updated = await onCommentPost(selectedPost.post.postId, content)
+              setSelectedPost(updated)
+              setPostSummaries(currentPosts =>
+                currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
+              )
+            }}
+            onDeleteComment={async commentId => {
+              const updated = await onDeleteComment(commentId)
+              setSelectedPost(updated)
+              setPostSummaries(currentPosts =>
+                currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
+              )
+            }}
+            onLike={async () => {
+              const updated = await onLikePost(selectedPost.post.postId)
+              setSelectedPost(updated)
+              setPostSummaries(currentPosts =>
+                currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
+              )
+            }}
+            onUnlike={async () => {
+              const updated = await onUnlikePost(selectedPost.post.postId)
+              setSelectedPost(updated)
+              setPostSummaries(currentPosts =>
+                currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
+              )
+            }}
+            onStartEdit={() => setEditingPost(selectedPost)}
+            onArchive={async () => {
+              const updated = await onArchivePost(selectedPost.post.postId)
+              setSelectedPost(updated)
+              await reloadPosts(scope, updated.post.postId)
+            }}
+          />
+        ) : (
+          <div className="list-surface">
+            <p className="empty-state">{translate('blog.empty')}</p>
+          </div>
+        )}
+      </div>
     </section>
   )
 }

@@ -5,6 +5,8 @@ import type {
   ApiErrorResponse,
   BlogPostListResponse,
   BlogPostResponse,
+  CurrentManagerSessionResponse,
+  CurrentUserSessionResponse,
   ResourceReviewSummaryResponse,
   FlightListResponse,
   FlightResponse,
@@ -27,6 +29,7 @@ import type {
   TourGroupPaySelectionResponse,
   TravelerListResponse,
   TravelerResponse,
+  ManagerType,
   UserResponse,
 } from './mvp-types'
 import { getTravelBackendOrigin } from './runtime-config'
@@ -41,6 +44,7 @@ function formatApiErrorMessage(apiErrorResponse: ApiErrorResponse, status: numbe
 async function apiRequest<TResponse>(path: string, options?: RequestInit): Promise<TResponse> {
   const isMultipartBody = typeof FormData !== 'undefined' && options?.body instanceof FormData
   const response = await fetch(`${travelMvpApiBaseUrl}${path}`, {
+    credentials: 'include',
     headers: isMultipartBody
       ? {
           ...(options?.headers ?? {}),
@@ -78,6 +82,50 @@ async function apiRequest<TResponse>(path: string, options?: RequestInit): Promi
 
 export const travelMvpApiClient = {
   getHealth: (): Promise<HealthResponse> => apiRequest('/health'),
+
+  signupUser: (payload: {
+    email: string
+    nickname: string
+    phone: string
+    password: string
+  }): Promise<CurrentUserSessionResponse> =>
+    apiRequest('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  loginUserWithPassword: (payload: {
+    email: string
+    password: string
+  }): Promise<CurrentUserSessionResponse> =>
+    apiRequest('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  logoutUser: (): Promise<{ status: string }> =>
+    apiRequest('/auth/logout', {
+      method: 'POST',
+    }),
+
+  getCurrentUserSession: (): Promise<CurrentUserSessionResponse> => apiRequest('/auth/me'),
+
+  loginManagerAuth: (payload: {
+    managerType: ManagerType
+    email: string
+    password: string
+  }): Promise<CurrentManagerSessionResponse> =>
+    apiRequest('/manager-auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  logoutManagerAuth: (): Promise<{ status: string }> =>
+    apiRequest('/manager-auth/logout', {
+      method: 'POST',
+    }),
+
+  getCurrentManagerSession: (): Promise<CurrentManagerSessionResponse> => apiRequest('/manager-auth/me'),
 
   listBlogPosts: (scope: 'latest' | 'mine' = 'latest', userId?: string, q?: string): Promise<BlogPostListResponse> => {
     const searchParams = new URLSearchParams()
@@ -446,16 +494,27 @@ export const travelMvpApiClient = {
 
   listAttractions: (query?: {
     city?: string
+    useDate?: string
   }): Promise<AttractionListResponse> => {
     const searchParams = new URLSearchParams()
     if (query?.city) {
       searchParams.set('city', query.city)
     }
+    if (query?.useDate) {
+      searchParams.set('useDate', query.useDate)
+    }
     const suffix = searchParams.toString() ? `?${searchParams.toString()}` : ''
     return apiRequest(`/attractions${suffix}`)
   },
 
-  getAttraction: (attractionId: string): Promise<AttractionResponse> => apiRequest(`/attractions/${attractionId}`),
+  getAttraction: (attractionId: string, query?: { useDate?: string }): Promise<AttractionResponse> => {
+    const searchParams = new URLSearchParams()
+    if (query?.useDate) {
+      searchParams.set('useDate', query.useDate)
+    }
+    const suffix = searchParams.toString() ? `?${searchParams.toString()}` : ''
+    return apiRequest(`/attractions/${attractionId}${suffix}`)
+  },
 
   createTourGroup: (payload: {
     organizerUserId: string
@@ -669,6 +728,7 @@ export const travelMvpApiClient = {
     displayName: string
     airlineName: string
     airlineCode: string
+    password: string
   }): Promise<ManagerSessionResponse> =>
     apiRequest('/manager/airline/register', {
       method: 'POST',
@@ -680,6 +740,7 @@ export const travelMvpApiClient = {
     displayName: string
     hotelName: string
     location: string
+    password: string
   }): Promise<ManagerSessionResponse> =>
     apiRequest('/manager/hotel/register', {
       method: 'POST',
@@ -690,6 +751,7 @@ export const travelMvpApiClient = {
     operatorCode: string
     email: string
     displayName: string
+    password: string
   }): Promise<TrainAdminSessionResponse> =>
     apiRequest('/train-admin/managers', {
       method: 'POST',
@@ -705,6 +767,7 @@ export const travelMvpApiClient = {
   registerAttractionManager: (payload: {
     email: string
     displayName: string
+    password: string
   }): Promise<AttractionAdminSessionResponse> =>
     apiRequest('/attraction-admin/managers', {
       method: 'POST',
@@ -739,6 +802,10 @@ export const travelMvpApiClient = {
     description: string
     unitPrice: string
     currency: string
+    availableFromDate: string
+    availableToDate: string
+    totalQuantity: number
+    validWeekdays: string[]
   }): Promise<AttractionResponse> =>
     apiRequest('/attraction-admin/ticket-types', {
       method: 'POST',

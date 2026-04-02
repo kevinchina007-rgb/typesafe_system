@@ -12,6 +12,7 @@ $logDir = Join-Path $templateRoot '.launcher-logs'
 $launcherLog = Join-Path $logDir 'launcher-stable.log'
 $backendStdout = Join-Path $logDir 'backend.stdout.log'
 $backendStderr = Join-Path $logDir 'backend.stderr.log'
+$backendArgFile = Join-Path $logDir 'backend-java.args'
 $frontendStdout = Join-Path $logDir 'frontend.stdout.log'
 $frontendStderr = Join-Path $logDir 'frontend.stderr.log'
 
@@ -143,11 +144,33 @@ function Get-BackendRuntimeClasspath {
   return ($entries -join ';')
 }
 
+function Write-RuntimeConfig {
+  param([bool]$BackendHealthy)
+
+  $initialHealthJson =
+    if ($BackendHealthy) {
+      "{ status: 'ok', service: 'travel-platform-backend', backendPort: $BackendPort }"
+    } else {
+      "null"
+    }
+
+  [System.IO.File]::WriteAllText(
+    $runtimeConfigPath,
+    @"
+window.__TRAVEL_BACKEND_ORIGIN__ = '$backendOrigin';
+window.__TRAVEL_INITIAL_BACKEND_HEALTH__ = $initialHealthJson;
+"@,
+    (New-Object System.Text.UTF8Encoding($false))
+  )
+}
+
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 Set-Content -Path $launcherLog -Value "[travel-platform] launcher started $(Get-Date -Format o)" -Encoding UTF8
 
 $backendOrigin = "http://localhost:$BackendPort"
 $frontendOrigin = "http://localhost:$FrontendPort"
+$bootToken = Get-Date -Format yyyyMMddHHmmssfff
+$frontendLaunchUrl = "$frontendOrigin/?boot=$bootToken"
 
 if (-not (Test-Path (Join-Path $distDir 'index.html'))) {
   Write-Host "[travel-platform] Frontend dist was not found at $distDir. Run npm.cmd run build once before using the shortcut."
@@ -156,12 +179,16 @@ if (-not (Test-Path (Join-Path $distDir 'index.html'))) {
 }
 
 $runtimeConfigPath = Join-Path $distDir 'runtime-config.js'
-[System.IO.File]::WriteAllText(
-  $runtimeConfigPath,
-  "window.__TRAVEL_BACKEND_ORIGIN__ = '$backendOrigin';",
-  [System.Text.Encoding]::UTF8
-)
+Write-RuntimeConfig -BackendHealthy $false
 Write-LauncherLog "runtime config written for backend $backendOrigin"
+
+$indexHtmlPath = Join-Path $distDir 'index.html'
+if (Test-Path $indexHtmlPath) {
+  $indexHtmlContent = Get-Content -Path $indexHtmlPath -Raw
+  $indexHtmlContent = $indexHtmlContent -replace '/runtime-config\.js(\?boot=\d+)?', "/runtime-config.js?boot=$bootToken"
+  [System.IO.File]::WriteAllText($indexHtmlPath, $indexHtmlContent, (New-Object System.Text.UTF8Encoding($false)))
+  Write-LauncherLog "index html updated with runtime-config cache bust token $bootToken"
+}
 
 $backendHealthUrl = "$backendOrigin/api/health"
 
@@ -205,7 +232,16 @@ if (-not (Test-StableBackendHealthy $backendHealthUrl)) {
         ""
       }
     Remove-Item $backendStdout, $backendStderr -Force -ErrorAction SilentlyContinue
-    $backendCommand = "/c set ""JAVA_HOME=$javaHome"" && set ""TRAVEL_REPOSITORY_MODE=database"" && set ""TRAVEL_BACKEND_PORT=$BackendPort"" && set ""TRAVEL_DB_URL=$databaseUrl"" && set ""TRAVEL_DB_DRIVER=$databaseDriver"" && set ""TRAVEL_DB_USER=$databaseUser"" && set ""TRAVEL_DB_PASSWORD=$databasePassword"" && ""$javaExe"" -classpath ""$runtimeClasspath"" com.typesafe.travel.api.Main 1>>""$backendStdout"" 2>>""$backendStderr"""
+    [System.IO.File]::WriteAllLines(
+      $backendArgFile,
+      @(
+        '-classpath',
+        $runtimeClasspath,
+        'com.typesafe.travel.api.Main'
+      ),
+      (New-Object System.Text.UTF8Encoding($false))
+    )
+    $backendCommand = "/c set ""JAVA_HOME=$javaHome"" && set ""TRAVEL_REPOSITORY_MODE=database"" && set ""TRAVEL_BACKEND_PORT=$BackendPort"" && set ""TRAVEL_DB_URL=$databaseUrl"" && set ""TRAVEL_DB_DRIVER=$databaseDriver"" && set ""TRAVEL_DB_USER=$databaseUser"" && set ""TRAVEL_DB_PASSWORD=$databasePassword"" && ""$javaExe"" ""@$backendArgFile"" 1>>""$backendStdout"" 2>>""$backendStderr"""
     $backendProcess = Start-BackgroundCommand -FilePath 'cmd.exe' -Arguments $backendCommand -WorkingDirectory $backendRoot
     Write-LauncherLog "backend process started pid=$($backendProcess.Id) db=$databaseUrl driver=$databaseDriver"
   } catch {
@@ -231,8 +267,9 @@ for ($attempt = 0; $attempt -lt 90; $attempt++) {
   $backendReady = Test-BackendHealthy $backendHealthUrl
 
   if ($frontendReady -and $backendReady) {
-    Write-LauncherLog "ready backend=$backendOrigin frontend=$frontendOrigin"
-    & cmd.exe /c start "" $frontendOrigin | Out-Null
+    Write-RuntimeConfig -BackendHealthy $true
+    Write-LauncherLog "ready backend=$backendOrigin frontend=$frontendOrigin launch=$frontendLaunchUrl"
+    & cmd.exe /c start "" $frontendLaunchUrl | Out-Null
     exit 0
   }
 
@@ -240,5 +277,6 @@ for ($attempt = 0; $attempt -lt 90; $attempt++) {
 }
 
 Write-LauncherLog "timed out waiting for backend/frontend readiness"
-& cmd.exe /c start "" $frontendOrigin | Out-Null
+Write-RuntimeConfig -BackendHealthy (Test-BackendHealthy -BackendHealthUrl $backendHealthUrl)
+& cmd.exe /c start "" $frontendLaunchUrl | Out-Null
 exit 0

@@ -97,7 +97,7 @@ export function BlogEditor({
         <button type="submit" disabled={isBusy}>
           {mode === 'edit' ? translate('blog.save') : translate('blog.publish')}
         </button>
-        {mode === 'edit' && onCancel ? (
+        {onCancel ? (
           <button type="button" className="secondary-button" disabled={isBusy} onClick={onCancel}>
             {translate('tourGroups.cancel')}
           </button>
