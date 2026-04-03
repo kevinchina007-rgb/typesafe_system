@@ -42,7 +42,10 @@ final case class CreateTrainStopInput(
 final case class CreateTrainSeatInventoryInput(
     seatClass: TrainSeatClass,
     totalSeats: SeatCount,
-    saleableSeats: SeatCount
+    saleableSeats: SeatCount,
+    carriageCount: Int,
+    rowsPerCarriage: Int,
+    seatLayoutSpec: String
 )
 
 final case class CreateTrainSegmentPriceInput(
@@ -96,6 +99,7 @@ final class LiveTrainAdminApplicationService[F[_]: MonadThrow](
   ): F[TrainJourney] =
     for
       _ <- trainRepository.findRailwayManagerById(managerId).flatMap(_.liftTo[F](TrainError.RailwayManagerWasNotFoundById(managerId)))
+      existingTrains <- trainService.browseTrains(TrainSearchCriteria(None, None, None))
       trainId <- trainRepository.nextTrainId
       persistedStops <- stops.zipWithIndex.traverse { case (stopInput, index) =>
         trainRepository.nextTrainStopId.map { stopId =>
@@ -121,6 +125,21 @@ final class LiveTrainAdminApplicationService[F[_]: MonadThrow](
           )
         }
       }
+      persistedSeats <- persistedSeatConfigs.zip(seatConfigs).traverse { case (inventory, seatConfig) =>
+        val layoutColumns = parseSeatLayoutColumns(seatConfig.seatLayoutSpec)
+        val expectedSeatCount = seatConfig.carriageCount * seatConfig.rowsPerCarriage * layoutColumns.size
+        for
+          seatIds <- List.fill(expectedSeatCount)(()).traverse(_ => trainRepository.nextTrainSeatId)
+          generatedSeats <- generateTrainSeats(
+            trainId = trainId,
+            inventory = inventory,
+            carriageCount = seatConfig.carriageCount,
+            rowsPerCarriage = seatConfig.rowsPerCarriage,
+            layoutColumns = layoutColumns,
+            seatIds = seatIds.toVector
+          ).liftTo[F]
+        yield generatedSeats
+      }.map(_.flatten.toVector)
       persistedSegmentPrices <- segmentPrices.traverse { segmentPrice =>
         for
           segmentPriceId <- trainRepository.nextTrainSegmentPriceId
@@ -154,10 +173,47 @@ final class LiveTrainAdminApplicationService[F[_]: MonadThrow](
         saleStartsAt = saleStartsAt,
         stops = persistedStops.toVector,
         seatInventories = persistedSeatConfigs.toVector,
+        seats = persistedSeats,
         segmentPrices = persistedSegmentPrices.toVector,
         refundPolicySegments = persistedRefundPolicies.toVector,
         createdAt = createdAt
       )
         .liftTo[F]
+      _ <- ensureTrainNumberDoesNotOverlap(existingTrains, trainJourney)
       savedTrain <- trainService.saveTrain(trainJourney)
     yield savedTrain
+
+  private def parseSeatLayoutColumns(seatLayoutSpec: String): Vector[TrainSeatLayoutColumn] =
+    seatLayoutSpec
+      .split(",")
+      .toVector
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .zipWithIndex
+      .map { case (rawValue, index) =>
+        val parts = rawValue.split(":").map(_.trim)
+        val code = parts.headOption.getOrElse("A").toUpperCase
+        val positionType =
+          parts.lift(1).map(_.toLowerCase) match
+            case Some("window") => TrainSeatPositionType.Window
+            case Some("aisle")  => TrainSeatPositionType.Aisle
+            case Some("middle") => TrainSeatPositionType.Middle
+            case _              => TrainSeatPositionType.Other
+        TrainSeatLayoutColumn(code = code, sortOrder = index, positionType = positionType)
+      }
+
+  private def ensureTrainNumberDoesNotOverlap(
+      existingTrains: List[TrainJourney],
+      candidateTrain: TrainJourney
+  ): F[Unit] =
+    candidateTrain.journeyWindow.liftTo[F].flatMap { candidateWindow =>
+      existingTrains
+        .find(existingTrain =>
+          existingTrain.trainNumber == candidateTrain.trainNumber &&
+          existingTrain.journeyWindow.exists(_.overlaps(candidateWindow))
+        ) match
+        case Some(conflictingTrain) =>
+          MonadThrow[F].raiseError(TrainError.TrainNumberConflict(candidateTrain.trainNumber, conflictingTrain.trainId))
+        case None =>
+          MonadThrow[F].unit
+    }

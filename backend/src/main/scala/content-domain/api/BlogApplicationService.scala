@@ -59,6 +59,7 @@ final case class BlogPostDetailsView(post: BlogPostView, content: String, commen
 
 trait BlogApplicationService[F[_]]:
   def listPosts(currentUserId: Option[UserId], scope: BlogPostScope, query: Option[String]): F[List[BlogPostView]]
+  def suggestPublishedPosts(query: String): F[List[SearchSuggestion]]
   def getPost(postId: BlogId, currentUserId: Option[UserId]): F[BlogPostDetailsView]
   def createPublishedPost(authorUserId: UserId, title: String, summary: String, content: String, imageRefs: List[BlogImageRef], now: Instant): F[BlogPostDetailsView]
   def updatePost(postId: BlogId, authorUserId: UserId, title: String, summary: String, content: String, imageRefs: List[BlogImageRef], now: Instant): F[BlogPostDetailsView]
@@ -89,7 +90,8 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
           posts <- query.filter(_.trim.nonEmpty) match
             case Some(searchQuery) => blogRepository.searchPublishedPosts(searchQuery)
             case None              => blogRepository.listPublishedPosts
-          views <- posts.traverse(toPostView(_, currentUserId, query))
+          sortedPosts = sortPostsByQuery(posts, query)
+          views <- sortedPosts.traverse(toPostView(_, currentUserId, query))
         yield views
       case BlogPostScope.Mine =>
         currentUserId match
@@ -99,10 +101,31 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
               posts <- query.filter(_.trim.nonEmpty) match
                 case Some(searchQuery) => blogRepository.searchPostsByAuthorUserId(authorUserId, searchQuery)
                 case None              => blogRepository.listPostsByAuthorUserId(authorUserId)
-              views <- posts.traverse(toPostView(_, currentUserId, query))
+              sortedPosts = sortPostsByQuery(posts, query)
+              views <- sortedPosts.traverse(toPostView(_, currentUserId, query))
             yield views
           case None =>
             MonadThrow[F].raiseError(UserError.UserWasNotFound(UserId("guest")))
+
+  override def suggestPublishedPosts(query: String): F[List[SearchSuggestion]] =
+    SearchRanking.usableKeyword(query) match
+      case None => MonadThrow[F].pure(List.empty)
+      case Some(normalizedKeyword) =>
+        blogRepository
+          .searchPublishedPosts(normalizedKeyword)
+          .map(sortPostsByQuery(_, Some(normalizedKeyword)))
+          .map(
+            _.map { post =>
+              SearchSuggestion(
+                resourceType = SearchResourceType.Blog,
+                value = post.title,
+                title = post.title,
+                subtitle = buildSearchSnippet(post, normalizedKeyword).getOrElse(post.summary.take(80)),
+                score = blogSearchScore(post, normalizedKeyword)
+              )
+            }
+          )
+          .map(_.filter(_.score > 0).take(8))
 
   override def getPost(postId: BlogId, currentUserId: Option[UserId]): F[BlogPostDetailsView] =
     for
@@ -301,3 +324,15 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
             normalizedText.substring(startIndex, endIndex)
         }
 
+  private def sortPostsByQuery(posts: List[BlogPost], query: Option[String]): List[BlogPost] =
+    query.filter(_.trim.nonEmpty) match
+      case Some(searchQuery) => posts.sortBy(post => -blogSearchScore(post, searchQuery))
+      case None              => posts
+
+  private def blogSearchScore(post: BlogPost, query: String): Int =
+    SearchRanking.weightedScore(
+      query,
+      post.title -> 4,
+      post.summary -> 2,
+      post.content -> 1
+    )

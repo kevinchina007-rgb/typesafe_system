@@ -21,6 +21,7 @@ type TrainsPanelProps = {
     fromStationCode: string
     toStationCode: string
     seatClass: string
+    seatPreference?: string | null
     orderCurrency: string
   }) => Promise<void>
   onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
@@ -214,10 +215,20 @@ export function TrainsPanel({
                               fromStationCode: searchFromStation,
                               toStationCode: searchToStation,
                               seatClass: seatInventory.seatClass,
+                              seatPreference: String(formData.get('seatPreference') ?? '').trim() || null,
                               orderCurrency: quote.currency,
                             })
                           }}
                         >
+                          <label>
+                            {translate('trains.seatPreference')}
+                            <select name="seatPreference" defaultValue="no_preference" disabled={isGuestMode || isBusy || !quote}>
+                              <option value="no_preference">{translate('trains.noPreference')}</option>
+                              <option value="window">{translate('trains.window')}</option>
+                              <option value="aisle">{translate('trains.aisle')}</option>
+                              <option value="middle">{translate('trains.middle')}</option>
+                            </select>
+                          </label>
                           <div className="checkbox-list">
                             <p className="detail-label">{translate('trains.selectTravelers')}</p>
                             {travelers.map(traveler => (

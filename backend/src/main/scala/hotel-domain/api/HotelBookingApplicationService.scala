@@ -43,6 +43,7 @@ trait HotelBookingApplicationService[F[_]]:
       locationQuery: Option[String],
       stayPeriod: Option[StayPeriod]
   ): F[List[Hotel]]
+  def suggestHotels(keyword: String): F[List[SearchSuggestion]]
   def getHotelDetails(hotelId: HotelId): F[Hotel]
   def createHotelOrder(
       actingUserId: UserId,
@@ -70,6 +71,41 @@ final class LiveHotelBookingApplicationService[F[_]: MonadThrow: Clock](
     hotelService
       .browseHotels(None, stayPeriod)
       .map(_.filter(hotelMatchesSearch(_, locationQuery)))
+      .map(_.sortBy(hotel => -hotelSearchScore(hotel, locationQuery)))
+
+  override def suggestHotels(keyword: String): F[List[SearchSuggestion]] =
+    SearchRanking.usableKeyword(keyword) match
+      case None => MonadThrow[F].pure(List.empty)
+      case Some(normalizedKeyword) =>
+        hotelService
+          .browseHotels(None, None)
+          .map(
+            _.flatMap { hotel =>
+              val locationScore = SearchRanking.weightedScore(normalizedKeyword, hotel.hotelLocation.value -> 4, hotel.hotelName.value -> 1)
+              val hotelNameScore = SearchRanking.weightedScore(normalizedKeyword, hotel.hotelName.value -> 4, hotel.hotelLocation.value -> 2)
+              List(
+                Option.when(locationScore > 0)(
+                  SearchSuggestion(
+                    resourceType = SearchResourceType.Hotel,
+                    value = hotel.hotelLocation.value,
+                    title = hotel.hotelLocation.value,
+                    subtitle = hotel.hotelName.value,
+                    score = locationScore
+                  )
+                ),
+                Option.when(hotelNameScore > 0)(
+                  SearchSuggestion(
+                    resourceType = SearchResourceType.Hotel,
+                    value = hotel.hotelName.value,
+                    title = hotel.hotelName.value,
+                    subtitle = hotel.hotelLocation.value,
+                    score = hotelNameScore
+                  )
+                )
+              ).flatten
+            }
+          )
+          .map(suggestions => SearchRanking.topDistinctByValue(suggestions, 8))
 
   override def getHotelDetails(hotelId: HotelId): F[Hotel] =
     hotelService.getHotelDetails(hotelId)
@@ -174,4 +210,7 @@ final class LiveHotelBookingApplicationService[F[_]: MonadThrow: Clock](
 
   private def hotelMatchesSearch(hotel: Hotel, locationQuery: Option[String]): Boolean =
     locationQuery.forall(queryText => TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesHotelLocationQuery(hotel.hotelLocation, queryText))
+
+  private def hotelSearchScore(hotel: Hotel, locationQuery: Option[String]): Int =
+    locationQuery.map(queryText => SearchRanking.weightedScore(queryText, hotel.hotelLocation.value -> 4, hotel.hotelName.value -> 2)).getOrElse(0)
 

@@ -14,6 +14,7 @@ type AttractionsPanelProps = {
   onBookAttraction: (payload: {
     attractionId: string
     ticketTypeId: string
+    sessionId?: string | null
     travelerIds: string[]
     useDate: string
     orderCurrency: string
@@ -144,6 +145,7 @@ export function AttractionsPanel({
                           await onBookAttraction({
                             attractionId: attractionResponse.attractionId,
                             ticketTypeId: ticketType.ticketTypeId,
+                            sessionId: String(formData.get('sessionId') ?? '').trim() || null,
                             travelerIds,
                             useDate,
                             orderCurrency: ticketType.priceCurrency,
@@ -154,6 +156,21 @@ export function AttractionsPanel({
                           {translate('attractions.useDate')}
                           <input name="useDate" type="date" defaultValue={useDateDraft} required disabled={isBusy || isGuestMode} />
                         </label>
+                        {ticketType.sessions.length > 0 ? (
+                          <label>
+                            {translate('attractions.session')}
+                            <select name="sessionId" defaultValue="" required disabled={isBusy || isGuestMode}>
+                              <option value="" disabled>{translate('attractions.selectSession')}</option>
+                              {ticketType.sessions
+                                .filter(session => session.useDate === useDateDraft)
+                                .map(session => (
+                                  <option key={session.sessionId} value={session.sessionId}>
+                                    {`${session.sessionName} · ${session.startsAt.slice(11, 16)}-${session.endsAt.slice(11, 16)}`}
+                                  </option>
+                                ))}
+                            </select>
+                          </label>
+                        ) : null}
 
                         <div className="checkbox-list">
                           <p className="detail-label">{translate('attractions.selectTravelers')}</p>

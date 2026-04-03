@@ -30,15 +30,30 @@ final case class CurrentManagerSessionView(
     expiresAt: Instant
 )
 
+final case class AuthSessionView(
+    sessionId: SessionId,
+    createdAt: Instant,
+    lastSeenAt: Instant,
+    expiresAt: Instant,
+    status: AuthSessionStatus,
+    isCurrent: Boolean
+)
+
 trait AuthApplicationService[F[_]]:
   def signupUser(loginEmail: EmailAddress, nickname: PersonName, phone: ContactNumber, rawPassword: String, now: Instant): F[CurrentUserSessionView]
   def loginUser(loginEmail: EmailAddress, rawPassword: String, now: Instant): F[CurrentUserSessionView]
   def restoreCurrentUser(sessionId: SessionId, now: Instant): F[CurrentUserSessionView]
+  def listUserSessions(sessionId: SessionId, now: Instant): F[List[AuthSessionView]]
+  def changeUserPassword(sessionId: SessionId, currentPassword: String, nextPassword: String, now: Instant): F[Unit]
   def logoutUser(sessionId: SessionId): F[Unit]
+  def logoutOtherUserSessions(sessionId: SessionId, now: Instant): F[Int]
   def createManagerCredential(managerType: AuthManagerType, managerId: ManagerId, loginEmail: EmailAddress, rawPassword: String, now: Instant): F[Unit]
   def loginManager(managerType: AuthManagerType, loginEmail: EmailAddress, rawPassword: String, now: Instant): F[CurrentManagerSessionView]
   def restoreCurrentManager(sessionId: SessionId, now: Instant): F[CurrentManagerSessionView]
+  def listManagerSessions(sessionId: SessionId, now: Instant): F[List[AuthSessionView]]
+  def changeManagerPassword(sessionId: SessionId, currentPassword: String, nextPassword: String, now: Instant): F[Unit]
   def logoutManager(sessionId: SessionId): F[Unit]
+  def logoutOtherManagerSessions(sessionId: SessionId, now: Instant): F[Int]
 
 final class LiveAuthApplicationService[F[_]: MonadThrow: Sync](
     authRepository: AuthRepository[F],
@@ -52,7 +67,7 @@ final class LiveAuthApplicationService[F[_]: MonadThrow: Sync](
   override def signupUser(loginEmail: EmailAddress, nickname: PersonName, phone: ContactNumber, rawPassword: String, now: Instant): F[CurrentUserSessionView] =
     for
       createdUser <- userService.registerUser(loginEmail, nickname, phone, now)
-      passwordHash <- hashPassword[F](rawPassword)
+      passwordHash <- hashPasswordForLoginEmail[F](rawPassword, loginEmail)
       credentialId <- authRepository.nextCredentialId
       credential <- MonadThrow[F].fromEither(com.typesafe.travel.auth.domain.createUserCredential(credentialId, createdUser.userId, loginEmail, passwordHash, now))
       _ <- authRepository.saveUserCredential(credential)
@@ -80,8 +95,42 @@ final class LiveAuthApplicationService[F[_]: MonadThrow: Sync](
       touchedSession <- touchActiveSession(session, now)
     yield CurrentUserSessionView(user, touchedSession.sessionId, touchedSession.expiresAt)
 
+  override def listUserSessions(sessionId: SessionId, now: Instant): F[List[AuthSessionView]] =
+    for
+      session <- requireActiveSession(sessionId, now)
+      principal <- MonadThrow[F].fromEither(toCurrentPrincipal(session))
+      userId <- principal match
+        case CurrentUserPrincipal(value) => value.pure[F]
+        case _                           => MonadThrow[F].raiseError(AuthError.UserSessionWasRequired)
+      sessions <- authRepository.listSessions(AuthActorType.User, userId.value, None)
+    yield sessions.sortBy(_.createdAt)(Ordering[Instant].reverse).map(toSessionView(_, sessionId))
+
+  override def changeUserPassword(sessionId: SessionId, currentPassword: String, nextPassword: String, now: Instant): F[Unit] =
+    for
+      session <- requireActiveSession(sessionId, now)
+      principal <- MonadThrow[F].fromEither(toCurrentPrincipal(session))
+      userId <- principal match
+        case CurrentUserPrincipal(value) => value.pure[F]
+        case _                           => MonadThrow[F].raiseError(AuthError.UserSessionWasRequired)
+      credential <- authRepository.findUserCredentialByUserId(userId).flatMap(_.liftTo[F](AuthError.UserCredentialWasNotFoundByUserId(userId)))
+      passwordMatches <- verifyPassword[F](currentPassword, credential.passwordHash)
+      _ <- if passwordMatches then ().pure[F] else MonadThrow[F].raiseError(AuthError.CurrentPasswordDidNotMatch)
+      nextPasswordHash <- hashPasswordForLoginEmail[F](nextPassword, credential.loginEmail)
+      _ <- authRepository.saveUserCredential(credential.copy(passwordHash = nextPasswordHash, updatedAt = now, passwordUpdatedAt = now))
+    yield ()
+
   override def logoutUser(sessionId: SessionId): F[Unit] =
     authRepository.revokeSession(sessionId)
+
+  override def logoutOtherUserSessions(sessionId: SessionId, now: Instant): F[Int] =
+    for
+      session <- requireActiveSession(sessionId, now)
+      principal <- MonadThrow[F].fromEither(toCurrentPrincipal(session))
+      userId <- principal match
+        case CurrentUserPrincipal(value) => value.pure[F]
+        case _                           => MonadThrow[F].raiseError(AuthError.UserSessionWasRequired)
+      revokedCount <- authRepository.revokeOtherSessions(sessionId, AuthActorType.User, userId.value, None)
+    yield revokedCount
 
   override def createManagerCredential(
       managerType: AuthManagerType,
@@ -93,7 +142,7 @@ final class LiveAuthApplicationService[F[_]: MonadThrow: Sync](
     for
       existingCredential <- authRepository.findManagerCredentialByLoginEmail(managerType, loginEmail)
       _ <- if existingCredential.isDefined then MonadThrow[F].raiseError(AuthError.ManagerCredentialAlreadyExists(managerType, loginEmail)) else ().pure[F]
-      passwordHash <- hashPassword[F](rawPassword)
+      passwordHash <- hashPasswordForLoginEmail[F](rawPassword, loginEmail)
       credentialId <- authRepository.nextCredentialId
       managerCredential <- MonadThrow[F].fromEither(com.typesafe.travel.auth.domain.createManagerCredential(credentialId, managerType, managerId, loginEmail, passwordHash, now))
       _ <- authRepository.saveManagerCredential(managerCredential)
@@ -119,8 +168,53 @@ final class LiveAuthApplicationService[F[_]: MonadThrow: Sync](
       managerView <- loadManagerView(currentManagerPrincipal.managerType, currentManagerPrincipal.managerId)
     yield managerView.copy(sessionId = touchedSession.sessionId, expiresAt = touchedSession.expiresAt)
 
+  override def listManagerSessions(sessionId: SessionId, now: Instant): F[List[AuthSessionView]] =
+    for
+      session <- requireActiveSession(sessionId, now)
+      principal <- MonadThrow[F].fromEither(toCurrentPrincipal(session))
+      currentManagerPrincipal <- principal match
+        case managerPrincipal: CurrentManagerPrincipal => managerPrincipal.pure[F]
+        case _                                         => MonadThrow[F].raiseError(AuthError.ManagerSessionWasRequired)
+      sessions <- authRepository.listSessions(
+        AuthActorType.Manager,
+        currentManagerPrincipal.managerId.value,
+        Some(currentManagerPrincipal.managerType)
+      )
+    yield sessions.sortBy(_.createdAt)(Ordering[Instant].reverse).map(toSessionView(_, sessionId))
+
+  override def changeManagerPassword(sessionId: SessionId, currentPassword: String, nextPassword: String, now: Instant): F[Unit] =
+    for
+      session <- requireActiveSession(sessionId, now)
+      principal <- MonadThrow[F].fromEither(toCurrentPrincipal(session))
+      currentManagerPrincipal <- principal match
+        case managerPrincipal: CurrentManagerPrincipal => managerPrincipal.pure[F]
+        case _                                         => MonadThrow[F].raiseError(AuthError.ManagerSessionWasRequired)
+      credential <- authRepository
+        .findManagerCredential(currentManagerPrincipal.managerType, currentManagerPrincipal.managerId)
+        .flatMap(_.liftTo[F](AuthError.ManagerCredentialWasNotFound(currentManagerPrincipal.managerType, currentManagerPrincipal.managerId)))
+      passwordMatches <- verifyPassword[F](currentPassword, credential.passwordHash)
+      _ <- if passwordMatches then ().pure[F] else MonadThrow[F].raiseError(AuthError.CurrentPasswordDidNotMatch)
+      nextPasswordHash <- hashPasswordForLoginEmail[F](nextPassword, credential.loginEmail)
+      _ <- authRepository.saveManagerCredential(credential.copy(passwordHash = nextPasswordHash, updatedAt = now, passwordUpdatedAt = now))
+    yield ()
+
   override def logoutManager(sessionId: SessionId): F[Unit] =
     authRepository.revokeSession(sessionId)
+
+  override def logoutOtherManagerSessions(sessionId: SessionId, now: Instant): F[Int] =
+    for
+      session <- requireActiveSession(sessionId, now)
+      principal <- MonadThrow[F].fromEither(toCurrentPrincipal(session))
+      currentManagerPrincipal <- principal match
+        case managerPrincipal: CurrentManagerPrincipal => managerPrincipal.pure[F]
+        case _                                         => MonadThrow[F].raiseError(AuthError.ManagerSessionWasRequired)
+      revokedCount <- authRepository.revokeOtherSessions(
+        sessionId,
+        AuthActorType.Manager,
+        currentManagerPrincipal.managerId.value,
+        Some(currentManagerPrincipal.managerType)
+      )
+    yield revokedCount
 
   private def ensureActiveCredential(loginEmail: EmailAddress, status: CredentialStatus): F[Unit] =
     status match
@@ -158,6 +252,16 @@ final class LiveAuthApplicationService[F[_]: MonadThrow: Sync](
   private def touchActiveSession(session: AuthSession, now: Instant): F[AuthSession] =
     val nextExpiresAt = now.plus(sessionTtlHours, ChronoUnit.HOURS)
     authRepository.touchSession(session.sessionId, now, nextExpiresAt).map(_.getOrElse(session.copy(lastSeenAt = now, expiresAt = nextExpiresAt)))
+
+  private def toSessionView(session: AuthSession, currentSessionId: SessionId): AuthSessionView =
+    AuthSessionView(
+      sessionId = session.sessionId,
+      createdAt = session.createdAt,
+      lastSeenAt = session.lastSeenAt,
+      expiresAt = session.expiresAt,
+      status = session.status,
+      isCurrent = session.sessionId == currentSessionId
+    )
 
   private def loadManagerView(managerType: AuthManagerType, managerId: ManagerId): F[CurrentManagerSessionView] =
     managerType match

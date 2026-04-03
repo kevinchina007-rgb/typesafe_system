@@ -19,7 +19,16 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
 
   import JsonCodecs.given
 
+  private given EntityDecoder[F, CreateTicketSessionRequestDto] = jsonOf[F, CreateTicketSessionRequestDto]
+
   protected final def attractionRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
+    case GET -> Root / "api" / "attractions" / "suggestions" :? SearchQueryParamMatcher(queryValue) =>
+      for
+        queryText <- fromEither(queryValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
+        suggestions <- attractionBookingApplicationService.suggestAttractions(queryText)
+        response <- Ok(SearchSuggestionListResponseDto(suggestions.map(SearchSuggestionResponseDto.fromApplication)).asJson)
+      yield response
+
     case request @ POST -> Root / "api" / "attraction-admin" / "managers" =>
       for
         registerAttractionManagerRequestDto <- request.as[RegisterAttractionManagerRequestDto]
@@ -91,6 +100,26 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
       yield response
 
+    case request @ POST -> Root / "api" / "attraction-admin" / "ticket-sessions" =>
+      for
+        currentManager <- requireCurrentManager(request)
+        createTicketSessionRequestDto <- request.as[CreateTicketSessionRequestDto]
+        _ <- if currentManager.managerType == com.typesafe.travel.auth.domain.AuthManagerType.Attraction && currentManager.managerId == ManagerId(createTicketSessionRequestDto.managerId) then Async[F].unit else Async[F].raiseError(com.typesafe.travel.auth.domain.AuthError.ManagerSessionWasRequired)
+        createdAt <- currentInstantF
+        attraction <- attractionAdminApplicationService.createTicketSession(
+          managerId = ManagerId(createTicketSessionRequestDto.managerId),
+          attractionId = AttractionId(createTicketSessionRequestDto.attractionId),
+          ticketTypeId = TicketTypeId(createTicketSessionRequestDto.ticketTypeId),
+          sessionName = createTicketSessionRequestDto.sessionName,
+          useDate = LocalDate.parse(createTicketSessionRequestDto.useDate),
+          startsAt = java.time.Instant.parse(createTicketSessionRequestDto.startsAt),
+          endsAt = java.time.Instant.parse(createTicketSessionRequestDto.endsAt),
+          capacity = createTicketSessionRequestDto.capacity,
+          createdAt = createdAt
+        )
+        response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
+      yield response
+
     case request @ POST -> Root / "api" / "attraction-admin" / "ticket-types" / "rules" =>
       for
         currentManager <- requireCurrentManager(request)
@@ -139,6 +168,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           orderId = OrderId(orderIdValue),
           attractionId = AttractionId(bookAttractionItemRequestDto.attractionId),
           ticketTypeId = TicketTypeId(bookAttractionItemRequestDto.ticketTypeId),
+          sessionId = bookAttractionItemRequestDto.sessionId.map(AttractionTicketSessionId.apply),
           travelerIds = bookAttractionItemRequestDto.travelerIds.map(TravelerId.apply),
           useDate = LocalDate.parse(bookAttractionItemRequestDto.useDate),
           now = currentTime

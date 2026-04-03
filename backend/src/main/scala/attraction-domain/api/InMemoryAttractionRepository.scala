@@ -11,7 +11,8 @@ final class InMemoryAttractionRepository[F[_]: Sync] private (
     attractionState: TrieMap[AttractionId, Attraction],
     attractionSequence: AtomicLong,
     ticketTypeSequence: AtomicLong,
-    ruleSequence: AtomicLong
+    ruleSequence: AtomicLong,
+    sessionSequence: AtomicLong
 ) extends AttractionRepository[F]:
   override def nextAttractionId: F[AttractionId] =
     Sync[F].delay(AttractionId(s"attraction-${attractionSequence.incrementAndGet()}"))
@@ -21,6 +22,9 @@ final class InMemoryAttractionRepository[F[_]: Sync] private (
 
   override def nextTicketEligibilityRuleId: F[TicketEligibilityRuleId] =
     Sync[F].delay(TicketEligibilityRuleId(s"ticket-rule-${ruleSequence.incrementAndGet()}"))
+
+  override def nextAttractionTicketSessionId: F[AttractionTicketSessionId] =
+    Sync[F].delay(AttractionTicketSessionId(s"ticket-session-${sessionSequence.incrementAndGet()}"))
 
   override def findAttractionById(attractionId: AttractionId): F[Option[Attraction]] =
     Sync[F].delay(attractionState.get(attractionId))
@@ -39,4 +43,4 @@ final class InMemoryAttractionRepository[F[_]: Sync] private (
 
 object InMemoryAttractionRepository:
   def create[F[_]: Sync]: InMemoryAttractionRepository[F] =
-    new InMemoryAttractionRepository[F](TrieMap.empty, AtomicLong(100), AtomicLong(1000), AtomicLong(1000))
+    new InMemoryAttractionRepository[F](TrieMap.empty, AtomicLong(100), AtomicLong(1000), AtomicLong(1000), AtomicLong(1000))

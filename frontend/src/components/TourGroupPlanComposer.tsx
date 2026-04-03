@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 
+import { travelMvpApiClient } from '../lib/api-client'
 import type {
   AppLanguage,
   AttractionResponse,
   FlightResponse,
   GroupPlanItemResponse,
   HotelResponse,
+  SearchSuggestionResponse,
   TrainResponse,
 } from '../lib/mvp-types'
 import {
@@ -116,6 +118,7 @@ export function TourGroupPlanComposer({
   const [hotelCheckOutDate, setHotelCheckOutDate] = useState('')
   const [location, setLocation] = useState('')
   const [searchMessage, setSearchMessage] = useState('')
+  const [locationSuggestions, setLocationSuggestions] = useState<SearchSuggestionResponse[]>([])
   const [flightResults, setFlightResults] = useState<FlightResponse[]>([])
   const [hotelResults, setHotelResults] = useState<HotelResponse[]>([])
   const [trainResults, setTrainResults] = useState<TrainResponse[]>([])
@@ -125,6 +128,28 @@ export function TourGroupPlanComposer({
     () => Math.max(0, ...existingPlanItems.map(planItem => planItem.sequenceNo)) + 1,
     [existingPlanItems],
   )
+
+  async function loadLocationSuggestions(nextLocation: string) {
+    const normalizedLocation = nextLocation.trim()
+    if (normalizedLocation.length < 2) {
+      setLocationSuggestions([])
+      return
+    }
+    try {
+      const response = await travelMvpApiClient.listExploreSuggestions(normalizedLocation)
+      const allowedTypes =
+        itemType === 'Flight'
+          ? new Set(['flight'])
+          : itemType === 'Hotel'
+            ? new Set(['hotel'])
+            : itemType === 'Train'
+              ? new Set(['train'])
+              : new Set(['attraction'])
+      setLocationSuggestions(response.suggestions.filter(suggestion => allowedTypes.has(suggestion.resourceType)).slice(0, 6))
+    } catch {
+      setLocationSuggestions([])
+    }
+  }
 
   async function runSearch() {
     setSearchMessage('')
@@ -248,7 +273,11 @@ export function TourGroupPlanComposer({
             {translate('tourGroups.search.locationLabel')}
             <input
               value={location}
-              onChange={event => setLocation(event.target.value)}
+              onChange={event => {
+                const nextLocation = event.target.value
+                setLocation(nextLocation)
+                void loadLocationSuggestions(nextLocation)
+              }}
               placeholder={
                 itemType === 'Flight' || itemType === 'Train'
                   ? translate('tourGroups.locationRoutePlaceholder')
@@ -258,6 +287,25 @@ export function TourGroupPlanComposer({
             />
           </label>
         </div>
+        {locationSuggestions.length > 0 ? (
+          <ul className="entity-list compact-suggestion-list">
+            {locationSuggestions.map(suggestion => (
+              <li key={`${suggestion.resourceType}:${suggestion.value}`}>
+                <button
+                  type="button"
+                  className="tour-group-link-button"
+                  onClick={() => {
+                    setLocation(suggestion.value)
+                    setLocationSuggestions([])
+                  }}
+                >
+                  <strong>{suggestion.title}</strong>
+                </button>
+                <p>{suggestion.subtitle}</p>
+              </li>
+            ))}
+          </ul>
+        ) : null}
         <div className="action-cluster">
           <button type="submit" disabled={isBusy}>
             {translate('tourGroups.searchOptions')}

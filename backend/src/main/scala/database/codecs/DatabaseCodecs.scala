@@ -9,7 +9,7 @@ import com.typesafe.travel.traveler.domain.*
 import doobie.implicits.javasql.DateMeta
 import doobie.implicits.javatimedrivernative.JavaOffsetDateTimeMeta
 import doobie.util.meta.Meta
-import io.circe.{Decoder, Encoder, Json}
+import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.generic.semiauto.*
 import io.circe.parser.decode
 import io.circe.syntax.*
@@ -80,19 +80,32 @@ object DatabaseCodecs:
       trainId: String,
       trainNumber: String,
       fromStopId: String,
+      fromStopSequenceNo: Option[Int],
       fromStationCode: String,
       fromStationName: String,
       toStopId: String,
+      toStopSequenceNo: Option[Int],
       toStationCode: String,
       toStationName: String,
       departureTime: String,
       arrivalTime: String,
       seatInventoryId: String,
       seatClass: String,
+      requestedSeatPreference: Option[String],
+      seatAssignments: Option[Vector[SerializedTrainSeatAssignment]],
       travelerIds: Vector[String],
       saleStartsAt: String,
       unitPriceAmount: BigDecimal,
       unitPriceCurrency: String
+  )
+
+  final case class SerializedTrainSeatAssignment(
+      travelerId: String,
+      seatId: String,
+      carriageNo: Int,
+      seatNo: String,
+      seatLabel: String,
+      seatPositionType: String
   )
 
   final case class SerializedAttractionTicketSnapshot(
@@ -101,6 +114,10 @@ object DatabaseCodecs:
       attractionName: String,
       ticketTypeId: String,
       ticketTypeName: String,
+      sessionId: Option[String],
+      sessionName: Option[String],
+      sessionStartsAt: Option[String],
+      sessionEndsAt: Option[String],
       useDate: String,
       travelerIds: Vector[String],
       unitPriceAmount: BigDecimal,
@@ -126,7 +143,53 @@ object DatabaseCodecs:
   given Encoder[SerializedHotelBookingSnapshot] = deriveEncoder
   given Decoder[SerializedHotelBookingSnapshot] = deriveDecoder
   given Encoder[SerializedTrainBookingSnapshot] = deriveEncoder
-  given Decoder[SerializedTrainBookingSnapshot] = deriveDecoder
+  given Decoder[SerializedTrainBookingSnapshot] = Decoder.instance { (cursor: HCursor) =>
+    for
+      trainId <- cursor.downField("trainId").as[String]
+      trainNumber <- cursor.downField("trainNumber").as[String]
+      fromStopId <- cursor.downField("fromStopId").as[String]
+      fromStopSequenceNo <- cursor.downField("fromStopSequenceNo").as[Option[Int]]
+      fromStationCode <- cursor.downField("fromStationCode").as[String]
+      fromStationName <- cursor.downField("fromStationName").as[String]
+      toStopId <- cursor.downField("toStopId").as[String]
+      toStopSequenceNo <- cursor.downField("toStopSequenceNo").as[Option[Int]]
+      toStationCode <- cursor.downField("toStationCode").as[String]
+      toStationName <- cursor.downField("toStationName").as[String]
+      departureTime <- cursor.downField("departureTime").as[String]
+      arrivalTime <- cursor.downField("arrivalTime").as[String]
+      seatInventoryId <- cursor.downField("seatInventoryId").as[String]
+      seatClass <- cursor.downField("seatClass").as[String]
+      requestedSeatPreference <- cursor.downField("requestedSeatPreference").as[Option[String]]
+      seatAssignments <- cursor.downField("seatAssignments").as[Option[Vector[SerializedTrainSeatAssignment]]]
+      travelerIds <- cursor.downField("travelerIds").as[Vector[String]]
+      saleStartsAt <- cursor.downField("saleStartsAt").as[String]
+      unitPriceAmount <- cursor.downField("unitPriceAmount").as[BigDecimal]
+      unitPriceCurrency <- cursor.downField("unitPriceCurrency").as[String]
+    yield SerializedTrainBookingSnapshot(
+      trainId = trainId,
+      trainNumber = trainNumber,
+      fromStopId = fromStopId,
+      fromStopSequenceNo = fromStopSequenceNo,
+      fromStationCode = fromStationCode,
+      fromStationName = fromStationName,
+      toStopId = toStopId,
+      toStopSequenceNo = toStopSequenceNo,
+      toStationCode = toStationCode,
+      toStationName = toStationName,
+      departureTime = departureTime,
+      arrivalTime = arrivalTime,
+      seatInventoryId = seatInventoryId,
+      seatClass = seatClass,
+      requestedSeatPreference = requestedSeatPreference,
+      seatAssignments = seatAssignments,
+      travelerIds = travelerIds,
+      saleStartsAt = saleStartsAt,
+      unitPriceAmount = unitPriceAmount,
+      unitPriceCurrency = unitPriceCurrency
+    )
+  }
+  given Encoder[SerializedTrainSeatAssignment] = deriveEncoder
+  given Decoder[SerializedTrainSeatAssignment] = deriveDecoder
   given Encoder[SerializedAttractionTicketSnapshot] = deriveEncoder
   given Decoder[SerializedAttractionTicketSnapshot] = deriveDecoder
   given Encoder[SerializedTravelerIds] = deriveEncoder
@@ -250,15 +313,28 @@ object DatabaseCodecs:
           trainId = trainOrderItem.trainBookingSnapshot.trainId.value,
           trainNumber = trainOrderItem.trainBookingSnapshot.trainNumber.value,
           fromStopId = trainOrderItem.trainBookingSnapshot.fromStopId.value,
+          fromStopSequenceNo = Some(trainOrderItem.trainBookingSnapshot.fromStopSequenceNo),
           fromStationCode = trainOrderItem.trainBookingSnapshot.fromStationCode.value,
           fromStationName = trainOrderItem.trainBookingSnapshot.fromStationName.value,
           toStopId = trainOrderItem.trainBookingSnapshot.toStopId.value,
+          toStopSequenceNo = Some(trainOrderItem.trainBookingSnapshot.toStopSequenceNo),
           toStationCode = trainOrderItem.trainBookingSnapshot.toStationCode.value,
           toStationName = trainOrderItem.trainBookingSnapshot.toStationName.value,
           departureTime = trainOrderItem.trainBookingSnapshot.departureTime.toString,
           arrivalTime = trainOrderItem.trainBookingSnapshot.arrivalTime.toString,
           seatInventoryId = trainOrderItem.trainBookingSnapshot.seatInventoryId.value,
           seatClass = trainOrderItem.trainBookingSnapshot.seatClass.value,
+          requestedSeatPreference = trainOrderItem.trainBookingSnapshot.requestedSeatPreference.map(_.toString),
+          seatAssignments = Some(trainOrderItem.trainBookingSnapshot.seatAssignments.map(assignment =>
+            SerializedTrainSeatAssignment(
+              travelerId = assignment.travelerId.value,
+              seatId = assignment.seatId.value,
+              carriageNo = assignment.carriageNo,
+              seatNo = assignment.seatNo,
+              seatLabel = assignment.seatLabel,
+              seatPositionType = assignment.seatPositionType.toString
+            )
+          )),
           travelerIds = trainOrderItem.trainBookingSnapshot.travelerIds.map(_.value),
           saleStartsAt = trainOrderItem.trainBookingSnapshot.saleStartsAt.toString,
           unitPriceAmount = trainOrderItem.trainBookingSnapshot.unitPriceSnapshot.amount,
@@ -271,6 +347,10 @@ object DatabaseCodecs:
           attractionName = attractionOrderItem.attractionTicketSnapshot.attractionName,
           ticketTypeId = attractionOrderItem.attractionTicketSnapshot.ticketTypeId.value,
           ticketTypeName = attractionOrderItem.attractionTicketSnapshot.ticketTypeName,
+          sessionId = attractionOrderItem.attractionTicketSnapshot.sessionId.map(_.value),
+          sessionName = attractionOrderItem.attractionTicketSnapshot.sessionName,
+          sessionStartsAt = attractionOrderItem.attractionTicketSnapshot.sessionStartsAt.map(_.toString),
+          sessionEndsAt = attractionOrderItem.attractionTicketSnapshot.sessionEndsAt.map(_.toString),
           useDate = attractionOrderItem.attractionTicketSnapshot.useDate.toString,
           travelerIds = attractionOrderItem.attractionTicketSnapshot.travelerIds.map(_.value),
           unitPriceAmount = attractionOrderItem.attractionTicketSnapshot.unitPriceSnapshot.amount,
@@ -350,15 +430,28 @@ object DatabaseCodecs:
         trainId = TrainId(serializedTrainBookingSnapshot.trainId),
         trainNumber = trainNumber,
         fromStopId = TrainStopId(serializedTrainBookingSnapshot.fromStopId),
+        fromStopSequenceNo = serializedTrainBookingSnapshot.fromStopSequenceNo.getOrElse(0),
         fromStationCode = fromStationCode,
         fromStationName = fromStationName,
         toStopId = TrainStopId(serializedTrainBookingSnapshot.toStopId),
+        toStopSequenceNo = serializedTrainBookingSnapshot.toStopSequenceNo.getOrElse(1),
         toStationCode = toStationCode,
         toStationName = toStationName,
         departureTime = Instant.parse(serializedTrainBookingSnapshot.departureTime),
         arrivalTime = Instant.parse(serializedTrainBookingSnapshot.arrivalTime),
         seatInventoryId = TrainSeatInventoryId(serializedTrainBookingSnapshot.seatInventoryId),
         seatClass = seatClass,
+        requestedSeatPreference = serializedTrainBookingSnapshot.requestedSeatPreference.map(TrainSeatPreference.valueOf),
+        seatAssignments = serializedTrainBookingSnapshot.seatAssignments.getOrElse(Vector.empty).map(assignment =>
+          TrainTravelerSeatAssignment(
+            travelerId = TravelerId(assignment.travelerId),
+            seatId = TrainSeatId(assignment.seatId),
+            carriageNo = assignment.carriageNo,
+            seatNo = assignment.seatNo,
+            seatLabel = assignment.seatLabel,
+            seatPositionType = TrainSeatPositionType.valueOf(assignment.seatPositionType)
+          )
+        ),
         travelerIds = serializedTrainBookingSnapshot.travelerIds.map(TravelerId.apply),
         saleStartsAt = Instant.parse(serializedTrainBookingSnapshot.saleStartsAt),
         unitPriceSnapshot = unitPriceSnapshot
@@ -376,6 +469,10 @@ object DatabaseCodecs:
         attractionName = serializedAttractionTicketSnapshot.attractionName,
         ticketTypeId = TicketTypeId(serializedAttractionTicketSnapshot.ticketTypeId),
         ticketTypeName = serializedAttractionTicketSnapshot.ticketTypeName,
+        sessionId = serializedAttractionTicketSnapshot.sessionId.map(AttractionTicketSessionId.apply),
+        sessionName = serializedAttractionTicketSnapshot.sessionName,
+        sessionStartsAt = serializedAttractionTicketSnapshot.sessionStartsAt.map(Instant.parse),
+        sessionEndsAt = serializedAttractionTicketSnapshot.sessionEndsAt.map(Instant.parse),
         useDate = LocalDate.parse(serializedAttractionTicketSnapshot.useDate),
         travelerIds = serializedAttractionTicketSnapshot.travelerIds.map(TravelerId.apply),
         unitPriceSnapshot = unitPriceSnapshot,

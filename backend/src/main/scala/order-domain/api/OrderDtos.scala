@@ -69,6 +69,8 @@ final case class TrainItemDetailsResponseDto(
     departureTime: String,
     arrivalTime: String,
     seatClass: String,
+    requestedSeatPreference: Option[String],
+    seatAssignments: List[TrainSeatAssignmentResponseDto],
     travelerIds: List[String],
     reservationStatus: Option[String],
     reservationExpiresAt: Option[String],
@@ -82,12 +84,25 @@ final case class AttractionItemDetailsResponseDto(
     attractionName: String,
     ticketTypeId: String,
     ticketTypeName: String,
+    sessionId: Option[String],
+    sessionName: Option[String],
+    sessionStartsAt: Option[String],
+    sessionEndsAt: Option[String],
     useDate: String,
     travelerIds: List[String],
     unitPrice: String,
     totalPrice: String,
     currency: String,
     ruleSummaries: List[String]
+)
+
+final case class TrainSeatAssignmentResponseDto(
+    travelerId: String,
+    seatId: String,
+    carriageNo: Int,
+    seatNo: String,
+    seatLabel: String,
+    seatPositionType: String
 )
 
 final case class OrderLineItemResponseDto(
@@ -262,6 +277,17 @@ object OrderResponseDto:
                 departureTime = trainOrderItem.trainBookingSnapshot.departureTime.toString,
                 arrivalTime = trainOrderItem.trainBookingSnapshot.arrivalTime.toString,
                 seatClass = trainOrderItem.trainBookingSnapshot.seatClass.value,
+                requestedSeatPreference = trainOrderItem.trainBookingSnapshot.requestedSeatPreference.map(_.toString),
+                seatAssignments = trainOrderItem.trainBookingSnapshot.seatAssignments.map(assignment =>
+                  TrainSeatAssignmentResponseDto(
+                    travelerId = assignment.travelerId.value,
+                    seatId = assignment.seatId.value,
+                    carriageNo = assignment.carriageNo,
+                    seatNo = assignment.seatNo,
+                    seatLabel = assignment.seatLabel,
+                    seatPositionType = assignment.seatPositionType.toString
+                  )
+                ).toList,
                 travelerIds = trainOrderItem.trainBookingSnapshot.travelerIds.map(_.value).toList,
                 reservationStatus = inventoryReservations.find(_.orderItemId == trainOrderItem.orderItemId).map(_.reservationStatus.toString),
                 reservationExpiresAt = inventoryReservations.find(_.orderItemId == trainOrderItem.orderItemId).map(_.expiresAt.toString),
@@ -291,6 +317,10 @@ object OrderResponseDto:
                 attractionName = attractionOrderItem.attractionTicketSnapshot.attractionName,
                 ticketTypeId = attractionOrderItem.attractionTicketSnapshot.ticketTypeId.value,
                 ticketTypeName = attractionOrderItem.attractionTicketSnapshot.ticketTypeName,
+                sessionId = attractionOrderItem.attractionTicketSnapshot.sessionId.map(_.value),
+                sessionName = attractionOrderItem.attractionTicketSnapshot.sessionName,
+                sessionStartsAt = attractionOrderItem.attractionTicketSnapshot.sessionStartsAt.map(_.toString),
+                sessionEndsAt = attractionOrderItem.attractionTicketSnapshot.sessionEndsAt.map(_.toString),
                 useDate = attractionOrderItem.attractionTicketSnapshot.useDate.toString,
                 travelerIds = attractionOrderItem.attractionTicketSnapshot.travelerIds.map(_.value).toList,
                 unitPrice = attractionOrderItem.attractionTicketSnapshot.unitPriceSnapshot.amount.toString,

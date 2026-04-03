@@ -32,6 +32,7 @@ trait FlightBookingApplicationService[F[_]]:
       arrivalAirportQuery: Option[String],
       departureDate: Option[LocalDate]
   ): F[List[(Airline, Flight)]]
+  def suggestFlights(keyword: String): F[List[SearchSuggestion]]
   def getFlightDetails(flightId: FlightId): F[(Airline, Flight)]
   def createFlightOrder(
       actingUserId: UserId,
@@ -57,10 +58,72 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow: Clock](
   ): F[List[(Airline, Flight)]] =
     flightService
       .browseFlights(None, None, departureDate)
-      .map(
-        _.filter(flightMatchesSearch(_, departureAirportQuery, arrivalAirportQuery))
-      )
+      .map(_.filter(flightMatchesSearch(_, departureAirportQuery, arrivalAirportQuery)))
+      .map(_.sortBy(flight => -flightSearchScore(flight, departureAirportQuery, arrivalAirportQuery)))
       .flatMap(_.traverse(toAirlineFlightTuple))
+
+  override def suggestFlights(keyword: String): F[List[SearchSuggestion]] =
+    SearchRanking.usableKeyword(keyword) match
+      case None => MonadThrow[F].pure(List.empty)
+      case Some(normalizedKeyword) =>
+        flightService
+          .browseFlights(None, None, None)
+          .flatMap(_.traverse(toAirlineFlightTuple))
+          .map(
+            _.flatMap { case (airline, flight) =>
+              val departureScore = SearchRanking.weightedScore(
+                normalizedKeyword,
+                flight.departureAirport.value -> 3,
+                flight.arrivalAirport.value -> 1,
+                airline.airlineName.value -> 1,
+                flight.flightNumber.value -> 2
+              )
+              val arrivalScore = SearchRanking.weightedScore(
+                normalizedKeyword,
+                flight.arrivalAirport.value -> 3,
+                flight.departureAirport.value -> 1,
+                airline.airlineName.value -> 1,
+                flight.flightNumber.value -> 2
+              )
+              val flightScore = SearchRanking.weightedScore(
+                normalizedKeyword,
+                flight.flightNumber.value -> 4,
+                airline.airlineName.value -> 2,
+                airline.airlineCode.value -> 2
+              )
+
+              List(
+                Option.when(departureScore > 0)(
+                  SearchSuggestion(
+                    resourceType = SearchResourceType.Flight,
+                    value = flight.departureAirport.value,
+                    title = s"${flight.departureAirport.value} airport",
+                    subtitle = s"${airline.airlineName.value} ${flight.flightNumber.value}",
+                    score = departureScore
+                  )
+                ),
+                Option.when(arrivalScore > 0)(
+                  SearchSuggestion(
+                    resourceType = SearchResourceType.Flight,
+                    value = flight.arrivalAirport.value,
+                    title = s"${flight.arrivalAirport.value} airport",
+                    subtitle = s"${airline.airlineName.value} ${flight.flightNumber.value}",
+                    score = arrivalScore
+                  )
+                ),
+                Option.when(flightScore > 0)(
+                  SearchSuggestion(
+                    resourceType = SearchResourceType.Flight,
+                    value = flight.flightNumber.value,
+                    title = s"${airline.airlineName.value} ${flight.flightNumber.value}",
+                    subtitle = s"${flight.departureAirport.value} -> ${flight.arrivalAirport.value}",
+                    score = flightScore
+                  )
+                )
+              ).flatten
+            }
+          )
+          .map(suggestions => SearchRanking.topDistinctByValue(suggestions, 8))
 
   override def getFlightDetails(flightId: FlightId): F[(Airline, Flight)] =
     flightService.getFlightDetails(flightId).flatMap(toAirlineFlightTuple)
@@ -135,6 +198,14 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow: Clock](
   ): Boolean =
     departureAirportQuery.forall(queryText => TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesAirportQuery(flight.departureAirport, queryText)) &&
     arrivalAirportQuery.forall(queryText => TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesAirportQuery(flight.arrivalAirport, queryText))
+
+  private def flightSearchScore(
+      flight: Flight,
+      departureAirportQuery: Option[String],
+      arrivalAirportQuery: Option[String]
+  ): Int =
+    departureAirportQuery.map(queryText => SearchRanking.weightedScore(queryText, flight.departureAirport.value -> 4)).getOrElse(0) +
+      arrivalAirportQuery.map(queryText => SearchRanking.weightedScore(queryText, flight.arrivalAirport.value -> 4)).getOrElse(0)
 
   private def validateTravelerSelection(travelerIds: List[TravelerId]): F[List[TravelerId]] =
     if travelerIds.isEmpty then

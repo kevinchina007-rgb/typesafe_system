@@ -1074,7 +1074,8 @@ final class LiveTourGroupApplicationService[F[_]: MonadThrow](
             travelerIds = travelerIds,
             fromStationCode = TrainStationCode.unsafe(stationParts._1),
             toStationCode = TrainStationCode.unsafe(stationParts._2),
-            seatClass = seatClass
+            seatClass = seatClass,
+            seatPreference = None
           )
         yield orderWithItem
       case GroupPlanOptionResourceType.AttractionTicketType =>
@@ -1088,6 +1089,7 @@ final class LiveTourGroupApplicationService[F[_]: MonadThrow](
             orderId = draftOrder.orderId,
             attractionId = AttractionId(attractionIdText),
             ticketTypeId = TicketTypeId(option.resourceId),
+            sessionId = None,
             travelerIds = travelerIds,
             useDate = planItem.scheduledAt.atZone(ZoneOffset.UTC).toLocalDate,
             now = currentTime

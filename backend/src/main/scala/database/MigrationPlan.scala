@@ -23,7 +23,10 @@ object MigrationPlan:
     loadMigrationStep(12, "attraction_ticket_inventory_fields", "V12__attraction_ticket_inventory_fields.sql"),
     loadMigrationStep(13, "authentication_session_phase1", "V13__authentication_session_phase1.sql"),
     loadMigrationStep(14, "tour_group_chat_phase1", "V14__tour_group_chat_phase1.sql"),
-    loadMigrationStep(15, "tour_group_chat_phase2", "V15__tour_group_chat_phase2.sql")
+    loadMigrationStep(15, "tour_group_chat_phase2", "V15__tour_group_chat_phase2.sql"),
+    loadMigrationStep(16, "authentication_authorization_phase2", "V16__authentication_authorization_phase2.sql"),
+    loadMigrationStep(17, "search_enhancement_phase2", "V17__search_enhancement_phase2.sql"),
+    loadMigrationStep(18, "train_attraction_enhancement_phase2", "V18__train_attraction_enhancement_phase2.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

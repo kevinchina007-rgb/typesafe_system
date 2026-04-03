@@ -15,6 +15,7 @@ final class InMemoryTrainRepository[F[_]: Sync] private (
     trainSequence: AtomicLong,
     stopSequence: AtomicLong,
     seatInventorySequence: AtomicLong,
+    seatSequence: AtomicLong,
     segmentPriceSequence: AtomicLong,
     refundPolicySequence: AtomicLong
 ) extends TrainRepository[F]:
@@ -29,6 +30,12 @@ final class InMemoryTrainRepository[F[_]: Sync] private (
 
   override def nextTrainSeatInventoryId: F[TrainSeatInventoryId] =
     Sync[F].delay(TrainSeatInventoryId(s"train-seat-${seatInventorySequence.incrementAndGet()}"))
+
+  override def nextTrainSeatId: F[TrainSeatId] =
+    Sync[F].delay(TrainSeatId(s"train-seat-def-${seatSequence.incrementAndGet()}"))
+
+  override def listSeatAllocations(trainId: TrainId): F[Vector[TrainSegmentSeatAllocation]] =
+    Sync[F].pure(Vector.empty)
 
   override def nextTrainSegmentPriceId: F[TrainSegmentPriceId] =
     Sync[F].delay(TrainSegmentPriceId(s"train-segment-${segmentPriceSequence.incrementAndGet()}"))
@@ -90,6 +97,7 @@ object InMemoryTrainRepository:
       trainSequence = AtomicLong(100),
       stopSequence = AtomicLong(1000),
       seatInventorySequence = AtomicLong(1000),
+      seatSequence = AtomicLong(1000),
       segmentPriceSequence = AtomicLong(1000),
       refundPolicySequence = AtomicLong(1000)
     )

@@ -61,6 +61,7 @@ final class TrainJourneySpec extends FunSuite:
   private def sampleTrainJourney: TrainJourney =
     val trainId = TrainId("train-1")
     val managerId = ManagerId("manager-1")
+    val inventoryId = TrainSeatInventoryId("inv-1")
     val shaStop = TrainStop(
       stopId = TrainStopId("stop-1"),
       stationCode = TrainStationCode.unsafe("SHA"),
@@ -85,6 +86,25 @@ final class TrainJourneySpec extends FunSuite:
       arrivalTime = Some(arrivalAt),
       departureTime = None
     )
+    val seats =
+      generateTrainSeats(
+        trainId = trainId,
+        inventory = TrainSeatInventory(
+          inventoryId = inventoryId,
+          trainId = trainId,
+          seatClass = TrainSeatClass.unsafe("SECOND_CLASS"),
+          totalSeats = SeatCount.unsafe(4),
+          saleableSeats = SeatCount.unsafe(4),
+          seatInventoryStatus = TrainSeatInventoryStatus.OpenForSale
+        ),
+        carriageCount = 1,
+        rowsPerCarriage = 2,
+        layoutColumns = Vector(
+          TrainSeatLayoutColumn("A", 0, TrainSeatPositionType.Window),
+          TrainSeatLayoutColumn("B", 1, TrainSeatPositionType.Aisle)
+        ),
+        seatIds = Vector("seat-1", "seat-2", "seat-3", "seat-4").map(TrainSeatId.apply)
+      ).fold(throw _, identity)
 
     createTrainJourney(
       trainId = trainId,
@@ -94,14 +114,15 @@ final class TrainJourneySpec extends FunSuite:
       stops = Vector(shaStop, nkgStop, hghStop),
       seatInventories = Vector(
         TrainSeatInventory(
-          inventoryId = TrainSeatInventoryId("inv-1"),
+          inventoryId = inventoryId,
           trainId = trainId,
           seatClass = TrainSeatClass.unsafe("SECOND_CLASS"),
-          totalSeats = SeatCount.unsafe(100),
-          saleableSeats = SeatCount.unsafe(100),
+          totalSeats = SeatCount.unsafe(4),
+          saleableSeats = SeatCount.unsafe(4),
           seatInventoryStatus = TrainSeatInventoryStatus.OpenForSale
         )
       ),
+      seats = seats,
       segmentPrices = Vector(
         TrainSegmentPrice(
           segmentPriceId = TrainSegmentPriceId("seg-1"),

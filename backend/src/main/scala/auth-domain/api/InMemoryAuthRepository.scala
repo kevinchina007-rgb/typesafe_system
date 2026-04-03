@@ -37,6 +37,11 @@ final class InMemoryAuthRepository[F[_]: Sync] private (stateRef: Ref[F, InMemor
   override def saveUserCredential(userCredential: UserCredential): F[UserCredential] =
     stateRef.update(state => state.copy(userCredentials = state.userCredentials + (userCredential.userId -> userCredential))).as(userCredential)
 
+  override def listSessions(actorType: AuthActorType, actorId: String, managerType: Option[AuthManagerType]): F[List[AuthSession]] =
+    stateRef.get.map(
+      _.sessions.values.filter(session => session.actorType == actorType && session.actorId == actorId && session.managerType == managerType).toList
+    )
+
   override def findManagerCredential(managerType: AuthManagerType, managerId: ManagerId): F[Option[ManagerCredential]] =
     stateRef.get.map(_.managerCredentials.get((managerType, managerId)))
 
@@ -66,6 +71,18 @@ final class InMemoryAuthRepository[F[_]: Sync] private (stateRef: Ref[F, InMemor
 
   override def revokeSession(sessionId: SessionId): F[Unit] =
     updateSessionStatus(sessionId, AuthSessionStatus.Revoked)
+
+  override def revokeOtherSessions(currentSessionId: SessionId, actorType: AuthActorType, actorId: String, managerType: Option[AuthManagerType]): F[Int] =
+    stateRef.modify { state =>
+      val matchingSessionIds = state.sessions.values
+        .filter(session => session.sessionId != currentSessionId && session.actorType == actorType && session.actorId == actorId && session.managerType == managerType && session.status == AuthSessionStatus.Active)
+        .map(_.sessionId)
+        .toList
+      val nextSessions = matchingSessionIds.foldLeft(state.sessions) { case (sessions, sessionId) =>
+        sessions.updatedWith(sessionId)(_.map(_.copy(status = AuthSessionStatus.Revoked)))
+      }
+      state.copy(sessions = nextSessions) -> matchingSessionIds.size
+    }
 
   private def updateSessionStatus(sessionId: SessionId, status: AuthSessionStatus): F[Unit] =
     stateRef.update { state =>

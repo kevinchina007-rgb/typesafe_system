@@ -85,6 +85,7 @@ final class TicketEligibilityServiceSpec extends FunSuite:
       totalQuantity = 100,
       validWeekdays = DayOfWeek.values().toSet,
       ticketTypeStatus = TicketTypeStatus.Active,
+      sessions = Vector.empty,
       eligibilityRules = rules,
       createdAt = createdAt
     )

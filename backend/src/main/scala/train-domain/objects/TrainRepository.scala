@@ -15,6 +15,8 @@ trait TrainRepository[F[_]]:
   def nextTrainId: F[TrainId]
   def nextTrainStopId: F[TrainStopId]
   def nextTrainSeatInventoryId: F[TrainSeatInventoryId]
+  def nextTrainSeatId: F[TrainSeatId]
+  def listSeatAllocations(trainId: TrainId): F[Vector[TrainSegmentSeatAllocation]]
   def nextTrainSegmentPriceId: F[TrainSegmentPriceId]
   def nextTrainRefundPolicySegmentId: F[TrainRefundPolicySegmentId]
   def findRailwayManagerByEmail(emailAddress: EmailAddress): F[Option[RailwayManager]]

@@ -23,7 +23,8 @@ final case class UserCredential(
     passwordHash: String,
     status: CredentialStatus,
     createdAt: Instant,
-    updatedAt: Instant
+    updatedAt: Instant,
+    passwordUpdatedAt: Instant
 )
 
 final case class ManagerCredential(
@@ -34,7 +35,8 @@ final case class ManagerCredential(
     passwordHash: String,
     status: CredentialStatus,
     createdAt: Instant,
-    updatedAt: Instant
+    updatedAt: Instant,
+    passwordUpdatedAt: Instant
 )
 
 final case class AuthSession(
@@ -63,6 +65,7 @@ trait AuthRepository[F[_]]:
   def findUserCredentialByLoginEmail(loginEmail: EmailAddress): F[Option[UserCredential]]
   def findUserCredentialByUserId(userId: UserId): F[Option[UserCredential]]
   def saveUserCredential(userCredential: UserCredential): F[UserCredential]
+  def listSessions(actorType: AuthActorType, actorId: String, managerType: Option[AuthManagerType]): F[List[AuthSession]]
   def findManagerCredential(managerType: AuthManagerType, managerId: ManagerId): F[Option[ManagerCredential]]
   def findManagerCredentialByLoginEmail(managerType: AuthManagerType, loginEmail: EmailAddress): F[Option[ManagerCredential]]
   def saveManagerCredential(managerCredential: ManagerCredential): F[ManagerCredential]
@@ -71,12 +74,18 @@ trait AuthRepository[F[_]]:
   def touchSession(sessionId: SessionId, lastSeenAt: Instant, expiresAt: Instant): F[Option[AuthSession]]
   def expireSession(sessionId: SessionId): F[Unit]
   def revokeSession(sessionId: SessionId): F[Unit]
+  def revokeOtherSessions(currentSessionId: SessionId, actorType: AuthActorType, actorId: String, managerType: Option[AuthManagerType]): F[Int]
 
 enum AuthError(val message: String) extends DomainError:
   case PasswordWasEmpty extends AuthError("Password cannot be empty")
+  case PasswordWasTooShort extends AuthError("Password must be at least 10 characters")
+  case PasswordWasTooWeak extends AuthError("Password must include letters and numbers and avoid weak defaults")
   case UserCredentialWasNotFoundByEmail(loginEmail: EmailAddress) extends AuthError(s"User credential '${loginEmail.value}' was not found")
+  case UserCredentialWasNotFoundByUserId(userId: UserId) extends AuthError(s"User credential for '${userId.value}' was not found")
   case ManagerCredentialWasNotFoundByEmail(managerType: AuthManagerType, loginEmail: EmailAddress)
       extends AuthError(s"$managerType credential '${loginEmail.value}' was not found")
+  case ManagerCredentialWasNotFound(managerType: AuthManagerType, managerId: ManagerId)
+      extends AuthError(s"$managerType credential for '${managerId.value}' was not found")
   case UserCredentialAlreadyExists(loginEmail: EmailAddress) extends AuthError(s"User credential '${loginEmail.value}' already exists")
   case ManagerCredentialAlreadyExists(managerType: AuthManagerType, loginEmail: EmailAddress)
       extends AuthError(s"$managerType credential '${loginEmail.value}' already exists")
@@ -88,5 +97,6 @@ enum AuthError(val message: String) extends DomainError:
   case UserSessionWasRequired extends AuthError("A signed-in user session is required")
   case ManagerSessionWasRequired extends AuthError("A signed-in manager session is required")
   case SessionActorDidNotMatch extends AuthError("The current session does not match the requested actor")
+  case CurrentPasswordDidNotMatch extends AuthError("The current password did not match")
   case ManagerTypeDidNotMatch(expected: AuthManagerType, actual: AuthManagerType)
       extends AuthError(s"Expected manager type $expected but found $actual")

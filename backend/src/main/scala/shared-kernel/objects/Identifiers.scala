@@ -13,11 +13,14 @@ final case class RoomInventoryId(value: String) extends AnyVal
 final case class TrainId(value: String) extends AnyVal
 final case class TrainStopId(value: String) extends AnyVal
 final case class TrainSeatInventoryId(value: String) extends AnyVal
+final case class TrainSeatId(value: String) extends AnyVal
+final case class TrainSeatAllocationId(value: String) extends AnyVal
 final case class TrainSegmentPriceId(value: String) extends AnyVal
 final case class TrainRefundPolicySegmentId(value: String) extends AnyVal
 final case class AttractionId(value: String) extends AnyVal
 final case class TicketTypeId(value: String) extends AnyVal
 final case class TicketEligibilityRuleId(value: String) extends AnyVal
+final case class AttractionTicketSessionId(value: String) extends AnyVal
 final case class ReservationId(value: String) extends AnyVal
 final case class ManagerId(value: String) extends AnyVal
 final case class OrderId(value: String) extends AnyVal

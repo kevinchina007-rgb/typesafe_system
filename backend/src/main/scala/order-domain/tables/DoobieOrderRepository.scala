@@ -157,6 +157,7 @@ final class DoobieOrderRepository[F[_]: Async](
 
     val replaceLineItems =
       for
+        _ <- sql"delete from train_seat_allocations where order_id = ${order.orderId.value}".update.run
         _ <- sql"delete from order_line_items where order_id = ${order.orderId.value}".update.run
         _ <- order.orderLineItems.zipWithIndex.traverse_ { case (orderLineItem, lineItemIndex) =>
           val lineItemPersistenceColumns = toLineItemPersistenceColumns(orderLineItem)
@@ -202,6 +203,32 @@ final class DoobieOrderRepository[F[_]: Async](
               ${lineItemIndex}
             )
           """.update.run
+        }
+        _ <- order.orderLineItems.traverse_ {
+          case trainOrderItem: TrainOrderItem =>
+            trainOrderItem.trainBookingSnapshot.seatAssignments.traverse_ { assignment =>
+              sql"""
+                insert into train_seat_allocations(
+                  allocation_id, seat_id, train_id, order_id, order_item_id, traveler_id, from_stop_sequence_no, to_stop_sequence_no,
+                  carriage_no, seat_no, seat_label, seat_position_type, created_at
+                ) values (
+                  ${s"seat-allocation-${UUID.randomUUID().toString.take(12)}"},
+                  ${assignment.seatId.value},
+                  ${trainOrderItem.trainBookingSnapshot.trainId.value},
+                  ${order.orderId.value},
+                  ${trainOrderItem.orderItemId.value},
+                  ${assignment.travelerId.value},
+                  ${trainOrderItem.trainBookingSnapshot.fromStopSequenceNo},
+                  ${trainOrderItem.trainBookingSnapshot.toStopSequenceNo},
+                  ${assignment.carriageNo},
+                  ${assignment.seatNo},
+                  ${assignment.seatLabel},
+                  ${assignment.seatPositionType.toString},
+                  ${order.createdAt}
+                )
+              """.update.run
+            }
+          case _ => ().pure[ConnectionIO]
         }
       yield ()
 
@@ -557,6 +584,7 @@ final class DoobieOrderRepository[F[_]: Async](
         )
       case _ =>
         None
+
 
   private final case class OrderRow(
       orderId: String,

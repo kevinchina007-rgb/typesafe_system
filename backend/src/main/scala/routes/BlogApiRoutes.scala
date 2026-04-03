@@ -22,6 +22,13 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
   import JsonCodecs.given
 
   protected final def blogRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
+    case GET -> Root / "api" / "blog" / "suggestions" :? SearchQueryParamMatcher(queryValue) =>
+      for
+        queryText <- fromEither(queryValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
+        suggestions <- blogApplicationService.suggestPublishedPosts(queryText)
+        response <- Ok(SearchSuggestionListResponseDto(suggestions.map(SearchSuggestionResponseDto.fromApplication)).asJson)
+      yield response
+
     case request @ GET -> Root / "api" / "blog" / "posts" =>
       val scope = request.params.get("scope").map(_.trim.toLowerCase).getOrElse("latest")
       val query = request.params.get("q").map(_.trim).filter(_.nonEmpty)

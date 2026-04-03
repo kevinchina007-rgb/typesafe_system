@@ -32,6 +32,15 @@ type AttractionAdminPanelProps = {
     totalQuantity: number
     validWeekdays: string[]
   }) => Promise<void>
+  onCreateSession: (payload: {
+    attractionId: string
+    ticketTypeId: string
+    sessionName: string
+    useDate: string
+    startsAt: string
+    endsAt: string
+    capacity: number
+  }) => Promise<void>
   onCreateRule: (payload: {
     attractionId: string
     ticketTypeId: string
@@ -55,6 +64,7 @@ export function AttractionAdminPanel({
   onReloadManagedAttractions,
   onCreateAttraction,
   onCreateTicketType,
+  onCreateSession,
   onCreateRule,
   onLogoutAttractionManager,
 }: AttractionAdminPanelProps) {
@@ -295,6 +305,62 @@ export function AttractionAdminPanel({
               </button>
             </form>
           </div>
+
+          <form
+            className="stack-form panel-card"
+            onSubmit={async event => {
+              event.preventDefault()
+              const formData = new FormData(event.currentTarget)
+              await onCreateSession({
+                attractionId: String(formData.get('attractionId') ?? '').trim(),
+                ticketTypeId: String(formData.get('ticketTypeId') ?? '').trim(),
+                sessionName: String(formData.get('sessionName') ?? '').trim(),
+                useDate: String(formData.get('useDate') ?? '').trim(),
+                startsAt: new Date(String(formData.get('startsAt') ?? '').trim()).toISOString(),
+                endsAt: new Date(String(formData.get('endsAt') ?? '').trim()).toISOString(),
+                capacity: Number(formData.get('capacity') ?? 0),
+              })
+              event.currentTarget.reset()
+            }}
+          >
+            <h3>{translate('attractionAdmin.createSession')}</h3>
+            <div className="three-column-grid">
+              <label>
+                {translate('attractionAdmin.attraction')}
+                <select name="attractionId" required defaultValue="">
+                  <option value="" disabled>{translate('attractionAdmin.attractionSelect')}</option>
+                  {attractionAdminSession.managedAttractions.map(attraction => (
+                    <option key={attraction.attractionId} value={attraction.attractionId}>{attraction.attractionName}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {translate('attractionAdmin.ticketTypeId')}
+                <input name="ticketTypeId" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.sessionName')}
+                <input name="sessionName" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.useDate')}
+                <input name="useDate" type="date" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.startsAt')}
+                <input name="startsAt" type="datetime-local" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.endsAt')}
+                <input name="endsAt" type="datetime-local" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.capacity')}
+                <input name="capacity" type="number" min="1" step="1" defaultValue="50" required />
+              </label>
+            </div>
+            <button type="submit" disabled={isBusy}>{translate('attractionAdmin.createSession')}</button>
+          </form>
 
           <form
             className="stack-form panel-card"

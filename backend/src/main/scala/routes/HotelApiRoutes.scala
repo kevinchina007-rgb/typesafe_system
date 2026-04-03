@@ -20,6 +20,13 @@ trait HotelApiRoutes[F[_]: Async] extends Http4sDsl[F]:
   import JsonCodecs.given
 
   protected final def hotelRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
+    case GET -> Root / "api" / "hotels" / "suggestions" :? SearchQueryParamMatcher(queryValue) =>
+      for
+        queryText <- fromEither(queryValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
+        suggestions <- hotelBookingApplicationService.suggestHotels(queryText)
+        response <- Ok(SearchSuggestionListResponseDto(suggestions.map(SearchSuggestionResponseDto.fromApplication)).asJson)
+      yield response
+
     case GET -> Root / "api" / "hotels" :? HotelLocationQueryParamMatcher(locationValue) +&
         CheckInDateQueryParamMatcher(checkInDateValue) +&
         CheckOutDateQueryParamMatcher(checkOutDateValue) =>

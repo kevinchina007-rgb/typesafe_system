@@ -65,6 +65,7 @@ final class ApiRouter[F[_]: Async: Clock](
     with AttractionApiRoutes[F]
     with BlogApiRoutes[F]
     with ReviewApiRoutes[F]
+    with ExploreApiRoutes[F]
     with ManagerApiRoutes[F]
     with OrderApiRoutes[F]
     with TourGroupApiRoutes[F]:
@@ -206,6 +207,7 @@ final class ApiRouter[F[_]: Async: Clock](
       attractionRoutes <+>
       blogRoutes <+>
       reviewRoutes <+>
+      exploreRoutes <+>
       managerRoutes <+>
       orderRoutes <+>
       tourGroupRoutes <+>
@@ -334,6 +336,8 @@ final class ApiRouter[F[_]: Async: Clock](
   protected object ManagerTypeQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("managerType")
   protected object TaskStatusQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("status")
   protected object TaskResourceTypeQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("resourceType")
+  protected object SearchQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("q")
+  protected object ExploreTypeQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("type")
 
   protected def parseOptionalSearchText(searchTextValue: Option[String]): F[Option[String]] =
     searchTextValue match
@@ -432,6 +436,8 @@ final class ApiRouter[F[_]: Async: Clock](
         case ManagerError.ManagerEmailAlreadyExists(_) => Status.Conflict -> ApiErrorResponseDto("manager_email_exists", throwable.getMessage)
         case ManagerError.ManagerWasInactive(_, _) => Status.Forbidden -> ApiErrorResponseDto("manager_inactive", throwable.getMessage)
         case ManagerError.ManagerScopeDidNotMatch(_, _, _) => Status.Forbidden -> ApiErrorResponseDto("manager_scope_mismatch", throwable.getMessage)
+        case AuthError.PasswordWasEmpty | AuthError.PasswordWasTooShort | AuthError.PasswordWasTooWeak | AuthError.CurrentPasswordDidNotMatch =>
+          Status.BadRequest -> ApiErrorResponseDto("auth_error", throwable.getMessage)
         case authError: AuthError => Status.Unauthorized -> ApiErrorResponseDto("auth_error", authError.message)
         case TravelerError.TravelerDocumentNumberAlreadyExists(_) => Status.Conflict -> ApiErrorResponseDto("traveler_document_exists", throwable.getMessage)
         case OrderError.SupplierRejectReasonWasEmpty(_) => Status.BadRequest -> ApiErrorResponseDto("decision_reason_required", throwable.getMessage)

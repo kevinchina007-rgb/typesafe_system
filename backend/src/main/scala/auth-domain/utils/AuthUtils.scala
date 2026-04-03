@@ -17,7 +17,7 @@ def createUserCredential(
     createdAt: Instant
 ): Either[AuthError, UserCredential] =
   if passwordHash.trim.isEmpty then Left(AuthError.PasswordWasEmpty)
-  else Right(UserCredential(credentialId, userId, loginEmail, passwordHash, CredentialStatus.Active, createdAt, createdAt))
+  else Right(UserCredential(credentialId, userId, loginEmail, passwordHash, CredentialStatus.Active, createdAt, createdAt, createdAt))
 
 def restorePersistedUserCredential(
     credentialId: CredentialId,
@@ -26,9 +26,10 @@ def restorePersistedUserCredential(
     passwordHash: String,
     status: CredentialStatus,
     createdAt: Instant,
-    updatedAt: Instant
+    updatedAt: Instant,
+    passwordUpdatedAt: Instant
 ): UserCredential =
-  UserCredential(credentialId, userId, loginEmail, passwordHash, status, createdAt, updatedAt)
+  UserCredential(credentialId, userId, loginEmail, passwordHash, status, createdAt, updatedAt, passwordUpdatedAt)
 
 def createManagerCredential(
     credentialId: CredentialId,
@@ -39,7 +40,7 @@ def createManagerCredential(
     createdAt: Instant
 ): Either[AuthError, ManagerCredential] =
   if passwordHash.trim.isEmpty then Left(AuthError.PasswordWasEmpty)
-  else Right(ManagerCredential(credentialId, managerType, managerId, loginEmail, passwordHash, CredentialStatus.Active, createdAt, createdAt))
+  else Right(ManagerCredential(credentialId, managerType, managerId, loginEmail, passwordHash, CredentialStatus.Active, createdAt, createdAt, createdAt))
 
 def restorePersistedManagerCredential(
     credentialId: CredentialId,
@@ -49,9 +50,10 @@ def restorePersistedManagerCredential(
     passwordHash: String,
     status: CredentialStatus,
     createdAt: Instant,
-    updatedAt: Instant
+    updatedAt: Instant,
+    passwordUpdatedAt: Instant
 ): ManagerCredential =
-  ManagerCredential(credentialId, managerType, managerId, loginEmail, passwordHash, status, createdAt, updatedAt)
+  ManagerCredential(credentialId, managerType, managerId, loginEmail, passwordHash, status, createdAt, updatedAt, passwordUpdatedAt)
 
 def createAuthSession(sessionId: SessionId, principal: CurrentPrincipal, createdAt: Instant, expiresAt: Instant): AuthSession =
   principal match
@@ -81,11 +83,24 @@ def toCurrentPrincipal(authSession: AuthSession): Either[AuthError, CurrentPrinc
 def hashPassword[F[_]: Sync](rawPassword: String): F[String] =
   Sync[F].delay {
     val normalizedPassword = rawPassword.trim
-    if normalizedPassword.isEmpty then throw AuthError.PasswordWasEmpty
+    validatePasswordStrength(normalizedPassword, None)
     val random = SecureRandom()
     val saltBytes = Array.ofDim[Byte](16)
     random.nextBytes(saltBytes)
-    val iterations = 65536
+    val iterations = 210000
+    val hashBytes = pbkdf2(normalizedPassword, saltBytes, iterations)
+    val encoder = Base64.getEncoder
+    "pbkdf2-sha256$" + iterations + "$" + encoder.encodeToString(saltBytes) + "$" + encoder.encodeToString(hashBytes)
+  }
+
+def hashPasswordForLoginEmail[F[_]: Sync](rawPassword: String, loginEmail: EmailAddress): F[String] =
+  Sync[F].delay {
+    val normalizedPassword = rawPassword.trim
+    validatePasswordStrength(normalizedPassword, Some(loginEmail))
+    val random = SecureRandom()
+    val saltBytes = Array.ofDim[Byte](16)
+    random.nextBytes(saltBytes)
+    val iterations = 210000
     val hashBytes = pbkdf2(normalizedPassword, saltBytes, iterations)
     val encoder = Base64.getEncoder
     "pbkdf2-sha256$" + iterations + "$" + encoder.encodeToString(saltBytes) + "$" + encoder.encodeToString(hashBytes)
@@ -108,3 +123,23 @@ private def pbkdf2(rawPassword: String, saltBytes: Array[Byte], iterations: Int)
   val keySpec = PBEKeySpec(rawPassword.toCharArray, saltBytes, iterations, 256)
   try SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(keySpec).getEncoded
   finally keySpec.clearPassword()
+
+private def validatePasswordStrength(rawPassword: String, loginEmail: Option[EmailAddress]): Unit =
+  val normalizedPassword = rawPassword.trim
+  if normalizedPassword.isEmpty then throw AuthError.PasswordWasEmpty
+  if normalizedPassword.length < 10 then throw AuthError.PasswordWasTooShort
+
+  val hasLetter = normalizedPassword.exists(_.isLetter)
+  val hasDigit = normalizedPassword.exists(_.isDigit)
+  val lowercasePassword = normalizedPassword.toLowerCase
+  val forbiddenValues = Set("password", "password123", "1234567890", "qwerty123", "admin123456", "hzhishengheng")
+  val emailLocalPart = loginEmail.map(_.value.takeWhile(_ != '@').toLowerCase)
+
+  val isWeak =
+    !hasLetter ||
+      !hasDigit ||
+      forbiddenValues.contains(lowercasePassword) ||
+      emailLocalPart.contains(lowercasePassword) ||
+      normalizedPassword.distinct.length <= 3
+
+  if isWeak then throw AuthError.PasswordWasTooWeak

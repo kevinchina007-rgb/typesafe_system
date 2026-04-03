@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { OrderPanel } from '../../components/OrderPanel'
 import { PaymentModal } from '../../components/PaymentModal'
 import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, OrderResponse, ReviewResponse, UserResponse } from '../../lib/mvp-types'
+import type { AppLanguage, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '../../lib/mvp-types'
 import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
 
 type BookingsPageProps = {
@@ -21,6 +21,7 @@ export function BookingsPage({
 }: BookingsPageProps) {
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [reviews, setReviews] = useState<ReviewResponse[]>([])
+  const [travelers, setTravelers] = useState<TravelerResponse[]>([])
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<OrderResponse | null>(null)
   const { isBusy, runPageAction, runPageActionWithResult } = usePageActions(currentLanguage, translate, onShowNotice)
 
@@ -49,9 +50,19 @@ export function BookingsPage({
     setReviews(reviewListResponse.reviews)
   }
 
+  async function reloadTravelers() {
+    if (!signedInUser) {
+      setTravelers([])
+      return
+    }
+    const travelerListResponse = await travelMvpApiClient.listTravelers(signedInUser.userId)
+    setTravelers(travelerListResponse.travelers)
+  }
+
   useEffect(() => {
     void reloadOrders()
     void reloadReviews()
+    void reloadTravelers()
   }, [signedInUser?.userId])
 
   return (
@@ -62,6 +73,7 @@ export function BookingsPage({
         isGuestMode={signedInUser === null}
         orders={orders}
         reviews={reviews}
+        travelers={travelers}
         translate={translate}
         onReloadOrders={async () => {
           await runPageAction(async () => {

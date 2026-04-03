@@ -15,7 +15,10 @@ final case class TrainStopRequestDto(
 final case class TrainSeatInventoryRequestDto(
     seatClass: String,
     totalSeats: Int,
-    saleableSeats: Int
+    saleableSeats: Int,
+    carriageCount: Int,
+    rowsPerCarriage: Int,
+    seatLayoutSpec: String
 )
 
 final case class TrainSegmentPriceRequestDto(
@@ -94,6 +97,7 @@ final case class TrainResponseDto(
     status: String,
     stops: List[TrainStopResponseDto],
     seatInventories: List[TrainSeatInventoryResponseDto],
+    seats: List[TrainSeatResponseDto],
     segmentPrices: List[TrainSegmentPriceResponseDto],
     refundPolicies: List[TrainRefundPolicyResponseDto]
 )
@@ -118,7 +122,18 @@ final case class BookTrainItemRequestDto(
     travelerIds: List[String],
     fromStationCode: String,
     toStationCode: String,
-    seatClass: String
+    seatClass: String,
+    seatPreference: Option[String]
+)
+
+final case class TrainSeatResponseDto(
+    seatId: String,
+    carriageNo: Int,
+    seatNo: String,
+    seatLabel: String,
+    seatClass: String,
+    seatPositionType: String,
+    status: String
 )
 
 object TrainResponseDto:
@@ -149,6 +164,17 @@ object TrainResponseDto:
           totalSeats = seatInventory.totalSeats.value,
           saleableSeats = remainingSeats,
           status = seatInventory.seatInventoryStatus.toString
+        )
+      }.toList,
+      seats = trainJourney.seats.map { seat =>
+        TrainSeatResponseDto(
+          seatId = seat.seatId.value,
+          carriageNo = seat.carriageNo,
+          seatNo = seat.seatNo,
+          seatLabel = seat.seatLabel,
+          seatClass = seat.seatClass.value,
+          seatPositionType = seat.seatPositionType.toString,
+          status = seat.seatStatus.toString
         )
       }.toList,
       segmentPrices = trainJourney.segmentPrices.map { segmentPrice =>
@@ -193,6 +219,14 @@ object TrainDtoMappers:
 
   def toTrainSeatClass(seatClassValue: String) =
     TrainSeatClass.create(seatClassValue)
+
+  def toTrainSeatPreference(seatPreferenceValue: String): Option[TrainSeatPreference] =
+    seatPreferenceValue.trim.toLowerCase match
+      case "" | "no_preference" | "none" => Some(TrainSeatPreference.NoPreference)
+      case "window"                      => Some(TrainSeatPreference.Window)
+      case "aisle"                       => Some(TrainSeatPreference.Aisle)
+      case "middle"                      => Some(TrainSeatPreference.Middle)
+      case _                             => None
 
   def toTrainRefundType(refundTypeValue: String): TrainRefundType =
     refundTypeValue.trim.toLowerCase match

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import { travelMvpApiClient } from '../lib/api-client'
 import type { AppLanguage, BlogPostResponse, BlogPostSummaryResponse, ContentImageResponse, UserResponse } from '../lib/mvp-types'
 import { BlogDetail } from './BlogDetail'
 import { BlogEditor } from './BlogEditor'
@@ -44,6 +45,7 @@ export function BlogPanel({
   const [searchDraft, setSearchDraft] = useState('')
   const [searchText, setSearchText] = useState('')
   const [postSummaries, setPostSummaries] = useState<BlogPostSummaryResponse[]>([])
+  const [searchSuggestions, setSearchSuggestions] = useState<Array<{ value: string; title: string; subtitle: string }>>([])
   const [selectedPost, setSelectedPost] = useState<BlogPostResponse | null>(null)
   const [editingPost, setEditingPost] = useState<BlogPostResponse | null>(null)
   const [isComposerOpen, setIsComposerOpen] = useState(false)
@@ -55,6 +57,35 @@ export function BlogPanel({
     }
     void reloadPosts(nextScope)
   }, [signedInUser?.userId, scope, searchText])
+
+  useEffect(() => {
+    let cancelled = false
+    const normalizedDraft = searchDraft.trim()
+    if (normalizedDraft.length < 2) {
+      setSearchSuggestions([])
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const response = await travelMvpApiClient.listBlogSuggestions(normalizedDraft)
+        if (!cancelled) {
+          setSearchSuggestions(response.suggestions)
+        }
+      } catch {
+        if (!cancelled) {
+          setSearchSuggestions([])
+        }
+      }
+    }, 180)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeoutId)
+    }
+  }, [searchDraft])
 
   async function reloadPosts(nextScope: BlogScope = scope, nextSelectedPostId?: string) {
     const nextPosts = await onListPosts(nextScope, searchText)
@@ -113,9 +144,31 @@ export function BlogPanel({
             />
           </label>
           <button type="button" disabled={isBusy} onClick={() => setSearchText(searchDraft)}>
-            {translate('blog.search')}
+            {translate('search.confirm')}
           </button>
         </div>
+
+        {searchSuggestions.length > 0 ? (
+          <div className="list-surface">
+            <ul className="entity-list">
+              {searchSuggestions.map(suggestion => (
+                <li key={`${suggestion.value}-${suggestion.title}`}>
+                  <button
+                    type="button"
+                    className="tour-group-link-button"
+                    onClick={() => {
+                      setSearchDraft(suggestion.value)
+                      setSearchText(suggestion.value)
+                    }}
+                  >
+                    <strong>{suggestion.title}</strong>
+                  </button>
+                  <p>{suggestion.subtitle}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {signedInUser && isComposerOpen ? (
           <BlogEditor

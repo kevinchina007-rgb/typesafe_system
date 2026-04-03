@@ -364,12 +364,14 @@ const translationTable: Record<AppLanguage, TranslationDictionary> = {
 }
 
 Object.assign(englishTranslations, {
+  'account.managerLogin': 'Manager sign in',
   'nav.manager': 'Manager',
   'manager.title': 'Operations desk',
   'manager.description': 'Enter a manager context, review actionable booking items, and confirm or reject fulfillment.',
   'manager.type': 'Manager type',
   'manager.type.airline': 'Airline manager',
   'manager.type.hotel': 'Hotel manager',
+  'manager.type.train': 'Train manager',
   'manager.type.attraction': 'Attraction manager',
   'manager.email': 'Manager email',
   'manager.login': 'Enter manager context',
@@ -408,12 +410,15 @@ Object.assign(englishTranslations, {
 })
 
 Object.assign(chineseTranslations, {
+  'account.managerLogin': '管理者登录',
   'nav.manager': '运营',
   'manager.title': '运营工作台',
   'manager.description': '进入管理者上下文，处理待确认的预订条目，并把结果返回给用户侧。',
   'manager.type': '管理者类型',
   'manager.type.airline': '航司经理',
   'manager.type.hotel': '酒店经理',
+  'manager.type.train': '火车经理',
+  'manager.type.attraction': '景点经理',
   'manager.email': '管理者邮箱',
   'manager.login': '进入管理上下文',
   'manager.logout': '退出管理视图',
@@ -517,6 +522,9 @@ Object.assign(chineseTranslations, {
 })
 
 Object.assign(englishTranslations, {
+  'booking.train.assignedSeats': 'Assigned seats',
+  'booking.train.carriageNo': 'Carriage ',
+  'booking.train.seatNo': 'Seat ',
   'booking.flight.departureTime': 'Departure time',
   'booking.flight.arrivalTime': 'Arrival time',
   'booking.hotel.unitPrice': 'Room price',
@@ -651,6 +659,9 @@ Object.assign(englishTranslations, {
 })
 
 Object.assign(chineseTranslations, {
+  'booking.train.assignedSeats': '已分配座位',
+  'booking.train.carriageNo': '车厢',
+  'booking.train.seatNo': '座位',
   'booking.flight.departureTime': '起飞时间',
   'booking.flight.arrivalTime': '到达时间',
   'booking.hotel.unitPrice': '单间房价',
@@ -1137,12 +1148,44 @@ Object.assign(chineseTranslations, {
 
 Object.assign(englishTranslations, {
   'account.confirmPassword': 'Confirm password',
+  'account.showChangePassword': 'Change password',
+  'account.hideChangePassword': 'Hide password form',
   'error.passwordMismatch': 'The two password fields must match.',
+  'account.security': 'Security',
+  'account.currentPassword': 'Current password',
+  'account.newPassword': 'New password',
+  'account.changePassword': 'Change password',
+  'account.sessions': 'Active sessions',
+  'account.refreshSessions': 'Refresh sessions',
+  'account.sessionStatus': 'Session status',
+  'account.currentSession': 'Current session',
+  'account.lastSeenAt': 'Last seen',
+  'account.sessionExpiresAt': 'Session expires',
+  'account.logoutCurrentSession': 'Sign out this device',
+  'account.logoutOtherSessions': 'Sign out other devices',
+  'account.noSessions': 'No active sessions found.',
+  'notice.passwordChanged': 'Password updated successfully.',
 })
 
 Object.assign(chineseTranslations, {
   'account.confirmPassword': '确认密码',
+  'account.showChangePassword': '修改密码',
+  'account.hideChangePassword': '收起修改密码',
   'error.passwordMismatch': '两次输入的密码必须一致。',
+  'account.security': '安全设置',
+  'account.currentPassword': '当前密码',
+  'account.newPassword': '新密码',
+  'account.changePassword': '修改密码',
+  'account.sessions': '登录会话',
+  'account.refreshSessions': '刷新会话',
+  'account.sessionStatus': '会话状态',
+  'account.currentSession': '当前会话',
+  'account.lastSeenAt': '最近活跃',
+  'account.sessionExpiresAt': '会话过期时间',
+  'account.logoutCurrentSession': '退出当前设备',
+  'account.logoutOtherSessions': '退出其他设备',
+  'account.noSessions': '当前没有可见会话。',
+  'notice.passwordChanged': '密码已更新。',
 })
 Object.assign(englishTranslations, {
   'tourGroups.memberCount': 'Members',
@@ -1211,6 +1254,44 @@ Object.assign(englishTranslations, {
   'tourGroups.unmuteConversation': 'Unmute',
   'tourGroups.archiveConversation': 'Archive',
   'tourGroups.unarchiveConversation': 'Unarchive',
+})
+
+Object.assign(englishTranslations, {
+  'explore.title': 'Search travel resources and stories',
+  'explore.description': 'Use one search entry to find flights, hotels, trains, attractions, and blog posts with lightweight suggestions.',
+  'search.type.all': 'All',
+  'search.type.flight': 'Flights',
+  'search.type.hotel': 'Hotels',
+  'search.type.train': 'Trains',
+  'search.type.attraction': 'Attractions',
+  'search.type.blog': 'Blog',
+  'search.global.label': 'Search',
+  'search.global.placeholder': 'Try Shanghai, West Lake, Tokyo, train number, attraction, or a blog topic',
+  'search.confirm': 'Confirm search',
+  'search.suggestions': 'Suggestions',
+  'search.loading': 'Loading suggestions...',
+  'search.emptyHint': 'Start typing to search across travel resources and blog posts.',
+  'search.emptyResults': 'No results matched this query yet.',
+  'search.resultGroupTitle': 'Results',
+  'search.openResult': 'Open page',
+})
+
+Object.assign(chineseTranslations, {
+  'search.type.all': '全部',
+  'search.type.flight': '航班',
+  'search.type.hotel': '酒店',
+  'search.type.train': '火车',
+  'search.type.attraction': '景点',
+  'search.type.blog': '博客',
+  'search.global.label': '统一搜索',
+  'search.global.placeholder': '例如：上海、西湖、东京、车次号、景点名或博客关键词',
+  'search.confirm': '确认搜索',
+  'search.suggestions': '搜索建议',
+  'search.loading': '正在加载建议...',
+  'search.emptyHint': '输入关键词后，可统一搜索旅行资源和博客内容。',
+  'search.emptyResults': '当前没有匹配结果。',
+  'search.resultGroupTitle': '搜索结果',
+  'search.openResult': '打开页面',
 })
 
 Object.assign(chineseTranslations, {

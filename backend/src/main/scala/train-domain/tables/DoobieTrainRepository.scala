@@ -27,11 +27,31 @@ final class DoobieTrainRepository[F[_]: Async](
   override def nextTrainSeatInventoryId: F[TrainSeatInventoryId] =
     Sync[F].delay(TrainSeatInventoryId(s"train-seat-${UUID.randomUUID().toString.take(12)}"))
 
+  override def nextTrainSeatId: F[TrainSeatId] =
+    Sync[F].delay(TrainSeatId(s"train-seat-def-${UUID.randomUUID().toString.take(12)}"))
+
   override def nextTrainSegmentPriceId: F[TrainSegmentPriceId] =
     Sync[F].delay(TrainSegmentPriceId(s"train-segment-${UUID.randomUUID().toString.take(12)}"))
 
   override def nextTrainRefundPolicySegmentId: F[TrainRefundPolicySegmentId] =
     Sync[F].delay(TrainRefundPolicySegmentId(s"train-policy-${UUID.randomUUID().toString.take(12)}"))
+
+  override def listSeatAllocations(trainId: TrainId): F[Vector[TrainSegmentSeatAllocation]] =
+    sql"""
+      select seat_id, order_id, order_item_id, from_stop_sequence_no, to_stop_sequence_no
+      from train_seat_allocations
+      where train_id = ${trainId.value}
+      order by created_at, allocation_id
+    """.query[(String, String, String, Int, Int)].to[List].transact(transactor)
+      .map(_.map { case (seatIdValue, orderIdValue, orderItemIdValue, fromSequenceNo, toSequenceNo) =>
+        TrainSegmentSeatAllocation(
+          seatId = TrainSeatId(seatIdValue),
+          orderId = OrderId(orderIdValue),
+          orderItemId = OrderItemId(orderItemIdValue),
+          fromStopSequenceNo = fromSequenceNo,
+          toStopSequenceNo = toSequenceNo
+        )
+      }.toVector)
 
   override def findRailwayManagerByEmail(emailAddress: EmailAddress): F[Option[RailwayManager]] =
     sql"""
@@ -126,6 +146,7 @@ final class DoobieTrainRepository[F[_]: Async](
           """.update.run.void
         _ <- sql"delete from train_refund_policy_segments where train_id = ${trainJourney.trainId.value}".update.run
         _ <- sql"delete from train_segment_prices where train_id = ${trainJourney.trainId.value}".update.run
+        _ <- sql"delete from train_seats where train_id = ${trainJourney.trainId.value}".update.run
         _ <- sql"delete from train_seat_inventories where train_id = ${trainJourney.trainId.value}".update.run
         _ <- sql"delete from train_stops where train_id = ${trainJourney.trainId.value}".update.run
         _ <- trainJourney.stops.traverse_ { stop =>
@@ -152,6 +173,25 @@ final class DoobieTrainRepository[F[_]: Async](
               ${seatInventory.totalSeats.value},
               ${seatInventory.saleableSeats.value},
               ${seatInventory.seatInventoryStatus.toString}
+            )
+          """.update.run
+        }
+        _ <- trainJourney.seats.traverse_ { seat =>
+          sql"""
+            insert into train_seats(
+              seat_id, train_id, inventory_id, seat_class, carriage_no, row_no, seat_code, seat_no, seat_label, seat_position_type, status
+            ) values (
+              ${seat.seatId.value},
+              ${trainJourney.trainId.value},
+              ${seat.inventoryId.value},
+              ${seat.seatClass.value},
+              ${seat.carriageNo},
+              ${seat.rowNo.value},
+              ${seat.seatCode},
+              ${seat.seatNo},
+              ${seat.seatLabel},
+              ${seat.seatPositionType.toString},
+              ${seat.seatStatus.toString}
             )
           """.update.run
         }
@@ -207,6 +247,7 @@ final class DoobieTrainRepository[F[_]: Async](
       trainNumber <- Async[F].fromEither(TrainNumber.create(trainNumberValue))
       stops <- loadStops(TrainId(trainIdValue))
       seatInventories <- loadSeatInventories(TrainId(trainIdValue))
+      seats <- loadSeats(TrainId(trainIdValue))
       segmentPrices <- loadSegmentPrices(TrainId(trainIdValue))
       refundPolicies <- loadRefundPolicies(TrainId(trainIdValue))
     yield restorePersistedTrainJourney(
@@ -217,6 +258,7 @@ final class DoobieTrainRepository[F[_]: Async](
       trainJourneyStatus = TrainJourneyStatus.valueOf(statusValue),
       stops = stops,
       seatInventories = seatInventories,
+      seats = seats,
       segmentPrices = segmentPrices,
       refundPolicySegments = refundPolicies,
       createdAt = createdAtValue
@@ -255,6 +297,32 @@ final class DoobieTrainRepository[F[_]: Async](
           totalSeats = totalSeats,
           saleableSeats = saleableSeats,
           seatInventoryStatus = TrainSeatInventoryStatus.valueOf(statusValue)
+        )
+      }.map(_.toVector))
+
+  private def loadSeats(trainId: TrainId): F[Vector[TrainSeat]] =
+    sql"""
+      select seat_id, inventory_id, seat_class, carriage_no, row_no, seat_code, seat_no, seat_label, seat_position_type, status
+      from train_seats
+      where train_id = ${trainId.value}
+      order by carriage_no, row_no, seat_code
+    """.query[(String, String, String, Int, Int, String, String, String, String, String)].to[List].transact(transactor)
+      .flatMap(_.traverse { case (seatIdValue, inventoryIdValue, seatClassValue, carriageNoValue, rowNoValue, seatCodeValue, seatNoValue, seatLabelValue, seatPositionTypeValue, statusValue) =>
+        for
+          seatClass <- Async[F].fromEither(TrainSeatClass.create(seatClassValue))
+          rowNo <- Async[F].fromEither(TrainSeatRowNo.create(rowNoValue))
+        yield TrainSeat(
+          seatId = TrainSeatId(seatIdValue),
+          trainId = trainId,
+          inventoryId = TrainSeatInventoryId(inventoryIdValue),
+          seatClass = seatClass,
+          carriageNo = carriageNoValue,
+          rowNo = rowNo,
+          seatCode = seatCodeValue,
+          seatNo = seatNoValue,
+          seatLabel = seatLabelValue,
+          seatPositionType = TrainSeatPositionType.valueOf(seatPositionTypeValue),
+          seatStatus = TrainSeatStatus.valueOf(statusValue)
         )
       }.map(_.toVector))
 

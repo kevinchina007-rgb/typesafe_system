@@ -85,6 +85,7 @@ export function TrainsPage({
             fromStationCode: payload.fromStationCode,
             toStationCode: payload.toStationCode,
             seatClass: payload.seatClass,
+            seatPreference: payload.seatPreference,
           })
           onNavigate('bookings')
         }, translate('trains.bookNow'), translate('notice.bookingCreated'))

@@ -115,6 +115,7 @@ def createTicketType(
     totalQuantity = totalQuantity,
     validWeekdays = normalizedWeekdays,
     ticketTypeStatus = TicketTypeStatus.Active,
+    sessions = Vector.empty,
     eligibilityRules = Vector.empty,
     createdAt = createdAt
   )
@@ -131,10 +132,52 @@ def restorePersistedTicketType(
     totalQuantity: Int,
     validWeekdays: Set[DayOfWeek],
     ticketTypeStatus: TicketTypeStatus,
+    sessions: Vector[AttractionTicketSession],
     eligibilityRules: Vector[TicketEligibilityRule],
     createdAt: Instant
 ): TicketType =
-  TicketType(ticketTypeId, attractionId, ticketTypeName, description, unitPrice, availableFromDate, availableToDate, totalQuantity, validWeekdays, ticketTypeStatus, eligibilityRules, createdAt)
+  TicketType(ticketTypeId, attractionId, ticketTypeName, description, unitPrice, availableFromDate, availableToDate, totalQuantity, validWeekdays, ticketTypeStatus, sessions, eligibilityRules, createdAt)
+
+
+def createAttractionTicketSession(
+    sessionId: AttractionTicketSessionId,
+    ticketTypeId: TicketTypeId,
+    sessionName: String,
+    useDate: LocalDate,
+    startsAt: Instant,
+    endsAt: Instant,
+    capacity: Int,
+    createdAt: Instant
+): Either[AttractionError, AttractionTicketSession] =
+  for
+    validatedSessionName <- validateText("ticket-session-name", sessionName, 120)
+    _ <- if endsAt.isAfter(startsAt) then Right(()) else Left(AttractionError.AttractionTicketSessionTimeRangeWasInvalid(sessionId))
+    _ <- if capacity > 0 then Right(()) else Left(AttractionError.AttractionTicketSessionCapacityWasInvalid(sessionId, capacity))
+  yield AttractionTicketSession(
+    sessionId = sessionId,
+    ticketTypeId = ticketTypeId,
+    sessionName = validatedSessionName,
+    useDate = useDate,
+    startsAt = startsAt,
+    endsAt = endsAt,
+    capacity = capacity,
+    status = AttractionTicketSessionStatus.Active,
+    createdAt = createdAt
+  )
+
+
+def restorePersistedAttractionTicketSession(
+    sessionId: AttractionTicketSessionId,
+    ticketTypeId: TicketTypeId,
+    sessionName: String,
+    useDate: LocalDate,
+    startsAt: Instant,
+    endsAt: Instant,
+    capacity: Int,
+    status: AttractionTicketSessionStatus,
+    createdAt: Instant
+): AttractionTicketSession =
+  AttractionTicketSession(sessionId, ticketTypeId, sessionName, useDate, startsAt, endsAt, capacity, status, createdAt)
 
 
 private def encodeTicketEligibilityRuleConfig(ruleConfig: TicketEligibilityRuleConfig): String =

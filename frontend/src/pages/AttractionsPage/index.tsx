@@ -91,6 +91,7 @@ export function AttractionsPage({
             orderId: createdOrder.orderId,
             attractionId: payload.attractionId,
             ticketTypeId: payload.ticketTypeId,
+            sessionId: payload.sessionId,
             travelerIds: payload.travelerIds,
             useDate: payload.useDate,
           })

@@ -18,6 +18,13 @@ trait FlightApiRoutes[F[_]: Async] extends Http4sDsl[F]:
   import JsonCodecs.given
 
   protected final def flightRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
+    case GET -> Root / "api" / "flights" / "suggestions" :? SearchQueryParamMatcher(queryValue) =>
+      for
+        queryText <- fromEither(queryValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
+        suggestions <- flightBookingApplicationService.suggestFlights(queryText)
+        response <- Ok(SearchSuggestionListResponseDto(suggestions.map(SearchSuggestionResponseDto.fromApplication)).asJson)
+      yield response
+
     case GET -> Root / "api" / "flights" :? DepartureAirportQueryParamMatcher(departureAirportValue) +&
         ArrivalAirportQueryParamMatcher(arrivalAirportValue) +&
         DepartureDateQueryParamMatcher(departureDateValue) =>

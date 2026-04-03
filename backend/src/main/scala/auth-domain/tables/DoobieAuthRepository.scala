@@ -21,17 +21,17 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
 
   override def findUserCredentialByLoginEmail(loginEmail: EmailAddress): F[Option[UserCredential]] =
     sql"""
-      select credential_id, user_id, login_email, password_hash, status, created_at, updated_at
+      select credential_id, user_id, login_email, password_hash, status, created_at, updated_at, password_updated_at
       from user_credentials
       where login_email = ${loginEmail.value}
-    """.query[(String, String, String, String, String, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toUserCredential))
+    """.query[(String, String, String, String, String, Instant, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toUserCredential))
 
   override def findUserCredentialByUserId(userId: UserId): F[Option[UserCredential]] =
     sql"""
-      select credential_id, user_id, login_email, password_hash, status, created_at, updated_at
+      select credential_id, user_id, login_email, password_hash, status, created_at, updated_at, password_updated_at
       from user_credentials
       where user_id = ${userId.value}
-    """.query[(String, String, String, String, String, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toUserCredential))
+    """.query[(String, String, String, String, String, Instant, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toUserCredential))
 
   override def saveUserCredential(userCredential: UserCredential): F[UserCredential] =
     (
@@ -40,13 +40,14 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
         set login_email = ${userCredential.loginEmail.value},
             password_hash = ${userCredential.passwordHash},
             status = ${userCredential.status.toString},
-            updated_at = ${userCredential.updatedAt}
+            updated_at = ${userCredential.updatedAt},
+            password_updated_at = ${userCredential.passwordUpdatedAt}
         where user_id = ${userCredential.userId.value}
       """.update.run.flatMap(updatedRows =>
         if updatedRows > 0 then updatedRows.pure[ConnectionIO]
         else
           sql"""
-            insert into user_credentials(credential_id, user_id, login_email, password_hash, status, created_at, updated_at)
+            insert into user_credentials(credential_id, user_id, login_email, password_hash, status, created_at, updated_at, password_updated_at)
             values (
               ${userCredential.credentialId.value},
               ${userCredential.userId.value},
@@ -54,25 +55,39 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
               ${userCredential.passwordHash},
               ${userCredential.status.toString},
               ${userCredential.createdAt},
-              ${userCredential.updatedAt}
+              ${userCredential.updatedAt},
+              ${userCredential.passwordUpdatedAt}
             )
           """.update.run
       )
     ).transact(transactor).as(userCredential)
 
+  override def listSessions(actorType: AuthActorType, actorId: String, managerType: Option[AuthManagerType]): F[List[AuthSession]] =
+    sql"""
+      select session_id, actor_type, actor_id, manager_type, created_at, last_seen_at, expires_at, status
+      from auth_sessions
+      where actor_type = ${actorType.toString}
+        and actor_id = $actorId
+        and (
+          (${managerType.map(_.toString)} is null and manager_type is null)
+          or manager_type = ${managerType.map(_.toString)}
+        )
+      order by created_at desc
+    """.query[(String, String, String, Option[String], Instant, Instant, Instant, String)].to[List].transact(transactor).flatMap(_.traverse(toSession))
+
   override def findManagerCredential(managerType: AuthManagerType, managerId: ManagerId): F[Option[ManagerCredential]] =
     sql"""
-      select credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at
+      select credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at, password_updated_at
       from manager_credentials
       where manager_type = ${managerType.toString} and manager_id = ${managerId.value}
-    """.query[(String, String, String, String, String, String, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toManagerCredential))
+    """.query[(String, String, String, String, String, String, Instant, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toManagerCredential))
 
   override def findManagerCredentialByLoginEmail(managerType: AuthManagerType, loginEmail: EmailAddress): F[Option[ManagerCredential]] =
     sql"""
-      select credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at
+      select credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at, password_updated_at
       from manager_credentials
       where manager_type = ${managerType.toString} and login_email = ${loginEmail.value}
-    """.query[(String, String, String, String, String, String, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toManagerCredential))
+    """.query[(String, String, String, String, String, String, Instant, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toManagerCredential))
 
   override def saveManagerCredential(managerCredential: ManagerCredential): F[ManagerCredential] =
     (
@@ -81,14 +96,15 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
         set login_email = ${managerCredential.loginEmail.value},
             password_hash = ${managerCredential.passwordHash},
             status = ${managerCredential.status.toString},
-            updated_at = ${managerCredential.updatedAt}
+            updated_at = ${managerCredential.updatedAt},
+            password_updated_at = ${managerCredential.passwordUpdatedAt}
         where manager_type = ${managerCredential.managerType.toString}
           and manager_id = ${managerCredential.managerId.value}
       """.update.run.flatMap(updatedRows =>
         if updatedRows > 0 then updatedRows.pure[ConnectionIO]
         else
           sql"""
-            insert into manager_credentials(credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at)
+            insert into manager_credentials(credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at, password_updated_at)
             values (
               ${managerCredential.credentialId.value},
               ${managerCredential.managerType.toString},
@@ -97,7 +113,8 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
               ${managerCredential.passwordHash},
               ${managerCredential.status.toString},
               ${managerCredential.createdAt},
-              ${managerCredential.updatedAt}
+              ${managerCredential.updatedAt},
+              ${managerCredential.passwordUpdatedAt}
             )
           """.update.run
       )
@@ -139,15 +156,29 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
   override def revokeSession(sessionId: SessionId): F[Unit] =
     sql"update auth_sessions set status = ${AuthSessionStatus.Revoked.toString} where session_id = ${sessionId.value}".update.run.transact(transactor).void
 
-  private def toUserCredential(row: (String, String, String, String, String, Instant, Instant)): F[UserCredential] =
+  override def revokeOtherSessions(currentSessionId: SessionId, actorType: AuthActorType, actorId: String, managerType: Option[AuthManagerType]): F[Int] =
+    sql"""
+      update auth_sessions
+      set status = ${AuthSessionStatus.Revoked.toString}
+      where session_id <> ${currentSessionId.value}
+        and actor_type = ${actorType.toString}
+        and actor_id = $actorId
+        and (
+          (${managerType.map(_.toString)} is null and manager_type is null)
+          or manager_type = ${managerType.map(_.toString)}
+        )
+        and status = ${AuthSessionStatus.Active.toString}
+    """.update.run.transact(transactor)
+
+  private def toUserCredential(row: (String, String, String, String, String, Instant, Instant, Instant)): F[UserCredential] =
     for
       loginEmail <- Async[F].fromEither(EmailAddress.create(row._3))
-    yield restorePersistedUserCredential(CredentialId(row._1), UserId(row._2), loginEmail, row._4, CredentialStatus.valueOf(row._5), row._6, row._7)
+    yield restorePersistedUserCredential(CredentialId(row._1), UserId(row._2), loginEmail, row._4, CredentialStatus.valueOf(row._5), row._6, row._7, row._8)
 
-  private def toManagerCredential(row: (String, String, String, String, String, String, Instant, Instant)): F[ManagerCredential] =
+  private def toManagerCredential(row: (String, String, String, String, String, String, Instant, Instant, Instant)): F[ManagerCredential] =
     for
       loginEmail <- Async[F].fromEither(EmailAddress.create(row._4))
-    yield restorePersistedManagerCredential(CredentialId(row._1), AuthManagerType.valueOf(row._2), ManagerId(row._3), loginEmail, row._5, CredentialStatus.valueOf(row._6), row._7, row._8)
+    yield restorePersistedManagerCredential(CredentialId(row._1), AuthManagerType.valueOf(row._2), ManagerId(row._3), loginEmail, row._5, CredentialStatus.valueOf(row._6), row._7, row._8, row._9)
 
   private def toSession(row: (String, String, String, Option[String], Instant, Instant, Instant, String)): F[AuthSession] =
     Async[F].pure(

@@ -7,6 +7,7 @@ import { travelMvpApiClient } from '../../lib/api-client'
 import type {
   AppLanguage,
   AttractionAdminSessionResponse,
+  AppViewKey,
   CurrentManagerSessionResponse,
   FlightResponse,
   ManagerRefundTaskResponse,
@@ -21,6 +22,7 @@ type ManagerPageProps = {
   currentManagerSession: CurrentManagerSessionResponse | null
   translate: (translationKey: string) => string
   onManagerSessionChange: (managerSession: CurrentManagerSessionResponse | null) => void
+  onNavigate: (viewKey: AppViewKey) => void
   onShowNotice: PageNoticeHandler
 }
 
@@ -56,6 +58,7 @@ export function ManagerPage({
   currentManagerSession,
   translate,
   onManagerSessionChange,
+  onNavigate,
   onShowNotice,
 }: ManagerPageProps) {
   const activeManagerType = currentManagerSession ? toManagerTypeKey(currentManagerSession.managerType) : null
@@ -191,6 +194,7 @@ export function ManagerPage({
     setManagedFlightResponses([])
     setManagerTaskResponses([])
     setManagerRefundTaskResponses([])
+    onNavigate('account')
   }
 
   return (
@@ -472,6 +476,18 @@ export function ManagerPage({
               })
               await reloadManagedAttractions(currentAttractionAdminSession.managerId)
             }, translate('attractionAdmin.createTicketType'), translate('notice.actionSuccess'))
+          }}
+          onCreateSession={async payload => {
+            if (!currentAttractionAdminSession) {
+              throw new Error(translate('error.managerNotFound'))
+            }
+            await runPageAction(async () => {
+              await travelMvpApiClient.createAttractionTicketSession({
+                managerId: currentAttractionAdminSession.managerId,
+                ...payload,
+              })
+              await reloadManagedAttractions(currentAttractionAdminSession.managerId)
+            }, translate('attractionAdmin.createSession'), translate('notice.actionSuccess'))
           }}
           onCreateRule={async payload => {
             if (!currentAttractionAdminSession) {

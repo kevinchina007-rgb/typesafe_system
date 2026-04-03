@@ -41,6 +41,17 @@ trait AttractionAdminApplicationService[F[_]]:
       validWeekdays: Set[DayOfWeek],
       createdAt: Instant
   ): F[Attraction]
+  def createTicketSession(
+      managerId: ManagerId,
+      attractionId: AttractionId,
+      ticketTypeId: TicketTypeId,
+      sessionName: String,
+      useDate: LocalDate,
+      startsAt: Instant,
+      endsAt: Instant,
+      capacity: Int,
+      createdAt: Instant
+  ): F[Attraction]
   def addTicketEligibilityRule(
       managerId: ManagerId,
       attractionId: AttractionId,
@@ -141,6 +152,27 @@ final class LiveAttractionAdminApplicationService[F[_]: MonadThrow](
         createdAt
       ).liftTo[F]
       updatedTicketType <- ticketType.addEligibilityRule(rule).liftTo[F]
+      updatedAttraction <- attraction.replaceTicketType(updatedTicketType).liftTo[F]
+      savedAttraction <- attractionRepository.saveAttraction(updatedAttraction)
+    yield savedAttraction
+
+  override def createTicketSession(
+      managerId: ManagerId,
+      attractionId: AttractionId,
+      ticketTypeId: TicketTypeId,
+      sessionName: String,
+      useDate: LocalDate,
+      startsAt: Instant,
+      endsAt: Instant,
+      capacity: Int,
+      createdAt: Instant
+  ): F[Attraction] =
+    for
+      attraction <- loadManagedAttraction(managerId, attractionId)
+      ticketType <- attraction.findTicketType(ticketTypeId).liftTo[F]
+      sessionId <- attractionRepository.nextAttractionTicketSessionId
+      ticketSession <- createAttractionTicketSession(sessionId, ticketTypeId, sessionName, useDate, startsAt, endsAt, capacity, createdAt).liftTo[F]
+      updatedTicketType <- ticketType.addSession(ticketSession).liftTo[F]
       updatedAttraction <- attraction.replaceTicketType(updatedTicketType).liftTo[F]
       savedAttraction <- attractionRepository.saveAttraction(updatedAttraction)
     yield savedAttraction

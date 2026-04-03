@@ -55,6 +55,31 @@ export type BlogPostListResponse = {
   posts: BlogPostSummaryResponse[]
 }
 
+export type SearchSuggestionResponse = {
+  resourceType: string
+  value: string
+  title: string
+  subtitle: string
+}
+
+export type SearchSuggestionListResponse = {
+  suggestions: SearchSuggestionResponse[]
+}
+
+export type ExploreSearchResultResponse = {
+  resourceType: string
+  resourceId: string
+  title: string
+  summary: string
+  metaLabel: string
+  navigationHint: string
+  imageUrl: string | null
+}
+
+export type ExploreSearchResponse = {
+  results: ExploreSearchResultResponse[]
+}
+
 export type ReviewEligibilityResponse = {
   orderId: string
   orderItemId: string
@@ -119,6 +144,19 @@ export type UserResponse = {
 export type CurrentUserSessionResponse = {
   user: UserResponse
   expiresAt: string
+}
+
+export type AuthSessionResponse = {
+  sessionId: string
+  createdAt: string
+  lastSeenAt: string
+  expiresAt: string
+  status: string
+  isCurrent: boolean
+}
+
+export type AuthSessionListResponse = {
+  sessions: AuthSessionResponse[]
 }
 
 export type TravelerResponse = {
@@ -211,6 +249,16 @@ export type TrainSeatInventoryResponse = {
   status: string
 }
 
+export type TrainSeatResponse = {
+  seatId: string
+  carriageNo: number
+  seatNo: string
+  seatLabel: string
+  seatClass: string
+  seatPositionType: string
+  status: string
+}
+
 export type TrainSegmentPriceResponse = {
   fromStationCode: string
   toStationCode: string
@@ -246,6 +294,18 @@ export type AttractionTicketTypeResponse = {
   availableQuantityForRequestedDate: number | null
   isAvailableForRequestedDate: boolean
   rules: AttractionTicketTypeRuleResponse[]
+  sessions: AttractionTicketSessionResponse[]
+}
+
+export type AttractionTicketSessionResponse = {
+  sessionId: string
+  sessionName: string
+  useDate: string
+  startsAt: string
+  endsAt: string
+  capacity: number
+  availableQuantity: number | null
+  status: string
 }
 
 export type AttractionResponse = {
@@ -269,8 +329,18 @@ export type TrainResponse = {
   status: string
   stops: TrainStopResponse[]
   seatInventories: TrainSeatInventoryResponse[]
+  seats: TrainSeatResponse[]
   segmentPrices: TrainSegmentPriceResponse[]
   refundPolicies: TrainRefundPolicyResponse[]
+}
+
+export type TrainSeatAssignmentResponse = {
+  travelerId: string
+  seatId: string
+  carriageNo: number
+  seatNo: string
+  seatLabel: string
+  seatPositionType: string
 }
 
 export type TrainListResponse = {
@@ -321,6 +391,8 @@ export type TrainItemDetailsResponse = {
   departureTime: string
   arrivalTime: string
   seatClass: string
+  requestedSeatPreference: string | null
+  seatAssignments: TrainSeatAssignmentResponse[]
   travelerIds: string[]
   reservationStatus: string | null
   reservationExpiresAt: string | null
@@ -334,6 +406,10 @@ export type AttractionItemDetailsResponse = {
   attractionName: string
   ticketTypeId: string
   ticketTypeName: string
+  sessionId: string | null
+  sessionName: string | null
+  sessionStartsAt: string | null
+  sessionEndsAt: string | null
   useDate: string
   travelerIds: string[]
   unitPrice: string

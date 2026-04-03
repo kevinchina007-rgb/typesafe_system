@@ -23,6 +23,9 @@ final class DoobieAttractionRepository[F[_]: Async](
   override def nextTicketEligibilityRuleId: F[TicketEligibilityRuleId] =
     Sync[F].delay(TicketEligibilityRuleId(s"ticket-rule-${UUID.randomUUID().toString.take(12)}"))
 
+  override def nextAttractionTicketSessionId: F[AttractionTicketSessionId] =
+    Sync[F].delay(AttractionTicketSessionId(s"ticket-session-${UUID.randomUUID().toString.take(12)}"))
+
   override def findAttractionById(attractionId: AttractionId): F[Option[Attraction]] =
     sql"""
       select attraction_id, manager_id, name, city, location, description, status, created_at
@@ -75,6 +78,7 @@ final class DoobieAttractionRepository[F[_]: Async](
               ${attraction.createdAt}
             )
           """.update.run.void
+        _ <- sql"delete from attraction_ticket_sessions where ticket_type_id in (select ticket_type_id from ticket_types where attraction_id = ${attraction.attractionId.value})".update.run
         _ <- sql"delete from ticket_type_rules where ticket_type_id in (select ticket_type_id from ticket_types where attraction_id = ${attraction.attractionId.value})".update.run
         _ <- sql"delete from ticket_types where attraction_id = ${attraction.attractionId.value}".update.run
         _ <- attraction.ticketTypes.traverse_ { ticketType =>
@@ -96,6 +100,23 @@ final class DoobieAttractionRepository[F[_]: Async](
                 ${ticketType.createdAt}
               )
             """.update.run
+            _ <- ticketType.sessions.traverse_ { session =>
+              sql"""
+                insert into attraction_ticket_sessions(
+                  session_id, ticket_type_id, session_name, use_date, starts_at, ends_at, capacity, status, created_at
+                ) values (
+                  ${session.sessionId.value},
+                  ${ticketType.ticketTypeId.value},
+                  ${session.sessionName},
+                  ${session.useDate},
+                  ${session.startsAt},
+                  ${session.endsAt},
+                  ${session.capacity},
+                  ${session.status.toString},
+                  ${session.createdAt}
+                )
+              """.update.run
+            }
             _ <- ticketType.eligibilityRules.traverse_ { rule =>
               sql"""
                 insert into ticket_type_rules(rule_id, ticket_type_id, rule_type, rule_config_json, created_at)
@@ -141,6 +162,7 @@ final class DoobieAttractionRepository[F[_]: Async](
           currency <- Async[F].fromEither(Either.catchNonFatal(Currency.valueOf(currencyValue)))
           unitPrice <- Async[F].fromEither(Money.create(amountValue, currency))
           rules <- loadRules(TicketTypeId(ticketTypeIdValue))
+          sessions <- loadSessions(TicketTypeId(ticketTypeIdValue))
         yield restorePersistedTicketType(
           ticketTypeId = TicketTypeId(ticketTypeIdValue),
           attractionId = attractionId,
@@ -152,6 +174,7 @@ final class DoobieAttractionRepository[F[_]: Async](
           totalQuantity = totalQuantityValue,
           validWeekdays = decodeWeekdays(validWeekdaysValue),
           ticketTypeStatus = TicketTypeStatus.valueOf(statusValue),
+          sessions = sessions,
           eligibilityRules = rules,
           createdAt = createdAtValue
         )
@@ -171,6 +194,28 @@ final class DoobieAttractionRepository[F[_]: Async](
           ticketTypeId = ticketTypeId,
           ruleType = TicketEligibilityRuleType.valueOf(ruleTypeValue),
           ruleConfigJson = ruleConfigJsonValue,
+          createdAt = createdAtValue
+        )
+      }.toVector
+    )
+
+  private def loadSessions(ticketTypeId: TicketTypeId): F[Vector[AttractionTicketSession]] =
+    sql"""
+      select session_id, session_name, use_date, starts_at, ends_at, capacity, status, created_at
+      from attraction_ticket_sessions
+      where ticket_type_id = ${ticketTypeId.value}
+      order by use_date, starts_at, session_id
+    """.query[(String, String, LocalDate, Instant, Instant, Int, String, Instant)].to[List].transact(transactor).map(
+      _.map { case (sessionIdValue, sessionNameValue, useDateValue, startsAtValue, endsAtValue, capacityValue, statusValue, createdAtValue) =>
+        restorePersistedAttractionTicketSession(
+          sessionId = AttractionTicketSessionId(sessionIdValue),
+          ticketTypeId = ticketTypeId,
+          sessionName = sessionNameValue,
+          useDate = useDateValue,
+          startsAt = startsAtValue,
+          endsAt = endsAtValue,
+          capacity = capacityValue,
+          status = AttractionTicketSessionStatus.valueOf(statusValue),
           createdAt = createdAtValue
         )
       }.toVector

@@ -8,15 +8,23 @@ object JsonCodecs:
   given Encoder[HealthResponseDto] = deriveEncoder
   given Encoder[ErrorResponseDto] = deriveEncoder
   given Encoder[ApiErrorResponseDto] = deriveEncoder
+  given Encoder[SearchSuggestionResponseDto] = deriveEncoder
+  given Encoder[SearchSuggestionListResponseDto] = deriveEncoder
+  given Encoder[ExploreSearchResultResponseDto] = deriveEncoder
+  given Encoder[ExploreSearchResponseDto] = deriveEncoder
 
   given Decoder[CreateUserRequestDto] = deriveDecoder
   given Decoder[LoginUserRequestDto] = deriveDecoder
   given Decoder[SignupRequestDto] = deriveDecoder
   given Decoder[PasswordLoginRequestDto] = deriveDecoder
   given Decoder[ManagerPasswordLoginRequestDto] = deriveDecoder
+  given Decoder[ChangePasswordRequestDto] = deriveDecoder
   given Encoder[UserResponseDto] = deriveEncoder
   given Encoder[CurrentUserSessionResponseDto] = deriveEncoder
   given Encoder[CurrentManagerSessionResponseDto] = deriveEncoder
+  given Encoder[AuthSessionResponseDto] = deriveEncoder
+  given Encoder[AuthSessionListResponseDto] = deriveEncoder
+  given Encoder[LogoutOtherSessionsResponseDto] = deriveEncoder
 
   given Decoder[CreateTravelerRequestDto] = deriveDecoder
   given Encoder[TravelerResponseDto] = deriveEncoder
@@ -34,6 +42,7 @@ object JsonCodecs:
   given Decoder[AttractionAdminLoginRequestDto] = deriveDecoder
   given Decoder[CreateAttractionRequestDto] = deriveDecoder
   given Decoder[CreateTicketTypeRequestDto] = deriveDecoder
+  given Decoder[CreateTicketSessionRequestDto] = deriveDecoder
   given Decoder[CreateTicketEligibilityRuleRequestDto] = deriveDecoder
   given Decoder[BookAttractionItemRequestDto] = deriveDecoder
   given Decoder[TrainStopRequestDto] = deriveDecoder
@@ -87,18 +96,21 @@ object JsonCodecs:
   given Encoder[HotelListResponseDto] = deriveEncoder
   given Encoder[TrainStopResponseDto] = deriveEncoder
   given Encoder[TrainSeatInventoryResponseDto] = deriveEncoder
+  given Encoder[TrainSeatResponseDto] = deriveEncoder
   given Encoder[TrainSegmentPriceResponseDto] = deriveEncoder
   given Encoder[TrainRefundPolicyResponseDto] = deriveEncoder
   given Encoder[TrainResponseDto] = deriveEncoder
   given Encoder[TrainListResponseDto] = deriveEncoder
   given Encoder[TrainAdminSessionResponseDto] = deriveEncoder
   given Encoder[AttractionTicketTypeRuleResponseDto] = deriveEncoder
+  given Encoder[AttractionTicketSessionResponseDto] = deriveEncoder
   given Encoder[AttractionTicketTypeResponseDto] = deriveEncoder
   given Encoder[AttractionResponseDto] = deriveEncoder
   given Encoder[AttractionListResponseDto] = deriveEncoder
   given Encoder[AttractionAdminSessionResponseDto] = deriveEncoder
   given Encoder[FlightItemDetailsResponseDto] = deriveEncoder
   given Encoder[HotelItemDetailsResponseDto] = deriveEncoder
+  given Encoder[TrainSeatAssignmentResponseDto] = deriveEncoder
   given Encoder[TrainItemDetailsResponseDto] = deriveEncoder
   given Encoder[AttractionItemDetailsResponseDto] = deriveEncoder
   given Encoder[ManagerSessionResponseDto] = deriveEncoder

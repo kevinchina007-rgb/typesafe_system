@@ -67,6 +67,38 @@ object TravelSearchAliases:
         (isKeywordEligible(searchTerm) && normalizedHotelLocation.contains(searchTerm))
       }
 
+  def airportSearchTerms(rawSearchText: String): Set[String] =
+    val normalizedSearchText = normalizeSearchText(rawSearchText)
+    if normalizedSearchText.isEmpty then Set.empty
+    else
+      resolveAirportAliasCodes(normalizedSearchText).map(_.value.toLowerCase) +
+        normalizedSearchText
+
+  def hotelLocationSearchTerms(rawSearchText: String): Set[String] =
+    val normalizedSearchText = normalizeSearchText(rawSearchText)
+    if normalizedSearchText.isEmpty then Set.empty
+    else resolveHotelLocationTerms(normalizedSearchText)
+
+  def matchesTrainStationQuery(stationCodeValue: String, stationNameValue: String, rawSearchText: String): Boolean =
+    val normalizedSearchText = normalizeSearchText(rawSearchText)
+    val normalizedStationCode = normalizeSearchText(stationCodeValue)
+    val normalizedStationName = normalizeSearchText(stationNameValue)
+    if normalizedSearchText.isEmpty then false
+    else
+      matchesText(normalizedStationCode, normalizedSearchText) ||
+      matchesText(normalizedStationName, normalizedSearchText)
+
+  def matchesAttractionQuery(attractionNameValue: String, cityValue: String, locationValue: String, rawSearchText: String): Boolean =
+    val normalizedSearchText = normalizeSearchText(rawSearchText)
+    val normalizedAttractionName = normalizeSearchText(attractionNameValue)
+    val normalizedCity = normalizeSearchText(cityValue)
+    val normalizedLocation = normalizeSearchText(locationValue)
+    if normalizedSearchText.isEmpty then false
+    else
+      matchesText(normalizedAttractionName, normalizedSearchText) ||
+      matchesText(normalizedCity, normalizedSearchText) ||
+      matchesText(normalizedLocation, normalizedSearchText)
+
   private def resolveAirportAliasCodes(normalizedSearchText: String): Set[AirportCode] =
     val directMatches = airportAliasIndex.collect {
       case (aliasText, airportCodes) if aliasMatches(aliasText, normalizedSearchText) => airportCodes
@@ -84,6 +116,11 @@ object TravelSearchAliases:
     aliasText == normalizedSearchText ||
     (isKeywordEligible(normalizedSearchText) && aliasText.startsWith(normalizedSearchText)) ||
     (isKeywordEligible(normalizedSearchText) && aliasText.contains(normalizedSearchText))
+
+  private def matchesText(normalizedCandidateText: String, normalizedSearchText: String): Boolean =
+    normalizedCandidateText == normalizedSearchText ||
+    (isKeywordEligible(normalizedSearchText) && normalizedCandidateText.startsWith(normalizedSearchText)) ||
+    (isKeywordEligible(normalizedSearchText) && normalizedCandidateText.contains(normalizedSearchText))
 
   private def isExactAirportCode(normalizedSearchText: String): Boolean =
     normalizedSearchText.matches("^[a-z]{3}$")

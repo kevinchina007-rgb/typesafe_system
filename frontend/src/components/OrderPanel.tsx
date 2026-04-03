@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import type { AppLanguage, OrderResponse, ReviewEligibilityResponse, ReviewResponse } from '../lib/mvp-types'
+import type { AppLanguage, OrderResponse, ReviewEligibilityResponse, ReviewResponse, TravelerResponse } from '../lib/mvp-types'
 import { ReviewComposerDialog } from './ReviewComposerDialog'
 import {
   formatIsoDateTime,
@@ -19,6 +19,7 @@ type OrderPanelProps = {
   isGuestMode: boolean
   orders: OrderResponse[]
   reviews: ReviewResponse[]
+  travelers: TravelerResponse[]
   translate: (translationKey: string) => string
   onReloadOrders: () => Promise<void>
   onOpenPayment: (order: OrderResponse) => void
@@ -37,6 +38,7 @@ export function OrderPanel({
   isGuestMode,
   orders,
   reviews,
+  travelers,
   translate,
   onReloadOrders,
   onOpenPayment,
@@ -63,6 +65,15 @@ export function OrderPanel({
     setPendingReviewTarget({ orderId, orderItemId, title })
     const eligibility = await onLoadReviewEligibility(orderItemId)
     setPendingReviewEligibility(eligibility)
+  }
+
+  function formatTravelerIdentity(travelerId: string): string {
+    const matchedTraveler = travelers.find(traveler => traveler.travelerId === travelerId)
+    if (!matchedTraveler) {
+      return travelerId
+    }
+    const documentSuffix = matchedTraveler.documentNumber.slice(-4)
+    return `${matchedTraveler.fullName} (${documentSuffix})`
   }
 
   return (
@@ -173,6 +184,16 @@ export function OrderPanel({
                               <p>
                                 {`${translate('booking.train.departureTime')}: ${formatIsoDateTime(orderLineItem.trainDetails.departureTime, translate('booking.notYet'))} | ${translate('booking.train.arrivalTime')}: ${formatIsoDateTime(orderLineItem.trainDetails.arrivalTime, translate('booking.notYet'))}`}
                               </p>
+                              {orderLineItem.trainDetails.seatAssignments.length > 0 ? (
+                                <p>
+                                  {`${translate('booking.train.assignedSeats')}: ${orderLineItem.trainDetails.seatAssignments
+                                    .map(
+                                      seatAssignment =>
+                                        `${formatTravelerIdentity(seatAssignment.travelerId)} ${translate('booking.train.carriageNo')}${seatAssignment.carriageNo} ${translate('booking.train.seatNo')}${seatAssignment.seatNo} (${seatAssignment.seatLabel})`,
+                                    )
+                                    .join(' | ')}`}
+                                </p>
+                              ) : null}
                               {orderLineItem.trainDetails.reservationStatus ? (
                                 <p>
                                   {`${translate('booking.train.reservation')}: ${localizeReservationStatus(orderLineItem.trainDetails.reservationStatus, currentLanguage)}`}

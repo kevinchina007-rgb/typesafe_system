@@ -35,7 +35,7 @@ type TrainAdminPanelProps = {
     trainNumber: string
     saleStartsAt: string
     stops: Array<{ stationCode: string; stationName: string; arrivalTime?: string | null; departureTime?: string | null }>
-    seatInventories: Array<{ seatClass: string; totalSeats: number; saleableSeats: number }>
+    seatInventories: Array<{ seatClass: string; totalSeats: number; saleableSeats: number; carriageCount: number; rowsPerCarriage: number; seatLayoutSpec: string }>
     segmentPrices: Array<{ fromStationCode: string; toStationCode: string; seatClass: string; amount: string; currency: string }>
     refundPolicies: Array<{ startOffsetMinutesBeforeDeparture: number; endOffsetMinutesBeforeDeparture: number; refundType: string; refundRate: string }>
   }) => Promise<void>
@@ -72,7 +72,10 @@ export function TrainAdminPanel({
     [],
   )
 
-  const defaultSeatInventoryExample = useMemo(() => ['second-class|240|240', 'first-class|60|60'].join('\n'), [])
+  const defaultSeatInventoryExample = useMemo(
+    () => ['second-class|40|40|2|5|A:Window,B:Middle,C:Aisle,D:Aisle,F:Window', 'first-class|16|16|1|4|A:Window,C:Aisle,D:Aisle,F:Window'].join('\n'),
+    [],
+  )
   const defaultSegmentPriceExample = useMemo(
     () =>
       ['SHH|NJN|second-class|149|CNY', 'NJN|HZH|second-class|119|CNY', 'SHH|NJN|first-class|239|CNY', 'NJN|HZH|first-class|199|CNY'].join(
@@ -212,13 +215,16 @@ export function TrainAdminPanel({
                 }
               })
               const seatInventories = parsePipeSeparatedLines(String(formData.get('seatInventories') ?? ''), (parts, lineNumber) => {
-                if (parts.length < 3) {
-                  throw new Error(`Seat inventory line ${lineNumber} must contain seatClass|totalSeats|saleableSeats`)
+                if (parts.length < 6) {
+                  throw new Error(`Seat inventory line ${lineNumber} must contain seatClass|totalSeats|saleableSeats|carriageCount|rowsPerCarriage|seatLayoutSpec`)
                 }
                 return {
                   seatClass: parts[0],
                   totalSeats: Number(parts[1]),
                   saleableSeats: Number(parts[2]),
+                  carriageCount: Number(parts[3]),
+                  rowsPerCarriage: Number(parts[4]),
+                  seatLayoutSpec: parts[5],
                 }
               })
               const segmentPrices = parsePipeSeparatedLines(String(formData.get('segmentPrices') ?? ''), (parts, lineNumber) => {

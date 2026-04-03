@@ -44,6 +44,38 @@ trait AuthApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         case None =>
           Ok(Map("status" -> "logged_out").asJson).map(clearUserSessionCookie)
 
+    case request @ POST -> Root / "api" / "auth" / "logout-current" =>
+      currentUserSessionId(request) match
+        case Some(sessionId) =>
+          authApplicationService.logoutUser(sessionId) *> Ok(Map("status" -> "logged_out").asJson).map(clearUserSessionCookie)
+        case None =>
+          Ok(Map("status" -> "logged_out").asJson).map(clearUserSessionCookie)
+
+    case request @ POST -> Root / "api" / "auth" / "logout-others" =>
+      for
+        sessionId <- currentUserSessionId(request).liftTo[F](AuthError.UserSessionWasRequired)
+        now <- currentInstantF
+        revokedCount <- authApplicationService.logoutOtherUserSessions(sessionId, now)
+        response <- Ok(LogoutOtherSessionsResponseDto(revokedCount).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "auth" / "change-password" =>
+      for
+        sessionId <- currentUserSessionId(request).liftTo[F](AuthError.UserSessionWasRequired)
+        changePasswordRequest <- request.as[ChangePasswordRequestDto]
+        now <- currentInstantF
+        _ <- authApplicationService.changeUserPassword(sessionId, changePasswordRequest.currentPassword, changePasswordRequest.newPassword, now)
+        response <- Ok(Map("status" -> "password_changed").asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "auth" / "sessions" =>
+      for
+        sessionId <- currentUserSessionId(request).liftTo[F](AuthError.UserSessionWasRequired)
+        now <- currentInstantF
+        sessions <- authApplicationService.listUserSessions(sessionId, now)
+        response <- Ok(AuthSessionListResponseDto(sessions.map(AuthSessionResponseDto.fromView)).asJson)
+      yield response
+
     case request @ GET -> Root / "api" / "auth" / "me" =>
       for
         sessionId <- currentUserSessionId(request).liftTo[F](AuthError.UserSessionWasRequired)

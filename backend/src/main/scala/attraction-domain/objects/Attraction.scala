@@ -15,6 +15,9 @@ enum AttractionStatus:
 enum TicketTypeStatus:
   case Active, Inactive
 
+enum AttractionTicketSessionStatus:
+  case Active, Closed
+
 enum TicketEligibilityRuleType:
   case AgeLessThan, AgeBetween, AgeAtLeast, DocumentTypeEquals, DocumentNumberPrefix
 
@@ -98,6 +101,7 @@ final case class TicketType(
     totalQuantity: Int,
     validWeekdays: Set[DayOfWeek],
     ticketTypeStatus: TicketTypeStatus,
+    sessions: Vector[AttractionTicketSession],
     eligibilityRules: Vector[TicketEligibilityRule],
     createdAt: Instant
 ):
@@ -111,6 +115,23 @@ final case class TicketType(
   def addEligibilityRule(ticketEligibilityRule: TicketEligibilityRule): Either[AttractionError, TicketType] =
     if ticketEligibilityRule.ticketTypeId != ticketTypeId then Left(AttractionError.TicketEligibilityRuleDidNotBelongToTicketType(ticketEligibilityRule.ruleId, ticketTypeId))
     else Right(copy(eligibilityRules = eligibilityRules :+ ticketEligibilityRule))
+
+  def addSession(ticketSession: AttractionTicketSession): Either[AttractionError, TicketType] =
+    if ticketSession.ticketTypeId != ticketTypeId then Left(AttractionError.AttractionTicketSessionDidNotBelongToTicketType(ticketSession.sessionId, ticketTypeId))
+    else Right(copy(sessions = sessions :+ ticketSession))
+
+final case class AttractionTicketSession(
+    sessionId: AttractionTicketSessionId,
+    ticketTypeId: TicketTypeId,
+    sessionName: String,
+    useDate: LocalDate,
+    startsAt: Instant,
+    endsAt: Instant,
+    capacity: Int,
+    status: AttractionTicketSessionStatus,
+    createdAt: Instant
+):
+  def isActive: Boolean = status == AttractionTicketSessionStatus.Active
 
 final case class Attraction(
     attractionId: AttractionId,
@@ -178,4 +199,16 @@ enum AttractionError(val message: String) extends DomainError:
       extends AttractionError(s"Ticket type '${ticketTypeId.value}' is not available on '$useDate'")
   case TicketTypeInventoryWasNotAvailable(ticketTypeId: TicketTypeId, useDate: LocalDate, requestedQuantity: Int, remainingQuantity: Int)
       extends AttractionError(s"Ticket type '${ticketTypeId.value}' on '$useDate' has only '$remainingQuantity' remaining for request '$requestedQuantity'")
+  case AttractionTicketSessionDidNotBelongToTicketType(sessionId: AttractionTicketSessionId, ticketTypeId: TicketTypeId)
+      extends AttractionError(s"Session '${sessionId.value}' does not belong to ticket type '${ticketTypeId.value}'")
+  case AttractionTicketSessionWasNotFound(sessionId: AttractionTicketSessionId)
+      extends AttractionError(s"Session '${sessionId.value}' was not found")
+  case AttractionTicketSessionWasInactive(sessionId: AttractionTicketSessionId)
+      extends AttractionError(s"Session '${sessionId.value}' is inactive")
+  case AttractionTicketSessionCapacityWasInvalid(sessionId: AttractionTicketSessionId, capacity: Int)
+      extends AttractionError(s"Session '${sessionId.value}' must have positive capacity but received '$capacity'")
+  case AttractionTicketSessionTimeRangeWasInvalid(sessionId: AttractionTicketSessionId)
+      extends AttractionError(s"Session '${sessionId.value}' must end after it starts")
+  case AttractionTicketSessionInventoryWasNotAvailable(sessionId: AttractionTicketSessionId, requestedQuantity: Int, remainingQuantity: Int)
+      extends AttractionError(s"Session '${sessionId.value}' has only '$remainingQuantity' remaining for request '$requestedQuantity'")
 

@@ -22,6 +22,13 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
   import JsonCodecs.given
 
   protected final def trainRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
+    case GET -> Root / "api" / "trains" / "suggestions" :? SearchQueryParamMatcher(queryValue) =>
+      for
+        queryText <- fromEither(queryValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
+        suggestions <- trainBookingApplicationService.suggestTrains(queryText)
+        response <- Ok(SearchSuggestionListResponseDto(suggestions.map(SearchSuggestionResponseDto.fromApplication)).asJson)
+      yield response
+
     case request @ POST -> Root / "api" / "train-admin" / "managers" =>
       for
         registerRailwayManagerRequestDto <- request.as[RegisterRailwayManagerRequestDto]
@@ -77,7 +84,14 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
             seatClass <- fromEither(TrainDtoMappers.toTrainSeatClass(seatInventoryRequestDto.seatClass))
             totalSeats <- fromEither(SeatCount.create(seatInventoryRequestDto.totalSeats))
             saleableSeats <- fromEither(SeatCount.create(seatInventoryRequestDto.saleableSeats))
-          yield CreateTrainSeatInventoryInput(seatClass, totalSeats, saleableSeats)
+          yield CreateTrainSeatInventoryInput(
+            seatClass,
+            totalSeats,
+            saleableSeats,
+            seatInventoryRequestDto.carriageCount,
+            seatInventoryRequestDto.rowsPerCarriage,
+            seatInventoryRequestDto.seatLayoutSpec
+          )
         }
         segmentPrices <- createTrainJourneyRequestDto.segmentPrices.traverse { segmentPriceRequestDto =>
           for
@@ -138,6 +152,7 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         fromStationCode <- fromEither(TrainDtoMappers.toTrainStationCode(bookTrainItemRequestDto.fromStationCode))
         toStationCode <- fromEither(TrainDtoMappers.toTrainStationCode(bookTrainItemRequestDto.toStationCode))
         seatClass <- fromEither(TrainDtoMappers.toTrainSeatClass(bookTrainItemRequestDto.seatClass))
+        seatPreference = bookTrainItemRequestDto.seatPreference.flatMap(TrainDtoMappers.toTrainSeatPreference)
         updatedOrder <- trainBookingApplicationService.addTrainItemToOrder(
           actingUserId = currentUserId,
           orderId = OrderId(orderIdValue),
@@ -145,7 +160,8 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           travelerIds = bookTrainItemRequestDto.travelerIds.map(TravelerId.apply),
           fromStationCode = fromStationCode,
           toStationCode = toStationCode,
-          seatClass = seatClass
+          seatClass = seatClass,
+          seatPreference = seatPreference
         )
         orderResponseDto <- toOrderResponseDto(updatedOrder)
         response <- Created(orderResponseDto.asJson)

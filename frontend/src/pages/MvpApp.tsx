@@ -162,7 +162,7 @@ export function MvpApp() {
           />
         ) : null}
 
-        {currentViewKey === 'explore' ? <ExplorePage translate={translate} /> : null}
+        {currentViewKey === 'explore' ? <ExplorePage translate={translate} onOpenView={setCurrentViewKey} /> : null}
 
         {currentViewKey === 'account' ? (
           <AccountPage
@@ -253,6 +253,7 @@ export function MvpApp() {
             currentManagerSession={signedInManagerSessionResponse}
             translate={translate}
             onManagerSessionChange={setSignedInManagerSessionResponse}
+            onNavigate={setCurrentViewKey}
             onShowNotice={showNotice}
           />
         ) : null}

@@ -1,5 +1,7 @@
+import { useState } from 'react'
+
 import { AvatarUploader } from './AvatarUploader'
-import type { UserResponse } from '../lib/mvp-types'
+import type { AuthSessionResponse, UserResponse } from '../lib/mvp-types'
 
 type AccountEntryMode = 'register' | 'login'
 
@@ -23,6 +25,11 @@ type UserPanelProps = {
   onAvatarValidationError: (message: string) => void
   onValidationError: (message: string) => void
   onRefreshAccount: () => Promise<void>
+  sessions: AuthSessionResponse[]
+  onRefreshSessions: () => Promise<void>
+  onChangePassword: (payload: { currentPassword: string; newPassword: string }) => Promise<void>
+  onLogoutCurrentSession: () => void
+  onLogoutOtherSessions: () => Promise<void>
   onLogout: () => void
 }
 
@@ -41,8 +48,16 @@ export function UserPanel({
   onAvatarValidationError,
   onValidationError,
   onRefreshAccount,
+  sessions,
+  onRefreshSessions,
+  onChangePassword,
+  onLogoutCurrentSession,
+  onLogoutOtherSessions,
   onLogout,
 }: UserPanelProps) {
+  const currentSession = sessions.find(session => session.isCurrent)
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+
   return (
     <section className="page-card">
       <div className="panel-heading">
@@ -55,7 +70,13 @@ export function UserPanel({
             <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onRefreshAccount()}>
               {translate('account.refresh')}
             </button>
-            <button type="button" disabled={isBusy} onClick={onLogout}>
+            <button type="button" disabled={isBusy} onClick={onLogoutCurrentSession}>
+              {translate('account.logoutCurrentSession')}
+            </button>
+            <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onLogoutOtherSessions()}>
+              {translate('account.logoutOtherSessions')}
+            </button>
+            <button type="button" className="secondary-button" disabled={isBusy} onClick={onLogout}>
               {translate('account.logout')}
             </button>
           </div>
@@ -205,9 +226,105 @@ export function UserPanel({
                 <strong>{account.defaultTravelerProfileId ?? '-'}</strong>
               </div>
               <div>
+                <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
+                <strong>{currentSession ? new Date(currentSession.expiresAt).toLocaleString() : '-'}</strong>
+              </div>
+              <div>
                 <span className="detail-label">{translate('account.createdAt')}</span>
                 <strong>{new Date(account.createdAt).toLocaleString()}</strong>
               </div>
+            </div>
+
+            <div className="page-card">
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow-label">{translate('account.security')}</p>
+                  <h3>{translate('account.changePassword')}</h3>
+                </div>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={isBusy}
+                  onClick={() => setIsChangePasswordOpen(open => !open)}
+                >
+                  {translate(isChangePasswordOpen ? 'account.hideChangePassword' : 'account.showChangePassword')}
+                </button>
+              </div>
+              {isChangePasswordOpen ? (
+                <form
+                  className="stack-form"
+                  onSubmit={async event => {
+                    event.preventDefault()
+                    const formData = new FormData(event.currentTarget)
+                    const currentPassword = String(formData.get('currentPassword') ?? '')
+                    const newPassword = String(formData.get('newPassword') ?? '')
+                    const confirmPassword = String(formData.get('confirmPassword') ?? '')
+                    if (newPassword !== confirmPassword) {
+                      onValidationError(translate('error.passwordMismatch'))
+                      return
+                    }
+                    await onChangePassword({ currentPassword, newPassword })
+                    event.currentTarget.reset()
+                    setIsChangePasswordOpen(false)
+                  }}
+                >
+                  <label>
+                    {translate('account.currentPassword')}
+                    <input name="currentPassword" type="password" placeholder={translate('account.currentPassword')} required />
+                  </label>
+                  <label>
+                    {translate('account.newPassword')}
+                    <input name="newPassword" type="password" placeholder={translate('account.newPassword')} required />
+                  </label>
+                  <label>
+                    {translate('account.confirmPassword')}
+                    <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+                  </label>
+                  <button type="submit" disabled={isBusy}>
+                    {translate('account.changePassword')}
+                  </button>
+                </form>
+              ) : null}
+            </div>
+
+            <div className="list-surface">
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow-label">{translate('account.security')}</p>
+                  <h3>{translate('account.sessions')}</h3>
+                </div>
+                <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onRefreshSessions()}>
+                  {translate('account.refreshSessions')}
+                </button>
+              </div>
+              {sessions.length > 0 ? (
+                <div className="stack-list">
+                  {sessions.map(session => (
+                    <article key={session.sessionId} className="list-card">
+                      <div className="detail-grid">
+                        <div>
+                          <span className="detail-label">{translate('account.sessionStatus')}</span>
+                          <strong>{session.isCurrent ? translate('account.currentSession') : session.status}</strong>
+                        </div>
+                        <div>
+                          <span className="detail-label">{translate('account.createdAt')}</span>
+                          <strong>{new Date(session.createdAt).toLocaleString()}</strong>
+                        </div>
+                        <div>
+                          <span className="detail-label">{translate('account.lastSeenAt')}</span>
+                          <strong>{new Date(session.lastSeenAt).toLocaleString()}</strong>
+                        </div>
+                        <div>
+                          <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
+                          <strong>{new Date(session.expiresAt).toLocaleString()}</strong>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <p className="empty-state">{translate('account.noSessions')}</p>
+              )}
             </div>
           </>
         ) : (

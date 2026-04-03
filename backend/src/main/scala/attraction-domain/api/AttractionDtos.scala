@@ -40,6 +40,17 @@ final case class CreateTicketTypeRequestDto(
     validWeekdays: List[String]
 )
 
+final case class CreateTicketSessionRequestDto(
+    managerId: String,
+    attractionId: String,
+    ticketTypeId: String,
+    sessionName: String,
+    useDate: String,
+    startsAt: String,
+    endsAt: String,
+    capacity: Int
+)
+
 final case class CreateTicketEligibilityRuleRequestDto(
     managerId: String,
     attractionId: String,
@@ -57,6 +68,7 @@ final case class BookAttractionItemRequestDto(
     orderId: String,
     attractionId: String,
     ticketTypeId: String,
+    sessionId: Option[String],
     travelerIds: List[String],
     useDate: String
 )
@@ -80,7 +92,19 @@ final case class AttractionTicketTypeResponseDto(
     availableQuantityForRequestedDate: Option[Int],
     isAvailableForRequestedDate: Boolean,
     status: String,
+    sessions: List[AttractionTicketSessionResponseDto],
     rules: List[AttractionTicketTypeRuleResponseDto]
+)
+
+final case class AttractionTicketSessionResponseDto(
+    sessionId: String,
+    sessionName: String,
+    useDate: String,
+    startsAt: String,
+    endsAt: String,
+    capacity: Int,
+    availableQuantity: Option[Int],
+    status: String
 )
 
 final case class AttractionResponseDto(
@@ -134,6 +158,18 @@ object AttractionResponseDto:
           },
           isAvailableForRequestedDate = requestedUseDate.forall(ticketType.supportsUseDate),
           status = ticketType.ticketTypeStatus.toString,
+          sessions = ticketType.sessions.map(session =>
+            AttractionTicketSessionResponseDto(
+              sessionId = session.sessionId.value,
+              sessionName = session.sessionName,
+              useDate = session.useDate.toString,
+              startsAt = session.startsAt.toString,
+              endsAt = session.endsAt.toString,
+              capacity = session.capacity,
+              availableQuantity = None,
+              status = session.status.toString
+            )
+          ).toList,
           rules = ticketType.eligibilityRules.map(rule =>
             AttractionTicketTypeRuleResponseDto(
               ruleId = rule.ruleId.value,

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { UserPanel } from '../../components/UserPanel'
 import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, AppViewKey, CurrentManagerSessionResponse, ManagerType, UserResponse } from '../../lib/mvp-types'
+import type { AppLanguage, AppViewKey, AuthSessionResponse, CurrentManagerSessionResponse, ManagerType, UserResponse } from '../../lib/mvp-types'
 import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
 
 type AccountEntryMode = 'register' | 'login'
@@ -34,11 +34,31 @@ export function AccountPage({
   const [loginEmailDraft, setLoginEmailDraft] = useState('')
   const [managerAuthMode, setManagerAuthMode] = useState<'login' | 'register'>('login')
   const [managerTypeDraft, setManagerTypeDraft] = useState<ManagerType>('airline')
+  const [userSessions, setUserSessions] = useState<AuthSessionResponse[]>([])
+  const [managerSessions, setManagerSessions] = useState<AuthSessionResponse[]>([])
+  const [isManagerChangePasswordOpen, setIsManagerChangePasswordOpen] = useState(false)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
 
   useEffect(() => {
     setAccountEntryMode(requestedEntryMode)
   }, [requestedEntryMode])
+
+  useEffect(() => {
+    if (!signedInUser) {
+      setUserSessions([])
+      return
+    }
+    void travelMvpApiClient.listUserSessions().then(response => setUserSessions(response.sessions)).catch(() => setUserSessions([]))
+  }, [signedInUser?.userId])
+
+  useEffect(() => {
+    if (!signedInManager) {
+      setManagerSessions([])
+      setIsManagerChangePasswordOpen(false)
+      return
+    }
+    void travelMvpApiClient.listManagerSessions().then(response => setManagerSessions(response.sessions)).catch(() => setManagerSessions([]))
+  }, [signedInManager?.managerId, signedInManager?.managerType])
 
   return (
     <>
@@ -90,10 +110,39 @@ export function AccountPage({
           onSignedInUserChange(refreshedAccount)
         }, translate('account.refresh'), translate('notice.actionSuccess'))
       }}
+      sessions={userSessions}
+      onRefreshSessions={async () => {
+        if (!signedInUser) return
+        await runPageAction(async () => {
+          const nextSessions = await travelMvpApiClient.listUserSessions()
+          setUserSessions(nextSessions.sessions)
+        }, translate('account.refreshSessions'), translate('notice.actionSuccess'))
+      }}
+      onChangePassword={async payload => {
+        await runPageAction(async () => {
+          await travelMvpApiClient.changeUserPassword(payload)
+        }, translate('account.changePassword'), translate('notice.passwordChanged'))
+      }}
+      onLogoutCurrentSession={() => {
+        void runPageAction(async () => {
+          await travelMvpApiClient.logoutCurrentUserSession()
+          onSignedInUserChange(null)
+          setUserSessions([])
+          onNavigate('blog')
+        }, translate('account.logoutCurrentSession'), translate('notice.logoutSuccess'))
+      }}
+      onLogoutOtherSessions={async () => {
+        await runPageAction(async () => {
+          await travelMvpApiClient.logoutOtherUserSessions()
+          const nextSessions = await travelMvpApiClient.listUserSessions()
+          setUserSessions(nextSessions.sessions)
+        }, translate('account.logoutOtherSessions'), translate('notice.actionSuccess'))
+      }}
       onLogout={() => {
         void runPageAction(async () => {
           await travelMvpApiClient.logoutUser()
           onSignedInUserChange(null)
+          setUserSessions([])
           onNavigate('blog')
         }, translate('account.logout'), translate('notice.logoutSuccess'))
       }}
@@ -114,6 +163,7 @@ export function AccountPage({
               void runPageAction(async () => {
                 await travelMvpApiClient.logoutManagerAuth()
                 onSignedInManagerChange(null)
+                setManagerSessions([])
                 onNavigate('blog')
               }, translate('manager.logout'), translate('notice.logoutSuccess'))
             }}
@@ -124,30 +174,152 @@ export function AccountPage({
       </div>
 
       {signedInManager ? (
-        <div className="detail-grid">
-          <div>
-            <span className="detail-label">{translate('manager.displayName')}</span>
-            <strong>{signedInManager.displayName}</strong>
+        <div className="stack-form">
+          <div className="detail-grid">
+            <div>
+              <span className="detail-label">{translate('manager.displayName')}</span>
+              <strong>{signedInManager.displayName}</strong>
+            </div>
+            <div>
+              <span className="detail-label">{translate('manager.scope')}</span>
+              <strong>{signedInManager.scopeId}</strong>
+            </div>
+            <div>
+              <span className="detail-label">{translate('manager.status')}</span>
+              <strong>{signedInManager.status}</strong>
+            </div>
+            <div>
+              <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
+              <strong>{new Date(signedInManager.expiresAt).toLocaleString()}</strong>
+            </div>
+            <div>
+              <span className="detail-label">{translate('manager.email')}</span>
+              <strong>{signedInManager.email}</strong>
+            </div>
+            <div>
+              <span className="detail-label">{translate('manager.profile')}</span>
+              <strong>{signedInManager.managerType}</strong>
+            </div>
           </div>
-          <div>
-            <span className="detail-label">{translate('manager.scope')}</span>
-            <strong>{signedInManager.scopeId}</strong>
+
+          <div className="page-card">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow-label">{translate('account.security')}</p>
+                <h3>{translate('account.changePassword')}</h3>
+              </div>
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={isBusy}
+                onClick={() => setIsManagerChangePasswordOpen(open => !open)}
+              >
+                {translate(isManagerChangePasswordOpen ? 'account.hideChangePassword' : 'account.showChangePassword')}
+              </button>
+            </div>
+            {isManagerChangePasswordOpen ? (
+              <form
+                className="stack-form"
+                onSubmit={async event => {
+                  event.preventDefault()
+                  const formData = new FormData(event.currentTarget)
+                  const currentPassword = String(formData.get('currentPassword') ?? '')
+                  const newPassword = String(formData.get('newPassword') ?? '')
+                  const confirmPassword = String(formData.get('confirmPassword') ?? '')
+                  if (newPassword !== confirmPassword) {
+                    onShowNotice('error', translate('error.friendly.default'), translate('error.passwordMismatch'))
+                    return
+                  }
+                  await runPageAction(async () => {
+                    await travelMvpApiClient.changeManagerPassword({ currentPassword, newPassword })
+                  }, translate('account.changePassword'), translate('notice.passwordChanged'))
+                  event.currentTarget.reset()
+                  setIsManagerChangePasswordOpen(false)
+                }}
+              >
+                <label>
+                  {translate('account.currentPassword')}
+                  <input name="currentPassword" type="password" placeholder={translate('account.currentPassword')} required />
+                </label>
+                <label>
+                  {translate('account.newPassword')}
+                  <input name="newPassword" type="password" placeholder={translate('account.newPassword')} required />
+                </label>
+                <label>
+                  {translate('account.confirmPassword')}
+                  <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+                </label>
+                <button type="submit" disabled={isBusy}>
+                  {translate('account.changePassword')}
+                </button>
+              </form>
+            ) : null}
           </div>
-          <div>
-            <span className="detail-label">{translate('manager.status')}</span>
-            <strong>{signedInManager.status}</strong>
-          </div>
-          <div>
-            <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
-            <strong>{new Date(signedInManager.expiresAt).toLocaleString()}</strong>
-          </div>
-          <div>
-            <span className="detail-label">{translate('manager.email')}</span>
-            <strong>{signedInManager.email}</strong>
-          </div>
-          <div>
-            <span className="detail-label">{translate('manager.profile')}</span>
-            <strong>{signedInManager.managerType}</strong>
+
+          <div className="list-surface">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow-label">{translate('account.security')}</p>
+                <h3>{translate('account.sessions')}</h3>
+              </div>
+              <div className="action-row">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={isBusy}
+                  onClick={() => {
+                    void runPageAction(async () => {
+                      const nextSessions = await travelMvpApiClient.listManagerSessions()
+                      setManagerSessions(nextSessions.sessions)
+                    }, translate('account.refreshSessions'), translate('notice.actionSuccess'))
+                  }}
+                >
+                  {translate('account.refreshSessions')}
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={isBusy}
+                  onClick={() => {
+                    void runPageAction(async () => {
+                      await travelMvpApiClient.logoutOtherManagerSessions()
+                      const nextSessions = await travelMvpApiClient.listManagerSessions()
+                      setManagerSessions(nextSessions.sessions)
+                    }, translate('account.logoutOtherSessions'), translate('notice.actionSuccess'))
+                  }}
+                >
+                  {translate('account.logoutOtherSessions')}
+                </button>
+              </div>
+            </div>
+            {managerSessions.length > 0 ? (
+              <div className="stack-list">
+                {managerSessions.map(session => (
+                  <article key={session.sessionId} className="list-card">
+                    <div className="detail-grid">
+                      <div>
+                        <span className="detail-label">{translate('account.sessionStatus')}</span>
+                        <strong>{session.isCurrent ? translate('account.currentSession') : session.status}</strong>
+                      </div>
+                      <div>
+                        <span className="detail-label">{translate('account.createdAt')}</span>
+                        <strong>{new Date(session.createdAt).toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span className="detail-label">{translate('account.lastSeenAt')}</span>
+                        <strong>{new Date(session.lastSeenAt).toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
+                        <strong>{new Date(session.expiresAt).toLocaleString()}</strong>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-state">{translate('account.noSessions')}</p>
+            )}
           </div>
         </div>
       ) : (

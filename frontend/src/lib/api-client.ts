@@ -3,11 +3,14 @@ import type {
   AttractionListResponse,
   AttractionResponse,
   ApiErrorResponse,
+  AuthSessionListResponse,
   BlogPostListResponse,
   BlogPostResponse,
+  ExploreSearchResponse,
   CurrentManagerSessionResponse,
   CurrentUserSessionResponse,
   ResourceReviewSummaryResponse,
+  SearchSuggestionListResponse,
   FlightListResponse,
   FlightResponse,
   HealthResponse,
@@ -117,6 +120,24 @@ export const travelMvpApiClient = {
 
   getCurrentUserSession: (): Promise<CurrentUserSessionResponse> => apiRequest('/auth/me'),
 
+  changeUserPassword: (payload: { currentPassword: string; newPassword: string }): Promise<{ status: string }> =>
+    apiRequest('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listUserSessions: (): Promise<AuthSessionListResponse> => apiRequest('/auth/sessions'),
+
+  logoutCurrentUserSession: (): Promise<{ status: string }> =>
+    apiRequest('/auth/logout-current', {
+      method: 'POST',
+    }),
+
+  logoutOtherUserSessions: (): Promise<{ revokedCount: number }> =>
+    apiRequest('/auth/logout-others', {
+      method: 'POST',
+    }),
+
   loginManagerAuth: (payload: {
     managerType: ManagerType
     email: string
@@ -134,6 +155,24 @@ export const travelMvpApiClient = {
 
   getCurrentManagerSession: (): Promise<CurrentManagerSessionResponse> => apiRequest('/manager-auth/me'),
 
+  changeManagerPassword: (payload: { currentPassword: string; newPassword: string }): Promise<{ status: string }> =>
+    apiRequest('/manager-auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listManagerSessions: (): Promise<AuthSessionListResponse> => apiRequest('/manager-auth/sessions'),
+
+  logoutCurrentManagerSession: (): Promise<{ status: string }> =>
+    apiRequest('/manager-auth/logout-current', {
+      method: 'POST',
+    }),
+
+  logoutOtherManagerSessions: (): Promise<{ revokedCount: number }> =>
+    apiRequest('/manager-auth/logout-others', {
+      method: 'POST',
+    }),
+
   listBlogPosts: (scope: 'latest' | 'mine' = 'latest', userId?: string, q?: string): Promise<BlogPostListResponse> => {
     const searchParams = new URLSearchParams()
     searchParams.set('scope', scope)
@@ -145,6 +184,21 @@ export const travelMvpApiClient = {
     }
     const suffix = `?${searchParams.toString()}`
     return apiRequest(`/blog/posts${suffix}`)
+  },
+
+  listBlogSuggestions: (q: string): Promise<SearchSuggestionListResponse> =>
+    apiRequest(`/blog/suggestions?q=${encodeURIComponent(q)}`),
+
+  listExploreSuggestions: (q: string): Promise<SearchSuggestionListResponse> =>
+    apiRequest(`/explore/suggestions?q=${encodeURIComponent(q)}`),
+
+  searchExplore: (payload: { q: string; type?: string }): Promise<ExploreSearchResponse> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set('q', payload.q)
+    if (payload.type && payload.type !== 'all') {
+      searchParams.set('type', payload.type)
+    }
+    return apiRequest(`/explore/search?${searchParams.toString()}`)
   },
 
   uploadBlogImage: (userId: string, imageFile: File) => {
@@ -835,6 +889,7 @@ export const travelMvpApiClient = {
       fromStationCode: string
       toStationCode: string
       seatClass: string
+      seatPreference?: string | null
     },
   ): Promise<OrderResponse> =>
     apiRequest(`/orders/${orderId}/train-items`, {
@@ -849,6 +904,7 @@ export const travelMvpApiClient = {
       orderId: string
       attractionId: string
       ticketTypeId: string
+      sessionId?: string | null
       travelerIds: string[]
       useDate: string
     },
@@ -984,6 +1040,21 @@ export const travelMvpApiClient = {
       body: JSON.stringify(payload),
     }),
 
+  createAttractionTicketSession: (payload: {
+    managerId: string
+    attractionId: string
+    ticketTypeId: string
+    sessionName: string
+    useDate: string
+    startsAt: string
+    endsAt: string
+    capacity: number
+  }): Promise<AttractionResponse> =>
+    apiRequest('/attraction-admin/ticket-sessions', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   createAttractionTicketRule: (payload: {
     managerId: string
     attractionId: string
@@ -1008,7 +1079,7 @@ export const travelMvpApiClient = {
     trainNumber: string
     saleStartsAt: string
     stops: Array<{ stationCode: string; stationName: string; arrivalTime?: string | null; departureTime?: string | null }>
-    seatInventories: Array<{ seatClass: string; totalSeats: number; saleableSeats: number }>
+    seatInventories: Array<{ seatClass: string; totalSeats: number; saleableSeats: number; carriageCount: number; rowsPerCarriage: number; seatLayoutSpec: string }>
     segmentPrices: Array<{ fromStationCode: string; toStationCode: string; seatClass: string; amount: string; currency: string }>
     refundPolicies: Array<{ startOffsetMinutesBeforeDeparture: number; endOffsetMinutesBeforeDeparture: number; refundType: string; refundRate: string }>
   }): Promise<TrainResponse> =>

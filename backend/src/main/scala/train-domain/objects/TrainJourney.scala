@@ -14,6 +14,15 @@ enum TrainSeatInventoryStatus:
 enum TrainRefundType:
   case FullRefund, PartialRefund, NonRefundable
 
+enum TrainSeatPositionType:
+  case Window, Aisle, Middle, Other
+
+enum TrainSeatStatus:
+  case Available, Unavailable
+
+enum TrainSeatPreference:
+  case Window, Aisle, Middle, NoPreference
+
 enum TrainError(val message: String) extends DomainError:
   case RailwayManagerWasNotFoundByEmail(primaryEmailAddress: EmailAddress)
       extends TrainError(s"Railway manager '${primaryEmailAddress.value}' was not found")
@@ -51,6 +60,14 @@ enum TrainError(val message: String) extends DomainError:
       extends TrainError(s"Train '${trainId.value}' booking contains duplicate travelers")
   case TrainRefundPolicyDidNotMatch(trainId: TrainId, refundRequestedAt: Instant)
       extends TrainError(s"Train '${trainId.value}' has no refund policy matching refund request at $refundRequestedAt")
+  case TrainSeatGenerationWasInvalid(trainId: TrainId, reason: String)
+      extends TrainError(s"Train '${trainId.value}' seat generation was invalid: $reason")
+  case TrainSeatAllocationWasNotAvailable(trainId: TrainId, seatClass: TrainSeatClass, requestedQuantity: Int)
+      extends TrainError(s"Train '${trainId.value}' does not have enough available seats in '${seatClass.value}' for '$requestedQuantity' travelers")
+  case TrainTravelerWasAlreadyBooked(trainId: TrainId, travelerId: TravelerId)
+      extends TrainError(s"Traveler '${travelerId.value}' already has a ticket on train '${trainId.value}'")
+  case TrainNumberConflict(trainNumber: TrainNumber, conflictingTrainId: TrainId)
+      extends TrainError(s"Train number '${trainNumber.value}' conflicts with overlapping train '${conflictingTrainId.value}'")
 
 final case class TrainStationCode private (value: String) extends AnyVal
 object TrainStationCode:
@@ -95,6 +112,52 @@ object TrainSeatClass:
 
   def unsafe(value: String): TrainSeatClass =
     create(value).fold(throw _, identity)
+
+final case class TrainSeatRowNo private (value: Int) extends AnyVal
+object TrainSeatRowNo:
+  def create(value: Int): Either[SharedValidationError, TrainSeatRowNo] =
+    if value > 0 then Right(TrainSeatRowNo(value))
+    else Left(SharedValidationError.NumberWasOutOfRange("train-seat-row-no", BigDecimal(1), BigDecimal(Int.MaxValue), BigDecimal(value)))
+
+final case class TrainSeatLayoutColumn(
+    code: String,
+    sortOrder: Int,
+    positionType: TrainSeatPositionType
+)
+
+final case class TrainSeat(
+    seatId: TrainSeatId,
+    trainId: TrainId,
+    inventoryId: TrainSeatInventoryId,
+    seatClass: TrainSeatClass,
+    carriageNo: Int,
+    rowNo: TrainSeatRowNo,
+    seatCode: String,
+    seatNo: String,
+    seatLabel: String,
+    seatPositionType: TrainSeatPositionType,
+    seatStatus: TrainSeatStatus
+):
+  def isBookable: Boolean = seatStatus == TrainSeatStatus.Available
+
+final case class TrainTravelerSeatAssignment(
+    travelerId: TravelerId,
+    seatId: TrainSeatId,
+    carriageNo: Int,
+    seatNo: String,
+    seatLabel: String,
+    seatPositionType: TrainSeatPositionType
+)
+
+final case class TrainSegmentSeatAllocation(
+    seatId: TrainSeatId,
+    orderId: OrderId,
+    orderItemId: OrderItemId,
+    fromStopSequenceNo: Int,
+    toStopSequenceNo: Int
+):
+  def overlaps(fromSequenceNo: Int, toSequenceNo: Int): Boolean =
+    fromStopSequenceNo < toSequenceNo && toStopSequenceNo > fromSequenceNo
 
 final case class RefundRate private (value: BigDecimal) extends AnyVal
 object RefundRate:
@@ -163,6 +226,20 @@ final case class TrainQuote(
     arrivalTime: Instant
 )
 
+final case class TrainSeatAllocationPlan(
+    assignments: Vector[TrainTravelerSeatAssignment],
+    requestedPreference: Option[TrainSeatPreference],
+    preferenceSatisfied: Boolean,
+    adjacencySatisfied: Boolean
+)
+
+final case class TrainJourneyWindow(
+    departureTime: Instant,
+    arrivalTime: Instant
+):
+  def overlaps(other: TrainJourneyWindow): Boolean =
+    departureTime.isBefore(other.arrivalTime) && arrivalTime.isAfter(other.departureTime)
+
 final case class TrainJourney private[domain] (
     trainId: TrainId,
     managerId: ManagerId,
@@ -171,6 +248,7 @@ final case class TrainJourney private[domain] (
     trainJourneyStatus: TrainJourneyStatus,
     stops: Vector[TrainStop],
     seatInventories: Vector[TrainSeatInventory],
+    seats: Vector[TrainSeat],
     segmentPrices: Vector[TrainSegmentPrice],
     refundPolicySegments: Vector[TrainRefundPolicySegment],
     createdAt: Instant
@@ -202,6 +280,49 @@ final case class TrainJourney private[domain] (
       arrivalTime <- toStop.arrivalTime.orElse(toStop.departureTime).toRight(TrainError.TrainStationOrderWasInvalid(trainId, fromStationCode, toStationCode))
     yield TrainQuote(fromStop, toStop, seatInventory, unitPrice, departureTime, arrivalTime)
 
+  def allocateSeats(
+      travelerIds: Vector[TravelerId],
+      fromStop: TrainStop,
+      toStop: TrainStop,
+      seatInventory: TrainSeatInventory,
+      seatPreference: Option[TrainSeatPreference],
+      existingAllocations: Vector[TrainSegmentSeatAllocation]
+  ): Either[TrainError, TrainSeatAllocationPlan] =
+    val availableSeats =
+      seats
+        .filter(seat => seat.inventoryId == seatInventory.inventoryId && seat.isBookable)
+        .filterNot(seat =>
+          existingAllocations.exists(allocation =>
+            allocation.seatId == seat.seatId && allocation.overlaps(fromStop.sequenceNo, toStop.sequenceNo)
+          )
+        )
+        .sortBy(seat => (seat.carriageNo, seat.rowNo.value, seat.seatCode))
+
+    if availableSeats.size < travelerIds.size then Left(TrainError.TrainSeatAllocationWasNotAvailable(trainId, seatInventory.seatClass, travelerIds.size))
+    else
+      val preferredSeats =
+        seatPreference match
+          case Some(TrainSeatPreference.NoPreference) | None => availableSeats
+          case Some(preference) =>
+            val matchingSeats = availableSeats.filter(_.seatPositionType == positionTypeForPreference(preference))
+            if matchingSeats.nonEmpty then matchingSeats else availableSeats
+      val adjacencyCandidate = chooseAdjacentSeats(preferredSeats, travelerIds.size).orElse(chooseSameCarriageCluster(preferredSeats, travelerIds.size))
+      val selectedSeats = adjacencyCandidate.getOrElse(preferredSeats.take(travelerIds.size))
+      val preferenceSatisfied = seatPreference.forall(_ == TrainSeatPreference.NoPreference) ||
+        selectedSeats.forall(_.seatPositionType == positionTypeForPreference(seatPreference.get)) ||
+        !availableSeats.exists(_.seatPositionType == positionTypeForPreference(seatPreference.get))
+      val adjacencySatisfied = selectedSeats.size > 1 && areAdjacent(selectedSeats)
+      Right(
+        TrainSeatAllocationPlan(
+          assignments = travelerIds.zip(selectedSeats).map { case (travelerId, seat) =>
+            TrainTravelerSeatAssignment(travelerId, seat.seatId, seat.carriageNo, seat.seatNo, seat.seatLabel, seat.seatPositionType)
+          },
+          requestedPreference = seatPreference,
+          preferenceSatisfied = preferenceSatisfied,
+          adjacencySatisfied = adjacencySatisfied
+        )
+      )
+
   def calculateRefundAmount(
       departureTime: Instant,
       ticketMoney: Money,
@@ -212,6 +333,12 @@ final case class TrainJourney private[domain] (
       .find(_.matches(offsetBeforeDeparture))
       .map(_.refundableAmount(ticketMoney))
       .toRight(TrainError.TrainRefundPolicyDidNotMatch(trainId, refundRequestedAt))
+
+  def journeyWindow: Either[TrainError, TrainJourneyWindow] =
+    for
+      departureTime <- stops.headOption.flatMap(_.departureTime).toRight(TrainError.TrainHadTooFewStops(trainId))
+      arrivalTime <- stops.lastOption.flatMap(stop => stop.arrivalTime.orElse(stop.departureTime)).toRight(TrainError.TrainHadTooFewStops(trainId))
+    yield TrainJourneyWindow(departureTime, arrivalTime)
 
   private def sumSegmentPrice(
       fromStop: TrainStop,
@@ -234,4 +361,44 @@ final case class TrainJourney private[domain] (
       .map(_.foldLeft(Money.zero(segmentPrices.headOption.map(_.price.currency).getOrElse(Currency.CNY))) { (acc, price) =>
         acc.add(price).fold(throw _, identity)
       })
+
+  private def positionTypeForPreference(seatPreference: TrainSeatPreference): TrainSeatPositionType =
+    seatPreference match
+      case TrainSeatPreference.Window      => TrainSeatPositionType.Window
+      case TrainSeatPreference.Aisle       => TrainSeatPositionType.Aisle
+      case TrainSeatPreference.Middle      => TrainSeatPositionType.Middle
+      case TrainSeatPreference.NoPreference => TrainSeatPositionType.Other
+
+  private def chooseAdjacentSeats(availableSeats: Vector[TrainSeat], requestedQuantity: Int): Option[Vector[TrainSeat]] =
+    availableSeats
+      .groupBy(seat => (seat.carriageNo, seat.rowNo.value))
+      .values
+      .iterator
+      .map(_.sortBy(_.seatCode))
+      .flatMap(_.sliding(requestedQuantity))
+      .find(candidate => candidate.size == requestedQuantity && areAdjacent(candidate.toVector))
+      .map(_.toVector)
+
+  private def chooseSameCarriageCluster(availableSeats: Vector[TrainSeat], requestedQuantity: Int): Option[Vector[TrainSeat]] =
+    availableSeats
+      .groupBy(_.carriageNo)
+      .values
+      .iterator
+      .filter(_.size >= requestedQuantity)
+      .map(_.sortBy(seat => (seat.rowNo.value, seat.seatCode)).take(requestedQuantity).toVector)
+      .toList
+      .sortBy(candidate => candidate.map(_.rowNo.value).max - candidate.map(_.rowNo.value).min)
+      .headOption
+
+  private def areAdjacent(candidateSeats: Vector[TrainSeat]): Boolean =
+    candidateSeats.nonEmpty &&
+      candidateSeats.map(_.carriageNo).distinct.size == 1 &&
+      candidateSeats.map(_.rowNo.value).distinct.size == 1 &&
+      candidateSeats
+        .sortBy(_.seatCode)
+        .sliding(2)
+        .forall {
+          case Vector(leftSeat, rightSeat) => rightSeat.seatCode.headOption.exists(_.toInt - leftSeat.seatCode.headOption.getOrElse('A').toInt == 1) || rightSeat.seatCode.compareTo(leftSeat.seatCode) == 1
+          case _                           => true
+        }
 

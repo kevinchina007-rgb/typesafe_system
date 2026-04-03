@@ -34,6 +34,38 @@ trait ManagerAuthApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         case None =>
           Ok(Map("status" -> "logged_out").asJson).map(clearManagerSessionCookie)
 
+    case request @ POST -> Root / "api" / "manager-auth" / "logout-current" =>
+      currentManagerSessionId(request) match
+        case Some(sessionId) =>
+          authApplicationService.logoutManager(sessionId) *> Ok(Map("status" -> "logged_out").asJson).map(clearManagerSessionCookie)
+        case None =>
+          Ok(Map("status" -> "logged_out").asJson).map(clearManagerSessionCookie)
+
+    case request @ POST -> Root / "api" / "manager-auth" / "logout-others" =>
+      for
+        sessionId <- currentManagerSessionId(request).liftTo[F](com.typesafe.travel.auth.domain.AuthError.ManagerSessionWasRequired)
+        now <- currentInstantF
+        revokedCount <- authApplicationService.logoutOtherManagerSessions(sessionId, now)
+        response <- Ok(LogoutOtherSessionsResponseDto(revokedCount).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager-auth" / "change-password" =>
+      for
+        sessionId <- currentManagerSessionId(request).liftTo[F](com.typesafe.travel.auth.domain.AuthError.ManagerSessionWasRequired)
+        changePasswordRequest <- request.as[ChangePasswordRequestDto]
+        now <- currentInstantF
+        _ <- authApplicationService.changeManagerPassword(sessionId, changePasswordRequest.currentPassword, changePasswordRequest.newPassword, now)
+        response <- Ok(Map("status" -> "password_changed").asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "manager-auth" / "sessions" =>
+      for
+        sessionId <- currentManagerSessionId(request).liftTo[F](com.typesafe.travel.auth.domain.AuthError.ManagerSessionWasRequired)
+        now <- currentInstantF
+        sessions <- authApplicationService.listManagerSessions(sessionId, now)
+        response <- Ok(AuthSessionListResponseDto(sessions.map(AuthSessionResponseDto.fromView)).asJson)
+      yield response
+
     case request @ GET -> Root / "api" / "manager-auth" / "me" =>
       for
         sessionId <- currentManagerSessionId(request).liftTo[F](com.typesafe.travel.auth.domain.AuthError.ManagerSessionWasRequired)
