@@ -3,6 +3,8 @@ ThisBuild / organization := "com.typesafe.travel"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
 lazy val backendSourceRoot = file("src/main/scala")
+lazy val backendTestRoot = file("src/test")
+lazy val backendApiTestRoot = file("src/api-test")
 
 lazy val commonSettings = Seq(
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
@@ -199,7 +201,7 @@ lazy val apiGateway = module("api-gateway")
   )
   .settings(
     Compile / unmanagedSourceDirectories ++= Seq(
-      backendSourceRoot / "routes",
+        backendSourceRoot / "routes",
       backendSourceRoot / "auth-domain" / "api",
       backendSourceRoot / "identity-domain" / "api",
       backendSourceRoot / "traveler-domain" / "api",
@@ -215,18 +217,18 @@ lazy val apiGateway = module("api-gateway")
       backendSourceRoot / "shared-kernel" / "api"
     ),
     Test / unmanagedSourceDirectories ++= Seq(
-      baseDirectory.value.getParentFile / "identity-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "traveler-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "flight-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "hotel-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "train-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "attraction-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "content-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "tour-group-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "inventory-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "order-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "operations-domain" / "src" / "api-test",
-      baseDirectory.value.getParentFile / "shared-kernel" / "src" / "api-test"
+      backendApiTestRoot / "identity-domain",
+      backendApiTestRoot / "traveler-domain",
+      backendApiTestRoot / "flight-domain",
+      backendApiTestRoot / "hotel-domain",
+      backendApiTestRoot / "train-domain",
+      backendApiTestRoot / "attraction-domain",
+      backendApiTestRoot / "content-domain",
+      backendApiTestRoot / "tour-group-domain",
+      backendApiTestRoot / "inventory-domain",
+      backendApiTestRoot / "order-domain",
+      backendApiTestRoot / "operations-domain",
+      backendApiTestRoot / "shared-kernel"
     ),
     libraryDependencies ++= Seq(
       catsEffectDependency,
@@ -243,7 +245,7 @@ lazy val apiGateway = module("api-gateway")
   )
 
 def module(moduleName: String) =
-  Project(id = moduleName, base = file(s"modules/$moduleName"))
+  Project(id = moduleName, base = file(s"projects/$moduleName"))
     .settings(commonSettings)
     .settings(
       name := moduleName,
@@ -251,5 +253,5 @@ def module(moduleName: String) =
         backendSourceRoot / moduleName / "objects",
         backendSourceRoot / moduleName / "utils"
       ),
-      Test / unmanagedSourceDirectories += baseDirectory.value / "src" / "test"
+      Test / unmanagedSourceDirectories += backendTestRoot / moduleName
     )

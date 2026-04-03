@@ -121,10 +121,19 @@ function Start-BackgroundCommand {
 }
 
 function Get-BackendRuntimeClasspath {
-  $classpathExport = Join-Path $backendRoot 'modules\api-gateway\target\streams\runtime\fullClasspathAsJars\_global\streams\export'
-  if (-not (Test-Path $classpathExport)) {
-    throw "Backend runtime classpath export was not found at $classpathExport. Compile the backend once before using the shortcut."
+  $classpathExportCandidates = @(
+    (Join-Path $backendRoot 'projects\api-gateway\target\streams\runtime\fullClasspathAsJars\_global\streams\export'),
+    (Join-Path $backendRoot 'projects\api-gateway\target\streams\runtime\dependencyClasspathAsJars\_global\streams\export'),
+    (Join-Path $backendRoot 'target\streams\runtime\fullClasspathAsJars\_global\streams\export'),
+    (Join-Path $backendRoot 'target\streams\runtime\dependencyClasspathAsJars\_global\streams\export')
+  )
+
+  $classpathExport = $classpathExportCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+  if (-not $classpathExport) {
+    throw "Backend runtime classpath export was not found in the expected target streams locations. Compile the backend once before using the shortcut."
   }
+
+  Write-LauncherLog "using backend classpath export $classpathExport"
 
   $entries =
     (Get-Content -Path $classpathExport -Raw).Trim().Split(';', [System.StringSplitOptions]::RemoveEmptyEntries) |
@@ -142,7 +151,7 @@ function Get-BackendRuntimeClasspath {
         }
       }
 
-      if ($entry -match '^(.*\\modules\\[^\\]+\\target\\scala-3\.3\.3)\\[^\\]+_3-[^\\]+\.jar$') {
+      if ($entry -match '^(.*\\projects\\[^\\]+\\target\\scala-3\.3\.3)\\[^\\]+_3-[^\\]+\.jar$') {
         $classesDir = Join-Path $matches[1] 'classes'
         if (Test-Path $classesDir) {
           $classesDir
