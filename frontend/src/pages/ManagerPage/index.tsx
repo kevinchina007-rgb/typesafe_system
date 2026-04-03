@@ -67,7 +67,13 @@ export function ManagerPage({
   const [managerRefundTaskResponses, setManagerRefundTaskResponses] = useState<ManagerRefundTaskResponse[]>([])
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
 
-  async function reloadManagerTasks(taskStatus: 'pending' | 'all' | 'confirmed' | 'rejected' = 'pending', session?: ManagerSessionResponse) {
+  async function reloadManagerTasks(
+    filters: {
+      status: 'pending' | 'all' | 'confirmed' | 'rejected'
+      resourceType: 'all' | 'flight' | 'hotel' | 'train' | 'attraction'
+    } = { status: 'pending', resourceType: 'all' },
+    session?: ManagerSessionResponse,
+  ) {
     const effectiveSession = session ?? currentSupplierManagerSession
     if (!effectiveSession) {
       return
@@ -76,7 +82,8 @@ export function ManagerPage({
     const taskListResponse = await travelMvpApiClient.listManagerTasks({
       managerId: effectiveSession.managerId,
       managerType: effectiveSession.managerType.toLowerCase(),
-      status: taskStatus,
+      status: filters.status,
+      resourceType: filters.resourceType === 'all' ? undefined : filters.resourceType,
     })
     setManagerTaskResponses(taskListResponse.tasks)
   }
@@ -144,15 +151,18 @@ export function ManagerPage({
 
       const managerType = toManagerTypeKey(currentManagerSession.managerType)
 
-      if (managerType === 'airline' || managerType === 'hotel') {
+      if (managerType === 'airline' || managerType === 'hotel' || managerType === 'attraction') {
         const legacySession = toLegacyManagerSession(currentManagerSession)
         setCurrentSupplierManagerSession(legacySession)
         setCurrentTrainAdminSession(null)
-        setCurrentAttractionAdminSession(null)
+        if (managerType !== 'attraction') {
+          setCurrentAttractionAdminSession(null)
+        }
         await Promise.all([
-          reloadManagerTasks('pending', legacySession),
+          reloadManagerTasks({ status: 'pending', resourceType: 'all' }, legacySession),
           reloadManagerRefundTasks(legacySession),
           managerType === 'airline' ? reloadManagedFlights(currentManagerSession.managerId) : Promise.resolve(setManagedFlightResponses([])),
+          managerType === 'attraction' ? reloadManagedAttractions(currentManagerSession.managerId, currentManagerSession) : Promise.resolve(),
         ])
       } else if (managerType === 'train') {
         setCurrentSupplierManagerSession(null)
@@ -185,7 +195,7 @@ export function ManagerPage({
 
   return (
     <>
-      {!activeManagerType || activeManagerType === 'airline' || activeManagerType === 'hotel' ? (
+      {!activeManagerType || activeManagerType === 'airline' || activeManagerType === 'hotel' || activeManagerType === 'attraction' ? (
         <ManagerPanel
           currentLanguage={currentLanguage}
           isBusy={isBusy}
@@ -230,9 +240,9 @@ export function ManagerPage({
           onValidationError={message => {
             onShowNotice('error', translate('error.friendly.default'), message)
           }}
-          onReloadTasks={async status => {
+          onReloadTasks={async filters => {
             await runPageAction(async () => {
-              await reloadManagerTasks(status)
+              await reloadManagerTasks(filters)
               if (currentSupplierManagerSession?.managerType === 'Airline') {
                 await reloadManagedFlights(currentSupplierManagerSession.managerId)
               }
@@ -280,6 +290,34 @@ export function ManagerPage({
               })
               await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
             }, translate('manager.reject'), translate('notice.actionSuccess'))
+          }}
+          onBatchConfirmTasks={async payload => {
+            if (!currentSupplierManagerSession) {
+              throw new Error(translate('error.managerNotFound'))
+            }
+            await runPageAction(async () => {
+              await travelMvpApiClient.batchConfirmManagerBookingItems({
+                managerId: currentSupplierManagerSession.managerId,
+                managerType: currentSupplierManagerSession.managerType.toLowerCase(),
+                orderItemIds: payload.orderItemIds,
+                note: payload.note.trim() || null,
+              })
+              await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
+            }, translate('manager.batchConfirm'), translate('notice.actionSuccess'))
+          }}
+          onBatchRejectTasks={async payload => {
+            if (!currentSupplierManagerSession) {
+              throw new Error(translate('error.managerNotFound'))
+            }
+            await runPageAction(async () => {
+              await travelMvpApiClient.batchRejectManagerBookingItems({
+                managerId: currentSupplierManagerSession.managerId,
+                managerType: currentSupplierManagerSession.managerType.toLowerCase(),
+                orderItemIds: payload.orderItemIds,
+                reason: payload.reason,
+              })
+              await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
+            }, translate('manager.batchReject'), translate('notice.actionSuccess'))
           }}
           onApproveRefundTask={async payload => {
             if (!currentSupplierManagerSession) {

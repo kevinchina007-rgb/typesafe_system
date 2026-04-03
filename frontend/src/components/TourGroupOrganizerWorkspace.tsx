@@ -6,6 +6,7 @@ import type {
   FlightResponse,
   GroupPlanItemResponse,
   GroupPlanOptionResponse,
+  GroupSelectionOrderProjectionResponse,
   GroupPlanSelectionResponse,
   HotelResponse,
   TourGroupMembershipResponse,
@@ -21,6 +22,7 @@ type TourGroupOrganizerWorkspaceProps = {
   activePlanItem: GroupPlanItemResponse | null
   planItems: GroupPlanItemResponse[]
   planOptions: GroupPlanOptionResponse[]
+  selectionOrderProjections: GroupSelectionOrderProjectionResponse[]
   pendingApprovals: GroupPlanSelectionResponse[]
   activeMembership: TourGroupMembershipResponse | null
   translate: (translationKey: string) => string
@@ -51,6 +53,8 @@ type TourGroupOrganizerWorkspaceProps = {
   ) => Promise<void>
   onConfirmSelection: (selectionId: string, note: string) => Promise<void>
   onRejectSelection: (selectionId: string, note: string) => Promise<void>
+  onBatchConfirmSelections: (selectionIds: string[]) => Promise<void>
+  onBatchRejectSelections: (selectionIds: string[], note: string) => Promise<void>
 }
 
 export function TourGroupOrganizerWorkspace({
@@ -59,6 +63,7 @@ export function TourGroupOrganizerWorkspace({
   activePlanItem,
   planItems,
   planOptions,
+  selectionOrderProjections,
   pendingApprovals,
   activeMembership,
   translate,
@@ -71,6 +76,8 @@ export function TourGroupOrganizerWorkspace({
   onCreateOption,
   onConfirmSelection,
   onRejectSelection,
+  onBatchConfirmSelections,
+  onBatchRejectSelections,
 }: TourGroupOrganizerWorkspaceProps) {
   useEffect(() => {
     if (!activePlanItem && planItems.length > 0) {
@@ -101,10 +108,13 @@ export function TourGroupOrganizerWorkspace({
           selections={pendingApprovals}
           planItems={planItems}
           planOptions={planOptions}
+          selectionOrderProjections={selectionOrderProjections}
           activeMembership={activeMembership}
           translate={translate}
           onConfirmSelection={onConfirmSelection}
           onRejectSelection={onRejectSelection}
+          onBatchConfirmSelections={onBatchConfirmSelections}
+          onBatchRejectSelections={onBatchRejectSelections}
         />
       </div>
 

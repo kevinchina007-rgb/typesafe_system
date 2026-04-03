@@ -244,7 +244,7 @@ export function AccountPage({
             </label>
             <label>
               {translate('manager.email')}
-              <input name="email" type="email" placeholder="ops@example.com" required />
+              <input name="email" type="email" placeholder={translate('manager.email')} required />
             </label>
             {managerAuthMode === 'register' ? (
               <label>

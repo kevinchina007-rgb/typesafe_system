@@ -75,18 +75,68 @@ trait ManagerApiRoutes[F[_]: Async] extends Http4sDsl[F]:
 
     case request @ GET -> Root / "api" / "manager" / "tasks" :? ManagerIdQueryParamMatcher(managerIdValue) +&
         ManagerTypeQueryParamMatcher(managerTypeValue) +&
-        TaskStatusQueryParamMatcher(taskStatusValue) =>
+        TaskStatusQueryParamMatcher(taskStatusValue) +&
+        TaskResourceTypeQueryParamMatcher(taskResourceTypeValue) =>
       for
         currentManager <- requireCurrentManager(request)
         managerIdText <- fromEither(managerIdValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
         managerTypeText <- fromEither(managerTypeValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerType")))
         _ <- ensureManagerScope(currentManager, managerIdText, managerTypeText)
+        requestedManagerType = ManagerDtoMappers.toManagerType(managerTypeText)
         tasks <- managerWorkflowApplicationService.listManagerTasks(
           managerId = ManagerId(managerIdText),
-          managerType = ManagerDtoMappers.toManagerType(managerTypeText),
-          requestedSupplierReviewStatuses = parseRequestedSupplierReviewStatuses(taskStatusValue)
+          managerType = requestedManagerType,
+          requestedSupplierReviewStatuses = parseRequestedSupplierReviewStatuses(taskStatusValue),
+          requestedResourceTypes = ManagerDtoMappers.toRequestedManagerTypes(taskResourceTypeValue, requestedManagerType)
         )
         response <- Ok(ManagerBookingTaskListResponseDto(tasks.map(ManagerBookingTaskResponseDto.fromApplication)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "tasks" / "batch-confirm" =>
+      for
+        currentManager <- requireCurrentManager(request)
+        managerBatchDecisionRequestDto <- request.as[ManagerBatchDecisionRequestDto]
+        _ <- ensureManagerScope(currentManager, managerBatchDecisionRequestDto.managerId, managerBatchDecisionRequestDto.managerType)
+        decidedAt <- currentInstantF
+        updatedOrders <- managerWorkflowApplicationService.batchConfirmBookingItems(
+          managerId = ManagerId(managerBatchDecisionRequestDto.managerId),
+          managerType = ManagerDtoMappers.toManagerType(managerBatchDecisionRequestDto.managerType),
+          orderItemIds = managerBatchDecisionRequestDto.orderItemIds.map(OrderItemId.apply),
+          note = managerBatchDecisionRequestDto.note.map(_.trim).filter(_.nonEmpty),
+          decidedAt = decidedAt
+        )
+        response <- Ok(
+          ManagerBatchDecisionResponseDto(
+            processedCount = updatedOrders.size,
+            orderItemIds = managerBatchDecisionRequestDto.orderItemIds,
+            action = "confirm"
+          ).asJson
+        )
+      yield response
+
+    case request @ POST -> Root / "api" / "manager" / "tasks" / "batch-reject" =>
+      for
+        currentManager <- requireCurrentManager(request)
+        managerBatchDecisionRequestDto <- request.as[ManagerBatchDecisionRequestDto]
+        _ <- ensureManagerScope(currentManager, managerBatchDecisionRequestDto.managerId, managerBatchDecisionRequestDto.managerType)
+        rejectReason <- fromEither(
+          managerBatchDecisionRequestDto.reason.map(_.trim).filter(_.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("reason"))
+        )
+        decidedAt <- currentInstantF
+        updatedOrders <- managerWorkflowApplicationService.batchRejectBookingItems(
+          managerId = ManagerId(managerBatchDecisionRequestDto.managerId),
+          managerType = ManagerDtoMappers.toManagerType(managerBatchDecisionRequestDto.managerType),
+          orderItemIds = managerBatchDecisionRequestDto.orderItemIds.map(OrderItemId.apply),
+          reason = rejectReason,
+          decidedAt = decidedAt
+        )
+        response <- Ok(
+          ManagerBatchDecisionResponseDto(
+            processedCount = updatedOrders.size,
+            orderItemIds = managerBatchDecisionRequestDto.orderItemIds,
+            action = "reject"
+          ).asJson
+        )
       yield response
 
     case request @ GET -> Root / "api" / "manager" / "flights" :? ManagerIdQueryParamMatcher(managerIdValue) =>
@@ -242,6 +292,7 @@ trait ManagerApiRoutes[F[_]: Async] extends Http4sDsl[F]:
   private def ensureManagerScope(currentManager: CurrentManagerSessionView, managerIdValue: String, managerTypeValue: String): F[Unit] =
     val requestedType = managerTypeValue.trim.toLowerCase match
       case "hotel"      => com.typesafe.travel.auth.domain.AuthManagerType.Hotel
+      case "train"      => com.typesafe.travel.auth.domain.AuthManagerType.Train
       case "attraction" => com.typesafe.travel.auth.domain.AuthManagerType.Attraction
       case _             => com.typesafe.travel.auth.domain.AuthManagerType.Airline
     if currentManager.managerId == ManagerId(managerIdValue) && currentManager.managerType == requestedType then Async[F].unit

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { AppSidebar } from '../components/AppSidebar'
 import { ToastNotice } from '../components/ToastNotice'
@@ -27,24 +27,38 @@ export function MvpApp() {
   const [signedInUserResponse, setSignedInUserResponse] = useState<UserResponse | null>(null)
   const [signedInManagerSessionResponse, setSignedInManagerSessionResponse] = useState<CurrentManagerSessionResponse | null>(null)
   const [currentNotice, setCurrentNotice] = useState<AppNotice | null>(null)
+  const backendFailureCountRef = useRef(0)
 
   const translate = createTranslator(currentLanguage)
   const isGuestMode = signedInUserResponse === null && signedInManagerSessionResponse === null
   const isManagerOnlyMode = signedInUserResponse === null && signedInManagerSessionResponse !== null
 
-  const reloadShellState = useCallback(async () => {
+  const reloadBackendHealth = useCallback(async () => {
     try {
-      const [healthResponse, currentUserSession, currentManagerSession] = await Promise.all([
-        travelMvpApiClient.getHealth(),
+      const healthResponse = await travelMvpApiClient.getHealth()
+      backendFailureCountRef.current = 0
+      setBackendHealthResponse(healthResponse)
+      return true
+    } catch {
+      backendFailureCountRef.current += 1
+      if (backendFailureCountRef.current >= 3) {
+        setBackendHealthResponse(null)
+      }
+      return false
+    }
+  }, [])
+
+  const reloadPrincipalState = useCallback(async () => {
+    try {
+      const [currentUserSession, currentManagerSession] = await Promise.all([
         travelMvpApiClient.getCurrentUserSession().catch(() => null),
         travelMvpApiClient.getCurrentManagerSession().catch(() => null),
       ])
-      setBackendHealthResponse(healthResponse)
+
       setSignedInUserResponse(currentUserSession?.user ?? null)
       setSignedInManagerSessionResponse(currentManagerSession)
       return true
     } catch {
-      setBackendHealthResponse(null)
       setSignedInUserResponse(null)
       setSignedInManagerSessionResponse(null)
       return false
@@ -56,8 +70,12 @@ export function MvpApp() {
     let retryTimeout: ReturnType<typeof setTimeout> | null = null
 
     const bootstrap = async () => {
-      const didSucceed = await reloadShellState()
-      if (!didSucceed && !isDisposed) {
+      const [didLoadHealth, didLoadPrincipalState] = await Promise.all([
+        reloadBackendHealth(),
+        reloadPrincipalState(),
+      ])
+
+      if ((!didLoadHealth || !didLoadPrincipalState) && !isDisposed) {
         retryTimeout = setTimeout(() => {
           void bootstrap()
         }, 2000)
@@ -67,7 +85,8 @@ export function MvpApp() {
     void bootstrap()
 
     const refreshInterval = setInterval(() => {
-      void reloadShellState()
+      void reloadBackendHealth()
+      void reloadPrincipalState()
     }, 15000)
 
     return () => {
@@ -77,7 +96,7 @@ export function MvpApp() {
         clearTimeout(retryTimeout)
       }
     }
-  }, [reloadShellState])
+  }, [reloadBackendHealth, reloadPrincipalState])
 
   useEffect(() => {
     if (currentViewKey === 'trainAdmin' || currentViewKey === 'attractionAdmin') {

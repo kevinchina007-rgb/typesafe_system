@@ -134,7 +134,7 @@ export function TrainAdminPanel({
             </label>
             <label>
               {translate('trainAdmin.email')}
-              <input name="email" type="email" placeholder="ops@rail.example" required />
+              <input name="email" type="email" placeholder={translate('trainAdmin.email')} required />
             </label>
             <label>
               {translate('account.password')}
@@ -163,7 +163,7 @@ export function TrainAdminPanel({
             <h3>{translate('trainAdmin.login')}</h3>
             <label>
               {translate('trainAdmin.email')}
-              <input name="email" type="email" placeholder="ops@rail.example" required />
+              <input name="email" type="email" placeholder={translate('trainAdmin.email')} required />
             </label>
             <label>
               {translate('account.password')}

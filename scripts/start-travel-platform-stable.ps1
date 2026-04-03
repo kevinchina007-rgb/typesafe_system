@@ -129,15 +129,28 @@ function Get-BackendRuntimeClasspath {
   $entries =
     (Get-Content -Path $classpathExport -Raw).Trim().Split(';', [System.StringSplitOptions]::RemoveEmptyEntries) |
     ForEach-Object {
-      if ($_ -match '^(.*\\modules\\[^\\]+\\target\\scala-3\.3\.3)\\[^\\]+_3-[^\\]+\.jar$') {
+      $entry = $_
+      if ($entry -like 'C:\Users\*\AppData\Local\Coursier\Cache\v1\*') {
+        $relativeCachePath = $entry.Substring($entry.IndexOf('\Cache\v1\') + '\Cache\v1\'.Length).TrimStart('\')
+        $workspaceCacheCandidate = Join-Path $backendRoot (Join-Path '.coursier-cache' $relativeCachePath)
+        $workspaceCoursierCandidate = Join-Path $backendRoot (Join-Path '.coursier\cache' $relativeCachePath)
+
+        if (Test-Path $workspaceCacheCandidate) {
+          $entry = $workspaceCacheCandidate
+        } elseif (Test-Path $workspaceCoursierCandidate) {
+          $entry = $workspaceCoursierCandidate
+        }
+      }
+
+      if ($entry -match '^(.*\\modules\\[^\\]+\\target\\scala-3\.3\.3)\\[^\\]+_3-[^\\]+\.jar$') {
         $classesDir = Join-Path $matches[1] 'classes'
         if (Test-Path $classesDir) {
           $classesDir
         } else {
-          $_
+          $entry
         }
       } else {
-        $_
+        $entry
       }
     }
 

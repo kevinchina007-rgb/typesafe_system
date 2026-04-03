@@ -68,6 +68,20 @@ final case class ManagerDecisionRequestDto(
     note: Option[String]
 )
 
+final case class ManagerBatchDecisionRequestDto(
+    managerId: String,
+    managerType: String,
+    orderItemIds: List[String],
+    reason: Option[String],
+    note: Option[String]
+)
+
+final case class ManagerBatchDecisionResponseDto(
+    processedCount: Int,
+    orderItemIds: List[String],
+    action: String
+)
+
 final case class SupplierReviewDecisionResponseDto(
     decision: String,
     reason: Option[String],
@@ -83,7 +97,11 @@ final case class ManagerBookingTaskResponseDto(
     supplierReviewStatus: String,
     summaryLabel: String,
     detailLabel: String,
-    reviewDecision: Option[SupplierReviewDecisionResponseDto]
+    requestedAt: String,
+    reviewDecision: Option[SupplierReviewDecisionResponseDto],
+    reviewedBy: Option[String],
+    reviewedAt: Option[String],
+    reviewNote: Option[String]
 )
 
 final case class ManagerBookingTaskListResponseDto(
@@ -128,7 +146,11 @@ object ManagerBookingTaskResponseDto:
       supplierReviewStatus = managerBookingTaskView.supplierReviewStatus.toString,
       summaryLabel = managerBookingTaskView.summaryLabel,
       detailLabel = managerBookingTaskView.detailLabel,
-      reviewDecision = managerBookingTaskView.reviewDecision.map(SupplierReviewDecisionResponseDto.fromDomain)
+      requestedAt = managerBookingTaskView.requestedAt.toString,
+      reviewDecision = managerBookingTaskView.reviewDecision.map(SupplierReviewDecisionResponseDto.fromDomain),
+      reviewedBy = managerBookingTaskView.reviewedBy.map(_.value),
+      reviewedAt = managerBookingTaskView.reviewedAt.map(_.toString),
+      reviewNote = managerBookingTaskView.reviewNote
     )
 
 object SupplierReviewDecisionResponseDto:
@@ -159,4 +181,15 @@ object ManagerDtoMappers:
     managerTypeValue.trim.toLowerCase match
       case "hotel" => ManagerType.Hotel
       case "attraction" => ManagerType.Attraction
+      case "train" => ManagerType.Airline
       case _       => ManagerType.Airline
+
+  def toRequestedManagerTypes(resourceTypeValue: Option[String], managerType: ManagerType): Set[ManagerType] =
+    resourceTypeValue.map(_.trim.toLowerCase).filter(_.nonEmpty) match
+      case Some("hotel") if managerType == ManagerType.Hotel => Set(ManagerType.Hotel)
+      case Some("attraction") if managerType == ManagerType.Attraction => Set(ManagerType.Attraction)
+      case Some("flight") if managerType == ManagerType.Airline => Set(ManagerType.Airline)
+      case Some("airline") if managerType == ManagerType.Airline => Set(ManagerType.Airline)
+      case Some("train") => Set.empty
+      case Some(_) => Set.empty
+      case None => Set(managerType)

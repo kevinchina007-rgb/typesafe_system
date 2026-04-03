@@ -11,6 +11,11 @@ trait TourGroupRepository[F[_]]:
   def nextSelectionId: F[GroupPlanSelectionId]
   def nextSelectionTravelerId: F[GroupPlanSelectionTravelerId]
   def nextSelectionOrderLinkId: F[GroupSelectionOrderLinkId]
+  def nextConversationId: F[TourGroupConversationId]
+  def nextConversationParticipantId: F[TourGroupConversationParticipantId]
+  def nextMessageId: F[TourGroupMessageId]
+  def nextMessageAttachmentId: F[TourGroupMessageAttachmentId]
+  def nextMessageReactionId: F[TourGroupMessageReactionId]
 
   def saveGroup(group: TourGroup): F[TourGroup]
   def findGroupById(groupId: TourGroupId): F[Option[TourGroup]]
@@ -45,5 +50,30 @@ trait TourGroupRepository[F[_]]:
   def saveSelectionOrderLink(link: GroupSelectionOrderLink): F[GroupSelectionOrderLink]
   def findSelectionOrderLinkBySelectionId(selectionId: GroupPlanSelectionId): F[Option[GroupSelectionOrderLink]]
   def findSelectionOrderLinksByGroupId(groupId: TourGroupId): F[List[GroupSelectionOrderLink]]
+
+  def saveChatSettings(settings: TourGroupChatSettings): F[TourGroupChatSettings]
+  def findChatSettingsByGroupId(groupId: TourGroupId): F[Option[TourGroupChatSettings]]
+
+  def saveConversation(conversation: TourGroupConversation): F[TourGroupConversation]
+  def findConversationById(conversationId: TourGroupConversationId): F[Option[TourGroupConversation]]
+  def findPublicConversationByGroupId(groupId: TourGroupId): F[Option[TourGroupConversation]]
+  def findDirectConversationByGroupIdAndUsers(groupId: TourGroupId, userA: UserId, userB: UserId): F[Option[TourGroupConversation]]
+  def findDirectConversationsByGroupIdAndUserId(groupId: TourGroupId, userId: UserId): F[List[TourGroupConversation]]
+  def findAccessibleConversationsByGroupIdAndUserId(groupId: TourGroupId, userId: UserId): F[List[TourGroupConversation]]
+
+  def saveConversationParticipant(participant: TourGroupConversationParticipant): F[TourGroupConversationParticipant]
+  def findConversationParticipant(conversationId: TourGroupConversationId, userId: UserId): F[Option[TourGroupConversationParticipant]]
+  def findParticipantsByConversationId(conversationId: TourGroupConversationId): F[List[TourGroupConversationParticipant]]
+
+  def saveMessage(message: TourGroupMessage): F[TourGroupMessage]
+  def findMessageById(messageId: TourGroupMessageId): F[Option[TourGroupMessage]]
+  def findMessagesByConversationId(conversationId: TourGroupConversationId): F[List[TourGroupMessage]]
+  def saveMessageAttachment(attachment: TourGroupMessageAttachment): F[TourGroupMessageAttachment]
+  def findAttachmentsByMessageId(messageId: TourGroupMessageId): F[List[TourGroupMessageAttachment]]
+  def findAttachmentsByMessageIds(messageIds: List[TourGroupMessageId]): F[Map[TourGroupMessageId, List[TourGroupMessageAttachment]]]
+  def saveMessageReaction(reaction: TourGroupMessageReaction): F[TourGroupMessageReaction]
+  def deleteMessageReaction(messageId: TourGroupMessageId, userId: UserId, reactionType: String): F[Unit]
+  def findReactionsByMessageIds(messageIds: List[TourGroupMessageId]): F[Map[TourGroupMessageId, List[TourGroupMessageReaction]]]
+  def searchMessagesByGroupIdAndUserId(groupId: TourGroupId, userId: UserId, query: String): F[List[TourGroupMessage]]
 
   def findGroupDetails(groupId: TourGroupId): F[Option[TourGroupDetails]]

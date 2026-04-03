@@ -30,7 +30,11 @@ final case class ManagerBookingTaskView(
     supplierReviewStatus: SupplierReviewStatus,
     summaryLabel: String,
     detailLabel: String,
-    reviewDecision: Option[SupplierReviewDecision]
+    requestedAt: Instant,
+    reviewDecision: Option[SupplierReviewDecision],
+    reviewedBy: Option[ManagerId],
+    reviewedAt: Option[Instant],
+    reviewNote: Option[String]
 )
 
 final case class ManagerRefundTaskView(
@@ -68,7 +72,8 @@ trait ManagerWorkflowApplicationService[F[_]]:
   def listManagerTasks(
       managerId: ManagerId,
       managerType: ManagerType,
-      requestedSupplierReviewStatuses: Set[SupplierReviewStatus]
+      requestedSupplierReviewStatuses: Set[SupplierReviewStatus],
+      requestedResourceTypes: Set[ManagerType]
   ): F[List[ManagerBookingTaskView]]
   def listManagerRefundTasks(managerId: ManagerId, managerType: ManagerType): F[List[ManagerRefundTaskView]]
   def listFlightsForAirlineManager(managerId: ManagerId): F[List[(Airline, Flight)]]
@@ -102,6 +107,13 @@ trait ManagerWorkflowApplicationService[F[_]]:
       note: Option[String],
       decidedAt: Instant
   ): F[Order]
+  def batchConfirmBookingItems(
+      managerId: ManagerId,
+      managerType: ManagerType,
+      orderItemIds: List[OrderItemId],
+      note: Option[String],
+      decidedAt: Instant
+  ): F[List[Order]]
   def rejectBookingItem(
       managerId: ManagerId,
       managerType: ManagerType,
@@ -109,6 +121,13 @@ trait ManagerWorkflowApplicationService[F[_]]:
       reason: String,
       decidedAt: Instant
   ): F[Order]
+  def batchRejectBookingItems(
+      managerId: ManagerId,
+      managerType: ManagerType,
+      orderItemIds: List[OrderItemId],
+      reason: String,
+      decidedAt: Instant
+  ): F[List[Order]]
   def approveRefund(
       managerId: ManagerId,
       managerType: ManagerType,
@@ -176,18 +195,25 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
     managerType match
       case ManagerType.Airline => managerService.loginAirlineManager(primaryEmailAddress).map(toSession)
       case ManagerType.Hotel   => managerService.loginHotelManager(primaryEmailAddress).map(toSession)
+      case ManagerType.Attraction => managerService.loginAttractionManager(primaryEmailAddress).map(toSession)
 
   override def listManagerTasks(
       managerId: ManagerId,
       managerType: ManagerType,
-      requestedSupplierReviewStatuses: Set[SupplierReviewStatus]
+      requestedSupplierReviewStatuses: Set[SupplierReviewStatus],
+      requestedResourceTypes: Set[ManagerType]
   ): F[List[ManagerBookingTaskView]] =
     for
       managerContext <- loadManagerContext(managerId, managerType)
       allOrders <- orderRepository.findAllOrders
     yield allOrders
-      .flatMap(order => order.orderLineItems.flatMap(orderLineItem => buildTaskView(managerContext, order, orderLineItem, requestedSupplierReviewStatuses)))
-      .sortBy(task => (task.orderId.value, task.orderItemId.value))
+      .flatMap(order =>
+        order.orderLineItems.flatMap(orderLineItem =>
+          buildTaskView(managerContext, order, orderLineItem, requestedSupplierReviewStatuses, requestedResourceTypes)
+        )
+      )
+      .sortBy(task => (task.requestedAt.toEpochMilli, task.orderId.value, task.orderItemId.value))
+      .reverse
 
   override def listManagerRefundTasks(managerId: ManagerId, managerType: ManagerType): F[List[ManagerRefundTaskView]] =
     for
@@ -302,6 +328,27 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
       updatedOrder <- orderService.confirmSupplierOrderItem(order.orderId, orderItemId, managerId, note, decidedAt)
     yield updatedOrder
 
+  override def batchConfirmBookingItems(
+      managerId: ManagerId,
+      managerType: ManagerType,
+      orderItemIds: List[OrderItemId],
+      note: Option[String],
+      decidedAt: Instant
+  ): F[List[Order]] =
+    for
+      managerContext <- loadManagerContext(managerId, managerType)
+      _ <- orderItemIds match
+        case Nil => MonadThrow[F].raiseError(SharedValidationError.RequiredFieldWasEmpty("orderItemIds"))
+        case _   => MonadThrow[F].unit
+      _ <- orderItemIds.traverse(loadScopedOrder(managerContext, _))
+      updatedOrders <- orderItemIds.traverse(orderItemId =>
+        orderRepository
+          .findOrderByOrderItemId(orderItemId)
+          .flatMap(_.liftTo[F](OrderError.OrderItemWasNotFound(OrderId("unknown-order"), orderItemId)))
+          .flatMap(order => orderService.confirmSupplierOrderItem(order.orderId, orderItemId, managerId, note, decidedAt))
+      )
+    yield updatedOrders
+
   override def rejectBookingItem(
       managerId: ManagerId,
       managerType: ManagerType,
@@ -315,6 +362,28 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
       rejectedOrder <- orderService.rejectSupplierOrderItem(order.orderId, orderItemId, managerId, reason, decidedAt)
       _ <- reservationLifecycle.releaseActiveReservationsForOrderItem(orderItemId, decidedAt)
     yield rejectedOrder
+
+  override def batchRejectBookingItems(
+      managerId: ManagerId,
+      managerType: ManagerType,
+      orderItemIds: List[OrderItemId],
+      reason: String,
+      decidedAt: Instant
+  ): F[List[Order]] =
+    for
+      managerContext <- loadManagerContext(managerId, managerType)
+      _ <- orderItemIds match
+        case Nil => MonadThrow[F].raiseError(SharedValidationError.RequiredFieldWasEmpty("orderItemIds"))
+        case _   => MonadThrow[F].unit
+      _ <- orderItemIds.traverse(loadScopedOrder(managerContext, _))
+      updatedOrders <- orderItemIds.traverse(orderItemId =>
+        orderRepository
+          .findOrderByOrderItemId(orderItemId)
+          .flatMap(_.liftTo[F](OrderError.OrderItemWasNotFound(OrderId("unknown-order"), orderItemId)))
+          .flatMap(order => orderService.rejectSupplierOrderItem(order.orderId, orderItemId, managerId, reason, decidedAt))
+          .flatTap(_ => reservationLifecycle.releaseActiveReservationsForOrderItem(orderItemId, decidedAt))
+      )
+    yield updatedOrders
 
   override def approveRefund(
       managerId: ManagerId,
@@ -385,13 +454,15 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
       managerContext: ManagerContext,
       order: Order,
       orderLineItem: OrderLineItem,
-      requestedSupplierReviewStatuses: Set[SupplierReviewStatus]
+      requestedSupplierReviewStatuses: Set[SupplierReviewStatus],
+      requestedResourceTypes: Set[ManagerType]
   ): Option[ManagerBookingTaskView] =
     orderLineItem match
       case flightOrderItem: FlightOrderItem =>
         managerContext match
           case airlineManager: AirlineManager
               if airlineManager.airlineId == flightOrderItem.flightBookingSnapshot.airlineId &&
+                requestedResourceTypes.contains(ManagerType.Airline) &&
                 requestedSupplierReviewStatuses.contains(flightOrderItem.supplierReviewStatus) =>
             Some(
               ManagerBookingTaskView(
@@ -402,7 +473,11 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
                 supplierReviewStatus = flightOrderItem.supplierReviewStatus,
                 summaryLabel = s"${flightOrderItem.flightBookingSnapshot.airlineName.value} ${flightOrderItem.flightBookingSnapshot.flightNumber.value}",
                 detailLabel = s"${flightOrderItem.flightBookingSnapshot.departureAirportCode.value}-${flightOrderItem.flightBookingSnapshot.arrivalAirportCode.value} ${flightOrderItem.flightBookingSnapshot.cabinClass.value}",
-                reviewDecision = flightOrderItem.supplierReviewDecision
+                requestedAt = order.createdAt,
+                reviewDecision = flightOrderItem.supplierReviewDecision,
+                reviewedBy = flightOrderItem.supplierReviewDecision.map(_.managerId),
+                reviewedAt = flightOrderItem.supplierReviewDecision.map(_.decidedAt),
+                reviewNote = flightOrderItem.supplierReviewDecision.flatMap(_.reason)
               )
             )
           case _ => None
@@ -410,6 +485,7 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
         managerContext match
           case hotelManager: HotelManager
               if hotelManager.hotelId == hotelOrderItem.hotelBookingSnapshot.hotelId &&
+                requestedResourceTypes.contains(ManagerType.Hotel) &&
                 requestedSupplierReviewStatuses.contains(hotelOrderItem.supplierReviewStatus) =>
             Some(
               ManagerBookingTaskView(
@@ -420,7 +496,11 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
                 supplierReviewStatus = hotelOrderItem.supplierReviewStatus,
                 summaryLabel = s"${hotelOrderItem.hotelBookingSnapshot.hotelName.value} ${hotelOrderItem.hotelBookingSnapshot.roomTypeName.value}",
                 detailLabel = s"${hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkIn} - ${hotelOrderItem.hotelBookingSnapshot.stayPeriod.checkOut}",
-                reviewDecision = hotelOrderItem.supplierReviewDecision
+                requestedAt = order.createdAt,
+                reviewDecision = hotelOrderItem.supplierReviewDecision,
+                reviewedBy = hotelOrderItem.supplierReviewDecision.map(_.managerId),
+                reviewedAt = hotelOrderItem.supplierReviewDecision.map(_.decidedAt),
+                reviewNote = hotelOrderItem.supplierReviewDecision.flatMap(_.reason)
               )
             )
           case _ => None
@@ -428,6 +508,7 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
         managerContext match
           case attractionManager: AttractionManager
               if attractionOrderItem.attractionTicketSnapshot.managerId == attractionManager.managerId &&
+                requestedResourceTypes.contains(ManagerType.Attraction) &&
                 requestedSupplierReviewStatuses.contains(attractionOrderItem.supplierReviewStatus) =>
             Some(
               ManagerBookingTaskView(
@@ -438,10 +519,15 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
                 supplierReviewStatus = attractionOrderItem.supplierReviewStatus,
                 summaryLabel = s"${attractionOrderItem.attractionTicketSnapshot.attractionName} ${attractionOrderItem.attractionTicketSnapshot.ticketTypeName}",
                 detailLabel = s"Use on ${attractionOrderItem.attractionTicketSnapshot.useDate}",
-                reviewDecision = attractionOrderItem.supplierReviewDecision
+                requestedAt = order.createdAt,
+                reviewDecision = attractionOrderItem.supplierReviewDecision,
+                reviewedBy = attractionOrderItem.supplierReviewDecision.map(_.managerId),
+                reviewedAt = attractionOrderItem.supplierReviewDecision.map(_.decidedAt),
+                reviewNote = attractionOrderItem.supplierReviewDecision.flatMap(_.reason)
               )
             )
           case _ => None
+      case _: TrainOrderItem => None
 
   private def buildRefundTaskView(managerContext: ManagerContext, order: Order): Option[ManagerRefundTaskView] =
     order.orderRefunds.find(_.refundStatus == RefundStatus.Requested).flatMap { requestedRefund =>
@@ -494,6 +580,8 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
                 )
               )
             case _ => None
+        case _: TrainOrderItem =>
+          None
       }.toSeq.headOption
     }
 

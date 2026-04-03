@@ -14,6 +14,7 @@ import type {
 import { localizeTourGroupStatus } from '../lib/view-models'
 import { TourGroupMemberWorkspace } from './TourGroupMemberWorkspace'
 import { TourGroupOrganizerWorkspace } from './TourGroupOrganizerWorkspace'
+import { TourGroupChatPanel } from './TourGroupChatPanel'
 
 type TourGroupDetailProps = {
   currentLanguage: AppLanguage
@@ -50,11 +51,36 @@ type TourGroupDetailProps = {
   onSubmitSelection: (selectionId: string) => Promise<void>
   onConfirmSelection: (selectionId: string, note: string) => Promise<void>
   onRejectSelection: (selectionId: string, note: string) => Promise<void>
+  onBatchConfirmSelections: (selectionIds: string[]) => Promise<void>
+  onBatchRejectSelections: (selectionIds: string[], note: string) => Promise<void>
+  onBatchPaySelections: (selectionIds: string[]) => Promise<void>
   onOpenBookings: () => void
   onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightResponse[]>
   onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelResponse[]>
   onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
+  onLoadChatSettings: (groupId: string) => Promise<import('../lib/mvp-types').TourGroupChatSettingsResponse>
+  onUpdateChatSettings: (groupId: string, payload: { allowMemberDirectChat: boolean }) => Promise<import('../lib/mvp-types').TourGroupChatSettingsResponse>
+  onLoadConversations: (groupId: string) => Promise<import('../lib/mvp-types').TourGroupConversationListResponse>
+  onSearchConversations: (groupId: string, query: string) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse[]>
+  onSearchMessages: (groupId: string, query: string) => Promise<import('../lib/mvp-types').TourGroupMessageSearchResultResponse[]>
+  onGetOrCreateDirectConversation: (groupId: string, payload: { targetUserId: string }) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse>
+  onLoadMessages: (conversationId: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onSendMessage: (conversationId: string, payload: {
+    messageType?: string
+    content: string
+    replyToMessageId?: string | null
+    attachments?: import('../lib/mvp-types').TourGroupUploadedAttachmentResponse[]
+  }) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onUploadAttachment: (groupId: string, conversationId: string, attachmentFile: File) => Promise<import('../lib/mvp-types').TourGroupUploadedAttachmentResponse>
+  onMarkConversationRead: (conversationId: string) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse>
+  onEditMessage: (messageId: string, payload: { content: string }) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onDeleteMessage: (messageId: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onRecallMessage: (messageId: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onAddReaction: (messageId: string, reactionType: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onRemoveReaction: (messageId: string, reactionType: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onUpdateMuteState: (conversationId: string, muted: boolean) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse>
+  onUpdateArchiveState: (conversationId: string, archived: boolean) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse>
 }
 
 export function TourGroupDetail({
@@ -74,11 +100,31 @@ export function TourGroupDetail({
   onSubmitSelection,
   onConfirmSelection,
   onRejectSelection,
+  onBatchConfirmSelections,
+  onBatchRejectSelections,
+  onBatchPaySelections,
   onOpenBookings,
   onSearchFlights,
   onSearchHotels,
   onSearchTrains,
   onSearchAttractions,
+  onLoadChatSettings,
+  onUpdateChatSettings,
+  onLoadConversations,
+  onSearchConversations,
+  onSearchMessages,
+  onGetOrCreateDirectConversation,
+  onLoadMessages,
+  onSendMessage,
+  onUploadAttachment,
+  onMarkConversationRead,
+  onEditMessage,
+  onDeleteMessage,
+  onRecallMessage,
+  onAddReaction,
+  onRemoveReaction,
+  onUpdateMuteState,
+  onUpdateArchiveState,
 }: TourGroupDetailProps) {
   const isOrganizer = signedInUser?.userId === details.group.organizerUserId
   const [workspaceMode, setWorkspaceMode] = useState<'manage' | 'member'>('manage')
@@ -127,6 +173,22 @@ export function TourGroupDetail({
           <span className="detail-label">{translate('tourGroups.organizer')}</span>
           <strong>{details.group.organizerUserId}</strong>
         </div>
+        <div>
+          <span className="detail-label">{translate('tourGroups.memberCount')}</span>
+          <strong>{details.group.memberCount}</strong>
+        </div>
+        <div>
+          <span className="detail-label">{translate('tourGroups.pendingApprovals')}</span>
+          <strong>{details.group.pendingSelectionCount}</strong>
+        </div>
+        <div>
+          <span className="detail-label">{translate('tourGroups.confirmedSelectionCount')}</span>
+          <strong>{details.group.confirmedSelectionCount}</strong>
+        </div>
+        <div>
+          <span className="detail-label">{translate('tourGroups.convertedOrderCount')}</span>
+          <strong>{details.group.convertedOrderCount}</strong>
+        </div>
       </div>
 
       {isOrganizer ? (
@@ -157,6 +219,7 @@ export function TourGroupDetail({
           activePlanItem={activePlanItem}
           planItems={details.planItems}
           planOptions={details.planOptions}
+          selectionOrderProjections={details.selectionOrderProjections}
           pendingApprovals={pendingApprovals}
           activeMembership={activeMembership}
           translate={translate}
@@ -169,6 +232,8 @@ export function TourGroupDetail({
           onCreateOption={onCreateOption}
           onConfirmSelection={onConfirmSelection}
           onRejectSelection={onRejectSelection}
+          onBatchConfirmSelections={onBatchConfirmSelections}
+          onBatchRejectSelections={onBatchRejectSelections}
         />
       ) : (
         <TourGroupMemberWorkspace
@@ -179,15 +244,44 @@ export function TourGroupDetail({
           activeMembership={activeMembership}
           mySelections={mySelections}
           linkedSelectionIds={linkedSelectionIds}
+          selectionOrderProjections={details.selectionOrderProjections}
           isBusy={isBusy}
           translate={translate}
           onJoinGroup={onJoinGroup}
           onAddMembershipTraveler={onAddMembershipTraveler}
           onOpenChoose={onOpenChoose}
           onSubmitSelection={onSubmitSelection}
+          onBatchPaySelections={onBatchPaySelections}
           onOpenBookings={onOpenBookings}
         />
       )}
+
+      <TourGroupChatPanel
+        currentLanguage={currentLanguage}
+        groupId={details.group.groupId}
+        organizerUserId={details.group.organizerUserId}
+        memberships={details.memberships}
+        signedInUser={signedInUser}
+        isBusy={isBusy}
+        translate={translate}
+        onLoadChatSettings={onLoadChatSettings}
+        onUpdateChatSettings={onUpdateChatSettings}
+        onLoadConversations={onLoadConversations}
+        onSearchConversations={onSearchConversations}
+        onSearchMessages={onSearchMessages}
+        onGetOrCreateDirectConversation={onGetOrCreateDirectConversation}
+        onLoadMessages={onLoadMessages}
+        onSendMessage={onSendMessage}
+        onUploadAttachment={onUploadAttachment}
+        onMarkConversationRead={onMarkConversationRead}
+        onEditMessage={onEditMessage}
+        onDeleteMessage={onDeleteMessage}
+        onRecallMessage={onRecallMessage}
+        onAddReaction={onAddReaction}
+        onRemoveReaction={onRemoveReaction}
+        onUpdateMuteState={onUpdateMuteState}
+        onUpdateArchiveState={onUpdateArchiveState}
+      />
     </section>
   )
 }

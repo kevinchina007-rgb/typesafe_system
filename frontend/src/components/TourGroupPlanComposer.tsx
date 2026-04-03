@@ -219,7 +219,7 @@ export function TourGroupPlanComposer({
           await runSearch()
         }}
       >
-        <div className={itemType === 'Hotel' ? 'four-column-grid' : 'three-column-grid'}>
+        <div className={itemType === 'Hotel' ? 'tour-group-plan-search-grid hotel' : 'tour-group-plan-search-grid'}>
           <label>
             {translate('tourGroups.itemType')}
             <select value={itemType} onChange={event => setItemType(event.target.value)}>

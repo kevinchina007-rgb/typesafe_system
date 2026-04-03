@@ -12,6 +12,8 @@ import io.circe.syntax.*
 import org.http4s.*
 import org.http4s.circe.*
 import org.http4s.dsl.Http4sDsl
+import org.http4s.headers
+import org.http4s.multipart.Multipart
 
 import java.time.{Instant, LocalDate}
 
@@ -19,6 +21,14 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
   this: ApiRouter[F] =>
 
   import JsonCodecs.given
+
+  private given EntityDecoder[F, UpdateTourGroupChatSettingsRequestDto] = jsonOf[F, UpdateTourGroupChatSettingsRequestDto]
+  private given EntityDecoder[F, CreateDirectConversationRequestDto] = jsonOf[F, CreateDirectConversationRequestDto]
+  private given EntityDecoder[F, SendTourGroupMessageRequestDto] = jsonOf[F, SendTourGroupMessageRequestDto]
+  private given EntityDecoder[F, EditTourGroupMessageRequestDto] = jsonOf[F, EditTourGroupMessageRequestDto]
+  private given EntityDecoder[F, ReactTourGroupMessageRequestDto] = jsonOf[F, ReactTourGroupMessageRequestDto]
+  private given EntityDecoder[F, UpdateConversationMuteRequestDto] = jsonOf[F, UpdateConversationMuteRequestDto]
+  private given EntityDecoder[F, UpdateConversationArchiveRequestDto] = jsonOf[F, UpdateConversationArchiveRequestDto]
 
   protected final def tourGroupRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
     case request @ POST -> Root / "api" / "tour-groups" =>
@@ -176,16 +186,280 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         )
         (detailsView, order) = payResult
         orderResponseDto <- toOrderResponseDto(order)
-        response <- Ok(
-          Map(
-            "group" -> TourGroupDetailsResponseDto.fromView(detailsView).asJson,
-            "order" -> orderResponseDto.asJson
-          ).asJson
+        response <- Ok(TourGroupBatchPayResponseDto(TourGroupDetailsResponseDto.fromView(detailsView), List(orderResponseDto)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "selections" / "batch-pay" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        payRequest <- request.as[BatchPayGroupPlanSelectionsRequestDto]
+        paidAt <- currentInstantF
+        payResult <- tourGroupApplicationService.batchPaySelections(
+          selectionIds = payRequest.selectionIds.map(GroupPlanSelectionId.apply),
+          actingUserId = currentUserId,
+          paymentMethod = OrderDtoMappers.toPaymentMethod(payRequest.paymentMethod),
+          paidAt = paidAt
         )
+        (detailsView, orders) = payResult
+        orderResponseDtos <- orders.traverse(toOrderResponseDto)
+        response <- Ok(TourGroupBatchPayResponseDto(TourGroupDetailsResponseDto.fromView(detailsView), orderResponseDtos).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "selections" / "batch-confirm" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        reviewRequest <- request.as[BatchReviewGroupPlanSelectionsRequestDto]
+        confirmedAt <- currentInstantF
+        detailsView <- tourGroupApplicationService.batchConfirmSelections(
+          selectionIds = reviewRequest.selectionIds.map(GroupPlanSelectionId.apply),
+          organizerUserId = currentUserId,
+          reviewNote = reviewRequest.reviewNote,
+          confirmedAt = confirmedAt
+        )
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "selections" / "batch-reject" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        rejectRequest <- request.as[BatchRejectGroupPlanSelectionsRequestDto]
+        rejectedAt <- currentInstantF
+        detailsView <- tourGroupApplicationService.batchRejectSelections(
+          selectionIds = rejectRequest.selectionIds.map(GroupPlanSelectionId.apply),
+          organizerUserId = currentUserId,
+          reviewNote = rejectRequest.reviewNote,
+          rejectedAt = rejectedAt
+        )
+        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
       yield response
 
     case GET -> Root / "api" / "tour-groups" / groupIdValue / "bookings" =>
       tourGroupApplicationService.listGroupBookings(TourGroupId(groupIdValue)).flatMap { orders =>
         orders.traverse(toOrderResponseDto).flatMap(orderDtos => Ok(OrderListResponseDto(orderDtos).asJson))
       }
+
+    case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat-settings" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        settingsView <- tourGroupApplicationService.getChatSettings(TourGroupId(groupIdValue), currentUserId, currentTime)
+        response <- Ok(TourGroupChatSettingsResponseDto.fromView(settingsView).asJson)
+      yield response
+
+    case request @ PATCH -> Root / "api" / "tour-groups" / groupIdValue / "chat-settings" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        settingsRequest <- request.as[UpdateTourGroupChatSettingsRequestDto]
+        updatedAt <- currentInstantF
+        settingsView <- tourGroupApplicationService.updateChatSettings(
+          groupId = TourGroupId(groupIdValue),
+          organizerUserId = currentUserId,
+          allowMemberDirectChat = settingsRequest.allowMemberDirectChat,
+          updatedAt = updatedAt
+        )
+        response <- Ok(TourGroupChatSettingsResponseDto.fromView(settingsView).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "conversations" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        conversations <- tourGroupApplicationService.listConversations(TourGroupId(groupIdValue), currentUserId, currentTime)
+        response <- Ok(TourGroupConversationListResponseDto.fromView(conversations).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "conversation" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        conversations <- tourGroupApplicationService.listConversations(TourGroupId(groupIdValue), currentUserId, currentTime)
+        response <- Ok(TourGroupConversationListResponseDto.fromView(conversations).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "messages" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        messageViews <- tourGroupApplicationService.listGroupChatMessages(TourGroupId(groupIdValue), currentUserId, currentTime)
+        response <- Ok(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "messages" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        messageRequest <- request.as[SendTourGroupMessageRequestDto]
+        createdAt <- currentInstantF
+        messageViews <- tourGroupApplicationService.sendGroupChatMessage(TourGroupId(groupIdValue), currentUserId, messageRequest.content, createdAt)
+        response <- Ok(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "search" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        query <- fromEither(request.params.get("q").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
+        results <- tourGroupApplicationService.searchMessages(TourGroupId(groupIdValue), currentUserId, query, currentTime)
+        response <- Ok(TourGroupMessageSearchResponseDto(results.map(TourGroupMessageSearchResultResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "conversations" / "search" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        query <- fromEither(request.params.get("q").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
+        results <- tourGroupApplicationService.searchConversations(TourGroupId(groupIdValue), currentUserId, query, currentTime)
+        response <- Ok(TourGroupConversationListResponseDto(results.map(TourGroupConversationSummaryResponseDto.fromView), None).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "direct-conversations" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        conversations <- tourGroupApplicationService.listDirectConversations(TourGroupId(groupIdValue), currentUserId, currentTime)
+        response <- Ok(TourGroupConversationListResponseDto(conversations.map(TourGroupConversationSummaryResponseDto.fromView), None).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "direct-conversations" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        conversationRequest <- request.as[CreateDirectConversationRequestDto]
+        currentTime <- currentInstantF
+        conversation <- tourGroupApplicationService.getOrCreateDirectConversation(
+          groupId = TourGroupId(groupIdValue),
+          actingUserId = currentUserId,
+          targetUserId = UserId(conversationRequest.targetUserId),
+          currentTime = currentTime
+        )
+        response <- Ok(TourGroupConversationSummaryResponseDto.fromView(conversation).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "conversations" / conversationIdValue / "attachments" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        multipartPayload <- request.as[Multipart[F]]
+        filePart <- multipartPayload.parts.find(_.name.contains("attachment")).liftTo[F](SharedValidationError.RequiredFieldWasEmpty("attachment"))
+        fileName <- filePart.filename.liftTo[F](SharedValidationError.RequiredFieldWasEmpty("attachment.filename"))
+        mimeType =
+          filePart.headers
+            .get[headers.`Content-Type`]
+            .map(header => s"${header.mediaType.mainType}/${header.mediaType.subType}")
+            .getOrElse("application/octet-stream")
+        fileBytes <- filePart.body.compile.to(Array)
+        groupIdValue <- fromEither(request.params.get("groupId").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("groupId")))
+        currentTime <- currentInstantF
+        uploaded <- tourGroupApplicationService.uploadConversationAttachment(TourGroupId(groupIdValue), currentUserId, fileName, mimeType, fileBytes, currentTime)
+        response <- Created(TourGroupUploadedAttachmentResponseDto.fromView(uploaded).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "conversations" / conversationIdValue / "messages" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        messages <- tourGroupApplicationService.getConversationMessages(TourGroupConversationId(conversationIdValue), currentUserId)
+        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "conversations" / conversationIdValue / "messages" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        messageRequest <- request.as[SendTourGroupMessageRequestDto]
+        createdAt <- currentInstantF
+        messages <- tourGroupApplicationService.sendConversationMessage(
+          conversationId = TourGroupConversationId(conversationIdValue),
+          actingUserId = currentUserId,
+          messageType = messageRequest.messageType.map(TourGroupDtoMappers.toMessageType).getOrElse(TourGroupMessageType.Text),
+          content = messageRequest.content,
+          replyToMessageId = messageRequest.replyToMessageId.map(TourGroupMessageId.apply),
+          attachmentRefs = messageRequest.attachments.map(TourGroupUploadedAttachmentResponseDto.toView),
+          createdAt = createdAt
+        )
+        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "conversations" / conversationIdValue / "read" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        summary <- tourGroupApplicationService.markConversationRead(TourGroupConversationId(conversationIdValue), currentUserId, currentTime)
+        response <- Ok(TourGroupConversationSummaryResponseDto.fromView(summary).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "direct-conversations" / conversationIdValue / "messages" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        messageViews <- tourGroupApplicationService.listDirectConversationMessages(TourGroupConversationId(conversationIdValue), currentUserId)
+        response <- Ok(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ PATCH -> Root / "api" / "direct-conversations" / conversationIdValue / "mute" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        muteRequest <- request.as[UpdateConversationMuteRequestDto]
+        currentTime <- currentInstantF
+        summary <- tourGroupApplicationService.updateConversationMuteState(TourGroupConversationId(conversationIdValue), currentUserId, muteRequest.muted, currentTime)
+        response <- Ok(TourGroupConversationSummaryResponseDto.fromView(summary).asJson)
+      yield response
+
+    case request @ PATCH -> Root / "api" / "direct-conversations" / conversationIdValue / "archive" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        archiveRequest <- request.as[UpdateConversationArchiveRequestDto]
+        currentTime <- currentInstantF
+        summary <- tourGroupApplicationService.updateConversationArchiveState(TourGroupConversationId(conversationIdValue), currentUserId, archiveRequest.archived, currentTime)
+        response <- Ok(TourGroupConversationSummaryResponseDto.fromView(summary).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "direct-conversations" / conversationIdValue / "messages" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        messageRequest <- request.as[SendTourGroupMessageRequestDto]
+        createdAt <- currentInstantF
+        messageViews <- tourGroupApplicationService.sendDirectConversationMessage(
+          conversationId = TourGroupConversationId(conversationIdValue),
+          actingUserId = currentUserId,
+          content = messageRequest.content,
+          createdAt = createdAt
+        )
+        response <- Ok(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ PATCH -> Root / "api" / "messages" / messageIdValue =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        editRequest <- request.as[EditTourGroupMessageRequestDto]
+        currentTime <- currentInstantF
+        messages <- tourGroupApplicationService.editMessage(TourGroupMessageId(messageIdValue), currentUserId, editRequest.content, currentTime)
+        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "messages" / messageIdValue / "delete" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        messages <- tourGroupApplicationService.deleteMessage(TourGroupMessageId(messageIdValue), currentUserId, currentTime)
+        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "messages" / messageIdValue / "recall" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        currentTime <- currentInstantF
+        messages <- tourGroupApplicationService.recallMessage(TourGroupMessageId(messageIdValue), currentUserId, currentTime)
+        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ POST -> Root / "api" / "messages" / messageIdValue / "reactions" =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        reactionRequest <- request.as[ReactTourGroupMessageRequestDto]
+        currentTime <- currentInstantF
+        messages <- tourGroupApplicationService.addReaction(TourGroupMessageId(messageIdValue), currentUserId, reactionRequest.reactionType, currentTime)
+        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
+
+    case request @ DELETE -> Root / "api" / "messages" / messageIdValue / "reactions" / reactionTypeValue =>
+      for
+        currentUserId <- requireCurrentUserId(request)
+        messages <- tourGroupApplicationService.removeReaction(TourGroupMessageId(messageIdValue), currentUserId, reactionTypeValue)
+        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+      yield response
   }

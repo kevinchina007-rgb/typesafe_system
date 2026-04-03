@@ -6,6 +6,7 @@ import com.typesafe.travel.auth.domain.*
 import com.typesafe.travel.persistence.codecs.DatabaseCodecs.given
 import com.typesafe.travel.shared.kernel.*
 import doobie.*
+import doobie.free.connection.ConnectionIO
 import doobie.implicits.*
 
 import java.time.Instant
@@ -33,23 +34,31 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
     """.query[(String, String, String, String, String, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toUserCredential))
 
   override def saveUserCredential(userCredential: UserCredential): F[UserCredential] =
-    sql"""
-      insert into user_credentials(credential_id, user_id, login_email, password_hash, status, created_at, updated_at)
-      values (
-        ${userCredential.credentialId.value},
-        ${userCredential.userId.value},
-        ${userCredential.loginEmail.value},
-        ${userCredential.passwordHash},
-        ${userCredential.status.toString},
-        ${userCredential.createdAt},
-        ${userCredential.updatedAt}
+    (
+      sql"""
+        update user_credentials
+        set login_email = ${userCredential.loginEmail.value},
+            password_hash = ${userCredential.passwordHash},
+            status = ${userCredential.status.toString},
+            updated_at = ${userCredential.updatedAt}
+        where user_id = ${userCredential.userId.value}
+      """.update.run.flatMap(updatedRows =>
+        if updatedRows > 0 then updatedRows.pure[ConnectionIO]
+        else
+          sql"""
+            insert into user_credentials(credential_id, user_id, login_email, password_hash, status, created_at, updated_at)
+            values (
+              ${userCredential.credentialId.value},
+              ${userCredential.userId.value},
+              ${userCredential.loginEmail.value},
+              ${userCredential.passwordHash},
+              ${userCredential.status.toString},
+              ${userCredential.createdAt},
+              ${userCredential.updatedAt}
+            )
+          """.update.run
       )
-      on conflict (user_id) do update set
-        login_email = excluded.login_email,
-        password_hash = excluded.password_hash,
-        status = excluded.status,
-        updated_at = excluded.updated_at
-    """.update.run.transact(transactor).as(userCredential)
+    ).transact(transactor).as(userCredential)
 
   override def findManagerCredential(managerType: AuthManagerType, managerId: ManagerId): F[Option[ManagerCredential]] =
     sql"""
@@ -66,24 +75,33 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
     """.query[(String, String, String, String, String, String, Instant, Instant)].option.transact(transactor).flatMap(_.traverse(toManagerCredential))
 
   override def saveManagerCredential(managerCredential: ManagerCredential): F[ManagerCredential] =
-    sql"""
-      insert into manager_credentials(credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at)
-      values (
-        ${managerCredential.credentialId.value},
-        ${managerCredential.managerType.toString},
-        ${managerCredential.managerId.value},
-        ${managerCredential.loginEmail.value},
-        ${managerCredential.passwordHash},
-        ${managerCredential.status.toString},
-        ${managerCredential.createdAt},
-        ${managerCredential.updatedAt}
+    (
+      sql"""
+        update manager_credentials
+        set login_email = ${managerCredential.loginEmail.value},
+            password_hash = ${managerCredential.passwordHash},
+            status = ${managerCredential.status.toString},
+            updated_at = ${managerCredential.updatedAt}
+        where manager_type = ${managerCredential.managerType.toString}
+          and manager_id = ${managerCredential.managerId.value}
+      """.update.run.flatMap(updatedRows =>
+        if updatedRows > 0 then updatedRows.pure[ConnectionIO]
+        else
+          sql"""
+            insert into manager_credentials(credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at)
+            values (
+              ${managerCredential.credentialId.value},
+              ${managerCredential.managerType.toString},
+              ${managerCredential.managerId.value},
+              ${managerCredential.loginEmail.value},
+              ${managerCredential.passwordHash},
+              ${managerCredential.status.toString},
+              ${managerCredential.createdAt},
+              ${managerCredential.updatedAt}
+            )
+          """.update.run
       )
-      on conflict (manager_type, manager_id) do update set
-        login_email = excluded.login_email,
-        password_hash = excluded.password_hash,
-        status = excluded.status,
-        updated_at = excluded.updated_at
-    """.update.run.transact(transactor).as(managerCredential)
+    ).transact(transactor).as(managerCredential)
 
   override def findSessionById(sessionId: SessionId): F[Option[AuthSession]] =
     sql"""

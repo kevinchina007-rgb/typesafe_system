@@ -161,6 +161,7 @@ final class ApiRouter[F[_]: Async: Clock](
   protected given createOrderDecoder: EntityDecoder[F, CreateOrderRequestDto] = jsonOf[F, CreateOrderRequestDto]
   protected given managerLoginDecoder: EntityDecoder[F, ManagerLoginRequestDto] = jsonOf[F, ManagerLoginRequestDto]
   protected given managerDecisionDecoder: EntityDecoder[F, ManagerDecisionRequestDto] = jsonOf[F, ManagerDecisionRequestDto]
+  protected given managerBatchDecisionDecoder: EntityDecoder[F, ManagerBatchDecisionRequestDto] = jsonOf[F, ManagerBatchDecisionRequestDto]
   protected given registerAirlineManagerDecoder: EntityDecoder[F, RegisterAirlineManagerRequestDto] = jsonOf[F, RegisterAirlineManagerRequestDto]
   protected given registerHotelManagerDecoder: EntityDecoder[F, RegisterHotelManagerRequestDto] = jsonOf[F, RegisterHotelManagerRequestDto]
   protected given createManagerFlightDecoder: EntityDecoder[F, CreateManagerFlightRequestDto] = jsonOf[F, CreateManagerFlightRequestDto]
@@ -189,6 +190,9 @@ final class ApiRouter[F[_]: Async: Clock](
   protected given reviewGroupPlanSelectionDecoder: EntityDecoder[F, ReviewGroupPlanSelectionRequestDto] = jsonOf[F, ReviewGroupPlanSelectionRequestDto]
   protected given rejectGroupPlanSelectionDecoder: EntityDecoder[F, RejectGroupPlanSelectionRequestDto] = jsonOf[F, RejectGroupPlanSelectionRequestDto]
   protected given payGroupPlanSelectionDecoder: EntityDecoder[F, PayGroupPlanSelectionRequestDto] = jsonOf[F, PayGroupPlanSelectionRequestDto]
+  protected given batchReviewGroupPlanSelectionsDecoder: EntityDecoder[F, BatchReviewGroupPlanSelectionsRequestDto] = jsonOf[F, BatchReviewGroupPlanSelectionsRequestDto]
+  protected given batchRejectGroupPlanSelectionsDecoder: EntityDecoder[F, BatchRejectGroupPlanSelectionsRequestDto] = jsonOf[F, BatchRejectGroupPlanSelectionsRequestDto]
+  protected given batchPayGroupPlanSelectionsDecoder: EntityDecoder[F, BatchPayGroupPlanSelectionsRequestDto] = jsonOf[F, BatchPayGroupPlanSelectionsRequestDto]
   protected given multipartDecoder: EntityDecoder[F, Multipart[F]] = EntityDecoder.multipart[F]
 
   private val baseRoutes: HttpRoutes[F] =
@@ -329,6 +333,7 @@ final class ApiRouter[F[_]: Async: Clock](
   protected object ManagerIdQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("managerId")
   protected object ManagerTypeQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("managerType")
   protected object TaskStatusQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("status")
+  protected object TaskResourceTypeQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("resourceType")
 
   protected def parseOptionalSearchText(searchTextValue: Option[String]): F[Option[String]] =
     searchTextValue match

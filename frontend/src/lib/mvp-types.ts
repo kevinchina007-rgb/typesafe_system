@@ -442,6 +442,11 @@ export type TourGroupSummaryResponse = {
   capacity: number
   usedCapacity: number
   isFull: boolean
+  memberCount: number
+  activeTravelerCount: number
+  pendingSelectionCount: number
+  confirmedSelectionCount: number
+  convertedOrderCount: number
   status: string
   createdAt: string
 }
@@ -506,6 +511,109 @@ export type GroupSelectionOrderLinkResponse = {
   createdAt: string
 }
 
+export type GroupSelectionOrderProjectionResponse = {
+  selectionId: string
+  orderId: string
+  orderStatus: string
+  paymentStatus: string
+  supplierReviewStatus: string
+  refundStatus: string | null
+  bookingSummaryLabel: string
+}
+
+export type TourGroupChatSettingsResponse = {
+  groupId: string
+  allowMemberDirectChat: boolean
+  updatedAt: string
+  updatedByUserId: string
+  canUpdate: boolean
+}
+
+export type TourGroupConversationSummaryResponse = {
+  conversationId: string
+  conversationType: string
+  status: string
+  counterpartUserId: string | null
+  counterpartDisplayName: string | null
+  counterpartAvatarUrl: string | null
+  conversationTitle: string
+  participantsSummary: string
+  lastMessagePreview: string | null
+  lastMessageAt: string | null
+  unreadCount: number
+  isMuted: boolean
+  isArchived: boolean
+  canSendMessage: boolean
+}
+
+export type TourGroupConversationListResponse = {
+  conversations: TourGroupConversationSummaryResponse[]
+  groupChatConversationId: string | null
+}
+
+export type TourGroupMessageAttachmentResponse = {
+  attachmentId: string
+  attachmentType: string
+  publicUrl: string
+  originalFileName: string
+  mimeType: string
+  fileSize: number
+}
+
+export type TourGroupUploadedAttachmentResponse = {
+  attachmentId: string
+  attachmentType: string
+  publicUrl: string
+  storagePath: string
+  originalFileName: string
+  mimeType: string
+  fileSize: number
+  sortOrder: number
+  createdAt: string
+}
+
+export type TourGroupMessageReactionResponse = {
+  reactionType: string
+  count: number
+  reactedByCurrentUser: boolean
+}
+
+export type TourGroupMessageResponse = {
+  messageId: string
+  conversationId: string
+  messageType: string
+  senderUserId: string
+  senderDisplayName: string
+  senderAvatarUrl: string | null
+  content: string
+  replyToMessageId: string | null
+  replyToPreview: string | null
+  status: string
+  createdAt: string
+  updatedAt: string
+  attachments: TourGroupMessageAttachmentResponse[]
+  reactions: TourGroupMessageReactionResponse[]
+  canEdit: boolean
+  canDelete: boolean
+  canRecall: boolean
+  canReact: boolean
+  isMine: boolean
+}
+
+export type TourGroupMessageListResponse = {
+  messages: TourGroupMessageResponse[]
+}
+
+export type TourGroupMessageSearchResultResponse = {
+  conversationId: string
+  conversationTitle: string
+  message: TourGroupMessageResponse
+}
+
+export type TourGroupMessageSearchResponse = {
+  results: TourGroupMessageSearchResultResponse[]
+}
+
 export type TourGroupDetailsResponse = {
   group: TourGroupSummaryResponse
   memberships: TourGroupMembershipResponse[]
@@ -514,6 +622,7 @@ export type TourGroupDetailsResponse = {
   planOptions: GroupPlanOptionResponse[]
   selections: GroupPlanSelectionResponse[]
   selectionOrderLinks: GroupSelectionOrderLinkResponse[]
+  selectionOrderProjections: GroupSelectionOrderProjectionResponse[]
   bookings: OrderResponse[]
 }
 
@@ -523,7 +632,7 @@ export type TourGroupListResponse = {
 
 export type TourGroupPaySelectionResponse = {
   group: TourGroupDetailsResponse
-  order: OrderResponse
+  orders: OrderResponse[]
 }
 
 export type ManagerSessionResponse = {
@@ -555,11 +664,21 @@ export type ManagerTaskResponse = {
   supplierReviewStatus: string
   summaryLabel: string
   detailLabel: string
+  requestedAt: string
   reviewDecision: SupplierReviewDecisionResponse | null
+  reviewedBy: string | null
+  reviewedAt: string | null
+  reviewNote: string | null
 }
 
 export type ManagerTaskListResponse = {
   tasks: ManagerTaskResponse[]
+}
+
+export type ManagerBatchDecisionResponse = {
+  processedCount: number
+  orderItemIds: string[]
+  action: string
 }
 
 export type ManagerRefundTaskResponse = {

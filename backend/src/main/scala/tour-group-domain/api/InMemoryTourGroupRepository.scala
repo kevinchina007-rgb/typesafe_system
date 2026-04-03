@@ -17,6 +17,12 @@ final class InMemoryTourGroupRepository[F[_]: Sync] private (
     selectionState: TrieMap[GroupPlanSelectionId, GroupPlanSelection],
     selectionTravelerState: TrieMap[GroupPlanSelectionTravelerId, GroupPlanSelectionTraveler],
     selectionOrderLinkState: TrieMap[GroupSelectionOrderLinkId, GroupSelectionOrderLink],
+    chatSettingsState: TrieMap[TourGroupId, TourGroupChatSettings],
+    conversationState: TrieMap[TourGroupConversationId, TourGroupConversation],
+    conversationParticipantState: TrieMap[TourGroupConversationParticipantId, TourGroupConversationParticipant],
+    messageState: TrieMap[TourGroupMessageId, TourGroupMessage],
+    messageAttachmentState: TrieMap[TourGroupMessageAttachmentId, TourGroupMessageAttachment],
+    messageReactionState: TrieMap[TourGroupMessageReactionId, TourGroupMessageReaction],
     sequence: AtomicLong
 ) extends TourGroupRepository[F]:
 
@@ -28,6 +34,11 @@ final class InMemoryTourGroupRepository[F[_]: Sync] private (
   override def nextSelectionId: F[GroupPlanSelectionId] = nextId("selection", GroupPlanSelectionId.apply)
   override def nextSelectionTravelerId: F[GroupPlanSelectionTravelerId] = nextId("selection-traveler", GroupPlanSelectionTravelerId.apply)
   override def nextSelectionOrderLinkId: F[GroupSelectionOrderLinkId] = nextId("selection-link", GroupSelectionOrderLinkId.apply)
+  override def nextConversationId: F[TourGroupConversationId] = nextId("conversation", TourGroupConversationId.apply)
+  override def nextConversationParticipantId: F[TourGroupConversationParticipantId] = nextId("conversation-participant", TourGroupConversationParticipantId.apply)
+  override def nextMessageId: F[TourGroupMessageId] = nextId("message", TourGroupMessageId.apply)
+  override def nextMessageAttachmentId: F[TourGroupMessageAttachmentId] = nextId("message-attachment", TourGroupMessageAttachmentId.apply)
+  override def nextMessageReactionId: F[TourGroupMessageReactionId] = nextId("message-reaction", TourGroupMessageReactionId.apply)
 
   override def saveGroup(group: TourGroup): F[TourGroup] = save(groupState, group.groupId, group)
   override def findGroupById(groupId: TourGroupId): F[Option[TourGroup]] = get(groupState, groupId)
@@ -89,6 +100,131 @@ final class InMemoryTourGroupRepository[F[_]: Sync] private (
       Sync[F].delay(selectionOrderLinkState.values.filter(link => selectionIds.contains(link.selectionId)).toList.sortBy(_.createdAt.toEpochMilli))
     }
 
+  override def saveChatSettings(settings: TourGroupChatSettings): F[TourGroupChatSettings] =
+    save(chatSettingsState, settings.groupId, settings)
+  override def findChatSettingsByGroupId(groupId: TourGroupId): F[Option[TourGroupChatSettings]] =
+    get(chatSettingsState, groupId)
+
+  override def saveConversation(conversation: TourGroupConversation): F[TourGroupConversation] =
+    save(conversationState, conversation.conversationId, conversation)
+  override def findConversationById(conversationId: TourGroupConversationId): F[Option[TourGroupConversation]] =
+    get(conversationState, conversationId)
+  override def findPublicConversationByGroupId(groupId: TourGroupId): F[Option[TourGroupConversation]] =
+    Sync[F].delay(conversationState.values.find(c => c.groupId == groupId && c.conversationType == TourGroupConversationType.GroupPublic))
+  override def findDirectConversationByGroupIdAndUsers(groupId: TourGroupId, userA: UserId, userB: UserId): F[Option[TourGroupConversation]] =
+    Sync[F].delay {
+      val (leftUserId, rightUserId) =
+        if userA.value <= userB.value then (userA, userB) else (userB, userA)
+      conversationState.values.find { conversation =>
+        conversation.groupId == groupId &&
+        conversation.conversationType == TourGroupConversationType.Direct &&
+        conversation.directMemberAUserId.contains(leftUserId) &&
+        conversation.directMemberBUserId.contains(rightUserId)
+      }
+    }
+  override def findDirectConversationsByGroupIdAndUserId(groupId: TourGroupId, userId: UserId): F[List[TourGroupConversation]] =
+    Sync[F].delay(
+      conversationState.values
+        .filter { conversation =>
+          conversation.groupId == groupId &&
+          conversation.conversationType == TourGroupConversationType.Direct &&
+          (conversation.directMemberAUserId.contains(userId) || conversation.directMemberBUserId.contains(userId))
+        }
+        .toList
+        .sortBy(_.createdAt.toEpochMilli)
+    )
+  override def findAccessibleConversationsByGroupIdAndUserId(groupId: TourGroupId, userId: UserId): F[List[TourGroupConversation]] =
+    Sync[F].delay {
+      val accessibleConversationIds =
+        conversationParticipantState.values
+          .filter(participant => participant.userId == userId && participant.status == TourGroupConversationParticipantStatus.Active)
+          .map(_.conversationId)
+          .toSet
+      conversationState.values
+        .filter(conversation => conversation.groupId == groupId && accessibleConversationIds.contains(conversation.conversationId))
+        .toList
+        .sortBy(_.updatedAt.toEpochMilli)
+        .reverse
+    }
+
+  override def saveConversationParticipant(participant: TourGroupConversationParticipant): F[TourGroupConversationParticipant] =
+    save(conversationParticipantState, participant.participantId, participant)
+  override def findConversationParticipant(conversationId: TourGroupConversationId, userId: UserId): F[Option[TourGroupConversationParticipant]] =
+    Sync[F].delay(conversationParticipantState.values.find(p => p.conversationId == conversationId && p.userId == userId))
+  override def findParticipantsByConversationId(conversationId: TourGroupConversationId): F[List[TourGroupConversationParticipant]] =
+    Sync[F].delay(conversationParticipantState.values.filter(_.conversationId == conversationId).toList.sortBy(_.joinedAt.toEpochMilli))
+
+  override def saveMessage(message: TourGroupMessage): F[TourGroupMessage] =
+    save(messageState, message.messageId, message)
+  override def findMessageById(messageId: TourGroupMessageId): F[Option[TourGroupMessage]] =
+    get(messageState, messageId)
+  override def findMessagesByConversationId(conversationId: TourGroupConversationId): F[List[TourGroupMessage]] =
+    Sync[F].delay(messageState.values.filter(_.conversationId == conversationId).toList.sortBy(_.createdAt.toEpochMilli))
+  override def saveMessageAttachment(attachment: TourGroupMessageAttachment): F[TourGroupMessageAttachment] =
+    save(messageAttachmentState, attachment.attachmentId, attachment)
+  override def findAttachmentsByMessageId(messageId: TourGroupMessageId): F[List[TourGroupMessageAttachment]] =
+    Sync[F].delay(messageAttachmentState.values.filter(_.messageId == messageId).toList.sortBy(_.sortOrder))
+  override def findAttachmentsByMessageIds(messageIds: List[TourGroupMessageId]): F[Map[TourGroupMessageId, List[TourGroupMessageAttachment]]] =
+    Sync[F].delay {
+      val messageIdSet = messageIds.toSet
+      messageAttachmentState.values
+        .filter(attachment => messageIdSet.contains(attachment.messageId))
+        .toList
+        .groupBy(_.messageId)
+        .view
+        .mapValues(_.sortBy(_.sortOrder))
+        .toMap
+    }
+  override def saveMessageReaction(reaction: TourGroupMessageReaction): F[TourGroupMessageReaction] =
+    Sync[F].delay {
+      messageReactionState.values
+        .filter(existing =>
+          existing.messageId == reaction.messageId &&
+            existing.userId == reaction.userId &&
+            existing.reactionType == reaction.reactionType
+        )
+        .foreach(existing => messageReactionState.remove(existing.reactionId))
+      messageReactionState.put(reaction.reactionId, reaction)
+      reaction
+    }
+  override def deleteMessageReaction(messageId: TourGroupMessageId, userId: UserId, reactionType: String): F[Unit] =
+    Sync[F].delay {
+      messageReactionState.values
+        .filter(existing =>
+          existing.messageId == messageId &&
+            existing.userId == userId &&
+            existing.reactionType == reactionType
+        )
+        .foreach(existing => messageReactionState.remove(existing.reactionId))
+      ()
+    }
+  override def findReactionsByMessageIds(messageIds: List[TourGroupMessageId]): F[Map[TourGroupMessageId, List[TourGroupMessageReaction]]] =
+    Sync[F].delay {
+      val messageIdSet = messageIds.toSet
+      messageReactionState.values
+        .filter(reaction => messageIdSet.contains(reaction.messageId))
+        .toList
+        .groupBy(_.messageId)
+        .view
+        .mapValues(_.sortBy(_.createdAt.toEpochMilli))
+        .toMap
+    }
+  override def searchMessagesByGroupIdAndUserId(groupId: TourGroupId, userId: UserId, query: String): F[List[TourGroupMessage]] =
+    findAccessibleConversationsByGroupIdAndUserId(groupId, userId).flatMap { conversations =>
+      val conversationIds = conversations.map(_.conversationId).toSet
+      val normalizedQuery = query.trim.toLowerCase
+      Sync[F].delay {
+        messageState.values
+          .filter(message =>
+            conversationIds.contains(message.conversationId) &&
+              message.content.toLowerCase.contains(normalizedQuery)
+          )
+          .toList
+          .sortBy(_.createdAt.toEpochMilli)
+          .reverse
+      }
+    }
+
   override def findGroupDetails(groupId: TourGroupId): F[Option[TourGroupDetails]] =
     findGroupById(groupId).flatMap {
       case None => Sync[F].pure(None)
@@ -119,6 +255,12 @@ final class InMemoryTourGroupRepository[F[_]: Sync] private (
 object InMemoryTourGroupRepository:
   def create[F[_]: Sync]: InMemoryTourGroupRepository[F] =
     new InMemoryTourGroupRepository[F](
+      TrieMap.empty,
+      TrieMap.empty,
+      TrieMap.empty,
+      TrieMap.empty,
+      TrieMap.empty,
+      TrieMap.empty,
       TrieMap.empty,
       TrieMap.empty,
       TrieMap.empty,

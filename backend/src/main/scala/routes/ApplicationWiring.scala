@@ -107,6 +107,7 @@ object ApplicationWiring:
     val frontendDistRootDirectoryPath = Paths.get("..", "frontend", "dist").toAbsolutePath.normalize()
     val localAvatarStorage = LocalAvatarStorage.create[F](avatarUploadRootDirectoryPath)
     val localContentImageStorage = LocalContentImageStorage.create[F](contentUploadRootDirectoryPath)
+    val localTourGroupChatAttachmentStorage = LocalTourGroupChatAttachmentStorage.create[F](contentUploadRootDirectoryPath)
 
     val liveUserService = LiveUserService[F](inMemoryUserRepository)
     val liveTravelerProfileService =
@@ -190,6 +191,7 @@ object ApplicationWiring:
     val liveTourGroupApplicationService =
       LiveTourGroupApplicationService[F](
         tourGroupRepository = inMemoryTourGroupRepository,
+        userRepository = inMemoryUserRepository,
         travelerProfileRepository = inMemoryTravelerProfileRepository,
         orderService = liveOrderService,
         orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
@@ -197,7 +199,8 @@ object ApplicationWiring:
         flightBookingApplicationService = liveFlightBookingApplicationService,
         hotelBookingApplicationService = liveHotelBookingApplicationService,
         trainBookingApplicationService = liveTrainBookingApplicationService,
-        attractionBookingApplicationService = liveAttractionBookingApplicationService
+        attractionBookingApplicationService = liveAttractionBookingApplicationService,
+        chatAttachmentStorage = localTourGroupChatAttachmentStorage
       )
     val liveTrainAdminApplicationService =
       LiveTrainAdminApplicationService[F](
@@ -301,6 +304,7 @@ object ApplicationWiring:
     val frontendDistRootDirectoryPath = Paths.get("..", "frontend", "dist").toAbsolutePath.normalize()
     val localAvatarStorage = LocalAvatarStorage.create[F](avatarUploadRootDirectoryPath)
     val localContentImageStorage = LocalContentImageStorage.create[F](contentUploadRootDirectoryPath)
+    val localTourGroupChatAttachmentStorage = LocalTourGroupChatAttachmentStorage.create[F](contentUploadRootDirectoryPath)
 
     DatabaseTransactor.resource[F](databaseConfig).evalMap { databaseTransactor =>
       for
@@ -400,6 +404,7 @@ object ApplicationWiring:
         liveTourGroupApplicationService =
           LiveTourGroupApplicationService[F](
             tourGroupRepository = doobieTourGroupRepository,
+            userRepository = doobieUserRepository,
             travelerProfileRepository = doobieTravelerProfileRepository,
             orderService = liveOrderService,
             orderLifecycleApplicationService = liveOrderLifecycleApplicationService,
@@ -407,7 +412,8 @@ object ApplicationWiring:
             flightBookingApplicationService = liveFlightBookingApplicationService,
             hotelBookingApplicationService = liveHotelBookingApplicationService,
             trainBookingApplicationService = liveTrainBookingApplicationService,
-            attractionBookingApplicationService = liveAttractionBookingApplicationService
+            attractionBookingApplicationService = liveAttractionBookingApplicationService,
+            chatAttachmentStorage = localTourGroupChatAttachmentStorage
           )
         liveTrainAdminApplicationService =
           LiveTrainAdminApplicationService[F](

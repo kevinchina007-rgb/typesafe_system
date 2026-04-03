@@ -554,6 +554,110 @@ textarea {
   width: 100%;
 }
 
+.tour-group-plan-search-grid {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: 1fr;
+}
+
+.tour-group-plan-search-grid.hotel {
+  grid-template-columns: 1fr;
+}
+
+.tour-group-chat-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.tour-group-chat-layout.direct {
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.tour-group-chat-messages,
+.tour-group-direct-list,
+.tour-group-chat-thread,
+.tour-group-direct-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.tour-group-chat-messages {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.chat-message-card {
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  background: #f3f7ff;
+  border: 1px solid #d7e4f1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.chat-message-card.mine {
+  background: #e9f3ff;
+  border-color: #9cc4ff;
+}
+
+.chat-message-card-highlight {
+  box-shadow: 0 0 0 3px rgba(47, 119, 255, 0.28);
+  border-color: #2f77ff;
+}
+
+.chat-search-result-active {
+  border-color: #2f77ff;
+  box-shadow: 0 0 0 2px rgba(47, 119, 255, 0.18);
+}
+
+.chat-message-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  color: #5e748d;
+  font-size: 0.9rem;
+}
+
+.chat-message-content {
+  margin: 0;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #1d2b3f;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  font-weight: 500;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-message-actions,
+.chat-message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.chat-message-actions > button,
+.chat-message-reactions > button {
+  width: auto;
+  min-width: 0;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+}
+
+.toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
 .blog-layout {
   display: grid;
   gap: 1rem;

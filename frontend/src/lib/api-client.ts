@@ -22,11 +22,18 @@ import type {
   ManagerRefundTaskListResponse,
   ManagerSessionResponse,
   ManagerTaskListResponse,
+  ManagerBatchDecisionResponse,
   OrderListResponse,
   OrderResponse,
   TourGroupDetailsResponse,
+  TourGroupChatSettingsResponse,
+  TourGroupConversationListResponse,
+  TourGroupConversationSummaryResponse,
   TourGroupListResponse,
+  TourGroupMessageListResponse,
+  TourGroupMessageSearchResponse,
   TourGroupPaySelectionResponse,
+  TourGroupUploadedAttachmentResponse,
   TravelerListResponse,
   TravelerResponse,
   ManagerType,
@@ -645,7 +652,172 @@ export const travelMvpApiClient = {
       body: JSON.stringify(payload),
     }),
 
+  batchPayTourGroupSelections: (payload: {
+    userId: string
+    selectionIds: string[]
+    paymentMethod: string
+  }): Promise<TourGroupPaySelectionResponse> =>
+    apiRequest('/selections/batch-pay', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  batchConfirmTourGroupSelections: (payload: {
+    organizerUserId: string
+    selectionIds: string[]
+    reviewNote?: string | null
+  }): Promise<TourGroupDetailsResponse> =>
+    apiRequest('/selections/batch-confirm', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  batchRejectTourGroupSelections: (payload: {
+    organizerUserId: string
+    selectionIds: string[]
+    reviewNote: string
+  }): Promise<TourGroupDetailsResponse> =>
+    apiRequest('/selections/batch-reject', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
   listTourGroupBookings: (groupId: string): Promise<OrderListResponse> => apiRequest(`/tour-groups/${groupId}/bookings`),
+
+  getTourGroupChatSettings: (groupId: string): Promise<TourGroupChatSettingsResponse> =>
+    apiRequest(`/tour-groups/${groupId}/chat-settings`),
+
+  updateTourGroupChatSettings: (
+    groupId: string,
+    payload: {
+      allowMemberDirectChat: boolean
+    },
+  ): Promise<TourGroupChatSettingsResponse> =>
+    apiRequest(`/tour-groups/${groupId}/chat-settings`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  listTourGroupChatMessages: (groupId: string): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/tour-groups/${groupId}/chat/messages`),
+
+  sendTourGroupChatMessage: (
+    groupId: string,
+    payload: {
+      content: string
+    },
+  ): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/tour-groups/${groupId}/chat/messages`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listTourGroupDirectConversations: (groupId: string): Promise<TourGroupConversationListResponse> =>
+    apiRequest(`/tour-groups/${groupId}/direct-conversations`),
+
+  listTourGroupConversations: (groupId: string): Promise<TourGroupConversationListResponse> =>
+    apiRequest(`/tour-groups/${groupId}/conversations`),
+
+  searchTourGroupConversations: (groupId: string, q: string): Promise<TourGroupConversationListResponse> =>
+    apiRequest(`/tour-groups/${groupId}/chat/conversations/search?q=${encodeURIComponent(q)}`),
+
+  searchTourGroupMessages: (groupId: string, q: string): Promise<TourGroupMessageSearchResponse> =>
+    apiRequest(`/tour-groups/${groupId}/chat/search?q=${encodeURIComponent(q)}`),
+
+  getOrCreateTourGroupDirectConversation: (
+    groupId: string,
+    payload: {
+      targetUserId: string
+    },
+  ): Promise<TourGroupConversationSummaryResponse> =>
+    apiRequest(`/tour-groups/${groupId}/direct-conversations`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listDirectConversationMessages: (conversationId: string): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/direct-conversations/${conversationId}/messages`),
+
+  listConversationMessages: (conversationId: string): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/conversations/${conversationId}/messages`),
+
+  markConversationRead: (conversationId: string): Promise<TourGroupConversationSummaryResponse> =>
+    apiRequest(`/conversations/${conversationId}/read`, {
+      method: 'POST',
+    }),
+
+  uploadConversationAttachment: (groupId: string, conversationId: string, attachmentFile: File): Promise<TourGroupUploadedAttachmentResponse> => {
+    const formData = new FormData()
+    formData.set('attachment', attachmentFile)
+    return apiRequest(`/conversations/${conversationId}/attachments?groupId=${encodeURIComponent(groupId)}`, {
+      method: 'POST',
+      body: formData,
+    })
+  },
+
+  sendConversationMessage: (
+    conversationId: string,
+    payload: {
+      messageType?: string
+      content: string
+      replyToMessageId?: string | null
+      attachments?: TourGroupUploadedAttachmentResponse[]
+    },
+  ): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  sendDirectConversationMessage: (
+    conversationId: string,
+    payload: {
+      content: string
+    },
+  ): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/direct-conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  editConversationMessage: (messageId: string, payload: { content: string }): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/messages/${messageId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteConversationMessage: (messageId: string): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/messages/${messageId}/delete`, {
+      method: 'POST',
+    }),
+
+  recallConversationMessage: (messageId: string): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/messages/${messageId}/recall`, {
+      method: 'POST',
+    }),
+
+  addConversationReaction: (messageId: string, reactionType: string): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/messages/${messageId}/reactions`, {
+      method: 'POST',
+      body: JSON.stringify({ reactionType }),
+    }),
+
+  removeConversationReaction: (messageId: string, reactionType: string): Promise<TourGroupMessageListResponse> =>
+    apiRequest(`/messages/${messageId}/reactions/${encodeURIComponent(reactionType)}`, {
+      method: 'DELETE',
+    }),
+
+  updateDirectConversationMuteState: (conversationId: string, muted: boolean): Promise<TourGroupConversationSummaryResponse> =>
+    apiRequest(`/direct-conversations/${conversationId}/mute`, {
+      method: 'PATCH',
+      body: JSON.stringify({ muted }),
+    }),
+
+  updateDirectConversationArchiveState: (conversationId: string, archived: boolean): Promise<TourGroupConversationSummaryResponse> =>
+    apiRequest(`/direct-conversations/${conversationId}/archive`, {
+      method: 'PATCH',
+      body: JSON.stringify({ archived }),
+    }),
 
   createOrder: (payload: { ownerUserId: string; orderCurrency: string }): Promise<OrderResponse> =>
     apiRequest('/orders', {
@@ -865,6 +1037,7 @@ export const travelMvpApiClient = {
     managerId: string
     managerType: string
     status?: string
+    resourceType?: string
   }): Promise<ManagerTaskListResponse> => {
     const searchParams = new URLSearchParams()
     searchParams.set('managerId', query.managerId)
@@ -872,8 +1045,33 @@ export const travelMvpApiClient = {
     if (query.status) {
       searchParams.set('status', query.status)
     }
+    if (query.resourceType) {
+      searchParams.set('resourceType', query.resourceType)
+    }
     return apiRequest(`/manager/tasks?${searchParams.toString()}`)
   },
+
+  batchConfirmManagerBookingItems: (payload: {
+    managerId: string
+    managerType: string
+    orderItemIds: string[]
+    note?: string | null
+  }): Promise<ManagerBatchDecisionResponse> =>
+    apiRequest('/manager/tasks/batch-confirm', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  batchRejectManagerBookingItems: (payload: {
+    managerId: string
+    managerType: string
+    orderItemIds: string[]
+    reason: string
+  }): Promise<ManagerBatchDecisionResponse> =>
+    apiRequest('/manager/tasks/batch-reject', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
 
   listManagerFlights: (managerId: string): Promise<FlightListResponse> =>
     apiRequest(`/manager/flights?managerId=${encodeURIComponent(managerId)}`),

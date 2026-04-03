@@ -110,7 +110,7 @@ export function AttractionAdminPanel({
             <h3>{translate('attractionAdmin.registerTitle')}</h3>
             <label>
               {translate('attractionAdmin.email')}
-              <input name="email" type="email" placeholder="attraction@example.com" required />
+              <input name="email" type="email" placeholder={translate('attractionAdmin.email')} required />
             </label>
             <label>
               {translate('attractionAdmin.displayName')}
@@ -143,7 +143,7 @@ export function AttractionAdminPanel({
             <h3>{translate('attractionAdmin.loginTitle')}</h3>
             <label>
               {translate('attractionAdmin.email')}
-              <input name="email" type="email" placeholder="attraction@example.com" required />
+              <input name="email" type="email" placeholder={translate('attractionAdmin.email')} required />
             </label>
             <label>
               {translate('account.password')}

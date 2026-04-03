@@ -65,7 +65,10 @@ type ManagerPanelProps = {
   }) => Promise<void>
   onLoginManager: (payload: { managerType: ManagerType; email: string; password: string }) => Promise<void>
   onValidationError: (message: string) => void
-  onReloadTasks: (status: 'pending' | 'all' | 'confirmed' | 'rejected') => Promise<void>
+  onReloadTasks: (filters: {
+    status: 'pending' | 'all' | 'confirmed' | 'rejected'
+    resourceType: 'all' | 'flight' | 'hotel' | 'train' | 'attraction'
+  }) => Promise<void>
   onReloadRefundTasks: () => Promise<void>
   onCreateManagerFlight: (payload: {
     flightNumber: string
@@ -81,6 +84,8 @@ type ManagerPanelProps = {
   }) => Promise<void>
   onConfirmTask: (payload: { orderItemId: string; note: string }) => Promise<void>
   onRejectTask: (payload: { orderItemId: string; reason: string }) => Promise<void>
+  onBatchConfirmTasks: (payload: { orderItemIds: string[]; note: string }) => Promise<void>
+  onBatchRejectTasks: (payload: { orderItemIds: string[]; reason: string }) => Promise<void>
   onApproveRefundTask: (payload: { orderId: string }) => Promise<void>
   onRejectRefundTask: (payload: { orderId: string }) => Promise<void>
   onLogoutManager: () => void
@@ -104,13 +109,33 @@ export function ManagerPanel({
   onCreateManagerFlight,
   onConfirmTask,
   onRejectTask,
+  onBatchConfirmTasks,
+  onBatchRejectTasks,
   onApproveRefundTask,
   onRejectRefundTask,
   onLogoutManager,
 }: ManagerPanelProps) {
   const [taskFilter, setTaskFilter] = useState<'pending' | 'all' | 'confirmed' | 'rejected'>('pending')
+  const [resourceFilter, setResourceFilter] = useState<'all' | 'flight' | 'hotel' | 'train' | 'attraction'>('all')
   const [draftNotesByTaskId, setDraftNotesByTaskId] = useState<Record<string, string>>({})
   const [draftReasonsByTaskId, setDraftReasonsByTaskId] = useState<Record<string, string>>({})
+  const [selectedOrderItemIds, setSelectedOrderItemIds] = useState<string[]>([])
+  const [bulkNote, setBulkNote] = useState('')
+  const [bulkReason, setBulkReason] = useState('')
+
+  const visiblePendingTaskIds = managerTasks
+    .filter(task => task.supplierReviewStatus === 'PendingSupplierConfirmation')
+    .map(task => task.orderItemId)
+
+  function toggleTaskSelection(orderItemId: string) {
+    setSelectedOrderItemIds(currentIds =>
+      currentIds.includes(orderItemId) ? currentIds.filter(currentId => currentId !== orderItemId) : [...currentIds, orderItemId],
+    )
+  }
+
+  function toggleSelectAllPending(checked: boolean) {
+    setSelectedOrderItemIds(checked ? visiblePendingTaskIds : [])
+  }
 
   return (
     <section className="page-card">
@@ -159,7 +184,7 @@ export function ManagerPanel({
               </label>
               <label>
                 {translate('manager.email')}
-                <input name="email" type="email" placeholder="ops@airline.example" required />
+                <input name="email" type="email" placeholder={translate('manager.email')} required />
               </label>
               <label>
                 {translate('manager.airlineName')}
@@ -197,7 +222,7 @@ export function ManagerPanel({
               <h3>{translate('manager.loginAirline')}</h3>
               <label>
                 {translate('manager.email')}
-                <input name="email" type="email" placeholder="ops@airline.example" required disabled={isBusy} />
+                <input name="email" type="email" placeholder={translate('manager.email')} required disabled={isBusy} />
               </label>
               <label>
                 {translate('account.password')}
@@ -238,7 +263,7 @@ export function ManagerPanel({
               </label>
               <label>
                 {translate('manager.email')}
-                <input name="email" type="email" placeholder="ops@hotel.example" required />
+                <input name="email" type="email" placeholder={translate('manager.email')} required />
               </label>
               <label>
                 {translate('manager.hotelName')}
@@ -276,7 +301,7 @@ export function ManagerPanel({
               <h3>{translate('manager.loginHotel')}</h3>
               <label>
                 {translate('manager.email')}
-                <input name="email" type="email" placeholder="ops@example.com" required disabled={isBusy} />
+                <input name="email" type="email" placeholder={translate('manager.email')} required disabled={isBusy} />
               </label>
               <label>
                 {translate('account.password')}
@@ -484,7 +509,19 @@ export function ManagerPanel({
               <option value="rejected">{translate('manager.filter.rejected')}</option>
               <option value="all">{translate('manager.filter.all')}</option>
             </select>
-            <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onReloadTasks(taskFilter)}>
+            <select value={resourceFilter} disabled={isBusy} onChange={event => setResourceFilter(event.target.value as typeof resourceFilter)}>
+              <option value="all">{translate('manager.resourceFilter.all')}</option>
+              <option value="flight">{translate('manager.resourceFilter.flight')}</option>
+              <option value="hotel">{translate('manager.resourceFilter.hotel')}</option>
+              <option value="train">{translate('manager.resourceFilter.train')}</option>
+              <option value="attraction">{translate('manager.resourceFilter.attraction')}</option>
+            </select>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={isBusy}
+              onClick={() => void onReloadTasks({ status: taskFilter, resourceType: resourceFilter })}
+            >
               {translate('manager.refresh')}
             </button>
             <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onReloadRefundTasks()}>
@@ -493,6 +530,53 @@ export function ManagerPanel({
           </div>
 
           <div className="list-surface">
+            {visiblePendingTaskIds.length > 0 ? (
+              <div className="panel-card stack-form">
+                <div className="panel-heading">
+                  <strong>{translate('manager.batchActions')}</strong>
+                  <label className="checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={selectedOrderItemIds.length > 0 && selectedOrderItemIds.length === visiblePendingTaskIds.length}
+                      onChange={event => toggleSelectAllPending(event.target.checked)}
+                    />
+                    {translate('manager.selectAllPending')}
+                  </label>
+                </div>
+                <p className="detail-label">{translate('manager.selectedCount').replace('{count}', String(selectedOrderItemIds.length))}</p>
+                <div className="three-column-grid">
+                  <label>
+                    {translate('manager.note')}
+                    <input value={bulkNote} placeholder={translate('manager.notePlaceholder')} onChange={event => setBulkNote(event.target.value)} />
+                  </label>
+                  <label>
+                    {translate('manager.rejectReason')}
+                    <input
+                      value={bulkReason}
+                      placeholder={translate('manager.rejectReasonPlaceholder')}
+                      onChange={event => setBulkReason(event.target.value)}
+                    />
+                  </label>
+                </div>
+                <div className="compact-action-block">
+                  <button
+                    type="button"
+                    disabled={isBusy || selectedOrderItemIds.length === 0}
+                    onClick={() => void onBatchConfirmTasks({ orderItemIds: selectedOrderItemIds, note: bulkNote })}
+                  >
+                    {translate('manager.batchConfirm')}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={isBusy || selectedOrderItemIds.length === 0}
+                    onClick={() => void onBatchRejectTasks({ orderItemIds: selectedOrderItemIds, reason: bulkReason })}
+                  >
+                    {translate('manager.batchReject')}
+                  </button>
+                </div>
+              </div>
+            ) : null}
             {managerTasks.length === 0 ? (
               <p className="empty-state">{translate('manager.empty')}</p>
             ) : (
@@ -500,10 +584,24 @@ export function ManagerPanel({
                 {managerTasks.map(task => (
                   <li key={task.orderItemId}>
                     <div>
+                      {task.supplierReviewStatus === 'PendingSupplierConfirmation' ? (
+                        <label className="checkbox-row">
+                          <input
+                            type="checkbox"
+                            checked={selectedOrderItemIds.includes(task.orderItemId)}
+                            onChange={() => toggleTaskSelection(task.orderItemId)}
+                          />
+                          {translate('manager.selectTask')}
+                        </label>
+                      ) : null}
                       <strong>{task.summaryLabel}</strong>
                       <p>{localizeManagerTaskType(task.taskType, currentLanguage)}</p>
                       <p>{task.detailLabel}</p>
                       <p>{localizeSupplierReviewStatus(task.supplierReviewStatus, currentLanguage)}</p>
+                      <p>{`${translate('manager.requestedAt')}: ${formatIsoDateTime(task.requestedAt, '-')}`}</p>
+                      {task.reviewedAt ? <p>{`${translate('manager.reviewedAt')}: ${formatIsoDateTime(task.reviewedAt, '-')}`}</p> : null}
+                      {task.reviewedBy ? <p>{`${translate('manager.reviewedBy')}: ${task.reviewedBy}`}</p> : null}
+                      {task.reviewNote ? <p>{`${translate('manager.reviewNote')}: ${task.reviewNote}`}</p> : null}
                     </div>
                     <div className="manager-task-actions">
                       <label>

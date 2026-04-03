@@ -38,6 +38,11 @@ final case class GroupPlanOptionId(value: String) extends AnyVal
 final case class GroupPlanSelectionId(value: String) extends AnyVal
 final case class GroupPlanSelectionTravelerId(value: String) extends AnyVal
 final case class GroupSelectionOrderLinkId(value: String) extends AnyVal
+final case class TourGroupConversationId(value: String) extends AnyVal
+final case class TourGroupConversationParticipantId(value: String) extends AnyVal
+final case class TourGroupMessageId(value: String) extends AnyVal
+final case class TourGroupMessageAttachmentId(value: String) extends AnyVal
+final case class TourGroupMessageReactionId(value: String) extends AnyVal
 final case class StaffId(value: String) extends AnyVal
 final case class AuditTaskId(value: String) extends AnyVal
 final case class SupportTicketId(value: String) extends AnyVal

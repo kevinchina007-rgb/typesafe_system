@@ -21,7 +21,9 @@ object MigrationPlan:
     loadMigrationStep(10, "blog_and_review_phase1", "V10__blog_and_review_phase1.sql"),
     loadMigrationStep(11, "blog_review_phase3", "V11__blog_review_phase3.sql"),
     loadMigrationStep(12, "attraction_ticket_inventory_fields", "V12__attraction_ticket_inventory_fields.sql"),
-    loadMigrationStep(13, "authentication_session_phase1", "V13__authentication_session_phase1.sql")
+    loadMigrationStep(13, "authentication_session_phase1", "V13__authentication_session_phase1.sql"),
+    loadMigrationStep(14, "tour_group_chat_phase1", "V14__tour_group_chat_phase1.sql"),
+    loadMigrationStep(15, "tour_group_chat_phase2", "V15__tour_group_chat_phase2.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

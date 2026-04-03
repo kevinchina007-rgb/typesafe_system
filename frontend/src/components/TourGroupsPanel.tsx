@@ -64,11 +64,48 @@ type TourGroupsPanelProps = {
   onSubmitSelection: (selectionId: string, payload: { userId: string }) => Promise<TourGroupDetailsResponse>
   onConfirmSelection: (selectionId: string, payload: { organizerUserId: string; reviewNote?: string | null }) => Promise<TourGroupDetailsResponse>
   onRejectSelection: (selectionId: string, payload: { organizerUserId: string; reviewNote: string }) => Promise<TourGroupDetailsResponse>
+  onBatchConfirmSelections: (payload: {
+    organizerUserId: string
+    selectionIds: string[]
+    reviewNote?: string | null
+  }) => Promise<TourGroupDetailsResponse>
+  onBatchRejectSelections: (payload: {
+    organizerUserId: string
+    selectionIds: string[]
+    reviewNote: string
+  }) => Promise<TourGroupDetailsResponse>
+  onBatchPaySelections: (payload: {
+    userId: string
+    selectionIds: string[]
+    paymentMethod: string
+  }) => Promise<{ group: TourGroupDetailsResponse; orders: import('../lib/mvp-types').OrderResponse[] }>
   onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightResponse[]>
   onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelResponse[]>
   onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onOpenBookings: () => Promise<void>
+  onLoadChatSettings: (groupId: string) => Promise<import('../lib/mvp-types').TourGroupChatSettingsResponse>
+  onUpdateChatSettings: (groupId: string, payload: { allowMemberDirectChat: boolean }) => Promise<import('../lib/mvp-types').TourGroupChatSettingsResponse>
+  onLoadConversations: (groupId: string) => Promise<import('../lib/mvp-types').TourGroupConversationListResponse>
+  onSearchConversations: (groupId: string, query: string) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse[]>
+  onSearchMessages: (groupId: string, query: string) => Promise<import('../lib/mvp-types').TourGroupMessageSearchResultResponse[]>
+  onGetOrCreateDirectConversation: (groupId: string, payload: { targetUserId: string }) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse>
+  onLoadMessages: (conversationId: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onSendMessage: (conversationId: string, payload: {
+    messageType?: string
+    content: string
+    replyToMessageId?: string | null
+    attachments?: import('../lib/mvp-types').TourGroupUploadedAttachmentResponse[]
+  }) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onUploadAttachment: (groupId: string, conversationId: string, attachmentFile: File) => Promise<import('../lib/mvp-types').TourGroupUploadedAttachmentResponse>
+  onMarkConversationRead: (conversationId: string) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse>
+  onEditMessage: (messageId: string, payload: { content: string }) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onDeleteMessage: (messageId: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onRecallMessage: (messageId: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onAddReaction: (messageId: string, reactionType: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onRemoveReaction: (messageId: string, reactionType: string) => Promise<import('../lib/mvp-types').TourGroupMessageResponse[]>
+  onUpdateMuteState: (conversationId: string, muted: boolean) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse>
+  onUpdateArchiveState: (conversationId: string, archived: boolean) => Promise<import('../lib/mvp-types').TourGroupConversationSummaryResponse>
 }
 
 function syncGroupSummary(groups: TourGroupSummaryResponse[], details: TourGroupDetailsResponse): TourGroupSummaryResponse[] {
@@ -93,11 +130,31 @@ export function TourGroupsPanel({
   onSubmitSelection,
   onConfirmSelection,
   onRejectSelection,
+  onBatchConfirmSelections,
+  onBatchRejectSelections,
+  onBatchPaySelections,
   onSearchFlights,
   onSearchHotels,
   onSearchTrains,
   onSearchAttractions,
   onOpenBookings,
+  onLoadChatSettings,
+  onUpdateChatSettings,
+  onLoadConversations,
+  onSearchConversations,
+  onSearchMessages,
+  onGetOrCreateDirectConversation,
+  onLoadMessages,
+  onSendMessage,
+  onUploadAttachment,
+  onMarkConversationRead,
+  onEditMessage,
+  onDeleteMessage,
+  onRecallMessage,
+  onAddReaction,
+  onRemoveReaction,
+  onUpdateMuteState,
+  onUpdateArchiveState,
 }: TourGroupsPanelProps) {
   const [groupSummaries, setGroupSummaries] = useState<TourGroupSummaryResponse[]>([])
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
@@ -309,13 +366,57 @@ export function TourGroupsPanel({
                 })
                 applyUpdatedGroupDetails(details)
               }}
+              onBatchConfirmSelections={async selectionIds => {
+                if (!signedInUser || selectionIds.length === 0) return
+                const details = await onBatchConfirmSelections({
+                  organizerUserId: signedInUser.userId,
+                  selectionIds,
+                  reviewNote: null,
+                })
+                applyUpdatedGroupDetails(details)
+              }}
+              onBatchRejectSelections={async (selectionIds, note) => {
+                if (!signedInUser || selectionIds.length === 0) return
+                const details = await onBatchRejectSelections({
+                  organizerUserId: signedInUser.userId,
+                  selectionIds,
+                  reviewNote: note,
+                })
+                applyUpdatedGroupDetails(details)
+              }}
               onOpenBookings={async () => {
                 await onOpenBookings()
+              }}
+              onBatchPaySelections={async selectionIds => {
+                if (!signedInUser || selectionIds.length === 0) return
+                const result = await onBatchPaySelections({
+                  userId: signedInUser.userId,
+                  selectionIds,
+                  paymentMethod: 'Wallet',
+                })
+                applyUpdatedGroupDetails(result.group)
               }}
               onSearchFlights={onSearchFlights}
               onSearchHotels={onSearchHotels}
               onSearchTrains={onSearchTrains}
               onSearchAttractions={onSearchAttractions}
+              onLoadChatSettings={onLoadChatSettings}
+              onUpdateChatSettings={onUpdateChatSettings}
+              onLoadConversations={onLoadConversations}
+              onSearchConversations={onSearchConversations}
+              onSearchMessages={onSearchMessages}
+              onGetOrCreateDirectConversation={onGetOrCreateDirectConversation}
+              onLoadMessages={onLoadMessages}
+              onSendMessage={onSendMessage}
+              onUploadAttachment={onUploadAttachment}
+              onMarkConversationRead={onMarkConversationRead}
+              onEditMessage={onEditMessage}
+              onDeleteMessage={onDeleteMessage}
+              onRecallMessage={onRecallMessage}
+              onAddReaction={onAddReaction}
+              onRemoveReaction={onRemoveReaction}
+              onUpdateMuteState={onUpdateMuteState}
+              onUpdateArchiveState={onUpdateArchiveState}
             />
           ) : (
             <section className="list-surface">

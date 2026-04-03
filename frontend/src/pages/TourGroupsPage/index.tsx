@@ -97,6 +97,27 @@ export function TourGroupsPage({
           translate('notice.actionSuccess'),
         )
       }
+      onBatchConfirmSelections={payload =>
+        runPageActionWithResult(
+          () => travelMvpApiClient.batchConfirmTourGroupSelections(payload),
+          translate('tourGroups.batchConfirmSelections'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onBatchRejectSelections={payload =>
+        runPageActionWithResult(
+          () => travelMvpApiClient.batchRejectTourGroupSelections(payload),
+          translate('tourGroups.batchRejectSelections'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onBatchPaySelections={payload =>
+        runPageActionWithResult(
+          () => travelMvpApiClient.batchPayTourGroupSelections(payload),
+          translate('tourGroups.batchPaySelections'),
+          translate('notice.actionSuccess'),
+        )
+      }
       onSearchFlights={async payload => {
         const flightListResponse = await travelMvpApiClient.listFlights(payload)
         return flightListResponse.flights
@@ -127,6 +148,101 @@ export function TourGroupsPage({
           onNavigate('bookings')
         }, translate('nav.bookings'), translate('notice.actionSuccess'))
       }}
+      onLoadChatSettings={groupId => travelMvpApiClient.getTourGroupChatSettings(groupId)}
+      onUpdateChatSettings={(groupId, payload) =>
+        runPageActionWithResult(
+          () => travelMvpApiClient.updateTourGroupChatSettings(groupId, payload),
+          translate('tourGroups.chatSettings'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onLoadConversations={groupId => travelMvpApiClient.listTourGroupConversations(groupId)}
+      onSearchConversations={async (groupId, query) => {
+        const response = await travelMvpApiClient.searchTourGroupConversations(groupId, query)
+        return response.conversations
+      }}
+      onSearchMessages={async (groupId, query) => {
+        const response = await travelMvpApiClient.searchTourGroupMessages(groupId, query)
+        return response.results
+      }}
+      onGetOrCreateDirectConversation={(groupId, payload) =>
+        runPageActionWithResult(
+          () => travelMvpApiClient.getOrCreateTourGroupDirectConversation(groupId, payload),
+          translate('tourGroups.directMessages'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onLoadMessages={async conversationId => {
+        const response = await travelMvpApiClient.listConversationMessages(conversationId)
+        return response.messages
+      }}
+      onSendMessage={(conversationId, payload) =>
+        runPageActionWithResult(
+          async () => {
+            const response = await travelMvpApiClient.sendConversationMessage(conversationId, payload)
+            return response.messages
+          },
+          translate('tourGroups.directMessages'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onUploadAttachment={(groupId, conversationId, attachmentFile) =>
+        runPageActionWithResult(
+          () => travelMvpApiClient.uploadConversationAttachment(groupId, conversationId, attachmentFile),
+          translate('tourGroups.attachFile'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onMarkConversationRead={conversationId => travelMvpApiClient.markConversationRead(conversationId)}
+      onEditMessage={(messageId, payload) =>
+        runPageActionWithResult(
+          async () => (await travelMvpApiClient.editConversationMessage(messageId, payload)).messages,
+          translate('tourGroups.editMessage'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onDeleteMessage={messageId =>
+        runPageActionWithResult(
+          async () => (await travelMvpApiClient.deleteConversationMessage(messageId)).messages,
+          translate('tourGroups.deleteMessage'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onRecallMessage={messageId =>
+        runPageActionWithResult(
+          async () => (await travelMvpApiClient.recallConversationMessage(messageId)).messages,
+          translate('tourGroups.recallMessage'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onAddReaction={(messageId, reactionType) =>
+        runPageActionWithResult(
+          async () => (await travelMvpApiClient.addConversationReaction(messageId, reactionType)).messages,
+          translate('tourGroups.addReaction'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onRemoveReaction={(messageId, reactionType) =>
+        runPageActionWithResult(
+          async () => (await travelMvpApiClient.removeConversationReaction(messageId, reactionType)).messages,
+          translate('tourGroups.removeReaction'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onUpdateMuteState={(conversationId, muted) =>
+        runPageActionWithResult(
+          () => travelMvpApiClient.updateDirectConversationMuteState(conversationId, muted),
+          translate('tourGroups.muteConversation'),
+          translate('notice.actionSuccess'),
+        )
+      }
+      onUpdateArchiveState={(conversationId, archived) =>
+        runPageActionWithResult(
+          () => travelMvpApiClient.updateDirectConversationArchiveState(conversationId, archived),
+          translate('tourGroups.archiveConversation'),
+          translate('notice.actionSuccess'),
+        )
+      }
     />
   )
 }

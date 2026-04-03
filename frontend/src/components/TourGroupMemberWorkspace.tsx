@@ -2,6 +2,7 @@ import type {
   AppLanguage,
   GroupPlanItemResponse,
   GroupPlanSelectionResponse,
+  GroupSelectionOrderProjectionResponse,
   TourGroupDetailsResponse,
   TourGroupMembershipResponse,
   TravelerResponse,
@@ -20,12 +21,14 @@ type TourGroupMemberWorkspaceProps = {
   activeMembership: TourGroupMembershipResponse | null
   mySelections: GroupPlanSelectionResponse[]
   linkedSelectionIds: string[]
+  selectionOrderProjections: GroupSelectionOrderProjectionResponse[]
   isBusy: boolean
   translate: (translationKey: string) => string
   onJoinGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
   onOpenChoose: (planItem: GroupPlanItemResponse) => void
   onSubmitSelection: (selectionId: string) => Promise<void>
+  onBatchPaySelections: (selectionIds: string[]) => Promise<void>
   onOpenBookings: () => void
 }
 
@@ -37,12 +40,14 @@ export function TourGroupMemberWorkspace({
   activeMembership,
   mySelections,
   linkedSelectionIds,
+  selectionOrderProjections,
   isBusy,
   translate,
   onJoinGroup,
   onAddMembershipTraveler,
   onOpenChoose,
   onSubmitSelection,
+  onBatchPaySelections,
   onOpenBookings,
 }: TourGroupMemberWorkspaceProps) {
   return (
@@ -77,8 +82,10 @@ export function TourGroupMemberWorkspace({
         planOptions={details.planOptions}
         activeMembership={activeMembership}
         linkedSelectionIds={linkedSelectionIds}
+        selectionOrderProjections={selectionOrderProjections}
         translate={translate}
         onSubmitSelection={onSubmitSelection}
+        onBatchPaySelections={onBatchPaySelections}
         onOpenBookings={onOpenBookings}
       />
       <TourGroupBookingSummary
