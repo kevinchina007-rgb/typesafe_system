@@ -11,7 +11,7 @@ def createCabinInventory(
     unitPrice: Money,
     inventoryStatus: InventoryStatus
 ): CabinInventory =
-  CabinInventory(cabinInventoryId, flightId, cabinClass, availableSeats, unitPrice, inventoryStatus)
+  CabinInventory.create(cabinInventoryId, flightId, cabinClass, availableSeats, unitPrice, inventoryStatus)
 
 
 def createFlight(
@@ -25,22 +25,17 @@ def createFlight(
     cabinInventories: Vector[CabinInventory],
     createdAt: Instant
 ): Either[FlightError, Flight] =
-  if departureAirport == arrivalAirport then Left(FlightError.DepartureAirportMatchedArrivalAirport(flightId, departureAirport))
-  else
-    Right(
-      Flight(
-        flightId = flightId,
-        airlineId = airlineId,
-        flightNumber = flightNumber,
-        departureAirport = departureAirport,
-        arrivalAirport = arrivalAirport,
-        flightSchedule = flightSchedule,
-        flightStatus = FlightStatus.OpenForBooking,
-        basePrice = basePrice,
-        cabinInventories = cabinInventories,
-        createdAt = createdAt
-      )
-    )
+  Flight.create(
+    flightId,
+    airlineId,
+    flightNumber,
+    departureAirport,
+    arrivalAirport,
+    flightSchedule,
+    basePrice,
+    cabinInventories,
+    createdAt
+  )
 
 
 def restorePersistedFlight(
@@ -55,15 +50,15 @@ def restorePersistedFlight(
     cabinInventories: Vector[CabinInventory],
     createdAt: Instant
 ): Flight =
-  Flight(
-    flightId = flightId,
-    airlineId = airlineId,
-    flightNumber = flightNumber,
-    departureAirport = departureAirport,
-    arrivalAirport = arrivalAirport,
-    flightSchedule = flightSchedule,
-    flightStatus = flightStatus,
-    basePrice = basePrice,
-    cabinInventories = cabinInventories,
-    createdAt = createdAt
+  Flight.restore(
+    flightId,
+    airlineId,
+    flightNumber,
+    departureAirport,
+    arrivalAirport,
+    flightSchedule,
+    flightStatus,
+    basePrice,
+    cabinInventories,
+    createdAt
   )

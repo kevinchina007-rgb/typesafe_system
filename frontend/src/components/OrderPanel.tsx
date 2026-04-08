@@ -13,6 +13,8 @@ import {
   mapBackendStatusToProductLabel,
 } from '../lib/view-models'
 
+// OrderPanel 的职责是把后端订单响应转成用户能读懂的订单视图。
+// 这里不负责请求本身，只负责“订单数据如何展示”。
 type OrderPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
@@ -55,6 +57,8 @@ export function OrderPanel({
   const [editingReview, setEditingReview] = useState<ReviewResponse | null>(null)
 
   async function openReviewDialog(orderId: string, orderItemId: string, title: string) {
+    // 订单项与评价的关联主键是 orderItemId。
+    // 已有评价时直接进入编辑模式，没有评价时先查资格。
     const existingReview = reviews.find(review => review.orderItemId === orderItemId)
     if (existingReview) {
       setEditingReview(existingReview)
@@ -68,6 +72,7 @@ export function OrderPanel({
   }
 
   function formatTravelerIdentity(travelerId: string): string {
+    // 订单快照里保留的是 travelerId，展示时再映射成“姓名 + 证件后四位”。
     const matchedTraveler = travelers.find(traveler => traveler.travelerId === travelerId)
     if (!matchedTraveler) {
       return travelerId
@@ -132,6 +137,7 @@ export function OrderPanel({
                       return (
                       <li key={orderLineItem.orderItemId}>
                         <div>
+                          {/* 各资源类型共用同一张订单卡，但明细展示按资源类型分支。 */}
                           <strong>{orderLineItem.summaryLabel}</strong>
                           <p>{`${localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)} | ${localizeSupplierReviewStatus(orderLineItem.supplierReviewStatus, currentLanguage)}`}</p>
                           {orderLineItem.flightDetails ? (
@@ -283,7 +289,7 @@ export function OrderPanel({
                   ) : null}
                 </div>
 
-                <div className="manager-task-actions">
+                <div className="manager-task-actions order-action-block">
                   {order.status === 'PendingPayment' ? (
                     <>
                       <button type="button" disabled={isBusy} onClick={() => onOpenPayment(order)}>

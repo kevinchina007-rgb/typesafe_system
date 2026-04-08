@@ -25,6 +25,11 @@ type BlogPanelProps = {
   onUnlikePost: (postId: string) => Promise<BlogPostResponse>
 }
 
+// BlogPanel 是博客页的状态编排层：
+// - postSummaries 保存列表摘要数据
+// - selectedPost 保存单篇详情数据
+// - searchDraft 只驱动建议列表
+// - searchText 才是真正提交给后端的查询条件
 export function BlogPanel({
   currentLanguage,
   isBusy,
@@ -51,6 +56,8 @@ export function BlogPanel({
   const [isComposerOpen, setIsComposerOpen] = useState(false)
 
   useEffect(() => {
+    // 列表刷新只依赖已确认的查询条件 searchText，
+    // 这样用户输入草稿时不会立即触发真正搜索。
     const nextScope = signedInUser ? scope : 'latest'
     if (!signedInUser && scope !== 'latest') {
       setScope('latest')
@@ -70,6 +77,7 @@ export function BlogPanel({
 
     const timeoutId = window.setTimeout(async () => {
       try {
+        // 建议列表来自搜索草稿，是一种轻量 view-like data，不会直接替代真正的搜索结果。
         const response = await travelMvpApiClient.listBlogSuggestions(normalizedDraft)
         if (!cancelled) {
           setSearchSuggestions(response.suggestions)
@@ -88,6 +96,7 @@ export function BlogPanel({
   }, [searchDraft])
 
   async function reloadPosts(nextScope: BlogScope = scope, nextSelectedPostId?: string) {
+    // 列表摘要和详情分开存，可以让列表刷新、详情加载、编辑态切换彼此独立。
     const nextPosts = await onListPosts(nextScope, searchText)
     setPostSummaries(nextPosts)
     const selectedPostId = nextSelectedPostId ?? selectedPost?.post.postId ?? nextPosts[0]?.postId

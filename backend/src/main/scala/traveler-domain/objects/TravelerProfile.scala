@@ -196,6 +196,70 @@ final case class TravelerProfile private[domain] (
   def clearDefaultTravelerProfile: TravelerProfile =
     copy(isDefaultTravelerProfile = false)
 
+object TravelerProfile:
+  def create(
+      travelerId: TravelerId,
+      ownerUserId: UserId,
+      travelerFullName: PersonName,
+      travelerDocumentType: TravelerDocumentType,
+      travelerDocumentNumber: DocumentNumber,
+      travelerPhoneNumber: ContactNumber,
+      travelerBirthDate: BirthDate,
+      travelerType: TravelerType,
+      travelerPreferences: TravelerPreferences,
+      travelerEmergencyContact: Option[TravelerEmergencyContact],
+      isDefaultTravelerProfile: Boolean
+  ): TravelerProfile =
+    TravelerProfile(
+      travelerId = travelerId,
+      ownerUserId = ownerUserId,
+      travelerFullName = travelerFullName,
+      travelerDocumentType = travelerDocumentType,
+      travelerDocumentNumber = travelerDocumentNumber,
+      travelerPhoneNumber = travelerPhoneNumber,
+      travelerBirthDate = travelerBirthDate,
+      travelerType = travelerType,
+      travelerIdentityDocuments = Nil,
+      travelerEmergencyContact = travelerEmergencyContact,
+      travelerLoyaltyMemberships = Nil,
+      travelerPreferences = travelerPreferences,
+      travelerProfileStatus = TravelerProfileStatus.Draft,
+      isDefaultTravelerProfile = isDefaultTravelerProfile
+    )
+
+  def restore(
+      travelerId: TravelerId,
+      ownerUserId: UserId,
+      travelerFullName: PersonName,
+      travelerDocumentType: TravelerDocumentType,
+      travelerDocumentNumber: DocumentNumber,
+      travelerPhoneNumber: ContactNumber,
+      travelerBirthDate: BirthDate,
+      travelerType: TravelerType,
+      travelerIdentityDocuments: List[TravelerIdentityDocument],
+      travelerEmergencyContact: Option[TravelerEmergencyContact],
+      travelerLoyaltyMemberships: List[TravelerLoyaltyMembership],
+      travelerPreferences: TravelerPreferences,
+      travelerProfileStatus: TravelerProfileStatus,
+      isDefaultTravelerProfile: Boolean
+  ): TravelerProfile =
+    TravelerProfile(
+      travelerId = travelerId,
+      ownerUserId = ownerUserId,
+      travelerFullName = travelerFullName,
+      travelerDocumentType = travelerDocumentType,
+      travelerDocumentNumber = travelerDocumentNumber,
+      travelerPhoneNumber = travelerPhoneNumber,
+      travelerBirthDate = travelerBirthDate,
+      travelerType = travelerType,
+      travelerIdentityDocuments = travelerIdentityDocuments,
+      travelerEmergencyContact = travelerEmergencyContact,
+      travelerLoyaltyMemberships = travelerLoyaltyMemberships,
+      travelerPreferences = travelerPreferences,
+      travelerProfileStatus = travelerProfileStatus,
+      isDefaultTravelerProfile = isDefaultTravelerProfile
+    )
+
 enum TravelerError(val message: String) extends DomainError:
   case TravelerProfileWasNotFound(travelerId: TravelerId)
       extends TravelerError(s"Traveler profile '${travelerId.value}' was not found")

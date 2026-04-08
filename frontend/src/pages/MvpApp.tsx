@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppSidebar } from '../components/AppSidebar'
 import { ToastNotice } from '../components/ToastNotice'
 import { travelMvpApiClient } from '../lib/api-client'
+import { isUnauthorizedApiError } from '../lib/api-transport'
 import { createTranslator } from '../lib/i18n'
 import type { AppLanguage, AppNotice, AppViewKey, CurrentManagerSessionResponse, HealthResponse, UserResponse } from '../lib/mvp-types'
 import { getInitialBackendHealth } from '../lib/runtime-config'
@@ -20,6 +21,8 @@ import { TrainsPage } from './TrainsPage'
 import { TravelersPage } from './TravelersPage'
 
 export function MvpApp() {
+  // MvpApp 现在只保留真正的 shell 级状态：
+  // 当前语言、当前页面、当前 principal、全局 notice、后端健康状态。
   const [currentLanguage, setCurrentLanguage] = useState<AppLanguage>('en')
   const [currentViewKey, setCurrentViewKey] = useState<AppViewKey>('blog')
   const [accountEntryMode, setAccountEntryMode] = useState<'register' | 'login'>('login')
@@ -49,23 +52,38 @@ export function MvpApp() {
   }, [])
 
   const reloadPrincipalState = useCallback(async () => {
-    try {
-      const [currentUserSession, currentManagerSession] = await Promise.all([
-        travelMvpApiClient.getCurrentUserSession().catch(() => null),
-        travelMvpApiClient.getCurrentManagerSession().catch(() => null),
-      ])
+    // user / manager 通过两条独立 session 链恢复。
+    // 只有服务端明确返回未授权时才清空当前 principal；
+    // 临时网络失败或后端短暂抖动不应把已登录用户打回游客态。
+    const [currentUserSessionResult, currentManagerSessionResult] = await Promise.allSettled([
+      travelMvpApiClient.getCurrentUserSession(),
+      travelMvpApiClient.getCurrentManagerSession(),
+    ])
 
-      setSignedInUserResponse(currentUserSession?.user ?? null)
-      setSignedInManagerSessionResponse(currentManagerSession)
-      return true
-    } catch {
+    let didRecoverPrincipalState = true
+
+    if (currentUserSessionResult.status === 'fulfilled') {
+      setSignedInUserResponse(currentUserSessionResult.value.user)
+    } else if (isUnauthorizedApiError(currentUserSessionResult.reason)) {
       setSignedInUserResponse(null)
-      setSignedInManagerSessionResponse(null)
-      return false
+    } else {
+      didRecoverPrincipalState = false
     }
+
+    if (currentManagerSessionResult.status === 'fulfilled') {
+      setSignedInManagerSessionResponse(currentManagerSessionResult.value)
+    } else if (isUnauthorizedApiError(currentManagerSessionResult.reason)) {
+      setSignedInManagerSessionResponse(null)
+    } else {
+      didRecoverPrincipalState = false
+    }
+
+    return didRecoverPrincipalState
   }, [])
 
   useEffect(() => {
+    // 启动时恢复后端健康和当前 principal，
+    // 之后用固定轮询保持 UI 与服务端 session 同步。
     let isDisposed = false
     let retryTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -144,6 +162,7 @@ export function MvpApp() {
       />
 
       <section className="content-shell">
+        {/* 这里是应用级视图分发层。每个 page 自己再管理局部数据与交互。 */}
         {currentViewKey === 'blog' ? (
           <BlogPage
             currentLanguage={currentLanguage}

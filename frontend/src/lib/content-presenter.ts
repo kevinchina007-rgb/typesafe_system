@@ -1,6 +1,8 @@
 import type { AppLanguage, BlogPostSummaryResponse, ResourceReviewSummaryResponse, ReviewResponse } from './mvp-types'
 import { formatIsoDateTime } from './view-models'
 
+// 这一层只负责把后端返回的数据整理成更适合阅读的文案。
+// 它不做网络 IO，也不保存状态，属于纯展示 helper。
 export function localizeBlogStatus(status: string, language: AppLanguage): string {
   const labels =
     language === 'zh'
@@ -57,6 +59,7 @@ export function localizeBlogScope(scope: 'latest' | 'mine', language: AppLanguag
 }
 
 export function formatBlogMeta(post: BlogPostSummaryResponse, fallbackLabel: string): string {
+  // 后端给的是原始时间字段，这里决定列表里优先显示发布时间还是创建时间。
   return formatIsoDateTime(post.publishedAt ?? post.createdAt, fallbackLabel)
 }
 
@@ -69,6 +72,7 @@ export function summarizeRating(rating: number): string {
 }
 
 export function summarizeReviewAggregate(summary: ResourceReviewSummaryResponse, language: AppLanguage): string {
+  // averageRating / reviewCount 是后端聚合结果，这里只把它转成一条用户可读摘要。
   if (summary.reviewCount === 0) {
     return language === 'zh' ? '暂无评价' : 'No reviews yet'
   }

@@ -9,6 +9,8 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.time.Instant
 
+// Blog application service 负责把 Blog 核心数据组装成前端直接可用的展示模型。
+// 点赞数、评论数、作者展示信息、搜索摘要等字段都在这一层计算，不回写成权威字段。
 enum BlogPostScope:
   case Latest, Mine
 
@@ -55,6 +57,7 @@ final case class BlogCommentView(
     canDelete: Boolean
 )
 
+// 详情页把列表摘要和正文/评论合在一起返回，避免前端再拼多次请求结果。
 final case class BlogPostDetailsView(post: BlogPostView, content: String, comments: List[BlogCommentView])
 
 trait BlogApplicationService[F[_]]:
@@ -84,6 +87,7 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
   private val maximumImageBytes: Long = 5L * 1024L * 1024L
 
   override def listPosts(currentUserId: Option[UserId], scope: BlogPostScope, query: Option[String]): F[List[BlogPostView]] =
+    // latest / mine 共享同一套 view 投影逻辑，差别只在可读范围。
     scope match
       case BlogPostScope.Latest =>
         for
@@ -260,6 +264,7 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
   private def buildCommentViews(postId: BlogId, currentUserId: Option[UserId]): F[List[BlogCommentView]] =
     for
       comments <- blogRepository.listCommentsByPostId(postId)
+      // 评论表里没有 authorDisplayName / canDelete 这类前端字段，这里统一投影出来。
       visibleComments = comments.filter(_.isVisible)
       views <- visibleComments.traverse { comment =>
         loadAuthor(comment.authorUserId).map { author =>
@@ -279,6 +284,8 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
     yield views
 
   private def toPostView(post: BlogPost, currentUserId: Option[UserId], query: Option[String]): F[BlogPostView] =
+    // 这里是 Blog core data -> BlogPostView 的主要收口点。
+    // 是否我的文章、是否已点赞、评论数、搜索摘要等都在运行时生成。
     for
       author <- loadAuthor(post.authorUserId)
       comments <- blogRepository.listCommentsByPostId(post.postId)
@@ -308,6 +315,7 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
     userRepository.findByUserId(authorUserId).flatMap(_.liftTo[F](UserError.UserWasNotFound(authorUserId)))
 
   private def buildSearchSnippet(post: BlogPost, query: String): Option[String] =
+    // snippet 只服务搜索展示，不是 Blog 持久化字段。
     val normalizedQuery = query.trim.toLowerCase
     if normalizedQuery.isEmpty then None
     else

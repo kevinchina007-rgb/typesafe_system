@@ -5,169 +5,9 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.time.{Duration, Instant}
 
-enum TrainJourneyStatus:
-  case Draft, OnSale, Closed
-
-enum TrainSeatInventoryStatus:
-  case OpenForSale, SoldOut, Closed
-
-enum TrainRefundType:
-  case FullRefund, PartialRefund, NonRefundable
-
-enum TrainSeatPositionType:
-  case Window, Aisle, Middle, Other
-
-enum TrainSeatStatus:
-  case Available, Unavailable
-
-enum TrainSeatPreference:
-  case Window, Aisle, Middle, NoPreference
-
-enum TrainError(val message: String) extends DomainError:
-  case RailwayManagerWasNotFoundByEmail(primaryEmailAddress: EmailAddress)
-      extends TrainError(s"Railway manager '${primaryEmailAddress.value}' was not found")
-  case RailwayManagerWasNotFoundById(managerId: ManagerId)
-      extends TrainError(s"Railway manager '${managerId.value}' was not found")
-  case TrainWasNotFound(trainId: TrainId)
-      extends TrainError(s"Train '${trainId.value}' was not found")
-  case TrainWasNotOpenForSale(trainId: TrainId, saleStartsAt: Instant, currentTime: Instant)
-      extends TrainError(s"Train '${trainId.value}' is not on sale at $currentTime; sale starts at $saleStartsAt")
-  case TrainWasClosed(trainId: TrainId, trainJourneyStatus: TrainJourneyStatus)
-      extends TrainError(s"Train '${trainId.value}' is not bookable in status $trainJourneyStatus")
-  case TrainHadTooFewStops(trainId: TrainId)
-      extends TrainError(s"Train '${trainId.value}' must contain at least two stops")
-  case TrainStopSequenceWasInvalid(trainId: TrainId, stationCode: String)
-      extends TrainError(s"Train '${trainId.value}' has an invalid stop sequence near station '$stationCode'")
-  case TrainStopWasNotFound(trainId: TrainId, stationCode: TrainStationCode)
-      extends TrainError(s"Train '${trainId.value}' does not contain station '${stationCode.value}'")
-  case TrainStationOrderWasInvalid(trainId: TrainId, fromStationCode: TrainStationCode, toStationCode: TrainStationCode)
-      extends TrainError(
-        s"Train '${trainId.value}' requires from station '${fromStationCode.value}' to appear before '${toStationCode.value}'"
-      )
-  case TrainSegmentPriceWasMissing(trainId: TrainId, seatClass: TrainSeatClass, fromStationCode: TrainStationCode, toStationCode: TrainStationCode)
-      extends TrainError(
-        s"Train '${trainId.value}' is missing a segment price for seat '${seatClass.value}' from '${fromStationCode.value}' to '${toStationCode.value}'"
-      )
-  case TrainSeatInventoryWasNotFound(trainId: TrainId, seatClass: TrainSeatClass)
-      extends TrainError(s"Train '${trainId.value}' does not have seat inventory '${seatClass.value}'")
-  case TrainSeatInventoryWasNotBookable(trainId: TrainId, seatClass: TrainSeatClass, seatInventoryStatus: TrainSeatInventoryStatus)
-      extends TrainError(
-        s"Train '${trainId.value}' seat inventory '${seatClass.value}' is not bookable in status $seatInventoryStatus"
-      )
-  case TrainTravelersWereEmpty(trainId: TrainId)
-      extends TrainError(s"Train '${trainId.value}' requires at least one traveler")
-  case TrainTravelersContainedDuplicates(trainId: TrainId)
-      extends TrainError(s"Train '${trainId.value}' booking contains duplicate travelers")
-  case TrainRefundPolicyDidNotMatch(trainId: TrainId, refundRequestedAt: Instant)
-      extends TrainError(s"Train '${trainId.value}' has no refund policy matching refund request at $refundRequestedAt")
-  case TrainSeatGenerationWasInvalid(trainId: TrainId, reason: String)
-      extends TrainError(s"Train '${trainId.value}' seat generation was invalid: $reason")
-  case TrainSeatAllocationWasNotAvailable(trainId: TrainId, seatClass: TrainSeatClass, requestedQuantity: Int)
-      extends TrainError(s"Train '${trainId.value}' does not have enough available seats in '${seatClass.value}' for '$requestedQuantity' travelers")
-  case TrainTravelerWasAlreadyBooked(trainId: TrainId, travelerId: TravelerId)
-      extends TrainError(s"Traveler '${travelerId.value}' already has a ticket on train '${trainId.value}'")
-  case TrainNumberConflict(trainNumber: TrainNumber, conflictingTrainId: TrainId)
-      extends TrainError(s"Train number '${trainNumber.value}' conflicts with overlapping train '${conflictingTrainId.value}'")
-
-final case class TrainStationCode private (value: String) extends AnyVal
-object TrainStationCode:
-  def create(value: String): Either[SharedValidationError, TrainStationCode] =
-    val normalized = value.trim.toUpperCase
-    if normalized.matches("^[A-Z0-9]{2,10}$") then Right(TrainStationCode(normalized))
-    else Left(SharedValidationError.RequiredFieldWasEmpty("train-station-code"))
-
-  def unsafe(value: String): TrainStationCode =
-    create(value).fold(throw _, identity)
-
-final case class TrainStationName private (value: String) extends AnyVal
-object TrainStationName:
-  def create(value: String): Either[SharedValidationError, TrainStationName] =
-    val normalized = value.trim
-    if normalized.nonEmpty && normalized.length <= 120 then Right(TrainStationName(normalized))
-    else if normalized.isEmpty then Left(SharedValidationError.RequiredFieldWasEmpty("train-station-name"))
-    else Left(SharedValidationError.StringWasTooLong("train-station-name", 120, normalized.length))
-
-  def unsafe(value: String): TrainStationName =
-    create(value).fold(throw _, identity)
-
-final case class TrainNumber private (value: String) extends AnyVal
-object TrainNumber:
-  def create(value: String): Either[SharedValidationError, TrainNumber] =
-    val normalized = value.trim.toUpperCase
-    if normalized.matches("^[A-Z0-9]{2,20}$") then Right(TrainNumber(normalized))
-    else if normalized.isEmpty then Left(SharedValidationError.RequiredFieldWasEmpty("train-number"))
-    else Left(SharedValidationError.StringWasTooLong("train-number", 20, normalized.length))
-
-  def unsafe(value: String): TrainNumber =
-    create(value).fold(throw _, identity)
-
-final case class TrainSeatClass private (value: String) extends AnyVal
-object TrainSeatClass:
-  private val supported = Set("SECOND_CLASS", "FIRST_CLASS", "BUSINESS_CLASS", "SLEEPER")
-
-  def create(value: String): Either[SharedValidationError, TrainSeatClass] =
-    val normalized = value.trim.toUpperCase.replace('-', '_').replace(' ', '_')
-    if supported.contains(normalized) then Right(TrainSeatClass(normalized))
-    else Left(SharedValidationError.CabinClassWasInvalid(normalized))
-
-  def unsafe(value: String): TrainSeatClass =
-    create(value).fold(throw _, identity)
-
-final case class TrainSeatRowNo private (value: Int) extends AnyVal
-object TrainSeatRowNo:
-  def create(value: Int): Either[SharedValidationError, TrainSeatRowNo] =
-    if value > 0 then Right(TrainSeatRowNo(value))
-    else Left(SharedValidationError.NumberWasOutOfRange("train-seat-row-no", BigDecimal(1), BigDecimal(Int.MaxValue), BigDecimal(value)))
-
-final case class TrainSeatLayoutColumn(
-    code: String,
-    sortOrder: Int,
-    positionType: TrainSeatPositionType
-)
-
-final case class TrainSeat(
-    seatId: TrainSeatId,
-    trainId: TrainId,
-    inventoryId: TrainSeatInventoryId,
-    seatClass: TrainSeatClass,
-    carriageNo: Int,
-    rowNo: TrainSeatRowNo,
-    seatCode: String,
-    seatNo: String,
-    seatLabel: String,
-    seatPositionType: TrainSeatPositionType,
-    seatStatus: TrainSeatStatus
-):
-  def isBookable: Boolean = seatStatus == TrainSeatStatus.Available
-
-final case class TrainTravelerSeatAssignment(
-    travelerId: TravelerId,
-    seatId: TrainSeatId,
-    carriageNo: Int,
-    seatNo: String,
-    seatLabel: String,
-    seatPositionType: TrainSeatPositionType
-)
-
-final case class TrainSegmentSeatAllocation(
-    seatId: TrainSeatId,
-    orderId: OrderId,
-    orderItemId: OrderItemId,
-    fromStopSequenceNo: Int,
-    toStopSequenceNo: Int
-):
-  def overlaps(fromSequenceNo: Int, toSequenceNo: Int): Boolean =
-    fromStopSequenceNo < toSequenceNo && toStopSequenceNo > fromSequenceNo
-
-final case class RefundRate private (value: BigDecimal) extends AnyVal
-object RefundRate:
-  def create(value: BigDecimal): Either[SharedValidationError, RefundRate] =
-    if value >= 0 && value <= 1 then Right(RefundRate(value))
-    else Left(SharedValidationError.NumberWasOutOfRange("refund-rate", BigDecimal(0), BigDecimal(1), value))
-
-  def unsafe(value: BigDecimal): RefundRate =
-    create(value).fold(throw _, identity)
-
+// TrainJourney 是火车域的核心聚合：
+// 它把站点序列、座位库存、具体座位、区间价格和退票规则收拢在一起，
+// 这样 quote / allocate / refund 这类纯规则都能围绕一个主类型阅读。
 final case class TrainStop(
     stopId: TrainStopId,
     stationCode: TrainStationCode,
@@ -177,17 +17,13 @@ final case class TrainStop(
     departureTime: Option[Instant]
 )
 
-final case class TrainSeatInventory(
-    inventoryId: TrainSeatInventoryId,
-    trainId: TrainId,
-    seatClass: TrainSeatClass,
-    totalSeats: SeatCount,
-    saleableSeats: SeatCount,
-    seatInventoryStatus: TrainSeatInventoryStatus
-):
-  def ensureBookable: Either[TrainError, TrainSeatInventory] =
-    if seatInventoryStatus == TrainSeatInventoryStatus.OpenForSale && saleableSeats.value > 0 then Right(this)
-    else Left(TrainError.TrainSeatInventoryWasNotBookable(trainId, seatClass, seatInventoryStatus))
+object TrainStop:
+  // 对火车来说，起点站依赖 departureTime，终点站依赖 arrivalTime。
+  // 这个 helper 统一了“取站点可用时间”的最小规则。
+  def departureOrArrivalTime(trainId: TrainId, trainStop: TrainStop): Either[TrainError, Instant] =
+    trainStop.arrivalTime
+      .orElse(trainStop.departureTime)
+      .toRight(TrainError.TrainStationOrderWasInvalid(trainId, trainStop.stationCode, trainStop.stationCode))
 
 final case class TrainSegmentPrice(
     segmentPriceId: TrainSegmentPriceId,
@@ -217,6 +53,8 @@ final case class TrainRefundPolicySegment(
       case TrainRefundType.PartialRefund =>
         Money.unsafe(ticketMoney.amount * refundRate.value, ticketMoney.currency)
 
+// TrainQuote 是下单前的纯报价结果。
+// 它故意不直接等同于订单快照，避免把 order 语义塞回 train 域。
 final case class TrainQuote(
     fromStop: TrainStop,
     toStop: TrainStop,
@@ -226,6 +64,8 @@ final case class TrainQuote(
     arrivalTime: Instant
 )
 
+// TrainSeatAllocationPlan 表示一次选座计算的结果：
+// 真正落单后还会进入订单快照和 seat allocation 持久化。
 final case class TrainSeatAllocationPlan(
     assignments: Vector[TrainTravelerSeatAssignment],
     requestedPreference: Option[TrainSeatPreference],
@@ -233,6 +73,7 @@ final case class TrainSeatAllocationPlan(
     adjacencySatisfied: Boolean
 )
 
+// journeyWindow 主要服务于“同代码时间重叠校验”等运营规则。
 final case class TrainJourneyWindow(
     departureTime: Instant,
     arrivalTime: Instant
@@ -288,6 +129,8 @@ final case class TrainJourney private[domain] (
       seatPreference: Option[TrainSeatPreference],
       existingAllocations: Vector[TrainSegmentSeatAllocation]
   ): Either[TrainError, TrainSeatAllocationPlan] =
+    // 这里的筛选顺序对应当前 Phase 2 的选座语义：
+    // 先找区间可用座位，再尽量满足偏好，再尽量相邻/同车厢。
     val availableSeats =
       seats
         .filter(seat => seat.inventoryId == seatInventory.inventoryId && seat.isBookable)
@@ -370,6 +213,7 @@ final case class TrainJourney private[domain] (
       case TrainSeatPreference.NoPreference => TrainSeatPositionType.Other
 
   private def chooseAdjacentSeats(availableSeats: Vector[TrainSeat], requestedQuantity: Int): Option[Vector[TrainSeat]] =
+    // 当前“相邻”规则保持可解释：同车厢、同行、seatCode 连续。
     availableSeats
       .groupBy(seat => (seat.carriageNo, seat.rowNo.value))
       .values
@@ -401,4 +245,140 @@ final case class TrainJourney private[domain] (
           case Vector(leftSeat, rightSeat) => rightSeat.seatCode.headOption.exists(_.toInt - leftSeat.seatCode.headOption.getOrElse('A').toInt == 1) || rightSeat.seatCode.compareTo(leftSeat.seatCode) == 1
           case _                           => true
         }
+
+object TrainJourney:
+  // create 面向管理员录入或业务创建，集中完成 stops / seats 这类结构校验。
+  def create(
+      trainId: TrainId,
+      managerId: ManagerId,
+      trainNumber: TrainNumber,
+      saleStartsAt: Instant,
+      stops: Vector[TrainStop],
+      seatInventories: Vector[TrainSeatInventory],
+      seats: Vector[TrainSeat],
+      segmentPrices: Vector[TrainSegmentPrice],
+      refundPolicySegments: Vector[TrainRefundPolicySegment],
+      createdAt: Instant
+  ): Either[TrainError, TrainJourney] =
+    for
+      _ <- validateStops(trainId, stops)
+      _ <- validateSeats(trainId, seatInventories, seats)
+    yield
+      TrainJourney(
+        trainId = trainId,
+        managerId = managerId,
+        trainNumber = trainNumber,
+        saleStartsAt = saleStartsAt,
+        trainJourneyStatus = TrainJourneyStatus.OnSale,
+        stops = stops.sortBy(_.sequenceNo),
+        seatInventories = seatInventories,
+        seats = seats.sortBy(seat => (seat.carriageNo, seat.rowNo.value, seat.seatCode)),
+        segmentPrices = segmentPrices,
+        refundPolicySegments = refundPolicySegments.sortBy(_.startOffsetBeforeDeparture.toMinutes).reverse,
+        createdAt = createdAt
+      )
+
+  // restore 只负责恢复持久化状态，不重新触发 create 的默认值逻辑。
+  def restore(
+      trainId: TrainId,
+      managerId: ManagerId,
+      trainNumber: TrainNumber,
+      saleStartsAt: Instant,
+      trainJourneyStatus: TrainJourneyStatus,
+      stops: Vector[TrainStop],
+      seatInventories: Vector[TrainSeatInventory],
+      seats: Vector[TrainSeat],
+      segmentPrices: Vector[TrainSegmentPrice],
+      refundPolicySegments: Vector[TrainRefundPolicySegment],
+      createdAt: Instant
+  ): TrainJourney =
+    TrainJourney(
+      trainId = trainId,
+      managerId = managerId,
+      trainNumber = trainNumber,
+      saleStartsAt = saleStartsAt,
+      trainJourneyStatus = trainJourneyStatus,
+      stops = stops.sortBy(_.sequenceNo),
+      seatInventories = seatInventories,
+      seats = seats.sortBy(seat => (seat.carriageNo, seat.rowNo.value, seat.seatCode)),
+      segmentPrices = segmentPrices,
+      refundPolicySegments = refundPolicySegments.sortBy(_.startOffsetBeforeDeparture.toMinutes).reverse,
+      createdAt = createdAt
+    )
+
+  // generateSeats 负责把“车厢数 + 排数 + 座位布局”物化成具体座位。
+  // 这是 Train admin 配置里最关键的一步，因为后续下单会落到具体座位。
+  def generateSeats(
+      trainId: TrainId,
+      inventory: TrainSeatInventory,
+      carriageCount: Int,
+      rowsPerCarriage: Int,
+      layoutColumns: Vector[TrainSeatLayoutColumn],
+      seatIds: Vector[TrainSeatId]
+  ): Either[TrainError, Vector[TrainSeat]] =
+    if carriageCount <= 0 || rowsPerCarriage <= 0 || layoutColumns.isEmpty then
+      Left(TrainError.TrainSeatGenerationWasInvalid(trainId, "carriageCount, rowsPerCarriage, and layoutColumns must all be positive"))
+    else
+      val preparedSeatSpecs =
+        (1 to carriageCount).toVector.flatMap { carriageNo =>
+          (1 to rowsPerCarriage).toVector.flatMap { rowNo =>
+            layoutColumns.map { column =>
+              (column, carriageNo, rowNo, f"$rowNo%02d${column.code}")
+            }
+          }
+        }
+      if preparedSeatSpecs.size != seatIds.size then
+        Left(TrainError.TrainSeatGenerationWasInvalid(trainId, s"Prepared ${preparedSeatSpecs.size} seats but got ${seatIds.size} ids"))
+      else
+        val materializedSeats = preparedSeatSpecs.zip(seatIds).map { case ((column, carriageNo, rowNo, seatNo), seatId) =>
+          TrainSeat(
+            seatId = seatId,
+            trainId = trainId,
+            inventoryId = inventory.inventoryId,
+            seatClass = inventory.seatClass,
+            carriageNo = carriageNo,
+            rowNo = TrainSeatRowNo.create(rowNo).fold(throw _, identity),
+            seatCode = column.code,
+            seatNo = seatNo,
+            seatLabel = s"${carriageNo}杞?seatNo",
+            seatPositionType = column.positionType,
+            seatStatus = TrainSeatStatus.Available
+          )
+        }
+        Either.cond(
+          materializedSeats.size == inventory.totalSeats.value,
+          materializedSeats,
+          TrainError.TrainSeatGenerationWasInvalid(trainId, s"Generated ${materializedSeats.size} seats but inventory declares ${inventory.totalSeats.value}")
+        )
+
+  private def validateStops(trainId: TrainId, stops: Vector[TrainStop]): Either[TrainError, Unit] =
+    if stops.size < 2 then Left(TrainError.TrainHadTooFewStops(trainId))
+    else
+      stops
+        .sortBy(_.sequenceNo)
+        .sliding(2)
+        .toVector
+        .traverse_ {
+          case Vector(leftStop, rightStop) if leftStop.sequenceNo + 1 == rightStop.sequenceNo => Right(())
+          case Vector(leftStop, _) => Left(TrainError.TrainStopSequenceWasInvalid(trainId, leftStop.stationCode.value))
+          case _ => Right(())
+        }
+
+  private def validateSeats(
+      trainId: TrainId,
+      seatInventories: Vector[TrainSeatInventory],
+      seats: Vector[TrainSeat]
+  ): Either[TrainError, Unit] =
+    val seatsByInventoryId = seats.groupBy(_.inventoryId)
+    seatInventories.traverse_ { inventory =>
+      val generatedSeats = seatsByInventoryId.getOrElse(inventory.inventoryId, Vector.empty)
+      Either.cond(
+        generatedSeats.size == inventory.totalSeats.value,
+        (),
+        TrainError.TrainSeatGenerationWasInvalid(
+          trainId,
+          s"Inventory '${inventory.inventoryId.value}' expected ${inventory.totalSeats.value} seats but found ${generatedSeats.size}"
+        )
+      )
+    }
 

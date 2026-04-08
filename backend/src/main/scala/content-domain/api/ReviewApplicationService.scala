@@ -10,6 +10,8 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.time.Instant
 
+// Review application service 负责把“严格绑定订单项”的 review core data
+// 组装成资源摘要、资格判断和可展示的 review 视图。
 enum ReviewImageUploadError(val message: String) extends DomainError:
   case ImageWasMissing
       extends ReviewImageUploadError("Review image file was missing")
@@ -50,6 +52,7 @@ final case class ReviewView(
     imageRefs: List[ReviewImageRef]
 )
 
+// 是否可评价最终以后端裁决为准，前端只消费这个结果。
 final case class ReviewEligibilityView(
     orderId: OrderId,
     orderItemId: OrderItemId,
@@ -59,6 +62,8 @@ final case class ReviewEligibilityView(
     resourceSummaryTitle: String
 )
 
+// 这是 application 层内部的桥接模型：
+// 从 order item snapshot 解析出 review 需要的资源主键和展示摘要。
 private final case class ReviewBinding(
     resourceType: ReviewResourceType,
     resourceId: String,
@@ -108,6 +113,7 @@ final class LiveReviewApplicationService[F[_]: MonadThrow](
     for
       _ <- requireUser(viewerUserId)
       reviews <- reviewRepository.listPublishedReviewsByResource(resourceType, resourceId)
+      // averageRating / reviewCount 是查询时聚合值，不是 review 表里的核心字段。
       reviewCount = reviews.size
       averageRating =
         if reviewCount == 0 then BigDecimal(0)
@@ -117,6 +123,7 @@ final class LiveReviewApplicationService[F[_]: MonadThrow](
   override def checkEligibility(authorUserId: UserId, orderItemId: OrderItemId): F[ReviewEligibilityView] =
     for
       _ <- requireUser(authorUserId)
+      // 资格校验放在后端，避免前端仅凭订单摘要猜测是否可写评价。
       order <- orderRepository.findOrderByOrderItemId(orderItemId).flatMap(_.liftTo[F](ReviewError.ReviewWasNotAllowed(authorUserId, orderItemId, "order item not found")))
       orderItem <- MonadThrow[F].fromEither(findOrderItem(order, orderItemId, authorUserId))
       binding = toReviewBinding(orderItem)
@@ -211,6 +218,8 @@ final class LiveReviewApplicationService[F[_]: MonadThrow](
       author <- requireUser(review.authorUserId)
       order <- orderRepository.findOrderById(review.orderId).flatMap(_.liftTo[F](OrderError.OrderWasNotFound(review.orderId)))
       orderItem <- MonadThrow[F].fromEither(findOrderItem(order, review.orderItemId, review.authorUserId))
+      // Review 核心只保存 resourceType/resourceId。
+      // 更适合阅读的标题、副标题来自订单快照的运行时绑定。
       binding = toReviewBinding(orderItem)
     yield ReviewView(
       review.reviewId,
@@ -243,6 +252,7 @@ final class LiveReviewApplicationService[F[_]: MonadThrow](
       orderItem.orderItemStatus != OrderItemStatus.Cancelled
 
   private def toReviewBinding(orderItem: OrderLineItem): ReviewBinding =
+    // 不同资源类型在这里被统一成 review 展示上下文。
     orderItem match
       case flightOrderItem: FlightOrderItem =>
         ReviewBinding(

@@ -42,6 +42,17 @@ final case class RoomInventory private[domain] (
   def isBookable(requiredRoomCount: RoomCount): Boolean =
     roomInventoryStatus == RoomInventoryStatus.Available && availableRooms.value >= requiredRoomCount.value
 
+object RoomInventory:
+  def create(
+      roomInventoryId: RoomInventoryId,
+      roomTypeId: RoomTypeId,
+      inventoryDate: LocalDate,
+      availableRooms: RoomCount,
+      unitPrice: Money,
+      roomInventoryStatus: RoomInventoryStatus
+  ): RoomInventory =
+    RoomInventory(roomInventoryId, roomTypeId, inventoryDate, availableRooms, unitPrice, roomInventoryStatus)
+
 final case class RoomType private[domain] (
     roomTypeId: RoomTypeId,
     hotelId: HotelId,
@@ -78,6 +89,40 @@ final case class RoomType private[domain] (
       .takeWhile(_.isBefore(stayPeriod.checkOut))
       .toVector
 
+object RoomType:
+  def create(
+      roomTypeId: RoomTypeId,
+      hotelId: HotelId,
+      roomTypeName: RoomTypeName,
+      roomCapacity: Capacity,
+      bedType: BedType,
+      basePrice: Money,
+      roomTypeStatus: RoomTypeStatus,
+      roomInventories: Vector[RoomInventory]
+  ): RoomType =
+    RoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
+
+  def restore(
+      roomTypeId: RoomTypeId,
+      hotelId: HotelId,
+      roomTypeName: RoomTypeName,
+      roomCapacity: Capacity,
+      bedType: BedType,
+      basePrice: Money,
+      roomTypeStatus: RoomTypeStatus,
+      roomInventories: Vector[RoomInventory]
+  ): RoomType =
+    RoomType(
+      roomTypeId = roomTypeId,
+      hotelId = hotelId,
+      roomTypeName = roomTypeName,
+      roomCapacity = roomCapacity,
+      bedType = bedType,
+      basePrice = basePrice,
+      roomTypeStatus = roomTypeStatus,
+      roomInventories = roomInventories
+    )
+
 final case class Hotel private[domain] (
     hotelId: HotelId,
     hotelName: HotelName,
@@ -112,4 +157,38 @@ final case class Hotel private[domain] (
       else Left(HotelError.GuestCapacityWasExceeded(roomType.roomTypeId, roomType.roomCapacity.value * roomCount.value, guestCount))
       roomInventories <- roomType.ensureBookableForStay(stayPeriod, roomCount)
     yield roomInventories
+
+object Hotel:
+  def create(
+      hotelId: HotelId,
+      hotelName: HotelName,
+      hotelLocation: HotelLocation,
+      roomTypes: Vector[RoomType],
+      createdAt: Instant
+  ): Hotel =
+    Hotel(
+      hotelId = hotelId,
+      hotelName = hotelName,
+      hotelLocation = hotelLocation,
+      hotelStatus = HotelStatus.Active,
+      roomTypes = roomTypes,
+      createdAt = createdAt
+    )
+
+  def restore(
+      hotelId: HotelId,
+      hotelName: HotelName,
+      hotelLocation: HotelLocation,
+      hotelStatus: HotelStatus,
+      roomTypes: Vector[RoomType],
+      createdAt: Instant
+  ): Hotel =
+    Hotel(
+      hotelId = hotelId,
+      hotelName = hotelName,
+      hotelLocation = hotelLocation,
+      hotelStatus = hotelStatus,
+      roomTypes = roomTypes,
+      createdAt = createdAt
+    )
 

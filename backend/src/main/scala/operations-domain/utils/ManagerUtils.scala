@@ -1,7 +1,5 @@
 package com.typesafe.travel.operations.domain
 
-import cats.MonadThrow
-import cats.syntax.all.*
 import com.typesafe.travel.shared.kernel.*
 import java.time.Instant
 
@@ -12,7 +10,7 @@ def registerNewAirlineManager(
     displayName: PersonName,
     createdAt: Instant
 ): AirlineManager =
-  AirlineManager(managerId, airlineId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
+  AirlineManager.register(managerId, airlineId, primaryEmailAddress, displayName, createdAt)
 
 
 def restorePersistedAirlineManager(
@@ -23,7 +21,7 @@ def restorePersistedAirlineManager(
     managerStatus: ManagerStatus,
     createdAt: Instant
 ): AirlineManager =
-  AirlineManager(managerId, airlineId, primaryEmailAddress, displayName, managerStatus, createdAt)
+  AirlineManager.restore(managerId, airlineId, primaryEmailAddress, displayName, managerStatus, createdAt)
 
 
 def registerNewHotelManager(
@@ -33,7 +31,7 @@ def registerNewHotelManager(
     displayName: PersonName,
     createdAt: Instant
 ): HotelManager =
-  HotelManager(managerId, hotelId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
+  HotelManager.register(managerId, hotelId, primaryEmailAddress, displayName, createdAt)
 
 
 def restorePersistedHotelManager(
@@ -44,7 +42,7 @@ def restorePersistedHotelManager(
     managerStatus: ManagerStatus,
     createdAt: Instant
 ): HotelManager =
-  HotelManager(managerId, hotelId, primaryEmailAddress, displayName, managerStatus, createdAt)
+  HotelManager.restore(managerId, hotelId, primaryEmailAddress, displayName, managerStatus, createdAt)
 
 
 def registerNewAttractionManager(
@@ -53,7 +51,7 @@ def registerNewAttractionManager(
     displayName: PersonName,
     createdAt: Instant
 ): AttractionManager =
-  AttractionManager(managerId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
+  AttractionManager.register(managerId, primaryEmailAddress, displayName, createdAt)
 
 
 def restorePersistedAttractionManager(
@@ -63,4 +61,4 @@ def restorePersistedAttractionManager(
     managerStatus: ManagerStatus,
     createdAt: Instant
 ): AttractionManager =
-  AttractionManager(managerId, primaryEmailAddress, displayName, managerStatus, createdAt)
+  AttractionManager.restore(managerId, primaryEmailAddress, displayName, managerStatus, createdAt)

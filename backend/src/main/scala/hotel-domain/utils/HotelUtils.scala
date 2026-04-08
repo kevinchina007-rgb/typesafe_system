@@ -12,7 +12,7 @@ def createRoomInventory(
     unitPrice: Money,
     roomInventoryStatus: RoomInventoryStatus
 ): RoomInventory =
-  RoomInventory(roomInventoryId, roomTypeId, inventoryDate, availableRooms, unitPrice, roomInventoryStatus)
+  RoomInventory.create(roomInventoryId, roomTypeId, inventoryDate, availableRooms, unitPrice, roomInventoryStatus)
 
 
 def createRoomType(
@@ -25,7 +25,7 @@ def createRoomType(
     roomTypeStatus: RoomTypeStatus,
     roomInventories: Vector[RoomInventory]
 ): RoomType =
-  RoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
+  RoomType.create(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
 
 
 def restorePersistedRoomType(
@@ -38,16 +38,7 @@ def restorePersistedRoomType(
     roomTypeStatus: RoomTypeStatus,
     roomInventories: Vector[RoomInventory]
 ): RoomType =
-  RoomType(
-    roomTypeId = roomTypeId,
-    hotelId = hotelId,
-    roomTypeName = roomTypeName,
-    roomCapacity = roomCapacity,
-    bedType = bedType,
-    basePrice = basePrice,
-    roomTypeStatus = roomTypeStatus,
-    roomInventories = roomInventories
-  )
+  RoomType.restore(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
 
 
 def createHotel(
@@ -57,14 +48,7 @@ def createHotel(
     roomTypes: Vector[RoomType],
     createdAt: Instant
 ): Hotel =
-  Hotel(
-    hotelId = hotelId,
-    hotelName = hotelName,
-    hotelLocation = hotelLocation,
-    hotelStatus = HotelStatus.Active,
-    roomTypes = roomTypes,
-    createdAt = createdAt
-  )
+  Hotel.create(hotelId, hotelName, hotelLocation, roomTypes, createdAt)
 
 
 def restorePersistedHotel(
@@ -75,11 +59,4 @@ def restorePersistedHotel(
     roomTypes: Vector[RoomType],
     createdAt: Instant
 ): Hotel =
-  Hotel(
-    hotelId = hotelId,
-    hotelName = hotelName,
-    hotelLocation = hotelLocation,
-    hotelStatus = hotelStatus,
-    roomTypes = roomTypes,
-    createdAt = createdAt
-  )
+  Hotel.restore(hotelId, hotelName, hotelLocation, hotelStatus, roomTypes, createdAt)

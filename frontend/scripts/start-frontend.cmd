@@ -12,4 +12,4 @@ cd /d E:\typesafe\template\frontend
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "[System.IO.File]::WriteAllText('E:\typesafe\template\frontend\dist\runtime-config.js', \"window.__TRAVEL_BACKEND_ORIGIN__ = '%BACKEND_ORIGIN%';\", [System.Text.Encoding]::UTF8)"
 
 cd /d E:\typesafe\template\frontend\dist
-python -m http.server %FRONTEND_PORT% --bind 127.0.0.1
+python -m http.server %FRONTEND_PORT% --bind 0.0.0.0

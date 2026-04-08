@@ -153,18 +153,9 @@ export function BookingsPage({
         isBusy={isBusy}
         translate={translate}
         onClose={() => setPendingPaymentOrder(null)}
-        onConfirmPayment={async payload => {
-          await runPageAction(async () => {
-            await travelMvpApiClient.payOrder(payload.orderId, {
-              paymentMethod: payload.paymentMethod,
-              paymentSucceeded: payload.paymentSucceeded,
-            })
-            await reloadOrders()
-            if (payload.paymentSucceeded) {
-              setPendingPaymentOrder(null)
-            }
-          }, translate('bookings.pay'), payload.paymentSucceeded ? translate('notice.paymentSuccess') : translate('notice.paymentPending'))
-        }}
+        onCreatePaymentLink={payload =>
+          travelMvpApiClient.createPaymentLink(payload.orderId, payload.paymentMethod, currentLanguage)
+        }
       />
     </>
   )

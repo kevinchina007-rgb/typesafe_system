@@ -84,7 +84,7 @@ final case class TourGroupSummaryResponseDto(
     createdAt: String
 )
 
-final case class TourGroupMembershipResponseDto(membershipId: String, userId: String, status: String, joinedAt: String)
+final case class TourGroupMembershipResponseDto(membershipId: String, userId: String, userDisplayName: String, status: String, joinedAt: String)
 final case class TourGroupMembershipTravelerResponseDto(membershipTravelerId: String, membershipId: String, travelerId: String, status: String, joinedAt: String)
 final case class GroupPlanItemResponseDto(planItemId: String, itemType: String, title: String, description: String, scheduledAt: String, endsAt: Option[String], sequenceNo: Int, status: String)
 final case class GroupPlanOptionResponseDto(optionId: String, planItemId: String, resourceType: String, resourceId: String, resourceVariantCode: Option[String], resourceContext: Option[String], label: String, description: String, defaultQuantity: Int, status: String)
@@ -222,7 +222,13 @@ object TourGroupDetailsResponseDto:
     TourGroupDetailsResponseDto(
       group = TourGroupSummaryResponseDto.fromView(view),
       memberships = view.details.memberships.toList.map(membership =>
-        TourGroupMembershipResponseDto(membership.membershipId.value, membership.userId.value, membership.status.toString, membership.joinedAt.toString)
+        TourGroupMembershipResponseDto(
+          membership.membershipId.value,
+          membership.userId.value,
+          view.memberDisplayNames.getOrElse(membership.userId, membership.userId.value),
+          membership.status.toString,
+          membership.joinedAt.toString
+        )
       ),
       membershipTravelers = view.details.membershipTravelers.toList.map(membershipTraveler =>
         TourGroupMembershipTravelerResponseDto(membershipTraveler.membershipTravelerId.value, membershipTraveler.membershipId.value, membershipTraveler.travelerId.value, membershipTraveler.status.toString, membershipTraveler.joinedAt.toString)

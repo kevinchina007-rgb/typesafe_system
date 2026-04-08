@@ -8,11 +8,9 @@ import com.typesafe.travel.api.dto.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.tourgroup.domain.*
-import io.circe.syntax.*
 import org.http4s.*
 import org.http4s.circe.*
 import org.http4s.dsl.Http4sDsl
-import org.http4s.headers
 import org.http4s.multipart.Multipart
 
 import java.time.{Instant, LocalDate}
@@ -48,14 +46,14 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           capacity = createTourGroupRequestDto.capacity,
           createdAt = createdAt
         )
-        response <- Created(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- createdJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case GET -> Root / "api" / "tour-groups" =>
-      tourGroupApplicationService.listGroups.flatMap(groups => Ok(TourGroupListResponseDto(groups.map(TourGroupSummaryResponseDto.fromView)).asJson))
+      tourGroupApplicationService.listGroups.flatMap(groups => okJson(TourGroupListResponseDto(groups.map(TourGroupSummaryResponseDto.fromView))))
 
     case GET -> Root / "api" / "tour-groups" / groupIdValue =>
-      tourGroupApplicationService.getGroupDetails(TourGroupId(groupIdValue)).flatMap(view => Ok(TourGroupDetailsResponseDto.fromView(view).asJson))
+      tourGroupApplicationService.getGroupDetails(TourGroupId(groupIdValue)).flatMap(view => okJson(TourGroupDetailsResponseDto.fromView(view)))
 
     case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "memberships" =>
       for
@@ -63,7 +61,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         joinRequest <- request.as[JoinTourGroupRequestDto]
         joinedAt <- currentInstantF
         detailsView <- tourGroupApplicationService.joinGroup(TourGroupId(groupIdValue), currentUserId, joinedAt)
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "membership-travelers" =>
@@ -77,7 +75,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           travelerId = TravelerId(membershipTravelerRequest.travelerId),
           joinedAt = joinedAt
         )
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "plan-items" =>
@@ -96,7 +94,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           endsAt = endsAt,
           sequenceNo = planItemRequest.sequenceNo
         )
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "plan-items" / planItemIdValue / "options" =>
@@ -116,7 +114,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           description = optionRequest.description,
           defaultQuantity = optionRequest.defaultQuantity
         )
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "plan-items" / planItemIdValue / "selections" =>
@@ -134,7 +132,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           travelerIds = selectionRequest.travelerIds.map(TravelerId.apply),
           createdAt = createdAt
         )
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "selections" / selectionIdValue / "submit" =>
@@ -142,7 +140,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         submitRequest <- request.as[SubmitGroupPlanSelectionRequestDto]
         detailsView <- tourGroupApplicationService.submitSelection(GroupPlanSelectionId(selectionIdValue), currentUserId)
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "selections" / selectionIdValue / "confirm" =>
@@ -156,7 +154,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           reviewNote = reviewRequest.reviewNote,
           confirmedAt = confirmedAt
         )
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "selections" / selectionIdValue / "reject" =>
@@ -170,7 +168,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           reviewNote = rejectRequest.reviewNote,
           rejectedAt = rejectedAt
         )
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "selections" / selectionIdValue / "pay" =>
@@ -186,7 +184,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         )
         (detailsView, order) = payResult
         orderResponseDto <- toOrderResponseDto(order)
-        response <- Ok(TourGroupBatchPayResponseDto(TourGroupDetailsResponseDto.fromView(detailsView), List(orderResponseDto)).asJson)
+        response <- okJson(TourGroupBatchPayResponseDto(TourGroupDetailsResponseDto.fromView(detailsView), List(orderResponseDto)))
       yield response
 
     case request @ POST -> Root / "api" / "selections" / "batch-pay" =>
@@ -202,7 +200,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         )
         (detailsView, orders) = payResult
         orderResponseDtos <- orders.traverse(toOrderResponseDto)
-        response <- Ok(TourGroupBatchPayResponseDto(TourGroupDetailsResponseDto.fromView(detailsView), orderResponseDtos).asJson)
+        response <- okJson(TourGroupBatchPayResponseDto(TourGroupDetailsResponseDto.fromView(detailsView), orderResponseDtos))
       yield response
 
     case request @ POST -> Root / "api" / "selections" / "batch-confirm" =>
@@ -216,7 +214,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           reviewNote = reviewRequest.reviewNote,
           confirmedAt = confirmedAt
         )
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case request @ POST -> Root / "api" / "selections" / "batch-reject" =>
@@ -230,12 +228,12 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           reviewNote = rejectRequest.reviewNote,
           rejectedAt = rejectedAt
         )
-        response <- Ok(TourGroupDetailsResponseDto.fromView(detailsView).asJson)
+        response <- okJson(TourGroupDetailsResponseDto.fromView(detailsView))
       yield response
 
     case GET -> Root / "api" / "tour-groups" / groupIdValue / "bookings" =>
       tourGroupApplicationService.listGroupBookings(TourGroupId(groupIdValue)).flatMap { orders =>
-        orders.traverse(toOrderResponseDto).flatMap(orderDtos => Ok(OrderListResponseDto(orderDtos).asJson))
+        orders.traverse(toOrderResponseDto).flatMap(orderDtos => okJson(OrderListResponseDto(orderDtos)))
       }
 
     case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat-settings" =>
@@ -243,7 +241,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         currentTime <- currentInstantF
         settingsView <- tourGroupApplicationService.getChatSettings(TourGroupId(groupIdValue), currentUserId, currentTime)
-        response <- Ok(TourGroupChatSettingsResponseDto.fromView(settingsView).asJson)
+        response <- okJson(TourGroupChatSettingsResponseDto.fromView(settingsView))
       yield response
 
     case request @ PATCH -> Root / "api" / "tour-groups" / groupIdValue / "chat-settings" =>
@@ -257,7 +255,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           allowMemberDirectChat = settingsRequest.allowMemberDirectChat,
           updatedAt = updatedAt
         )
-        response <- Ok(TourGroupChatSettingsResponseDto.fromView(settingsView).asJson)
+        response <- okJson(TourGroupChatSettingsResponseDto.fromView(settingsView))
       yield response
 
     case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "conversations" =>
@@ -265,7 +263,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         currentTime <- currentInstantF
         conversations <- tourGroupApplicationService.listConversations(TourGroupId(groupIdValue), currentUserId, currentTime)
-        response <- Ok(TourGroupConversationListResponseDto.fromView(conversations).asJson)
+        response <- okJson(TourGroupConversationListResponseDto.fromView(conversations))
       yield response
 
     case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "conversation" =>
@@ -273,7 +271,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         currentTime <- currentInstantF
         conversations <- tourGroupApplicationService.listConversations(TourGroupId(groupIdValue), currentUserId, currentTime)
-        response <- Ok(TourGroupConversationListResponseDto.fromView(conversations).asJson)
+        response <- okJson(TourGroupConversationListResponseDto.fromView(conversations))
       yield response
 
     case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "messages" =>
@@ -281,7 +279,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         currentTime <- currentInstantF
         messageViews <- tourGroupApplicationService.listGroupChatMessages(TourGroupId(groupIdValue), currentUserId, currentTime)
-        response <- Ok(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "messages" =>
@@ -290,7 +288,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         messageRequest <- request.as[SendTourGroupMessageRequestDto]
         createdAt <- currentInstantF
         messageViews <- tourGroupApplicationService.sendGroupChatMessage(TourGroupId(groupIdValue), currentUserId, messageRequest.content, createdAt)
-        response <- Ok(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "search" =>
@@ -299,7 +297,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentTime <- currentInstantF
         query <- fromEither(request.params.get("q").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
         results <- tourGroupApplicationService.searchMessages(TourGroupId(groupIdValue), currentUserId, query, currentTime)
-        response <- Ok(TourGroupMessageSearchResponseDto(results.map(TourGroupMessageSearchResultResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageSearchResponseDto(results.map(TourGroupMessageSearchResultResponseDto.fromView)))
       yield response
 
     case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "chat" / "conversations" / "search" =>
@@ -308,7 +306,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentTime <- currentInstantF
         query <- fromEither(request.params.get("q").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
         results <- tourGroupApplicationService.searchConversations(TourGroupId(groupIdValue), currentUserId, query, currentTime)
-        response <- Ok(TourGroupConversationListResponseDto(results.map(TourGroupConversationSummaryResponseDto.fromView), None).asJson)
+        response <- okJson(TourGroupConversationListResponseDto(results.map(TourGroupConversationSummaryResponseDto.fromView), None))
       yield response
 
     case request @ GET -> Root / "api" / "tour-groups" / groupIdValue / "direct-conversations" =>
@@ -316,7 +314,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         currentTime <- currentInstantF
         conversations <- tourGroupApplicationService.listDirectConversations(TourGroupId(groupIdValue), currentUserId, currentTime)
-        response <- Ok(TourGroupConversationListResponseDto(conversations.map(TourGroupConversationSummaryResponseDto.fromView), None).asJson)
+        response <- okJson(TourGroupConversationListResponseDto(conversations.map(TourGroupConversationSummaryResponseDto.fromView), None))
       yield response
 
     case request @ POST -> Root / "api" / "tour-groups" / groupIdValue / "direct-conversations" =>
@@ -330,32 +328,33 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           targetUserId = UserId(conversationRequest.targetUserId),
           currentTime = currentTime
         )
-        response <- Ok(TourGroupConversationSummaryResponseDto.fromView(conversation).asJson)
+        response <- okJson(TourGroupConversationSummaryResponseDto.fromView(conversation))
       yield response
 
     case request @ POST -> Root / "api" / "conversations" / conversationIdValue / "attachments" =>
       for
         currentUserId <- requireCurrentUserId(request)
         multipartPayload <- request.as[Multipart[F]]
-        filePart <- multipartPayload.parts.find(_.name.contains("attachment")).liftTo[F](SharedValidationError.RequiredFieldWasEmpty("attachment"))
-        fileName <- filePart.filename.liftTo[F](SharedValidationError.RequiredFieldWasEmpty("attachment.filename"))
-        mimeType =
-          filePart.headers
-            .get[headers.`Content-Type`]
-            .map(header => s"${header.mediaType.mainType}/${header.mediaType.subType}")
-            .getOrElse("application/octet-stream")
-        fileBytes <- filePart.body.compile.to(Array)
-        groupIdValue <- fromEither(request.params.get("groupId").filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("groupId")))
+        filePart <- requireMultipartPart(multipartPayload, "attachment", SharedValidationError.RequiredFieldWasEmpty("attachment"))
+        uploadedAttachment <- readUploadedBinary(filePart, SharedValidationError.RequiredFieldWasEmpty("attachment.filename"))
+        groupIdValue <- requireQueryParam(request, "groupId")
         currentTime <- currentInstantF
-        uploaded <- tourGroupApplicationService.uploadConversationAttachment(TourGroupId(groupIdValue), currentUserId, fileName, mimeType, fileBytes, currentTime)
-        response <- Created(TourGroupUploadedAttachmentResponseDto.fromView(uploaded).asJson)
+        uploaded <- tourGroupApplicationService.uploadConversationAttachment(
+          TourGroupId(groupIdValue),
+          currentUserId,
+          uploadedAttachment.originalFileName,
+          uploadedAttachment.contentTypeValue,
+          uploadedAttachment.fileBytes,
+          currentTime
+        )
+        response <- createdJson(TourGroupUploadedAttachmentResponseDto.fromView(uploaded))
       yield response
 
     case request @ GET -> Root / "api" / "conversations" / conversationIdValue / "messages" =>
       for
         currentUserId <- requireCurrentUserId(request)
         messages <- tourGroupApplicationService.getConversationMessages(TourGroupConversationId(conversationIdValue), currentUserId)
-        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ POST -> Root / "api" / "conversations" / conversationIdValue / "messages" =>
@@ -372,7 +371,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           attachmentRefs = messageRequest.attachments.map(TourGroupUploadedAttachmentResponseDto.toView),
           createdAt = createdAt
         )
-        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ POST -> Root / "api" / "conversations" / conversationIdValue / "read" =>
@@ -380,14 +379,14 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         currentTime <- currentInstantF
         summary <- tourGroupApplicationService.markConversationRead(TourGroupConversationId(conversationIdValue), currentUserId, currentTime)
-        response <- Ok(TourGroupConversationSummaryResponseDto.fromView(summary).asJson)
+        response <- okJson(TourGroupConversationSummaryResponseDto.fromView(summary))
       yield response
 
     case request @ GET -> Root / "api" / "direct-conversations" / conversationIdValue / "messages" =>
       for
         currentUserId <- requireCurrentUserId(request)
         messageViews <- tourGroupApplicationService.listDirectConversationMessages(TourGroupConversationId(conversationIdValue), currentUserId)
-        response <- Ok(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ PATCH -> Root / "api" / "direct-conversations" / conversationIdValue / "mute" =>
@@ -396,7 +395,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         muteRequest <- request.as[UpdateConversationMuteRequestDto]
         currentTime <- currentInstantF
         summary <- tourGroupApplicationService.updateConversationMuteState(TourGroupConversationId(conversationIdValue), currentUserId, muteRequest.muted, currentTime)
-        response <- Ok(TourGroupConversationSummaryResponseDto.fromView(summary).asJson)
+        response <- okJson(TourGroupConversationSummaryResponseDto.fromView(summary))
       yield response
 
     case request @ PATCH -> Root / "api" / "direct-conversations" / conversationIdValue / "archive" =>
@@ -405,7 +404,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         archiveRequest <- request.as[UpdateConversationArchiveRequestDto]
         currentTime <- currentInstantF
         summary <- tourGroupApplicationService.updateConversationArchiveState(TourGroupConversationId(conversationIdValue), currentUserId, archiveRequest.archived, currentTime)
-        response <- Ok(TourGroupConversationSummaryResponseDto.fromView(summary).asJson)
+        response <- okJson(TourGroupConversationSummaryResponseDto.fromView(summary))
       yield response
 
     case request @ POST -> Root / "api" / "direct-conversations" / conversationIdValue / "messages" =>
@@ -419,7 +418,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           content = messageRequest.content,
           createdAt = createdAt
         )
-        response <- Ok(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messageViews.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ PATCH -> Root / "api" / "messages" / messageIdValue =>
@@ -428,7 +427,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         editRequest <- request.as[EditTourGroupMessageRequestDto]
         currentTime <- currentInstantF
         messages <- tourGroupApplicationService.editMessage(TourGroupMessageId(messageIdValue), currentUserId, editRequest.content, currentTime)
-        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ POST -> Root / "api" / "messages" / messageIdValue / "delete" =>
@@ -436,7 +435,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         currentTime <- currentInstantF
         messages <- tourGroupApplicationService.deleteMessage(TourGroupMessageId(messageIdValue), currentUserId, currentTime)
-        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ POST -> Root / "api" / "messages" / messageIdValue / "recall" =>
@@ -444,7 +443,7 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         currentTime <- currentInstantF
         messages <- tourGroupApplicationService.recallMessage(TourGroupMessageId(messageIdValue), currentUserId, currentTime)
-        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ POST -> Root / "api" / "messages" / messageIdValue / "reactions" =>
@@ -453,13 +452,13 @@ trait TourGroupApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         reactionRequest <- request.as[ReactTourGroupMessageRequestDto]
         currentTime <- currentInstantF
         messages <- tourGroupApplicationService.addReaction(TourGroupMessageId(messageIdValue), currentUserId, reactionRequest.reactionType, currentTime)
-        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)))
       yield response
 
     case request @ DELETE -> Root / "api" / "messages" / messageIdValue / "reactions" / reactionTypeValue =>
       for
         currentUserId <- requireCurrentUserId(request)
         messages <- tourGroupApplicationService.removeReaction(TourGroupMessageId(messageIdValue), currentUserId, reactionTypeValue)
-        response <- Ok(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)).asJson)
+        response <- okJson(TourGroupMessageListResponseDto(messages.map(TourGroupMessageResponseDto.fromView)))
       yield response
   }

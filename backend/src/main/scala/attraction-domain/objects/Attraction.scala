@@ -9,6 +9,8 @@ import io.circe.parser.decode
 
 import java.time.{DayOfWeek, Instant, LocalDate, Period}
 
+// Attraction 域当前把景点、票型、资格规则、场次放在同一处阅读，
+// 目的是让“能卖什么票、谁能买、何时可用”这几件事能一起看清楚。
 enum AttractionStatus:
   case Draft, Published, Closed
 
@@ -23,6 +25,8 @@ enum TicketEligibilityRuleType:
 
 sealed trait TicketEligibilityRuleConfig
 object TicketEligibilityRuleConfig:
+  // 资格规则配置本身是纯数据。
+  // 这里附带 Circe codec，只是为了把规则以 JSON 落库存储。
   final case class AgeLessThan(maxExclusive: Int) extends TicketEligibilityRuleConfig
   final case class AgeBetween(minInclusive: Int, maxInclusive: Int) extends TicketEligibilityRuleConfig
   final case class AgeAtLeast(minInclusive: Int) extends TicketEligibilityRuleConfig
@@ -54,6 +58,7 @@ final case class TicketEligibilityRule private[domain] (
     ruleConfigJson: String,
     createdAt: Instant
 ):
+  // parseConfig 把存储态 JSON 恢复成强类型规则配置。
   def parseConfig: Either[AttractionError, TicketEligibilityRuleConfig] =
     ruleType match
       case TicketEligibilityRuleType.AgeLessThan =>
@@ -105,6 +110,7 @@ final case class TicketType(
     eligibilityRules: Vector[TicketEligibilityRule],
     createdAt: Instant
 ):
+  // supportsUseDate 是票型“静态可售性”规则，不包含实时库存判断。
   def isActive: Boolean = ticketTypeStatus == TicketTypeStatus.Active
 
   def supportsUseDate(useDate: LocalDate): Boolean =
@@ -131,6 +137,7 @@ final case class AttractionTicketSession(
     status: AttractionTicketSessionStatus,
     createdAt: Instant
 ):
+  // session 负责更细粒度的场次 / 名额控制，是票型上的可选强化层。
   def isActive: Boolean = status == AttractionTicketSessionStatus.Active
 
 final case class Attraction(
@@ -144,6 +151,7 @@ final case class Attraction(
     ticketTypes: Vector[TicketType],
     createdAt: Instant
 ):
+  // Attraction 本体是管理员管理的资源入口，ticketTypes 挂在其下。
   def addTicketType(ticketType: TicketType): Either[AttractionError, Attraction] =
     if ticketType.attractionId != attractionId then Left(AttractionError.TicketTypeDidNotBelongToAttraction(ticketType.ticketTypeId, attractionId))
     else if ticketTypes.exists(_.ticketTypeName.equalsIgnoreCase(ticketType.ticketTypeName)) then

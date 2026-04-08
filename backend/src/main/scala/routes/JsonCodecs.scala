@@ -121,6 +121,7 @@ object JsonCodecs:
   given Encoder[ManagerRefundTaskResponseDto] = deriveEncoder
   given Encoder[ManagerRefundTaskListResponseDto] = deriveEncoder
   given Encoder[OrderLineItemResponseDto] = deriveEncoder
+  given Encoder[PaymentLinkResponseDto] = deriveEncoder
   given Encoder[PaymentResponseDto] = deriveEncoder
   given Encoder[RefundResponseDto] = deriveEncoder
   given Encoder[OrderResponseDto] = deriveEncoder

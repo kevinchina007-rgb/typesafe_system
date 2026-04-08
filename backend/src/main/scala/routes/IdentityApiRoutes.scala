@@ -11,7 +11,6 @@ import io.circe.syntax.*
 import org.http4s.*
 import org.http4s.circe.*
 import org.http4s.dsl.Http4sDsl
-import org.http4s.headers
 import org.http4s.multipart.Multipart
 
 trait IdentityApiRoutes[F[_]: Async] extends Http4sDsl[F]:
@@ -28,7 +27,7 @@ trait IdentityApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         userPhoneNumber <- fromEither(ContactNumber.create(createUserRequestDto.phone))
         createdAt <- currentInstantF
         createdUser <- userService.registerUser(primaryEmailAddress, userDisplayName, userPhoneNumber, createdAt)
-        response <- Created(UserResponseDto.fromDomain(createdUser).asJson)
+        response <- createdJson(UserResponseDto.fromDomain(createdUser))
       yield response
 
     case request @ POST -> Root / "api" / "session" / "login" =>
@@ -36,12 +35,12 @@ trait IdentityApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         loginUserRequestDto <- request.as[LoginUserRequestDto]
         primaryEmailAddress <- fromEither(EmailAddress.create(loginUserRequestDto.email))
         signedInUser <- userService.loginUserByEmail(primaryEmailAddress)
-        response <- Ok(UserResponseDto.fromDomain(signedInUser).asJson)
+        response <- okJson(UserResponseDto.fromDomain(signedInUser))
       yield response
 
     case GET -> Root / "api" / "users" / userIdValue =>
       userRepository.findByUserId(UserId(userIdValue)).flatMap {
-        case Some(foundUser) => Ok(UserResponseDto.fromDomain(foundUser).asJson)
+        case Some(foundUser) => okJson(UserResponseDto.fromDomain(foundUser))
         case None            => NotFound(ApiErrorResponseDto("user_not_found", s"User '$userIdValue' was not found").asJson)
       }
 
@@ -50,20 +49,14 @@ trait IdentityApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         _ <- if currentUserId == UserId(userIdValue) then Async[F].unit else Async[F].raiseError(com.typesafe.travel.auth.domain.AuthError.SessionActorDidNotMatch)
         multipartPayload <- request.as[Multipart[F]]
-        avatarPart <- multipartPayload.parts.find(_.name.contains("avatar")).liftTo[F](AvatarApplicationError.AvatarWasMissing)
-        avatarFileName <- avatarPart.filename.liftTo[F](AvatarApplicationError.AvatarWasMissing)
-        avatarContentType =
-          avatarPart.headers
-            .get[headers.`Content-Type`]
-            .map(contentTypeHeader => s"${contentTypeHeader.mediaType.mainType}/${contentTypeHeader.mediaType.subType}")
-            .getOrElse("")
-        avatarBytes <- avatarPart.body.compile.to(Array)
+        avatarPart <- requireMultipartPart(multipartPayload, "avatar", AvatarApplicationError.AvatarWasMissing)
+        uploadedAvatar <- readUploadedBinary(avatarPart, AvatarApplicationError.AvatarWasMissing)
         updatedUser <- avatarApplicationService.uploadUserAvatar(
           userId = UserId(userIdValue),
-          originalFileName = avatarFileName,
-          contentTypeValue = avatarContentType,
-          fileBytes = avatarBytes
+          originalFileName = uploadedAvatar.originalFileName,
+          contentTypeValue = uploadedAvatar.contentTypeValue,
+          fileBytes = uploadedAvatar.fileBytes
         )
-        response <- Ok(UserResponseDto.fromDomain(updatedUser).asJson)
+        response <- okJson(UserResponseDto.fromDomain(updatedUser))
       yield response
   }

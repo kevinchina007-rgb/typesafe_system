@@ -1,4 +1,5 @@
 import type { ContentImageResponse } from '../lib/mvp-types'
+import { BackendAssetImage } from './BackendAssetImage'
 
 type ContentImageUploaderProps = {
   images: ContentImageResponse[]
@@ -81,7 +82,7 @@ export function ContentImageUploader({
         <div className="content-image-gallery">
           {images.map(image => (
             <figure key={image.imageId} className="content-image-card">
-              <img src={image.publicUrl} alt={image.originalFileName} className="content-image" />
+              <BackendAssetImage assetUrl={image.publicUrl} alt={image.originalFileName} className="content-image" />
               <figcaption>{image.originalFileName}</figcaption>
               <button
                 type="button"

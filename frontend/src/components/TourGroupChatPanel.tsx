@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { getTravelBackendOrigin } from '../lib/runtime-config'
 import type {
   AppLanguage,
   TourGroupChatSettingsResponse,
@@ -12,6 +11,8 @@ import type {
   TourGroupUploadedAttachmentResponse,
   UserResponse,
 } from '../lib/mvp-types'
+import { BackendAssetImage } from './BackendAssetImage'
+import { toBackendAssetUrl } from '../lib/view-models'
 
 type TourGroupChatPanelProps = {
   currentLanguage: AppLanguage
@@ -48,7 +49,6 @@ type TourGroupChatPanelProps = {
   onUpdateArchiveState: (conversationId: string, archived: boolean) => Promise<TourGroupConversationSummaryResponse>
 }
 
-const backendOrigin = getTravelBackendOrigin()
 const quickReactions = ['👍', '❤️', '👀', '✅']
 
 export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
@@ -99,6 +99,39 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
   const isMember = memberships.some(membership => membership.userId === signedInUser?.userId && membership.status === 'Active')
   const activeConversation =
     conversationList?.conversations.find(conversation => conversation.conversationId === activeConversationId) ?? null
+
+  const memberDisplayNameMap = useMemo(() => {
+    const entries = memberships.map(membership => [membership.userId, membership.userDisplayName ?? membership.userId] as const)
+    if (signedInUser) {
+      entries.push([signedInUser.userId, signedInUser.nickname] as const)
+    }
+    return new Map(entries)
+  }, [memberships, signedInUser])
+
+  function getUserDisplayName(userId: string) {
+    if (userId === organizerUserId) {
+      return memberDisplayNameMap.get(userId) ?? translate('tourGroups.organizer')
+    }
+    return memberDisplayNameMap.get(userId) ?? userId
+  }
+
+  function localizeConversationTitle(conversationTitle: string, conversationType?: string) {
+    if (conversationType === 'GroupPublic' || conversationTitle === 'Group chat') {
+      return translate('tourGroups.groupChat')
+    }
+    if (conversationTitle === 'Direct chat') {
+      return translate('tourGroups.directMessages')
+    }
+    return conversationTitle
+  }
+
+  const activeConversationParticipantsSummary =
+    activeConversation?.conversationType === 'GroupPublic'
+      ? memberships
+          .filter(membership => membership.status === 'Active')
+          .map(membership => getUserDisplayName(membership.userId))
+          .join(', ')
+      : activeConversation?.participantsSummary ?? ''
 
   const selectableDirectTargets = useMemo(() => {
     if (!signedInUser) return []
@@ -256,7 +289,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
               <option value="">{translate('tourGroups.selectMemberToChat')}</option>
               {selectableDirectTargets.map(target => (
                 <option key={target.userId} value={target.userId}>
-                  {target.userId === organizerUserId ? translate('tourGroups.messageOrganizer') : target.userId}
+                  {target.userId === organizerUserId ? translate('tourGroups.messageOrganizer') : getUserDisplayName(target.userId)}
                 </option>
               ))}
             </select>
@@ -285,7 +318,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
             <div className="tour-group-direct-list">
               {conversationSearchResults.map(conversation => (
                 <button key={conversation.conversationId} type="button" onClick={() => setActiveConversationId(conversation.conversationId)}>
-                  <strong>{conversation.conversationTitle}</strong>
+                  <strong>{localizeConversationTitle(conversation.conversationTitle, conversation.conversationType)}</strong>
                   <span>{conversation.lastMessagePreview ?? translate('tourGroups.noMessagesYet')}</span>
                 </button>
               ))}
@@ -300,7 +333,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                 className={conversation.conversationId === activeConversationId ? 'secondary-button' : undefined}
                 onClick={() => setActiveConversationId(conversation.conversationId)}
               >
-                <strong>{conversation.conversationTitle}</strong>
+                <strong>{localizeConversationTitle(conversation.conversationTitle, conversation.conversationType)}</strong>
                 <span>{conversation.lastMessagePreview ?? translate('tourGroups.noMessagesYet')}</span>
                 {conversation.unreadCount > 0 ? <em>{conversation.unreadCount}</em> : null}
               </button>
@@ -313,8 +346,8 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
             <>
               <div className="panel-heading">
                 <div>
-                  <h4>{activeConversation.conversationTitle}</h4>
-                  <p>{activeConversation.participantsSummary}</p>
+                  <h4>{localizeConversationTitle(activeConversation.conversationTitle, activeConversation.conversationType)}</h4>
+                  <p>{activeConversationParticipantsSummary}</p>
                 </div>
                 {activeConversation.conversationType === 'Direct' ? (
                   <div className="manager-task-actions">
@@ -354,7 +387,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                         }
                       }}
                     >
-                      {result.conversationTitle}: {result.message.content}
+                      {localizeConversationTitle(result.conversationTitle)}: {result.message.content}
                     </button>
                   ))}
                 </div>
@@ -378,10 +411,10 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                         {message.attachments.map(attachment => (
                           attachment.attachmentType === 'Image' ? (
                             <figure key={attachment.attachmentId} className="content-image-card">
-                              <img src={attachment.publicUrl.startsWith('http') ? attachment.publicUrl : `${backendOrigin}${attachment.publicUrl}`} alt={attachment.originalFileName} className="content-image" />
+                              <BackendAssetImage assetUrl={attachment.publicUrl} alt={attachment.originalFileName} className="content-image" />
                             </figure>
                           ) : (
-                            <a key={attachment.attachmentId} href={attachment.publicUrl.startsWith('http') ? attachment.publicUrl : `${backendOrigin}${attachment.publicUrl}`} target="_blank" rel="noreferrer" className="secondary-button">
+                            <a key={attachment.attachmentId} href={toBackendAssetUrl(attachment.publicUrl)} target="_blank" rel="noreferrer" className="secondary-button">
                               {attachment.originalFileName}
                             </a>
                           )
@@ -454,7 +487,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                       {attachments.map(attachment => (
                         <figure key={attachment.attachmentId} className="content-image-card">
                           {attachment.attachmentType === 'Image' ? (
-                            <img src={attachment.publicUrl.startsWith('http') ? attachment.publicUrl : `${backendOrigin}${attachment.publicUrl}`} alt={attachment.originalFileName} className="content-image" />
+                            <BackendAssetImage assetUrl={attachment.publicUrl} alt={attachment.originalFileName} className="content-image" />
                           ) : (
                             <figcaption>{attachment.originalFileName}</figcaption>
                           )}

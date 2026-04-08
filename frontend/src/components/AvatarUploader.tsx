@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 
 import type { UserResponse } from '../lib/mvp-types'
-import { toBackendAssetUrl } from '../lib/view-models'
+import { BackendAssetImage } from './BackendAssetImage'
 
 type AvatarUploaderProps = {
   account: UserResponse
@@ -24,7 +24,6 @@ export function AvatarUploader({
   const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(null)
   const hiddenFileInputRef = useRef<HTMLInputElement | null>(null)
 
-  const avatarImageUrl = account.avatarUrl ? toBackendAssetUrl(account.avatarUrl) : null
   const avatarFallbackLabel = account.nickname.trim().slice(0, 1).toUpperCase() || 'U'
 
   function handleSelectedFile(nextAvatarFile: File | null) {
@@ -49,8 +48,8 @@ export function AvatarUploader({
   return (
     <div className="avatar-panel">
       <div className="avatar-preview-shell">
-        {avatarImageUrl ? (
-          <img className="avatar-preview-image" src={avatarImageUrl} alt={translate('account.avatar')} />
+        {account.avatarUrl ? (
+          <BackendAssetImage className="avatar-preview-image" assetUrl={account.avatarUrl} alt={translate('account.avatar')} />
         ) : (
           <div className="avatar-preview-fallback" aria-label={translate('account.avatar')}>
             {avatarFallbackLabel}
@@ -60,7 +59,10 @@ export function AvatarUploader({
 
       <div className="avatar-panel-copy">
         <span className="detail-label">{translate('account.avatar')}</span>
-        <strong>{selectedAvatarFile?.name ?? translate('account.avatarEmpty')}</strong>
+        <strong>
+          {selectedAvatarFile?.name ??
+            (account.avatarUrl ? translate('account.avatarUploadedState') : translate('account.avatarEmpty'))}
+        </strong>
         <p className="hero-copy">{translate('account.avatarHint')}</p>
       </div>
 

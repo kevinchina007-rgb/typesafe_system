@@ -1,8 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import { AttractionAdminPanel } from '../../components/AttractionAdminPanel'
-import { ManagerPanel } from '../../components/ManagerPanel'
-import { TrainAdminPanel } from '../../components/TrainAdminPanel'
 import { travelMvpApiClient } from '../../lib/api-client'
 import type {
   AppLanguage,
@@ -16,6 +13,12 @@ import type {
   TrainAdminSessionResponse,
 } from '../../lib/mvp-types'
 import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
+import {
+  AttractionManagerPanelSection,
+  SupplierManagerPanelSection,
+  TrainManagerPanelSection,
+} from './ManagerPagePanels'
+import { toLegacyManagerSession, toManagerTypeKey } from './managerPageSession'
 
 type ManagerPageProps = {
   currentLanguage: AppLanguage
@@ -24,33 +27,6 @@ type ManagerPageProps = {
   onManagerSessionChange: (managerSession: CurrentManagerSessionResponse | null) => void
   onNavigate: (viewKey: AppViewKey) => void
   onShowNotice: PageNoticeHandler
-}
-
-function toLegacyManagerSession(session: CurrentManagerSessionResponse): ManagerSessionResponse {
-  return {
-    managerId: session.managerId,
-    managerType: session.managerType,
-    email: session.email,
-    displayName: session.displayName,
-    status: session.status,
-    scopeId: session.scopeId,
-    createdAt: session.createdAt,
-  }
-}
-
-function toManagerTypeKey(managerType: string): 'airline' | 'hotel' | 'train' | 'attraction' {
-  switch (managerType) {
-    case 'Airline':
-      return 'airline'
-    case 'Hotel':
-      return 'hotel'
-    case 'Train':
-      return 'train'
-    case 'Attraction':
-      return 'attraction'
-    default:
-      return 'airline'
-  }
 }
 
 export function ManagerPage({
@@ -199,8 +175,8 @@ export function ManagerPage({
 
   return (
     <>
-      {!activeManagerType || activeManagerType === 'airline' || activeManagerType === 'hotel' || activeManagerType === 'attraction' ? (
-        <ManagerPanel
+      <SupplierManagerPanelSection
+        isVisible={!activeManagerType || activeManagerType === 'airline' || activeManagerType === 'hotel' || activeManagerType === 'attraction'}
           currentLanguage={currentLanguage}
           isBusy={isBusy}
           managerSession={currentSupplierManagerSession}
@@ -355,10 +331,9 @@ export function ManagerPage({
             }, translate('manager.logout'), translate('notice.logoutSuccess'))
           }}
         />
-      ) : null}
 
-      {!activeManagerType || activeManagerType === 'train' ? (
-        <TrainAdminPanel
+      <TrainManagerPanelSection
+        isVisible={!activeManagerType || activeManagerType === 'train'}
           currentLanguage={currentLanguage}
           isBusy={isBusy}
           trainAdminSession={currentTrainAdminSession}
@@ -413,10 +388,9 @@ export function ManagerPage({
             }, translate('manager.logout'), translate('notice.logoutSuccess'))
           }}
         />
-      ) : null}
 
-      {!activeManagerType || activeManagerType === 'attraction' ? (
-        <AttractionAdminPanel
+      <AttractionManagerPanelSection
+        isVisible={!activeManagerType || activeManagerType === 'attraction'}
           currentLanguage={currentLanguage}
           isBusy={isBusy}
           attractionAdminSession={currentAttractionAdminSession}
@@ -507,7 +481,6 @@ export function ManagerPage({
             }, translate('manager.logout'), translate('notice.logoutSuccess'))
           }}
         />
-      ) : null}
     </>
   )
 }

@@ -1,16 +1,19 @@
 import { useState } from 'react'
 
 import { AvatarUploader } from './AvatarUploader'
-import type { AuthSessionResponse, UserResponse } from '../lib/mvp-types'
+import type { AppLanguage, AuthSessionResponse, TravelerResponse, UserResponse } from '../lib/mvp-types'
+import { formatTravelerReference, localizeAccountStatus, localizeMembershipLevel } from '../lib/view-models'
 
 type AccountEntryMode = 'register' | 'login'
 
 type UserPanelProps = {
   account: UserResponse | null
+  currentLanguage: AppLanguage
   accountEntryMode: AccountEntryMode
   isBusy: boolean
   isGuestMode: boolean
   loginEmailDraft: string
+  travelers: TravelerResponse[]
   translate: (translationKey: string) => string
   onChangeAccountEntryMode: (accountEntryMode: AccountEntryMode) => void
   onChangeLoginEmailDraft: (email: string) => void
@@ -35,10 +38,12 @@ type UserPanelProps = {
 
 export function UserPanel({
   account,
+  currentLanguage,
   accountEntryMode,
   isBusy,
   isGuestMode,
   loginEmailDraft,
+  travelers,
   translate,
   onChangeAccountEntryMode,
   onChangeLoginEmailDraft,
@@ -57,6 +62,11 @@ export function UserPanel({
 }: UserPanelProps) {
   const currentSession = sessions.find(session => session.isCurrent)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [isSessionsOpen, setIsSessionsOpen] = useState(false)
+  const defaultTraveler =
+    account?.defaultTravelerProfileId
+      ? travelers.find(traveler => traveler.travelerId === account.defaultTravelerProfileId) ?? null
+      : null
 
   return (
     <section className="page-card">
@@ -211,11 +221,11 @@ export function UserPanel({
               </div>
               <div>
                 <span className="detail-label">{translate('account.status')}</span>
-                <strong>{account.status}</strong>
+                <strong>{localizeAccountStatus(account.status, currentLanguage)}</strong>
               </div>
               <div>
                 <span className="detail-label">{translate('account.membership')}</span>
-                <strong>{account.membershipLevel}</strong>
+                <strong>{localizeMembershipLevel(account.membershipLevel, currentLanguage)}</strong>
               </div>
               <div>
                 <span className="detail-label">{translate('account.points')}</span>
@@ -223,7 +233,7 @@ export function UserPanel({
               </div>
               <div>
                 <span className="detail-label">{translate('account.primaryTraveler')}</span>
-                <strong>{account.defaultTravelerProfileId ?? '-'}</strong>
+                <strong>{formatTravelerReference(defaultTraveler)}</strong>
               </div>
               <div>
                 <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
@@ -293,11 +303,21 @@ export function UserPanel({
                   <p className="eyebrow-label">{translate('account.security')}</p>
                   <h3>{translate('account.sessions')}</h3>
                 </div>
-                <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onRefreshSessions()}>
-                  {translate('account.refreshSessions')}
-                </button>
+                <div className="action-row">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={isBusy}
+                    onClick={() => setIsSessionsOpen(open => !open)}
+                  >
+                    {translate(isSessionsOpen ? 'account.hideSessions' : 'account.showSessions')}
+                  </button>
+                  <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onRefreshSessions()}>
+                    {translate('account.refreshSessions')}
+                  </button>
+                </div>
               </div>
-              {sessions.length > 0 ? (
+              {isSessionsOpen ? sessions.length > 0 ? (
                 <div className="stack-list">
                   {sessions.map(session => (
                     <article key={session.sessionId} className="list-card">
@@ -324,7 +344,7 @@ export function UserPanel({
                 </div>
               ) : (
                 <p className="empty-state">{translate('account.noSessions')}</p>
-              )}
+              ) : null}
             </div>
           </>
         ) : (

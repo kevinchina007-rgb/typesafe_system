@@ -16,21 +16,18 @@ def newTravelerProfile(
     travelerEmergencyContact: Option[TravelerEmergencyContact],
     isDefaultTravelerProfile: Boolean
 ): TravelerProfile =
-  TravelerProfile(
-    travelerId = travelerId,
-    ownerUserId = ownerUserId,
-    travelerFullName = travelerFullName,
-    travelerDocumentType = travelerDocumentType,
-    travelerDocumentNumber = travelerDocumentNumber,
-    travelerPhoneNumber = travelerPhoneNumber,
-    travelerBirthDate = travelerBirthDate,
-    travelerType = travelerType,
-    travelerIdentityDocuments = Nil,
-    travelerEmergencyContact = travelerEmergencyContact,
-    travelerLoyaltyMemberships = Nil,
-    travelerPreferences = travelerPreferences,
-    travelerProfileStatus = TravelerProfileStatus.Draft,
-    isDefaultTravelerProfile = isDefaultTravelerProfile
+  TravelerProfile.create(
+    travelerId,
+    ownerUserId,
+    travelerFullName,
+    travelerDocumentType,
+    travelerDocumentNumber,
+    travelerPhoneNumber,
+    travelerBirthDate,
+    travelerType,
+    travelerPreferences,
+    travelerEmergencyContact,
+    isDefaultTravelerProfile
   )
 
 
@@ -50,19 +47,19 @@ def restoreTravelerProfile(
     travelerProfileStatus: TravelerProfileStatus,
     isDefaultTravelerProfile: Boolean
 ): TravelerProfile =
-  TravelerProfile(
-    travelerId = travelerId,
-    ownerUserId = ownerUserId,
-    travelerFullName = travelerFullName,
-    travelerDocumentType = travelerDocumentType,
-    travelerDocumentNumber = travelerDocumentNumber,
-    travelerPhoneNumber = travelerPhoneNumber,
-    travelerBirthDate = travelerBirthDate,
-    travelerType = travelerType,
-    travelerIdentityDocuments = travelerIdentityDocuments,
-    travelerEmergencyContact = travelerEmergencyContact,
-    travelerLoyaltyMemberships = travelerLoyaltyMemberships,
-    travelerPreferences = travelerPreferences,
-    travelerProfileStatus = travelerProfileStatus,
-    isDefaultTravelerProfile = isDefaultTravelerProfile
+  TravelerProfile.restore(
+    travelerId,
+    ownerUserId,
+    travelerFullName,
+    travelerDocumentType,
+    travelerDocumentNumber,
+    travelerPhoneNumber,
+    travelerBirthDate,
+    travelerType,
+    travelerIdentityDocuments,
+    travelerEmergencyContact,
+    travelerLoyaltyMemberships,
+    travelerPreferences,
+    travelerProfileStatus,
+    isDefaultTravelerProfile
   )

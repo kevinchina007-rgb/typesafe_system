@@ -25,7 +25,7 @@ if (-not (Test-Path (Join-Path $distDir 'index.html'))) {
 
 Add-Content -Path $frontendScriptLog -Value "[frontend] launching python http.server $(Get-Date -Format o) port=$Port"
 Set-Location $distDir
-& python -m http.server $Port --bind 127.0.0.1
+& python -m http.server $Port --bind 0.0.0.0
 $exitCode = if ($LASTEXITCODE -ne $null) { $LASTEXITCODE } else { 0 }
 Add-Content -Path $frontendScriptLog -Value "[frontend] python http.server exited $(Get-Date -Format o) code=$exitCode"
 exit $exitCode

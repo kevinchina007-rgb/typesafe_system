@@ -1,1 +1,8 @@
-window.__TRAVEL_BACKEND_ORIGIN__ = window.__TRAVEL_BACKEND_ORIGIN__ || 'http://localhost:19095'
+window.__TRAVEL_BACKEND_ORIGIN__ =
+  window.__TRAVEL_BACKEND_ORIGIN__ ||
+  window.__TRAVEL_PUBLIC_BACKEND_ORIGIN__ ||
+  'same-origin'
+
+window.__TRAVEL_PUBLIC_BACKEND_ORIGIN__ =
+  window.__TRAVEL_PUBLIC_BACKEND_ORIGIN__ ||
+  window.__TRAVEL_BACKEND_ORIGIN__

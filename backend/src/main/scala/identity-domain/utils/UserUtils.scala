@@ -10,18 +10,7 @@ def registerNewUser(
     userPhoneNumber: ContactNumber,
     registeredAt: Instant
 ): User =
-  User(
-    userId = userId,
-    primaryEmailAddress = primaryEmailAddress,
-    userDisplayName = userDisplayName,
-    userPhoneNumber = userPhoneNumber,
-    avatarUrl = None,
-    userAccountStatus = UserAccountStatus.PendingActivation,
-    membershipLevel = UserMembershipLevel.Standard,
-    loyaltyPoints = Points.zero,
-    defaultTravelerProfileId = None,
-    registeredAt = registeredAt
-  )
+  User.register(userId, primaryEmailAddress, userDisplayName, userPhoneNumber, registeredAt)
 
 
 def restorePersistedUser(
@@ -36,15 +25,15 @@ def restorePersistedUser(
     defaultTravelerProfileId: Option[TravelerId],
     registeredAt: Instant
 ): User =
-  User(
-    userId = userId,
-    primaryEmailAddress = primaryEmailAddress,
-    userDisplayName = userDisplayName,
-    userPhoneNumber = userPhoneNumber,
-    avatarUrl = avatarUrl,
-    userAccountStatus = userAccountStatus,
-    membershipLevel = membershipLevel,
-    loyaltyPoints = loyaltyPoints,
-    defaultTravelerProfileId = defaultTravelerProfileId,
-    registeredAt = registeredAt
+  User.restore(
+    userId,
+    primaryEmailAddress,
+    userDisplayName,
+    userPhoneNumber,
+    avatarUrl,
+    userAccountStatus,
+    membershipLevel,
+    loyaltyPoints,
+    defaultTravelerProfileId,
+    registeredAt
   )

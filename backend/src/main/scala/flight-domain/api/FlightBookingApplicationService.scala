@@ -137,7 +137,9 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow: Clock](
     for
       validatedTravelerIds <- validateTravelerSelection(travelerIds)
       travelerProfiles <- validatedTravelerIds.traverse(loadOwnedTravelerProfile(actingUserId, _))
+      ownerOrders <- orderRepository.findOrdersByOwnerUserId(actingUserId)
       flight <- flightService.getFlightDetails(flightId)
+      _ <- ensureTravelersDoNotAlreadyHoldFlightTickets(flight.flightId, travelerProfiles.map(_.travelerId), ownerOrders)
       airline <- flightRepository.findAirlineById(flight.airlineId).flatMap(_.liftTo[F](FlightError.AirlineWasNotFound(flight.airlineId)))
       cabinInventory <- flight.ensureBookableCabinInventory(cabinClass).leftMap(mapFlightError(_, cabinClass)).liftTo[F]
       generatedOrderId <- orderRepository.nextOrderId
@@ -228,6 +230,27 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow: Clock](
           )
         )
     }
+
+  private def ensureTravelersDoNotAlreadyHoldFlightTickets(
+      flightId: FlightId,
+      travelerIds: List[TravelerId],
+      ownerOrders: List[Order]
+  ): F[Unit] =
+    ownerOrders
+      .flatMap(_.orderLineItems)
+      .collect { case flightOrderItem: FlightOrderItem => flightOrderItem }
+      .find(flightOrderItem =>
+        flightOrderItem.flightBookingSnapshot.flightId == flightId &&
+        flightOrderItem.orderItemStatus != OrderItemStatus.Cancelled &&
+        flightOrderItem.orderItemStatus != OrderItemStatus.Refunded &&
+        flightOrderItem.flightBookingSnapshot.travelerIds.exists(travelerIds.contains)
+      ) match
+      case Some(conflictingOrderItem) =>
+        val conflictingTravelerId =
+          conflictingOrderItem.flightBookingSnapshot.travelerIds.find(travelerIds.contains).getOrElse(travelerIds.head)
+        MonadThrow[F].raiseError(FlightError.FlightTravelerWasAlreadyBooked(flightId, conflictingTravelerId))
+      case None =>
+        MonadThrow[F].unit
 
   private def mapFlightError(flightError: FlightError, requestedCabinClass: CabinClass): DomainError =
     flightError match

@@ -11,14 +11,7 @@ def registerNewRailwayManager(
     displayName: PersonName,
     createdAt: Instant
 ): RailwayManager =
-  RailwayManager(
-    managerId = managerId,
-    operatorCode = operatorCode.trim.toUpperCase,
-    primaryEmailAddress = primaryEmailAddress,
-    displayName = displayName,
-    managerStatus = RailwayManagerStatus.Active,
-    createdAt = createdAt
-  )
+  RailwayManager.register(managerId, operatorCode, primaryEmailAddress, displayName, createdAt)
 
 
 def restorePersistedRailwayManager(
@@ -29,4 +22,4 @@ def restorePersistedRailwayManager(
     managerStatus: RailwayManagerStatus,
     createdAt: Instant
 ): RailwayManager =
-  RailwayManager(managerId, operatorCode, primaryEmailAddress, displayName, managerStatus, createdAt)
+  RailwayManager.restore(managerId, operatorCode, primaryEmailAddress, displayName, managerStatus, createdAt)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import type { OrderResponse } from '../lib/mvp-types'
+import type { OrderResponse, PaymentLinkResponse } from '../lib/mvp-types'
 
 type PaymentMethodValue = 'alipay' | 'wechat-pay' | 'nailong-pay'
 
@@ -10,17 +10,47 @@ type PaymentModalProps = {
   isBusy: boolean
   translate: (translationKey: string) => string
   onClose: () => void
-  onConfirmPayment: (payload: { orderId: string; paymentMethod: PaymentMethodValue; paymentSucceeded: boolean }) => Promise<void>
+  onCreatePaymentLink: (payload: { orderId: string; paymentMethod: PaymentMethodValue }) => Promise<PaymentLinkResponse>
 }
 
-export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onConfirmPayment }: PaymentModalProps) {
+export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onCreatePaymentLink }: PaymentModalProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodValue | null>(null)
+  const [paymentLink, setPaymentLink] = useState<PaymentLinkResponse | null>(null)
+  const [isLoadingPaymentLink, setIsLoadingPaymentLink] = useState(false)
 
   useEffect(() => {
     if (!isOpen) {
       setSelectedPaymentMethod(null)
+      setPaymentLink(null)
+      setIsLoadingPaymentLink(false)
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen || !order || !selectedPaymentMethod) {
+      return
+    }
+
+    let cancelled = false
+    setIsLoadingPaymentLink(true)
+    setPaymentLink(null)
+
+    void onCreatePaymentLink({ orderId: order.orderId, paymentMethod: selectedPaymentMethod })
+      .then(response => {
+        if (!cancelled) {
+          setPaymentLink(response)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingPaymentLink(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, order?.orderId, selectedPaymentMethod])
 
   if (!isOpen || !order) {
     return null
@@ -65,30 +95,26 @@ export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onConf
           <div className="stack-form">
             <div className="fake-qr-card">
               <strong>{paymentQrLabel}</strong>
-              <div className="fake-qr-grid" aria-hidden="true">
-                {Array.from({ length: 36 }).map((_, index) => (
-                  <span key={index} className={index % 2 === 0 ? 'is-filled' : ''} />
-                ))}
-              </div>
-            </div>
-
-            <div className="action-cluster">
-              <span className="detail-label">{translate('payment.confirmLabel')}</span>
-              <button
-                type="button"
-                disabled={isBusy}
-                onClick={() => void onConfirmPayment({ orderId: order.orderId, paymentMethod: selectedPaymentMethod, paymentSucceeded: true })}
-              >
-                {translate('payment.confirmYes')}
-              </button>
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={isBusy}
-                onClick={() => void onConfirmPayment({ orderId: order.orderId, paymentMethod: selectedPaymentMethod, paymentSucceeded: false })}
-              >
-                {translate('payment.confirmNo')}
-              </button>
+              {isLoadingPaymentLink ? (
+                <p className="detail-label">{translate('payment.loadingLink')}</p>
+              ) : paymentLink ? (
+                <>
+                  <div className="payment-qr-frame">
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=24&data=${encodeURIComponent(paymentLink.paymentUrl)}`}
+                      alt={translate('payment.qrAlt')}
+                      className="payment-qr-image"
+                    />
+                  </div>
+                  <p className="detail-label">{translate('payment.scanHint')}</p>
+                  <a href={paymentLink.paymentUrl} target="_blank" rel="noreferrer">
+                    {translate('payment.openLink')}
+                  </a>
+                  <small>{paymentLink.expiresAt}</small>
+                </>
+              ) : (
+                <p className="detail-label">{translate('payment.linkUnavailable')}</p>
+              )}
             </div>
           </div>
         )}

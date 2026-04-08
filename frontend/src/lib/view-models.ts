@@ -3,6 +3,8 @@ import { getTravelBackendOrigin } from './runtime-config'
 
 const travelBackendOrigin = getTravelBackendOrigin()
 
+// 这里集中收口“核心值 -> 展示值”的转换：
+// 后端状态、技术错误、资源相对路径都会先过这一层，再进入页面组件。
 function chooseLabel(language: AppLanguage, englishLabel: string, chineseLabel: string): string {
   return language === 'zh' ? chineseLabel : englishLabel
 }
@@ -33,6 +35,7 @@ export function deriveTravelerTypeLabelFromBirthDate(birthDateValue: string, lan
 }
 
 export function mapBackendStatusToProductLabel(backendStatus: string, language: AppLanguage): string {
+  // backendStatus 是核心状态；这里把它翻译成产品文案，避免组件里到处分支判断。
   const englishStatusLabels: Record<string, string> = {
     PendingActivation: 'Pending setup',
     Active: 'Active',
@@ -116,6 +119,7 @@ export function mapBackendStatusToProductLabel(backendStatus: string, language: 
 }
 
 export function mapTechnicalErrorToFriendlyMessage(backendMessage: string, language: AppLanguage): string {
+  // 后端返回的技术错误往往太底层，这里统一转换成用户可理解的提示。
   const [errorCode, messageBody] = backendMessage.includes('|') ? backendMessage.split('|', 2) : [backendMessage, backendMessage]
   const normalizedMessage = `${errorCode} ${messageBody}`.toLowerCase()
 
@@ -490,9 +494,57 @@ export function localizeTourGroupResourceType(resourceTypeValue: string, languag
   return labels[resourceTypeValue as keyof typeof labels] ?? resourceTypeValue
 }
 
-export function toBackendAssetUrl(relativeAssetUrl: string): string {
-  if (relativeAssetUrl.startsWith('http://') || relativeAssetUrl.startsWith('https://')) {
-    return relativeAssetUrl
+export function localizeAccountStatus(statusValue: string, language: AppLanguage): string {
+  return mapBackendStatusToProductLabel(statusValue, language)
+}
+
+export function localizeMembershipLevel(membershipLevelValue: string, language: AppLanguage): string {
+  const labels =
+    language === 'zh'
+      ? {
+          Standard: '普通会员',
+          Silver: '白银会员',
+          Gold: '黄金会员',
+          Platinum: '白金会员',
+        }
+      : {
+          Standard: 'Standard',
+          Silver: 'Silver',
+          Gold: 'Gold',
+          Platinum: 'Platinum',
+        }
+
+  return labels[membershipLevelValue as keyof typeof labels] ?? membershipLevelValue
+}
+
+export function formatTravelerReference(
+  traveler: { fullName: string; documentNumber: string } | null | undefined,
+  fallbackLabel = '-',
+): string {
+  if (!traveler) {
+    return fallbackLabel
   }
-  return `${travelBackendOrigin}${relativeAssetUrl}`
+
+  const documentTail = traveler.documentNumber.trim().slice(-4)
+  return documentTail ? `${traveler.fullName} (${documentTail})` : traveler.fullName
+}
+
+export function toBackendAssetUrl(relativeAssetUrl: string | null | undefined): string {
+  // 数据库存的是相对 publicUrl；前端在这里补齐 backend origin，得到真正的访问地址。
+  // 同时兼容完整 URL、/uploads/... 以及 uploads/... 这三类输入。
+  if (!relativeAssetUrl) {
+    return ''
+  }
+
+  const normalizedAssetUrl = relativeAssetUrl.trim()
+  if (!normalizedAssetUrl) {
+    return ''
+  }
+
+  if (normalizedAssetUrl.startsWith('http://') || normalizedAssetUrl.startsWith('https://')) {
+    return normalizedAssetUrl
+  }
+
+  const normalizedPath = normalizedAssetUrl.startsWith('/') ? normalizedAssetUrl : `/${normalizedAssetUrl}`
+  return `${travelBackendOrigin}${encodeURI(normalizedPath)}`
 }

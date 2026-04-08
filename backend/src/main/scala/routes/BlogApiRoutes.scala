@@ -7,11 +7,9 @@ import com.typesafe.travel.api.application.{BlogImageUploadError, BlogPostScope}
 import com.typesafe.travel.api.dto.*
 import com.typesafe.travel.content.domain.BlogImageRef
 import com.typesafe.travel.shared.kernel.*
-import io.circe.syntax.*
 import org.http4s.*
 import org.http4s.circe.CirceEntityCodec.*
 import org.http4s.dsl.Http4sDsl
-import org.http4s.headers
 import org.http4s.multipart.Multipart
 
 import java.time.Instant
@@ -26,7 +24,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
       for
         queryText <- fromEither(queryValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
         suggestions <- blogApplicationService.suggestPublishedPosts(queryText)
-        response <- Ok(SearchSuggestionListResponseDto(suggestions.map(SearchSuggestionResponseDto.fromApplication)).asJson)
+        response <- okJson(SearchSuggestionListResponseDto(suggestions.map(SearchSuggestionResponseDto.fromApplication)))
       yield response
 
     case request @ GET -> Root / "api" / "blog" / "posts" =>
@@ -41,7 +39,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           case None            => Async[F].pure(None)
         effectiveUserId <- if scope == "mine" then requireCurrentUserId(request).map(Some(_)) else Async[F].pure(currentUserId)
         posts <- blogApplicationService.listPosts(effectiveUserId, parseBlogScope(scope), query)
-        response <- Ok(BlogPostListResponseDto(posts.map(BlogPostSummaryResponseDto.fromView)).asJson)
+        response <- okJson(BlogPostListResponseDto(posts.map(BlogPostSummaryResponseDto.fromView)))
       yield response
 
     case request @ GET -> Root / "api" / "blog" / "posts" / postIdValue =>
@@ -50,24 +48,18 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           case Some(sessionId) => currentInstantF.flatMap(now => authApplicationService.restoreCurrentUser(sessionId, now).map(view => Some(view.user.userId)).handleError(_ => None))
           case None            => Async[F].pure(None)
         post <- blogApplicationService.getPost(BlogId(postIdValue), currentUserId)
-        response <- Ok(BlogPostResponseDto.fromView(post).asJson)
+        response <- okJson(BlogPostResponseDto.fromView(post))
       yield response
 
     case request @ POST -> Root / "api" / "blog" / "images" =>
       for
         currentUserId <- requireCurrentUserId(request)
         multipartPayload <- request.as[Multipart[F]]
-        imagePart <- multipartPayload.parts.find(_.name.contains("image")).liftTo[F](BlogImageUploadError.ImageWasMissing)
-        imageFileName <- imagePart.filename.liftTo[F](BlogImageUploadError.ImageWasMissing)
-        imageContentType =
-          imagePart.headers
-            .get[headers.`Content-Type`]
-            .map(contentTypeHeader => s"${contentTypeHeader.mediaType.mainType}/${contentTypeHeader.mediaType.subType}")
-            .getOrElse("")
-        imageBytes <- imagePart.body.compile.to(Array)
+        imagePart <- requireMultipartPart(multipartPayload, "image", BlogImageUploadError.ImageWasMissing)
+        uploadedImage <- readUploadedBinary(imagePart, BlogImageUploadError.ImageWasMissing)
         now <- currentInstantF
-        imageRef <- blogApplicationService.uploadImage(currentUserId, imageFileName, imageContentType, imageBytes, now)
-        response <- Created(ContentImageResponseDto.fromBlogImageRef(imageRef).asJson)
+        imageRef <- blogApplicationService.uploadImage(currentUserId, uploadedImage.originalFileName, uploadedImage.contentTypeValue, uploadedImage.fileBytes, now)
+        response <- createdJson(ContentImageResponseDto.fromBlogImageRef(imageRef))
       yield response
 
     case request @ POST -> Root / "api" / "blog" / "posts" =>
@@ -83,7 +75,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           parseBlogImages(createRequest.images),
           now
         )
-        response <- Created(BlogPostResponseDto.fromView(post).asJson)
+        response <- createdJson(BlogPostResponseDto.fromView(post))
       yield response
 
     case request @ PATCH -> Root / "api" / "blog" / "posts" / postIdValue =>
@@ -100,7 +92,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           parseBlogImages(updateRequest.images),
           now
         )
-        response <- Ok(BlogPostResponseDto.fromView(post).asJson)
+        response <- okJson(BlogPostResponseDto.fromView(post))
       yield response
 
     case request @ POST -> Root / "api" / "blog" / "posts" / postIdValue / "archive" =>
@@ -109,7 +101,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         likeRequest <- request.as[BlogLikeRequestDto]
         now <- currentInstantF
         post <- blogApplicationService.archivePost(BlogId(postIdValue), currentUserId, now)
-        response <- Ok(BlogPostResponseDto.fromView(post).asJson)
+        response <- okJson(BlogPostResponseDto.fromView(post))
       yield response
 
     case request @ POST -> Root / "api" / "blog" / "posts" / postIdValue / "comments" =>
@@ -118,7 +110,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         createRequest <- request.as[CreateBlogCommentRequestDto]
         now <- currentInstantF
         post <- blogApplicationService.addComment(BlogId(postIdValue), currentUserId, createRequest.content, now)
-        response <- Created(BlogPostResponseDto.fromView(post).asJson)
+        response <- createdJson(BlogPostResponseDto.fromView(post))
       yield response
 
     case request @ DELETE -> Root / "api" / "blog" / "comments" / commentIdValue =>
@@ -126,7 +118,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         deleteRequest <- request.as[DeleteBlogCommentRequestDto]
         post <- blogApplicationService.deleteComment(BlogCommentId(commentIdValue), currentUserId)
-        response <- Ok(BlogPostResponseDto.fromView(post).asJson)
+        response <- okJson(BlogPostResponseDto.fromView(post))
       yield response
 
     case request @ POST -> Root / "api" / "blog" / "posts" / postIdValue / "likes" =>
@@ -135,7 +127,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         likeRequest <- request.as[BlogLikeRequestDto]
         now <- currentInstantF
         post <- blogApplicationService.likePost(BlogId(postIdValue), currentUserId, now)
-        response <- Ok(BlogPostResponseDto.fromView(post).asJson)
+        response <- okJson(BlogPostResponseDto.fromView(post))
       yield response
 
     case request @ POST -> Root / "api" / "blog" / "posts" / postIdValue / "unlike" =>
@@ -143,7 +135,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         likeRequest <- request.as[BlogLikeRequestDto]
         post <- blogApplicationService.unlikePost(BlogId(postIdValue), currentUserId)
-        response <- Ok(BlogPostResponseDto.fromView(post).asJson)
+        response <- okJson(BlogPostResponseDto.fromView(post))
       yield response
   }
 

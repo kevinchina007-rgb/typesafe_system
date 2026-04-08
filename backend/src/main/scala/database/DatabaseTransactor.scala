@@ -20,18 +20,13 @@ object DatabaseTransactor:
     )
 
   def resource[F[_]: Async](databaseConfig: DatabaseConfig): Resource[F, Transactor[F]] =
-    Resource
-      .eval(Async[F].delay(Class.forName(databaseConfig.jdbcDriverClassName)))
-      .flatMap { _ =>
-        val hikariConfig = HikariConfig()
-        hikariConfig.setDriverClassName(databaseConfig.jdbcDriverClassName)
-        hikariConfig.setJdbcUrl(databaseConfig.jdbcUrl)
-        hikariConfig.setUsername(databaseConfig.jdbcUser)
-        hikariConfig.setPassword(databaseConfig.jdbcPassword)
-        hikariConfig.setMaximumPoolSize(8)
-        hikariConfig.setMinimumIdle(1)
-        hikariConfig.setPoolName("travel-platform-backend")
-        hikariConfig.setInitializationFailTimeout(-1)
+    val hikariConfig = HikariConfig()
+    hikariConfig.setJdbcUrl(databaseConfig.jdbcUrl)
+    hikariConfig.setUsername(databaseConfig.jdbcUser)
+    hikariConfig.setPassword(databaseConfig.jdbcPassword)
+    hikariConfig.setMaximumPoolSize(8)
+    hikariConfig.setMinimumIdle(1)
+    hikariConfig.setPoolName("travel-platform-backend")
+    hikariConfig.setInitializationFailTimeout(-1)
 
-        HikariTransactor.fromHikariConfig[F](hikariConfig).map(xa => xa: Transactor[F])
-      }
+    HikariTransactor.fromHikariConfig[F](hikariConfig).map(xa => xa: Transactor[F])

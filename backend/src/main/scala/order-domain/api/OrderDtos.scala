@@ -5,6 +5,8 @@ import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.shared.kernel.CabinClass
 import java.time.LocalDate
 
+// 这里是 order domain 和 transport DTO 之间的薄边界。
+// DTO 可以携带前端友好的字符串字段，但不改变 Order 的核心建模。
 final case class CreateOrderRequestDto(
     ownerUserId: String,
     orderCurrency: String
@@ -23,6 +25,11 @@ final case class RequestRefundRequestDto(
 final case class PayOrderRequestDto(
     paymentMethod: String,
     paymentSucceeded: Boolean
+)
+
+final case class PaymentLinkResponseDto(
+    paymentUrl: String,
+    expiresAt: String
 )
 
 final case class FlightItemDetailsResponseDto(
@@ -167,6 +174,8 @@ final case class OrderListResponseDto(
 
 object OrderResponseDto:
   def fromDomain(order: Order, inventoryReservations: List[InventoryReservation] = Nil): OrderResponseDto =
+    // Order 核心数据与库存锁定信息在这里被组装成前端可直接展示的订单视图。
+    // reservationStatus / reservationExpiresAt 属于跨域展示态，不是订单权威字段。
     OrderResponseDto(
       orderId = order.orderId.value,
       buyerUserId = order.ownerUserId.value,
@@ -357,6 +366,7 @@ object OrderResponseDto:
     )
 
   private def deriveCustomerFacingOrderStatus(order: Order): String =
+    // 面向用户的状态有时比核心 orderStatus 更贴近产品表达。
     if order.orderStatus == OrderStatus.Cancelled then "Cancelled"
     else if order.orderStatus == OrderStatus.Refunded || order.totalSettledRefundMoney.amount >= order.totalBookedMoney.amount && order.totalBookedMoney.amount > 0 then "Refunded"
     else if order.orderRefunds.exists(_.refundStatus == RefundStatus.Requested) && order.allSupplierReviewDecisionsConfirmed then "PendingRefund"
@@ -365,6 +375,7 @@ object OrderResponseDto:
     else "PendingPayment"
 
 object OrderDtoMappers:
+  // transport 字符串到 typed domain value 的映射统一收口在这里。
   def toCurrency(currencyValue: String) =
     currencyValue.trim.toUpperCase match
       case "USD" => com.typesafe.travel.shared.kernel.Currency.USD
@@ -385,6 +396,7 @@ object OrderDtoMappers:
     CabinClass.create(cabinClassValue)
 
 object TravelerDtoMappers:
+  // 出行人相关输入也保持同样的边界：前端传字符串，这里恢复成受限类型。
   def toTravelerDocumentType(documentTypeValue: String): com.typesafe.travel.traveler.domain.TravelerDocumentType =
     documentTypeValue.trim.toLowerCase match
       case "identity-card"    => com.typesafe.travel.traveler.domain.TravelerDocumentType.NationalIdentityCard

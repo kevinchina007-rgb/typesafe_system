@@ -22,6 +22,47 @@ This backend now exposes a minimal runnable HTTP layer for the travel booking MV
 
 The backend enables CORS for local frontend development.
 
+## LAN Access
+
+The bundled shortcut now binds the backend and frontend to `0.0.0.0` and opens the app on the machine's local IPv4 address when one is available.
+
+Typical access pattern:
+
+- Frontend: `http://<your-lan-ip>:5173`
+- Backend API: `http://<your-lan-ip>:19095`
+- Health check: `http://<your-lan-ip>:19095/api/health`
+
+Open these ports on the host machine if the Windows firewall blocks inbound traffic:
+
+- `19095` for the backend API
+- `5173` for the frontend static server
+
+## Public Access
+
+This project can also be exposed on a public IP or domain without changing the application structure. The current startup script supports public-facing origins through environment variables.
+
+Typical setup:
+
+- `TRAVEL_PUBLIC_HOST=your-public-host-or-domain`
+- `TRAVEL_PUBLIC_SCHEME=http`
+- optional `TRAVEL_PUBLIC_FRONTEND_ORIGIN=http://your-public-host-or-domain:5173`
+- optional `TRAVEL_PUBLIC_BACKEND_ORIGIN=http://your-public-host-or-domain:19095`
+
+If the frontend and backend are served from different public origins, also set cookie and CORS policy explicitly:
+
+- `TRAVEL_ALLOWED_ORIGINS=http://your-frontend-origin`
+- `TRAVEL_SESSION_COOKIE_SAMESITE=None`
+- `TRAVEL_SESSION_COOKIE_SECURE=true`
+- optional `TRAVEL_SESSION_COOKIE_DOMAIN=your-domain`
+
+For a minimal public exposure, you still need host-level networking outside the app:
+
+- open inbound ports `5173` and `19095`
+- if the machine is behind a router, forward those ports to the host
+- ensure your public host name resolves to that machine
+
+This is still a plain HTTP setup. It is suitable for testing, but not a hardened internet deployment.
+
 ## Repository Modes
 
 - Default mode: `database`
@@ -89,7 +130,7 @@ npm run dev
 
 ## Manual Demo Flow
 
-1. Open `http://localhost:5173`.
+1. Open `http://<your-lan-ip>:5173` when using the bundled shortcut, or `http://localhost:5173` on the host machine.
 2. Wait for the page to show backend health from `GET /api/health`.
 3. Create a user and sign in.
 4. Optionally upload a PNG or JPG avatar for that account.

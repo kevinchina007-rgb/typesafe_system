@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { UserPanel } from '../../components/UserPanel'
 import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, AppViewKey, AuthSessionResponse, CurrentManagerSessionResponse, ManagerType, UserResponse } from '../../lib/mvp-types'
+import type { AppLanguage, AppViewKey, AuthSessionResponse, CurrentManagerSessionResponse, ManagerType, TravelerResponse, UserResponse } from '../../lib/mvp-types'
 import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
 
 type AccountEntryMode = 'register' | 'login'
@@ -35,8 +35,10 @@ export function AccountPage({
   const [managerAuthMode, setManagerAuthMode] = useState<'login' | 'register'>('login')
   const [managerTypeDraft, setManagerTypeDraft] = useState<ManagerType>('airline')
   const [userSessions, setUserSessions] = useState<AuthSessionResponse[]>([])
+  const [userTravelers, setUserTravelers] = useState<TravelerResponse[]>([])
   const [managerSessions, setManagerSessions] = useState<AuthSessionResponse[]>([])
   const [isManagerChangePasswordOpen, setIsManagerChangePasswordOpen] = useState(false)
+  const [isManagerSessionsOpen, setIsManagerSessionsOpen] = useState(false)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
 
   useEffect(() => {
@@ -46,15 +48,25 @@ export function AccountPage({
   useEffect(() => {
     if (!signedInUser) {
       setUserSessions([])
+      setUserTravelers([])
       return
     }
     void travelMvpApiClient.listUserSessions().then(response => setUserSessions(response.sessions)).catch(() => setUserSessions([]))
   }, [signedInUser?.userId])
 
   useEffect(() => {
+    if (!signedInUser) {
+      setUserTravelers([])
+      return
+    }
+    void travelMvpApiClient.listTravelers(signedInUser.userId).then(response => setUserTravelers(response.travelers)).catch(() => setUserTravelers([]))
+  }, [signedInUser?.userId])
+
+  useEffect(() => {
     if (!signedInManager) {
       setManagerSessions([])
       setIsManagerChangePasswordOpen(false)
+      setIsManagerSessionsOpen(false)
       return
     }
     void travelMvpApiClient.listManagerSessions().then(response => setManagerSessions(response.sessions)).catch(() => setManagerSessions([]))
@@ -64,10 +76,12 @@ export function AccountPage({
     <>
       <UserPanel
       account={signedInUser}
+      currentLanguage={currentLanguage}
       accountEntryMode={accountEntryMode}
       isBusy={isBusy}
       isGuestMode={signedInUser === null}
       loginEmailDraft={loginEmailDraft}
+      travelers={userTravelers}
       translate={translate}
       onChangeAccountEntryMode={setAccountEntryMode}
       onChangeLoginEmailDraft={setLoginEmailDraft}
@@ -107,7 +121,9 @@ export function AccountPage({
         }
         await runPageAction(async () => {
           const refreshedAccount = await travelMvpApiClient.getUser(signedInUser.userId)
+          const refreshedTravelers = await travelMvpApiClient.listTravelers(signedInUser.userId)
           onSignedInUserChange(refreshedAccount)
+          setUserTravelers(refreshedTravelers.travelers)
         }, translate('account.refresh'), translate('notice.actionSuccess'))
       }}
       sessions={userSessions}
@@ -267,6 +283,14 @@ export function AccountPage({
                   type="button"
                   className="secondary-button"
                   disabled={isBusy}
+                  onClick={() => setIsManagerSessionsOpen(open => !open)}
+                >
+                  {translate(isManagerSessionsOpen ? 'account.hideSessions' : 'account.showSessions')}
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={isBusy}
                   onClick={() => {
                     void runPageAction(async () => {
                       const nextSessions = await travelMvpApiClient.listManagerSessions()
@@ -292,7 +316,7 @@ export function AccountPage({
                 </button>
               </div>
             </div>
-            {managerSessions.length > 0 ? (
+            {isManagerSessionsOpen ? managerSessions.length > 0 ? (
               <div className="stack-list">
                 {managerSessions.map(session => (
                   <article key={session.sessionId} className="list-card">
@@ -319,7 +343,7 @@ export function AccountPage({
               </div>
             ) : (
               <p className="empty-state">{translate('account.noSessions')}</p>
-            )}
+            ) : null}
           </div>
         </div>
       ) : (

@@ -8,6 +8,7 @@ import org.http4s.server.middleware.CORS
 import org.http4s.syntax.header.*
 
 import java.net.{BindException, HttpURLConnection, URI}
+import java.net.InetAddress
 
 object Main extends IOApp.Simple:
   override def run: IO[Unit] =
@@ -40,12 +41,41 @@ object Main extends IOApp.Simple:
     }
 
   private def isAllowedFrontendOrigin(originHeader: Origin): Boolean =
-    originHeader.renderString match
-      case "Origin: http://localhost:5173" => true
-      case "Origin: http://127.0.0.1:5173" => true
-      case "Origin: http://localhost:5174" => true
-      case "Origin: http://127.0.0.1:5174" => true
-      case _                               => false
+    val originText = originHeader.renderString.stripPrefix("Origin: ").trim
+    configuredAllowedOrigins.contains(originText) ||
+    (allowPrivateNetworkOrigins && safeParseOrigin(originText).exists(parsedOrigin => Option(parsedOrigin.getHost).exists(isLocalNetworkHost)))
+
+  private def configuredAllowedOrigins: Set[String] =
+    sys.env
+      .get("TRAVEL_ALLOWED_ORIGINS")
+      .toList
+      .flatMap(_.split(",").toList)
+      .map(_.trim)
+      .filter(_.nonEmpty)
+      .toSet
+
+  private def allowPrivateNetworkOrigins: Boolean =
+    sys.env
+      .get("TRAVEL_ALLOW_PRIVATE_NETWORK_ORIGINS")
+      .forall(_.trim.equalsIgnoreCase("true"))
+
+  private def safeParseOrigin(originText: String): Option[URI] =
+    try Some(URI.create(originText))
+    catch case _: IllegalArgumentException => None
+
+  private def isLocalNetworkHost(hostName: String): Boolean =
+    hostName match
+      case "localhost" => true
+      case "127.0.0.1"  => true
+      case "0.0.0.0"    => true
+      case _ =>
+        try
+          val resolvedAddress = InetAddress.getByName(hostName)
+          resolvedAddress.isLoopbackAddress ||
+          resolvedAddress.isSiteLocalAddress ||
+          resolvedAddress.isLinkLocalAddress
+        catch
+          case _: Exception => false
 
   private def configuredBackendPort: Port =
     sys.env
