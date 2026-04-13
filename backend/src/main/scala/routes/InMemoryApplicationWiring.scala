@@ -200,6 +200,7 @@ object InMemoryApplicationWiring:
             travelerProfileRepository = inMemoryTravelerProfileRepository,
             orderRepository = inMemoryOrderRepository,
             inventoryReservationRepository = inMemoryInventoryReservationRepository,
+            uploadedBinaryAssetReader = None,
             avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
             contentUploadRootDirectoryPath = contentUploadRootDirectoryPath,
             frontendDistRootDirectoryPath = frontendDistRootDirectoryPath

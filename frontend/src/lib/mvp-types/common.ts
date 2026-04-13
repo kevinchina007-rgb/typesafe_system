@@ -10,6 +10,9 @@ export type {
 export type AppLanguage = 'en' | 'zh'
 
 export type AppViewKey =
+  | 'overview'
+  | 'smartPlanner'
+  | 'orders'
   | 'blog'
   | 'reviews'
   | 'explore'

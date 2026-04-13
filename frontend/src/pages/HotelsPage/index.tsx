@@ -1,3 +1,6 @@
+import { useState } from 'react'
+
+import { AuthRequiredDialog } from '../../components/AuthRequiredDialog'
 import { HotelsPanel } from '../../components/HotelsPanel'
 import { travelMvpApiClient } from '../../lib/api-client'
 import type {
@@ -27,6 +30,7 @@ export function HotelsPage({
 }: HotelsPageProps) {
   const { travelers } = useSignedInTravelers(signedInUser)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
 
   async function loadReviewSummary(payload: {
     resourceType: string
@@ -58,34 +62,50 @@ export function HotelsPage({
   }
 
   return (
-    <HotelsPanel
-      currentLanguage={currentLanguage}
-      isBusy={isBusy}
-      isGuestMode={signedInUser === null}
-      travelers={travelers}
-      translate={translate}
-      onSearchHotels={async payload => {
-        const hotelListResponse = await travelMvpApiClient.listHotels(payload)
-        return hotelListResponse.hotels
-      }}
-      onBookHotel={async payload => {
-        if (!signedInUser) {
-          throw new Error(translate('error.loginRequired'))
-        }
-        await runPageAction(async () => {
-          await travelMvpApiClient.createHotelOrder({
-            buyerUserId: signedInUser.userId,
-            roomTypeId: payload.roomTypeId,
-            guestTravelerIds: payload.guestTravelerIds,
-            checkInDate: payload.checkInDate,
-            checkOutDate: payload.checkOutDate,
-            roomCount: payload.roomCount,
-          })
-          onNavigate('bookings')
-        }, translate('hotels.bookNow'), translate('notice.bookingCreated'))
-      }}
-      onLoadReviewSummary={loadReviewSummary}
-      onLoadReviews={loadReviewsByResource}
-    />
+    <>
+      <HotelsPanel
+        currentLanguage={currentLanguage}
+        isBusy={isBusy}
+        isGuestMode={signedInUser === null}
+        travelers={travelers}
+        translate={translate}
+        onRequireLogin={() => setIsAuthDialogOpen(true)}
+        onSearchHotels={async payload => {
+          const hotelListResponse = await travelMvpApiClient.listHotels(payload)
+          return hotelListResponse.hotels
+        }}
+        onBookHotel={async payload => {
+          if (!signedInUser) {
+            setIsAuthDialogOpen(true)
+            return
+          }
+          await runPageAction(async () => {
+            await travelMvpApiClient.createHotelOrder({
+              buyerUserId: signedInUser.userId,
+              roomTypeId: payload.roomTypeId,
+              guestTravelerIds: payload.guestTravelerIds,
+              checkInDate: payload.checkInDate,
+              checkOutDate: payload.checkOutDate,
+              roomCount: payload.roomCount,
+            })
+            onNavigate('bookings')
+          }, translate('hotels.bookNow'), translate('notice.bookingCreated'))
+        }}
+        onLoadReviewSummary={loadReviewSummary}
+        onLoadReviews={loadReviewsByResource}
+      />
+
+      <AuthRequiredDialog
+        isOpen={isAuthDialogOpen}
+        title={translate('authRequired.bookingTitle')}
+        description={translate('authRequired.bookingDescription')}
+        translate={translate}
+        onClose={() => setIsAuthDialogOpen(false)}
+        onConfirm={() => {
+          setIsAuthDialogOpen(false)
+          onNavigate('account')
+        }}
+      />
+    </>
   )
 }

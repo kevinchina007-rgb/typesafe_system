@@ -1,3 +1,6 @@
+import { useState } from 'react'
+
+import { AuthRequiredDialog } from '../../components/AuthRequiredDialog'
 import { AttractionsPanel } from '../../components/AttractionsPanel'
 import { travelMvpApiClient } from '../../lib/api-client'
 import type {
@@ -27,6 +30,7 @@ export function AttractionsPage({
 }: AttractionsPageProps) {
   const { travelers } = useSignedInTravelers(signedInUser)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
 
   async function loadReviewSummary(payload: {
     resourceType: string
@@ -58,48 +62,64 @@ export function AttractionsPage({
   }
 
   return (
-    <AttractionsPanel
-      currentLanguage={currentLanguage}
-      isBusy={isBusy}
-      isGuestMode={signedInUser === null}
-      travelers={travelers}
-      translate={translate}
-      onSearchAttractions={async payload => {
-        const attractionListResponse = await travelMvpApiClient.listAttractions(payload)
-        const detailedAttractions = await Promise.all(
-          attractionListResponse.attractions.map(async attractionSummary => {
-            try {
-              return await travelMvpApiClient.getAttraction(attractionSummary.attractionId, { useDate: payload.useDate })
-            } catch {
-              return attractionSummary
-            }
-          }),
-        )
-        return detailedAttractions
-      }}
-      onBookAttraction={async payload => {
-        if (!signedInUser) {
-          throw new Error(translate('error.loginRequired'))
-        }
-        await runPageAction(async () => {
-          const createdOrder = await travelMvpApiClient.createOrder({
-            ownerUserId: signedInUser.userId,
-            orderCurrency: payload.orderCurrency,
-          })
-          await travelMvpApiClient.addAttractionItemToOrder(createdOrder.orderId, {
-            buyerUserId: signedInUser.userId,
-            orderId: createdOrder.orderId,
-            attractionId: payload.attractionId,
-            ticketTypeId: payload.ticketTypeId,
-            sessionId: payload.sessionId,
-            travelerIds: payload.travelerIds,
-            useDate: payload.useDate,
-          })
-          onNavigate('bookings')
-        }, translate('attractions.bookNow'), translate('notice.bookingCreated'))
-      }}
-      onLoadReviewSummary={loadReviewSummary}
-      onLoadReviews={loadReviewsByResource}
-    />
+    <>
+      <AttractionsPanel
+        currentLanguage={currentLanguage}
+        isBusy={isBusy}
+        isGuestMode={signedInUser === null}
+        travelers={travelers}
+        translate={translate}
+        onRequireLogin={() => setIsAuthDialogOpen(true)}
+        onSearchAttractions={async payload => {
+          const attractionListResponse = await travelMvpApiClient.listAttractions(payload)
+          const detailedAttractions = await Promise.all(
+            attractionListResponse.attractions.map(async attractionSummary => {
+              try {
+                return await travelMvpApiClient.getAttraction(attractionSummary.attractionId, { useDate: payload.useDate })
+              } catch {
+                return attractionSummary
+              }
+            }),
+          )
+          return detailedAttractions
+        }}
+        onBookAttraction={async payload => {
+          if (!signedInUser) {
+            setIsAuthDialogOpen(true)
+            return
+          }
+          await runPageAction(async () => {
+            const createdOrder = await travelMvpApiClient.createOrder({
+              ownerUserId: signedInUser.userId,
+              orderCurrency: payload.orderCurrency,
+            })
+            await travelMvpApiClient.addAttractionItemToOrder(createdOrder.orderId, {
+              buyerUserId: signedInUser.userId,
+              orderId: createdOrder.orderId,
+              attractionId: payload.attractionId,
+              ticketTypeId: payload.ticketTypeId,
+              sessionId: payload.sessionId,
+              travelerIds: payload.travelerIds,
+              useDate: payload.useDate,
+            })
+            onNavigate('bookings')
+          }, translate('attractions.bookNow'), translate('notice.bookingCreated'))
+        }}
+        onLoadReviewSummary={loadReviewSummary}
+        onLoadReviews={loadReviewsByResource}
+      />
+
+      <AuthRequiredDialog
+        isOpen={isAuthDialogOpen}
+        title={translate('authRequired.bookingTitle')}
+        description={translate('authRequired.bookingDescription')}
+        translate={translate}
+        onClose={() => setIsAuthDialogOpen(false)}
+        onConfirm={() => {
+          setIsAuthDialogOpen(false)
+          onNavigate('account')
+        }}
+      />
+    </>
   )
 }

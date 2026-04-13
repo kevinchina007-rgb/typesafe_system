@@ -17,7 +17,7 @@ final case class StoredTourGroupChatAttachmentFile(
     originalFileName: String,
     mimeType: String,
     fileSize: Long,
-    absolutePath: Path
+    storagePath: String
 )
 
 trait TourGroupChatAttachmentStorage[F[_]]:
@@ -61,7 +61,7 @@ final class LocalTourGroupChatAttachmentStorage[F[_]: Sync: Clock] private (
           originalFileName = originalFileName,
           mimeType = mimeType,
           fileSize = fileBytes.length.toLong,
-          absolutePath = targetPath
+          storagePath = targetPath.toString
         )
       }
     }

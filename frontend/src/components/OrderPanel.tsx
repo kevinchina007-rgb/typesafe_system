@@ -23,6 +23,7 @@ type OrderPanelProps = {
   reviews: ReviewResponse[]
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
+  onRequireLogin: () => void
   onReloadOrders: () => Promise<void>
   onOpenPayment: (order: OrderResponse) => void
   onCancelOrder: (orderId: string) => Promise<void>
@@ -42,6 +43,7 @@ export function OrderPanel({
   reviews,
   travelers,
   translate,
+  onRequireLogin,
   onReloadOrders,
   onOpenPayment,
   onCancelOrder,
@@ -96,7 +98,16 @@ export function OrderPanel({
       <p className="hero-copy">{translate('bookings.description')}</p>
 
       <div className="list-surface">
-        {isGuestMode ? <p className="empty-state">{translate('bookings.guest')}</p> : null}
+        {isGuestMode ? (
+          <div className="stack-form">
+            <p className="empty-state">{translate('bookings.guest')}</p>
+            <div className="action-row">
+              <button type="button" onClick={onRequireLogin}>
+                {translate('bookings.loginToPay')}
+              </button>
+            </div>
+          </div>
+        ) : null}
         {!isGuestMode && orders.length === 0 ? <p className="empty-state">{translate('bookings.empty')}</p> : null}
 
         {orders.length > 0 ? (

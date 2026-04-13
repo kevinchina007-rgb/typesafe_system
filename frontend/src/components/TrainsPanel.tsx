@@ -10,6 +10,7 @@ type TrainsPanelProps = {
   isGuestMode: boolean
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
+  onRequireLogin: () => void
   onSearchTrains: (payload: {
     fromStation?: string
     toStation?: string
@@ -83,6 +84,7 @@ export function TrainsPanel({
   isGuestMode,
   travelers,
   translate,
+  onRequireLogin,
   onSearchTrains,
   onBookTrain,
   onLoadReviewSummary,
@@ -199,6 +201,10 @@ export function TrainsPanel({
                           className="compact-action-block"
                           onSubmit={async event => {
                             event.preventDefault()
+                            if (isGuestMode) {
+                              onRequireLogin()
+                              return
+                            }
                             if (!quote) {
                               throw new Error('train_price_not_defined')
                             }
@@ -222,7 +228,7 @@ export function TrainsPanel({
                         >
                           <label>
                             {translate('trains.seatPreference')}
-                            <select name="seatPreference" defaultValue="no_preference" disabled={isGuestMode || isBusy || !quote}>
+                            <select name="seatPreference" defaultValue="no_preference" disabled={isBusy || !quote}>
                               <option value="no_preference">{translate('trains.noPreference')}</option>
                               <option value="window">{translate('trains.window')}</option>
                               <option value="aisle">{translate('trains.aisle')}</option>
@@ -237,13 +243,13 @@ export function TrainsPanel({
                                   type="checkbox"
                                   name="travelerIds"
                                   value={traveler.travelerId}
-                                  disabled={isGuestMode || isBusy || !quote}
+                                  disabled={isBusy || !quote}
                                 />
                                 {renderTravelerOptionLabel(traveler)}
                               </label>
                             ))}
                           </div>
-                          <button type="submit" disabled={isGuestMode || isBusy || !quote}>
+                          <button type="submit" disabled={isBusy || !quote}>
                             {translate('trains.bookNow')}
                           </button>
                         </form>

@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter
 
 final case class StoredAvatarFile(
     publicUrl: String,
-    absolutePath: Path
+    storagePath: String
 )
 
 trait AvatarStorage[F[_]]:
@@ -38,7 +38,7 @@ final class LocalAvatarStorage[F[_]: Sync: Clock] private (
         Files.write(targetPath, fileBytes)
         StoredAvatarFile(
           publicUrl = s"/uploads/avatars/$fileName",
-          absolutePath = targetPath
+          storagePath = targetPath.toString
         )
       }
     }

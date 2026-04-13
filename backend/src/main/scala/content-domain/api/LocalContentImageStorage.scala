@@ -14,7 +14,7 @@ enum ContentImageCollection:
 final case class StoredContentImageFile(
     publicUrl: String,
     originalFileName: String,
-    absolutePath: Path
+    storagePath: String
 )
 
 trait ContentImageStorage[F[_]]:
@@ -53,7 +53,7 @@ final class LocalContentImageStorage[F[_]: Sync: Clock] private (
         StoredContentImageFile(
           publicUrl = s"/uploads/content/$collectionDirectoryName/$fileName",
           originalFileName = originalFileName,
-          absolutePath = targetPath
+          storagePath = targetPath.toString
         )
       }
     }

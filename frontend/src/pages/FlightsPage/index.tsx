@@ -1,3 +1,6 @@
+import { useState } from 'react'
+
+import { AuthRequiredDialog } from '../../components/AuthRequiredDialog'
 import { FlightsPanel } from '../../components/FlightsPanel'
 import { travelMvpApiClient } from '../../lib/api-client'
 import type {
@@ -27,6 +30,7 @@ export function FlightsPage({
 }: FlightsPageProps) {
   const { travelers } = useSignedInTravelers(signedInUser)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
 
   async function loadReviewSummary(payload: {
     resourceType: string
@@ -58,32 +62,48 @@ export function FlightsPage({
   }
 
   return (
-    <FlightsPanel
-      currentLanguage={currentLanguage}
-      isBusy={isBusy}
-      isGuestMode={signedInUser === null}
-      travelers={travelers}
-      translate={translate}
-      onSearchFlights={async payload => {
-        const flightListResponse = await travelMvpApiClient.listFlights(payload)
-        return flightListResponse.flights
-      }}
-      onBookFlight={async payload => {
-        if (!signedInUser) {
-          throw new Error(translate('error.loginRequired'))
-        }
-        await runPageAction(async () => {
-          await travelMvpApiClient.createFlightOrder({
-            buyerUserId: signedInUser.userId,
-            flightId: payload.flightId,
-            travelerIds: payload.travelerIds,
-            cabinClass: payload.cabinClass,
-          })
-          onNavigate('bookings')
-        }, translate('flights.bookNow'), translate('notice.bookingCreated'))
-      }}
-      onLoadReviewSummary={loadReviewSummary}
-      onLoadReviews={loadReviewsByResource}
-    />
+    <>
+      <FlightsPanel
+        currentLanguage={currentLanguage}
+        isBusy={isBusy}
+        isGuestMode={signedInUser === null}
+        travelers={travelers}
+        translate={translate}
+        onRequireLogin={() => setIsAuthDialogOpen(true)}
+        onSearchFlights={async payload => {
+          const flightListResponse = await travelMvpApiClient.listFlights(payload)
+          return flightListResponse.flights
+        }}
+        onBookFlight={async payload => {
+          if (!signedInUser) {
+            setIsAuthDialogOpen(true)
+            return
+          }
+          await runPageAction(async () => {
+            await travelMvpApiClient.createFlightOrder({
+              buyerUserId: signedInUser.userId,
+              flightId: payload.flightId,
+              travelerIds: payload.travelerIds,
+              cabinClass: payload.cabinClass,
+            })
+            onNavigate('bookings')
+          }, translate('flights.bookNow'), translate('notice.bookingCreated'))
+        }}
+        onLoadReviewSummary={loadReviewSummary}
+        onLoadReviews={loadReviewsByResource}
+      />
+
+      <AuthRequiredDialog
+        isOpen={isAuthDialogOpen}
+        title={translate('authRequired.bookingTitle')}
+        description={translate('authRequired.bookingDescription')}
+        translate={translate}
+        onClose={() => setIsAuthDialogOpen(false)}
+        onConfirm={() => {
+          setIsAuthDialogOpen(false)
+          onNavigate('account')
+        }}
+      />
+    </>
   )
 }

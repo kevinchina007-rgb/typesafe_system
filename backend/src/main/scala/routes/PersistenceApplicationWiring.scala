@@ -42,13 +42,10 @@ object PersistenceApplicationWiring:
     val avatarUploadRootDirectoryPath = resolveConfiguredPath("TRAVEL_AVATAR_UPLOAD_ROOT", "TRAVEL_UPLOAD_ROOT", "uploads", "avatars")
     val contentUploadRootDirectoryPath = resolveConfiguredPath("TRAVEL_CONTENT_UPLOAD_ROOT", "TRAVEL_UPLOAD_ROOT", "uploads", "content")
     val frontendDistRootDirectoryPath = resolveConfiguredPath("TRAVEL_FRONTEND_DIST_ROOT", "TRAVEL_STATIC_ROOT", "..", "frontend", "dist")
-    val localAvatarStorage = LocalAvatarStorage.create[F](avatarUploadRootDirectoryPath)
-    val localContentImageStorage = LocalContentImageStorage.create[F](contentUploadRootDirectoryPath)
-    val localTourGroupChatAttachmentStorage = LocalTourGroupChatAttachmentStorage.create[F](contentUploadRootDirectoryPath)
-
     DatabaseTransactor.resource[F](databaseConfig).evalMap { databaseTransactor =>
       for
         _ <- SchemaInitializer.initialize(databaseTransactor)
+        doobieUploadedBinaryAssetRepository = DoobieUploadedBinaryAssetRepository[F](databaseTransactor)
         doobieUserRepository = DoobieUserRepository[F](databaseTransactor)
         doobieAuthRepository = DoobieAuthRepository[F](databaseTransactor)
         doobieTravelerProfileRepository = DoobieTravelerProfileRepository[F](databaseTransactor)
@@ -62,6 +59,9 @@ object PersistenceApplicationWiring:
         doobieOrderRepository = DoobieOrderRepository[F](databaseTransactor)
         doobieInventoryReservationRepository = DoobieInventoryReservationRepository[F](databaseTransactor)
         doobieManagerRepository = DoobieManagerRepository[F](databaseTransactor)
+        databaseAvatarStorage = DatabaseAvatarStorage.create[F](doobieUploadedBinaryAssetRepository)
+        databaseContentImageStorage = DatabaseContentImageStorage.create[F](doobieUploadedBinaryAssetRepository)
+        databaseTourGroupChatAttachmentStorage = DatabaseTourGroupChatAttachmentStorage.create[F](doobieUploadedBinaryAssetRepository)
         liveUserService = LiveUserService[F](doobieUserRepository)
         liveTravelerProfileService =
           LiveTravelerProfileService[F](
@@ -132,14 +132,14 @@ object PersistenceApplicationWiring:
           LiveBlogApplicationService[F](
             blogRepository = doobieBlogRepository,
             userRepository = doobieUserRepository,
-            contentImageStorage = localContentImageStorage
+            contentImageStorage = databaseContentImageStorage
           )
         liveReviewApplicationService =
           LiveReviewApplicationService[F](
             reviewRepository = doobieReviewRepository,
             orderRepository = doobieOrderRepository,
             userRepository = doobieUserRepository,
-            contentImageStorage = localContentImageStorage
+            contentImageStorage = databaseContentImageStorage
           )
         liveTourGroupApplicationService =
           LiveTourGroupApplicationService[F](
@@ -153,7 +153,7 @@ object PersistenceApplicationWiring:
             hotelBookingApplicationService = liveHotelBookingApplicationService,
             trainBookingApplicationService = liveTrainBookingApplicationService,
             attractionBookingApplicationService = liveAttractionBookingApplicationService,
-            chatAttachmentStorage = localTourGroupChatAttachmentStorage
+            chatAttachmentStorage = databaseTourGroupChatAttachmentStorage
           )
         liveTrainAdminApplicationService =
           LiveTrainAdminApplicationService[F](
@@ -179,7 +179,7 @@ object PersistenceApplicationWiring:
         liveAvatarApplicationService =
           LiveAvatarApplicationService[F](
             userService = liveUserService,
-            avatarStorage = localAvatarStorage
+            avatarStorage = databaseAvatarStorage
           )
         apiRouter =
           ApiRouter[F](
@@ -203,6 +203,7 @@ object PersistenceApplicationWiring:
             travelerProfileRepository = doobieTravelerProfileRepository,
             orderRepository = doobieOrderRepository,
             inventoryReservationRepository = doobieInventoryReservationRepository,
+            uploadedBinaryAssetReader = Some(doobieUploadedBinaryAssetRepository),
             avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
             contentUploadRootDirectoryPath = contentUploadRootDirectoryPath,
             frontendDistRootDirectoryPath = frontendDistRootDirectoryPath

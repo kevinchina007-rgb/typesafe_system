@@ -87,6 +87,12 @@ trait ApiRouterStaticSupport[F[_]: Async]:
         if normalizedCollection.isEmpty then NotFound()
         else serveUploadFile(contentUploadRootDirectoryPath.resolve(normalizedCollection).normalize(), normalizedFileName)
 
+      case GET -> Root / "uploads" / "assets" / assetIdValue =>
+        serveUploadedBinaryAsset(assetIdValue.trim)
+
+      case GET -> Root / "uploads" / "assets" / assetIdValue / _ =>
+        serveUploadedBinaryAsset(assetIdValue.trim)
+
       case GET -> path =>
         serveFrontendAsset(path.renderString)
     }
@@ -120,6 +126,27 @@ trait ApiRouterStaticSupport[F[_]: Async]:
         }
       else
         NotFound()
+
+  private def serveUploadedBinaryAsset(assetId: String): F[Response[F]] =
+    if assetId.isEmpty then
+      NotFound()
+    else
+      uploadedBinaryAssetReader match
+        case None => NotFound()
+        case Some(assetReader) =>
+          assetReader.findAssetByAssetId(assetId).flatMap {
+            case None => NotFound()
+            case Some(asset) =>
+              Ok(Stream.emits(asset.binaryContent).covary[F]).map(
+                _.putHeaders(
+                  headers.`Content-Type`(MediaType.unsafeParse(asset.mimeType)),
+                  Header.Raw(CIString("Access-Control-Allow-Origin"), "*"),
+                  Header.Raw(CIString("Cross-Origin-Resource-Policy"), "cross-origin"),
+                  Header.Raw(CIString("Cache-Control"), "no-store, no-cache, must-revalidate"),
+                  Header.Raw(CIString("Content-Disposition"), "inline")
+                )
+              )
+          }
 
   private def inferMediaType(fileName: String): MediaType =
     fileName.toLowerCase match

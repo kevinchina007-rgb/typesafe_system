@@ -19,6 +19,7 @@ import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.tourgroup.domain.*
 import com.typesafe.travel.train.domain.*
 import com.typesafe.travel.traveler.domain.*
+import com.typesafe.travel.persistence.UploadedBinaryAssetReader
 import org.http4s.*
 import org.http4s.dsl.Http4sDsl
 
@@ -45,6 +46,7 @@ final class ApiRouter[F[_]: Async: Clock](
     protected val travelerProfileRepository: TravelerProfileRepository[F],
     protected val orderRepository: OrderRepository[F],
     protected val inventoryReservationRepository: InventoryReservationRepository[F],
+    protected val uploadedBinaryAssetReader: Option[UploadedBinaryAssetReader[F]],
     protected val avatarUploadRootDirectoryPath: Path,
     protected val contentUploadRootDirectoryPath: Path,
     protected val frontendDistRootDirectoryPath: Path
@@ -106,6 +108,7 @@ object ApiRouter:
       travelerProfileRepository: TravelerProfileRepository[F],
       orderRepository: OrderRepository[F],
       inventoryReservationRepository: InventoryReservationRepository[F],
+      uploadedBinaryAssetReader: Option[UploadedBinaryAssetReader[F]],
       avatarUploadRootDirectoryPath: Path,
       contentUploadRootDirectoryPath: Path,
       frontendDistRootDirectoryPath: Path
@@ -131,6 +134,7 @@ object ApiRouter:
       travelerProfileRepository,
       orderRepository,
       inventoryReservationRepository,
+      uploadedBinaryAssetReader,
       avatarUploadRootDirectoryPath,
       contentUploadRootDirectoryPath,
       frontendDistRootDirectoryPath

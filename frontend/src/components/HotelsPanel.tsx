@@ -10,6 +10,7 @@ type HotelsPanelProps = {
   isGuestMode: boolean
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
+  onRequireLogin: () => void
   onSearchHotels: (payload: {
     location?: string
     checkInDate?: string
@@ -36,6 +37,7 @@ export function HotelsPanel({
   isGuestMode,
   travelers,
   translate,
+  onRequireLogin,
   onSearchHotels,
   onBookHotel,
   onLoadReviewSummary,
@@ -150,6 +152,10 @@ export function HotelsPanel({
                         className="compact-action-block"
                         onSubmit={async event => {
                           event.preventDefault()
+                          if (isGuestMode) {
+                            onRequireLogin()
+                            return
+                          }
                           const formData = new FormData(event.currentTarget)
                           const selectedGuestTravelerIds = formData
                             .getAll('guestTravelerIds')
@@ -180,7 +186,7 @@ export function HotelsPanel({
                             min={1}
                             max={roomTypeResponse.availableRoomsForRequestedStay ?? undefined}
                             defaultValue={1}
-                            disabled={isGuestMode || isBusy || !roomTypeResponse.isBookableForRequestedStay}
+                            disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}
                           />
                         </label>
                         <div className="checkbox-list">
@@ -191,16 +197,13 @@ export function HotelsPanel({
                                 type="checkbox"
                                 name="guestTravelerIds"
                                 value={traveler.travelerId}
-                                disabled={isGuestMode || isBusy || !roomTypeResponse.isBookableForRequestedStay}
+                                disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}
                               />
                               {renderTravelerOptionLabel(traveler)}
                             </label>
                           ))}
                         </div>
-                        <button
-                          type="submit"
-                          disabled={isGuestMode || isBusy || !roomTypeResponse.isBookableForRequestedStay}
-                        >
+                        <button type="submit" disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}>
                           {translate('hotels.bookNow')}
                         </button>
                       </form>

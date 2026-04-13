@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { AppSidebar } from '../components/AppSidebar'
+import { getActiveTopNav, getSidebarItemsForTopNav, getVisibleTopNavItems, shouldShowSidebar } from '../app/navigation'
+import { AppShell } from '../components/shell/AppShell'
 import { ToastNotice } from '../components/ToastNotice'
 import { travelMvpApiClient } from '../lib/api-client'
 import { isUnauthorizedApiError } from '../lib/api-transport'
@@ -11,22 +12,65 @@ import { AccountPage } from './AccountPage'
 import { AttractionsPage } from './AttractionsPage'
 import { BlogPage } from './BlogPage'
 import { BookingsPage } from './BookingsPage'
-import { ExplorePage } from './ExplorePage'
 import { FlightsPage } from './FlightsPage'
 import { HotelsPage } from './HotelsPage'
 import { ManagerPage } from './ManagerPage'
 import { ReviewsPage } from './ReviewsPage'
+import { SmartTripPlannerPage } from './SmartTripPlannerPage'
 import { TourGroupsPage } from './TourGroupsPage'
 import { TrainsPage } from './TrainsPage'
 import { TravelersPage } from './TravelersPage'
+import { WorkspaceOverviewPage } from './WorkspaceOverviewPage'
+
+type ThemeMode = 'dark' | 'light'
+
+const languageStorageKey = 'travel-workbench.language'
+const viewStorageKey = 'travel-workbench.view'
+const themeStorageKey = 'travel-workbench.theme'
+
+function normalizeViewKey(viewKey: AppViewKey): AppViewKey {
+  if (viewKey === 'bookings') {
+    return 'orders'
+  }
+
+  if (viewKey === 'explore') {
+    return 'smartPlanner'
+  }
+
+  if (viewKey === 'trainAdmin' || viewKey === 'attractionAdmin') {
+    return 'manager'
+  }
+
+  return viewKey
+}
 
 export function MvpApp() {
-  // MvpApp 现在只保留真正的 shell 级状态：
-  // 当前语言、当前页面、当前 principal、全局 notice、后端健康状态。
-  const [currentLanguage, setCurrentLanguage] = useState<AppLanguage>('en')
-  const [currentViewKey, setCurrentViewKey] = useState<AppViewKey>('blog')
-  const [accountEntryMode, setAccountEntryMode] = useState<'register' | 'login'>('login')
-  const [backendHealthResponse, setBackendHealthResponse] = useState<HealthResponse | null>(() => getInitialBackendHealth())
+  const [currentLanguage, setCurrentLanguage] = useState<AppLanguage>(() => {
+    if (typeof window === 'undefined') {
+      return 'en'
+    }
+
+    const savedLanguage = window.localStorage.getItem(languageStorageKey)
+    return savedLanguage === 'zh' ? 'zh' : 'en'
+  })
+  const [currentViewKey, setCurrentViewKey] = useState<AppViewKey>(() => {
+    if (typeof window === 'undefined') {
+      return 'overview'
+    }
+
+    const savedView = window.localStorage.getItem(viewStorageKey)
+    return (savedView as AppViewKey) ?? 'overview'
+  })
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    if (typeof window === 'undefined') {
+      return 'dark'
+    }
+
+    return window.localStorage.getItem(themeStorageKey) === 'light' ? 'light' : 'dark'
+  })
+  const [accountEntryMode] = useState<'register' | 'login'>('login')
+  const [, setBackendHealthResponse] = useState<HealthResponse | null>(() => getInitialBackendHealth())
+  const [hasResolvedPrincipalState, setHasResolvedPrincipalState] = useState(false)
   const [signedInUserResponse, setSignedInUserResponse] = useState<UserResponse | null>(null)
   const [signedInManagerSessionResponse, setSignedInManagerSessionResponse] = useState<CurrentManagerSessionResponse | null>(null)
   const [currentNotice, setCurrentNotice] = useState<AppNotice | null>(null)
@@ -35,6 +79,19 @@ export function MvpApp() {
   const translate = createTranslator(currentLanguage)
   const isGuestMode = signedInUserResponse === null && signedInManagerSessionResponse === null
   const isManagerOnlyMode = signedInUserResponse === null && signedInManagerSessionResponse !== null
+
+  const normalizedViewKey = normalizeViewKey(currentViewKey)
+  const currentTopNav = getActiveTopNav(normalizedViewKey)
+  const topNavItems = getVisibleTopNavItems({
+    signedInManager: signedInManagerSessionResponse,
+    signedInUser: signedInUserResponse,
+  })
+  const sidebarItems = getSidebarItemsForTopNav({
+    topNav: currentTopNav,
+    signedInManager: signedInManagerSessionResponse,
+    signedInUser: signedInUserResponse,
+  })
+  const showSidebar = shouldShowSidebar(currentTopNav, sidebarItems)
 
   const reloadBackendHealth = useCallback(async () => {
     try {
@@ -52,9 +109,6 @@ export function MvpApp() {
   }, [])
 
   const reloadPrincipalState = useCallback(async () => {
-    // user / manager 通过两条独立 session 链恢复。
-    // 只有服务端明确返回未授权时才清空当前 principal；
-    // 临时网络失败或后端短暂抖动不应把已登录用户打回游客态。
     const [currentUserSessionResult, currentManagerSessionResult] = await Promise.allSettled([
       travelMvpApiClient.getCurrentUserSession(),
       travelMvpApiClient.getCurrentManagerSession(),
@@ -78,12 +132,14 @@ export function MvpApp() {
       didRecoverPrincipalState = false
     }
 
+    if (didRecoverPrincipalState) {
+      setHasResolvedPrincipalState(true)
+    }
+
     return didRecoverPrincipalState
   }, [])
 
   useEffect(() => {
-    // 启动时恢复后端健康和当前 principal，
-    // 之后用固定轮询保持 UI 与服务端 session 同步。
     let isDisposed = false
     let retryTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -117,22 +173,55 @@ export function MvpApp() {
   }, [reloadBackendHealth, reloadPrincipalState])
 
   useEffect(() => {
-    if (currentViewKey === 'trainAdmin' || currentViewKey === 'attractionAdmin') {
-      setCurrentViewKey('manager')
+    if (typeof window === 'undefined') {
+      return
     }
-  }, [currentViewKey])
+
+    window.localStorage.setItem(languageStorageKey, currentLanguage)
+  }, [currentLanguage])
 
   useEffect(() => {
-    if (isGuestMode && currentViewKey !== 'blog' && currentViewKey !== 'account') {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(viewStorageKey, normalizedViewKey)
+  }, [normalizedViewKey])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(themeStorageKey, themeMode)
+    document.documentElement.dataset.theme = themeMode
+  }, [themeMode])
+
+  useEffect(() => {
+    if (normalizedViewKey !== currentViewKey) {
+      setCurrentViewKey(normalizedViewKey)
+    }
+  }, [currentViewKey, normalizedViewKey])
+
+  useEffect(() => {
+    if (!hasResolvedPrincipalState) {
+      return
+    }
+
+    if (isGuestMode && normalizedViewKey === 'reviews') {
       setCurrentViewKey('blog')
     }
-  }, [currentViewKey, isGuestMode])
+  }, [hasResolvedPrincipalState, isGuestMode, normalizedViewKey])
 
   useEffect(() => {
-    if (isManagerOnlyMode && currentViewKey !== 'blog' && currentViewKey !== 'account' && currentViewKey !== 'manager') {
+    if (!hasResolvedPrincipalState) {
+      return
+    }
+
+    if (isManagerOnlyMode && normalizedViewKey !== 'overview' && normalizedViewKey !== 'blog' && normalizedViewKey !== 'account' && normalizedViewKey !== 'manager') {
       setCurrentViewKey('manager')
     }
-  }, [currentViewKey, isManagerOnlyMode])
+  }, [hasResolvedPrincipalState, isManagerOnlyMode, normalizedViewKey])
 
   function showNotice(kind: AppNotice['kind'], title: string, description: string, technicalMessage?: string) {
     setCurrentNotice({
@@ -144,141 +233,214 @@ export function MvpApp() {
     })
   }
 
+  function renderCurrentPage() {
+    if (normalizedViewKey === 'overview') {
+      return (
+        <WorkspaceOverviewPage
+          isSessionReady={hasResolvedPrincipalState}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onSelectView={setCurrentViewKey}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'smartPlanner') {
+      return <SmartTripPlannerPage translate={translate} onSelectView={setCurrentViewKey} />
+    }
+
+    if (normalizedViewKey === 'blog') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <BlogPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'reviews') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <ReviewsPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'account') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <AccountPage
+          currentLanguage={currentLanguage}
+          signedInManager={signedInManagerSessionResponse}
+          signedInUser={signedInUserResponse}
+          requestedEntryMode={accountEntryMode}
+          translate={translate}
+          onSignedInManagerChange={setSignedInManagerSessionResponse}
+          onSignedInUserChange={setSignedInUserResponse}
+          onNavigate={setCurrentViewKey}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'travelers') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <TravelersPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onSignedInUserChange={setSignedInUserResponse}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'flights') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <FlightsPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onNavigate={setCurrentViewKey}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'hotels') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <HotelsPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onNavigate={setCurrentViewKey}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'trains') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <TrainsPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onNavigate={setCurrentViewKey}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'attractions') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <AttractionsPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onNavigate={setCurrentViewKey}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'tourGroups') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <TourGroupsPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onNavigate={setCurrentViewKey}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'orders') {
+      // Existing module mount preserved inside the new Travel Workbench shell.
+      return (
+        <BookingsPage
+          currentLanguage={currentLanguage}
+          isSessionReady={hasResolvedPrincipalState}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onNavigate={setCurrentViewKey}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'manager') {
+      return (
+        <ManagerPage
+          currentLanguage={currentLanguage}
+          currentManagerSession={signedInManagerSessionResponse}
+          translate={translate}
+          onManagerSessionChange={setSignedInManagerSessionResponse}
+          onNavigate={setCurrentViewKey}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    return null
+  }
+
+  if (!hasResolvedPrincipalState) {
+    return (
+      <main className="layout-shell">
+        <section className="content-shell">
+          <section className="app-card empty-state-panel">
+            <strong>{currentLanguage === 'zh' ? '正在恢复页面状态' : 'Restoring workspace state'}</strong>
+          </section>
+        </section>
+      </main>
+    )
+  }
+
   return (
-    <main className="layout-shell">
-      <AppSidebar
-        currentLanguage={currentLanguage}
-        currentViewKey={currentViewKey}
-        health={backendHealthResponse}
-        signedInManager={signedInManagerSessionResponse}
-        signedInUser={signedInUserResponse}
-        onChangeLanguage={setCurrentLanguage}
-        onSelectView={setCurrentViewKey}
-        onOpenAccountEntryMode={nextAccountEntryMode => {
-          setAccountEntryMode(nextAccountEntryMode)
-          setCurrentViewKey('account')
+    <>
+      <AppShell
+        topNav={{
+          currentLanguage,
+          currentTopNav,
+          themeMode,
+          items: topNavItems,
+          signedInManager: signedInManagerSessionResponse,
+          signedInUser: signedInUserResponse,
+          onChangeLanguage: setCurrentLanguage,
+          onChangeTheme: setThemeMode,
+          onSelectTopNav: (_topNav, defaultViewKey) => setCurrentViewKey(defaultViewKey),
+          translate,
         }}
-        translate={translate}
-      />
-
-      <section className="content-shell">
-        {/* 这里是应用级视图分发层。每个 page 自己再管理局部数据与交互。 */}
-        {currentViewKey === 'blog' ? (
-          <BlogPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'reviews' ? (
-          <ReviewsPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'explore' ? <ExplorePage translate={translate} onOpenView={setCurrentViewKey} /> : null}
-
-        {currentViewKey === 'account' ? (
-          <AccountPage
-            currentLanguage={currentLanguage}
-            signedInManager={signedInManagerSessionResponse}
-            signedInUser={signedInUserResponse}
-            requestedEntryMode={accountEntryMode}
-            translate={translate}
-            onSignedInManagerChange={setSignedInManagerSessionResponse}
-            onSignedInUserChange={setSignedInUserResponse}
-            onNavigate={setCurrentViewKey}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'travelers' ? (
-          <TravelersPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onSignedInUserChange={setSignedInUserResponse}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'flights' ? (
-          <FlightsPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onNavigate={setCurrentViewKey}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'hotels' ? (
-          <HotelsPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onNavigate={setCurrentViewKey}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'trains' ? (
-          <TrainsPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onNavigate={setCurrentViewKey}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'attractions' ? (
-          <AttractionsPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onNavigate={setCurrentViewKey}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'tourGroups' ? (
-          <TourGroupsPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onNavigate={setCurrentViewKey}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'bookings' ? (
-          <BookingsPage
-            currentLanguage={currentLanguage}
-            signedInUser={signedInUserResponse}
-            translate={translate}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-
-        {currentViewKey === 'manager' ? (
-          <ManagerPage
-            currentLanguage={currentLanguage}
-            currentManagerSession={signedInManagerSessionResponse}
-            translate={translate}
-            onManagerSessionChange={setSignedInManagerSessionResponse}
-            onNavigate={setCurrentViewKey}
-            onShowNotice={showNotice}
-          />
-        ) : null}
-      </section>
+        sidebar={
+          showSidebar
+            ? {
+                currentTopNav,
+                currentViewKey: normalizedViewKey,
+                items: sidebarItems,
+                onSelectView: setCurrentViewKey,
+                translate,
+              }
+            : undefined
+        }
+      >
+        {renderCurrentPage()}
+      </AppShell>
 
       <ToastNotice notice={currentNotice} onDismiss={() => setCurrentNotice(null)} />
-    </main>
+    </>
   )
 }

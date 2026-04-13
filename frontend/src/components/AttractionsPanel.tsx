@@ -10,6 +10,7 @@ type AttractionsPanelProps = {
   isGuestMode: boolean
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
+  onRequireLogin: () => void
   onSearchAttractions: (payload: { city?: string; useDate?: string }) => Promise<AttractionResponse[]>
   onBookAttraction: (payload: {
     attractionId: string
@@ -33,6 +34,7 @@ export function AttractionsPanel({
   isGuestMode,
   travelers,
   translate,
+  onRequireLogin,
   onSearchAttractions,
   onBookAttraction,
   onLoadReviewSummary,
@@ -138,6 +140,10 @@ export function AttractionsPanel({
                         className="compact-action-block"
                         onSubmit={async event => {
                           event.preventDefault()
+                          if (isGuestMode) {
+                            onRequireLogin()
+                            return
+                          }
                           const formData = new FormData(event.currentTarget)
                           const travelerIds = formData.getAll('travelerIds').map(value => String(value)).filter(Boolean)
                           const useDate = String(formData.get('useDate') ?? '').trim()
@@ -154,12 +160,12 @@ export function AttractionsPanel({
                       >
                         <label>
                           {translate('attractions.useDate')}
-                          <input name="useDate" type="date" defaultValue={useDateDraft} required disabled={isBusy || isGuestMode} />
+                          <input name="useDate" type="date" defaultValue={useDateDraft} required disabled={isBusy} />
                         </label>
                         {ticketType.sessions.length > 0 ? (
                           <label>
                             {translate('attractions.session')}
-                            <select name="sessionId" defaultValue="" required disabled={isBusy || isGuestMode}>
+                            <select name="sessionId" defaultValue="" required disabled={isBusy}>
                               <option value="" disabled>{translate('attractions.selectSession')}</option>
                               {ticketType.sessions
                                 .filter(session => session.useDate === useDateDraft)
@@ -176,7 +182,7 @@ export function AttractionsPanel({
                           <p className="detail-label">{translate('attractions.selectTravelers')}</p>
                           {travelers.map(traveler => (
                             <label key={traveler.travelerId} className="checkbox-row">
-                              <input type="checkbox" name="travelerIds" value={traveler.travelerId} disabled={isGuestMode || isBusy} />
+                              <input type="checkbox" name="travelerIds" value={traveler.travelerId} disabled={isBusy} />
                               {renderTravelerOptionLabel(traveler)}
                             </label>
                           ))}
@@ -184,7 +190,7 @@ export function AttractionsPanel({
 
                         <button
                           type="submit"
-                          disabled={isGuestMode || isBusy || !ticketType.isAvailableForRequestedDate || (ticketType.availableQuantityForRequestedDate ?? 0) <= 0}
+                          disabled={isBusy || !ticketType.isAvailableForRequestedDate || (ticketType.availableQuantityForRequestedDate ?? 0) <= 0}
                         >
                           {translate('attractions.bookNow')}
                         </button>

@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { travelMvpApiClient } from '../lib/api-client'
 import type { AppLanguage, BlogPostResponse, BlogPostSummaryResponse, ContentImageResponse, UserResponse } from '../lib/mvp-types'
 import { BlogDetail } from './BlogDetail'
 import { BlogEditor } from './BlogEditor'
-import { formatBlogMeta, localizeBlogScope } from '../lib/content-presenter'
+import { CommunityArticleCard } from './community/CommunityArticleCard'
+import { CommunityHero } from './community/CommunityHero'
+import { formatBlogMeta, localizeBlogStatus } from '../lib/content-presenter'
 
 type BlogScope = 'latest' | 'mine'
+type CommunityFeedTab = 'latest' | 'hot' | 'recommended' | 'mine'
 
 type BlogPanelProps = {
   currentLanguage: AppLanguage
@@ -25,11 +28,21 @@ type BlogPanelProps = {
   onUnlikePost: (postId: string) => Promise<BlogPostResponse>
 }
 
-// BlogPanel 是博客页的状态编排层：
-// - postSummaries 保存列表摘要数据
-// - selectedPost 保存单篇详情数据
-// - searchDraft 只驱动建议列表
-// - searchText 才是真正提交给后端的查询条件
+function scoreRecommended(post: BlogPostSummaryResponse) {
+  return post.likeCount * 2 + post.commentCount + (post.images.length > 0 ? 3 : 0)
+}
+
+function sortPosts(posts: BlogPostSummaryResponse[], tab: CommunityFeedTab) {
+  const nextPosts = [...posts]
+  if (tab === 'hot') {
+    return nextPosts.sort((left, right) => right.commentCount + right.likeCount - (left.commentCount + left.likeCount))
+  }
+  if (tab === 'recommended') {
+    return nextPosts.sort((left, right) => scoreRecommended(right) - scoreRecommended(left))
+  }
+  return nextPosts.sort((left, right) => (right.publishedAt ?? right.createdAt).localeCompare(left.publishedAt ?? left.createdAt))
+}
+
 export function BlogPanel({
   currentLanguage,
   isBusy,
@@ -46,24 +59,28 @@ export function BlogPanel({
   onLikePost,
   onUnlikePost,
 }: BlogPanelProps) {
-  const [scope, setScope] = useState<BlogScope>('latest')
+  const [activeTab, setActiveTab] = useState<CommunityFeedTab>('latest')
   const [searchDraft, setSearchDraft] = useState('')
   const [searchText, setSearchText] = useState('')
-  const [postSummaries, setPostSummaries] = useState<BlogPostSummaryResponse[]>([])
+  const [rawPosts, setRawPosts] = useState<BlogPostSummaryResponse[]>([])
   const [searchSuggestions, setSearchSuggestions] = useState<Array<{ value: string; title: string; subtitle: string }>>([])
   const [selectedPost, setSelectedPost] = useState<BlogPostResponse | null>(null)
   const [editingPost, setEditingPost] = useState<BlogPostResponse | null>(null)
   const [isComposerOpen, setIsComposerOpen] = useState(false)
 
+  const effectiveScope: BlogScope = activeTab === 'mine' ? 'mine' : 'latest'
+
+  const visiblePosts = useMemo(() => sortPosts(rawPosts, activeTab), [activeTab, rawPosts])
+
   useEffect(() => {
-    // 列表刷新只依赖已确认的查询条件 searchText，
-    // 这样用户输入草稿时不会立即触发真正搜索。
-    const nextScope = signedInUser ? scope : 'latest'
-    if (!signedInUser && scope !== 'latest') {
-      setScope('latest')
+    if (!signedInUser && activeTab === 'mine') {
+      setActiveTab('latest')
     }
-    void reloadPosts(nextScope)
-  }, [signedInUser?.userId, scope, searchText])
+  }, [activeTab, signedInUser])
+
+  useEffect(() => {
+    void reloadPosts()
+  }, [signedInUser?.userId, effectiveScope, searchText])
 
   useEffect(() => {
     let cancelled = false
@@ -77,7 +94,6 @@ export function BlogPanel({
 
     const timeoutId = window.setTimeout(async () => {
       try {
-        // 建议列表来自搜索草稿，是一种轻量 view-like data，不会直接替代真正的搜索结果。
         const response = await travelMvpApiClient.listBlogSuggestions(normalizedDraft)
         if (!cancelled) {
           setSearchSuggestions(response.suggestions)
@@ -95,91 +111,115 @@ export function BlogPanel({
     }
   }, [searchDraft])
 
-  async function reloadPosts(nextScope: BlogScope = scope, nextSelectedPostId?: string) {
-    // 列表摘要和详情分开存，可以让列表刷新、详情加载、编辑态切换彼此独立。
-    const nextPosts = await onListPosts(nextScope, searchText)
-    setPostSummaries(nextPosts)
-    const selectedPostId = nextSelectedPostId ?? selectedPost?.post.postId ?? nextPosts[0]?.postId
-    if (selectedPostId) {
-      const detailedPost = await onLoadPost(selectedPostId)
-      setSelectedPost(detailedPost)
-      setEditingPost(currentEditingPost => (currentEditingPost?.post.postId === detailedPost.post.postId ? detailedPost : currentEditingPost))
-    } else {
+  async function reloadPosts(nextSelectedPostId?: string) {
+    const nextPosts = await onListPosts(effectiveScope, searchText)
+    setRawPosts(nextPosts)
+    const sortedPosts = sortPosts(nextPosts, activeTab)
+    const selectedPostId = nextSelectedPostId ?? selectedPost?.post.postId ?? sortedPosts[0]?.postId
+    if (!selectedPostId) {
       setSelectedPost(null)
       setEditingPost(null)
+      return
     }
+    const detailedPost = await onLoadPost(selectedPostId)
+    setSelectedPost(detailedPost)
+    setEditingPost(currentEditingPost => (currentEditingPost?.post.postId === detailedPost.post.postId ? detailedPost : currentEditingPost))
   }
 
+  const tabs = [
+    { key: 'latest', label: translate('community.tabs.latest') },
+    { key: 'hot', label: translate('community.tabs.hot') },
+    { key: 'recommended', label: translate('community.tabs.recommended') },
+    ...(signedInUser ? [{ key: 'mine', label: translate('community.tabs.mine') }] : []),
+  ]
+
   return (
-    <section className="page-card">
-      <div className="panel-card">
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow-label">{translate('nav.blog')}</p>
-            <h2>{translate('blog.title')}</h2>
-          </div>
-          <div className="action-row">
-            {signedInUser ? (
-              <button type="button" disabled={isBusy} onClick={() => setIsComposerOpen(true)}>
-                {translate('blog.publish')}
+    <section className="page-stack community-page-stack">
+      <CommunityHero
+        eyebrow={translate('community.blogEyebrow')}
+        title={translate('blog.title')}
+        searchValue={searchDraft}
+        searchPlaceholder={translate('blog.searchHint')}
+        searchButtonLabel={translate('search.confirm')}
+        tabs={tabs}
+        activeTab={activeTab}
+        primaryActionLabel={signedInUser ? translate('blog.publish') : undefined}
+        secondaryActionLabel={translate('blog.refresh')}
+        isBusy={isBusy}
+        onSearchChange={setSearchDraft}
+        onSearchSubmit={() => setSearchText(searchDraft)}
+        onSelectTab={tabKey => setActiveTab(tabKey as CommunityFeedTab)}
+        onPrimaryAction={signedInUser ? () => setIsComposerOpen(true) : undefined}
+        onSecondaryAction={() => void reloadPosts()}
+      />
+
+      {searchSuggestions.length > 0 ? (
+        <section className="page-card community-suggestion-panel">
+          <div className="community-suggestion-list">
+            {searchSuggestions.map(suggestion => (
+              <button
+                key={`${suggestion.value}-${suggestion.title}`}
+                type="button"
+                className="community-suggestion-item"
+                onClick={() => {
+                  setSearchDraft(suggestion.value)
+                  setSearchText(suggestion.value)
+                }}
+              >
+                <strong>{suggestion.title}</strong>
+                <span>{suggestion.subtitle}</span>
               </button>
-            ) : null}
-            <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void reloadPosts()}>
-              {translate('blog.refresh')}
-            </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {!signedInUser ? <p className="empty-state">{translate('blog.guestHint')}</p> : null}
+
+      <section className="page-card community-list-section">
+        <div className="section-header">
+          <div>
+            <p className="eyebrow-label">{translate('community.listEyebrow')}</p>
+            <h2 className="section-title">{translate('community.blogListTitle')}</h2>
           </div>
         </div>
 
-        <p className="hero-copy">{translate('blog.description')}</p>
-
-        <div className="manager-task-actions">
-          <button type="button" className={scope === 'latest' ? '' : 'secondary-button'} onClick={() => setScope('latest')}>
-            {localizeBlogScope('latest', currentLanguage)}
-          </button>
-          {signedInUser ? (
-            <button type="button" className={scope === 'mine' ? '' : 'secondary-button'} onClick={() => setScope('mine')}>
-              {localizeBlogScope('mine', currentLanguage)}
-            </button>
-          ) : null}
-        </div>
-
-        <div className="stack-form">
-          <label>
-            {translate('blog.search')}
-            <input
-              value={searchDraft}
-              onChange={event => setSearchDraft(event.target.value)}
-              placeholder={translate('blog.searchHint')}
-            />
-          </label>
-          <button type="button" disabled={isBusy} onClick={() => setSearchText(searchDraft)}>
-            {translate('search.confirm')}
-          </button>
-        </div>
-
-        {searchSuggestions.length > 0 ? (
-          <div className="list-surface">
-            <ul className="entity-list">
-              {searchSuggestions.map(suggestion => (
-                <li key={`${suggestion.value}-${suggestion.title}`}>
-                  <button
-                    type="button"
-                    className="tour-group-link-button"
-                    onClick={() => {
-                      setSearchDraft(suggestion.value)
-                      setSearchText(suggestion.value)
-                    }}
-                  >
-                    <strong>{suggestion.title}</strong>
-                  </button>
-                  <p>{suggestion.subtitle}</p>
-                </li>
-              ))}
-            </ul>
+        {visiblePosts.length === 0 ? (
+          <div className="empty-state-panel">
+            <p className="empty-state">{translate(activeTab === 'mine' ? 'blog.mineEmpty' : 'blog.empty')}</p>
           </div>
-        ) : null}
+        ) : (
+          <div className="community-list-grid">
+            {visiblePosts.map(post => (
+              <CommunityArticleCard
+                key={post.postId}
+                title={post.title}
+                summary={post.summary}
+                author={post.authorDisplayName}
+                authorAvatarUrl={post.authorAvatarUrl}
+                time={formatBlogMeta(post, translate('booking.notYet'))}
+                likes={post.likeCount}
+                comments={post.commentCount}
+                likesLabel={translate('blog.likes')}
+                commentsLabel={translate('blog.comments')}
+                badge={localizeBlogStatus(post.status, currentLanguage)}
+                snippet={post.searchResultSnippet}
+                isActive={selectedPost?.post.postId === post.postId}
+                onSelect={() => void reloadPosts(post.postId)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
-        {signedInUser && isComposerOpen ? (
+      {signedInUser && isComposerOpen ? (
+        <section className="page-card community-detail-section">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow-label">{translate('community.detailEyebrow')}</p>
+              <h2 className="section-title">{translate('blog.editorTitle')}</h2>
+            </div>
+          </div>
           <BlogEditor
             isBusy={isBusy}
             translate={translate}
@@ -188,35 +228,19 @@ export function BlogPanel({
               const created = await onCreatePost(payload)
               setIsComposerOpen(false)
               setEditingPost(null)
-              await reloadPosts(scope, created.post.postId)
+              await reloadPosts(created.post.postId)
             }}
             onCancel={() => setIsComposerOpen(false)}
           />
-        ) : !signedInUser ? (
-          <p className="empty-state">{translate('blog.guestHint')}</p>
-        ) : null}
-
-        <div className="list-surface">
-          {postSummaries.length === 0 ? <p className="empty-state">{translate(scope === 'mine' ? 'blog.mineEmpty' : 'blog.empty')}</p> : null}
-
-          {postSummaries.length > 0 ? (
-            <ul className="entity-list">
-              {postSummaries.map(post => (
-                <li key={post.postId}>
-                  <button type="button" className="tour-group-link-button" onClick={() => void reloadPosts(scope, post.postId)}>
-                    <strong>{post.title}</strong>
-                  </button>
-                  <p>{post.summary}</p>
-                  {post.searchResultSnippet ? <p>{post.searchResultSnippet}</p> : null}
-                  <p>{`${post.authorDisplayName} · ${formatBlogMeta(post, translate('booking.notYet'))}`}</p>
-                  <p>{`${translate('blog.likes')}: ${post.likeCount} · ${translate('blog.comments')}: ${post.commentCount}`}</p>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-
-        {editingPost ? (
+        </section>
+      ) : editingPost ? (
+        <section className="page-card community-detail-section">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow-label">{translate('community.detailEyebrow')}</p>
+              <h2 className="section-title">{translate('blog.editorEditTitle')}</h2>
+            </div>
+          </div>
           <BlogEditor
             isBusy={isBusy}
             mode="edit"
@@ -232,11 +256,19 @@ export function BlogPanel({
               const updated = await onUpdatePost(editingPost.post.postId, payload)
               setEditingPost(null)
               setSelectedPost(updated)
-              await reloadPosts(scope, updated.post.postId)
+              await reloadPosts(updated.post.postId)
             }}
             onCancel={() => setEditingPost(null)}
           />
-        ) : selectedPost ? (
+        </section>
+      ) : selectedPost ? (
+        <section className="page-card community-detail-section">
+          <div className="section-header">
+            <div>
+              <p className="eyebrow-label">{translate('community.detailEyebrow')}</p>
+              <h2 className="section-title">{translate('community.blogDetailTitle')}</h2>
+            </div>
+          </div>
           <BlogDetail
             currentLanguage={currentLanguage}
             isBusy={isBusy}
@@ -246,28 +278,28 @@ export function BlogPanel({
             onComment={async content => {
               const updated = await onCommentPost(selectedPost.post.postId, content)
               setSelectedPost(updated)
-              setPostSummaries(currentPosts =>
+              setRawPosts(currentPosts =>
                 currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
               )
             }}
             onDeleteComment={async commentId => {
               const updated = await onDeleteComment(commentId)
               setSelectedPost(updated)
-              setPostSummaries(currentPosts =>
+              setRawPosts(currentPosts =>
                 currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
               )
             }}
             onLike={async () => {
               const updated = await onLikePost(selectedPost.post.postId)
               setSelectedPost(updated)
-              setPostSummaries(currentPosts =>
+              setRawPosts(currentPosts =>
                 currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
               )
             }}
             onUnlike={async () => {
               const updated = await onUnlikePost(selectedPost.post.postId)
               setSelectedPost(updated)
-              setPostSummaries(currentPosts =>
+              setRawPosts(currentPosts =>
                 currentPosts.map(postSummary => (postSummary.postId === updated.post.postId ? updated.post : postSummary)),
               )
             }}
@@ -275,15 +307,11 @@ export function BlogPanel({
             onArchive={async () => {
               const updated = await onArchivePost(selectedPost.post.postId)
               setSelectedPost(updated)
-              await reloadPosts(scope, updated.post.postId)
+              await reloadPosts(updated.post.postId)
             }}
           />
-        ) : (
-          <div className="list-surface">
-            <p className="empty-state">{translate('blog.empty')}</p>
-          </div>
-        )}
-      </div>
+        </section>
+      ) : null}
     </section>
   )
 }

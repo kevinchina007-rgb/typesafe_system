@@ -153,7 +153,7 @@ trait LiveTourGroupChatOperations[F[_]: MonadThrow]:
       attachmentId = attachmentId,
       attachmentType = attachmentType,
       publicUrl = stored.publicUrl,
-      storagePath = stored.absolutePath.toString,
+      storagePath = stored.storagePath,
       originalFileName = stored.originalFileName,
       mimeType = stored.mimeType,
       fileSize = stored.fileSize,

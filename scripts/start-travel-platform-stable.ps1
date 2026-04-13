@@ -16,6 +16,30 @@ $backendArgFile = Join-Path $logDir 'backend-java.args'
 $frontendStdout = Join-Path $logDir 'frontend.stdout.log'
 $frontendStderr = Join-Path $logDir 'frontend.stderr.log'
 
+function Get-CommandPath {
+  param(
+    [string[]]$Candidates,
+    [string]$DisplayName
+  )
+
+  foreach ($candidate in $Candidates) {
+    if (-not $candidate) {
+      continue
+    }
+
+    $resolved = Get-Command $candidate -ErrorAction SilentlyContinue
+    if ($resolved) {
+      return $resolved.Source
+    }
+
+    if (Test-Path $candidate) {
+      return $candidate
+    }
+  }
+
+  throw "Required command '$DisplayName' was not found. Checked: $($Candidates -join ', ')"
+}
+
 function Write-LauncherLog {
   param([string]$Message)
   Add-Content -Path $launcherLog -Value "[travel-platform] $(Get-Date -Format o) $Message"
@@ -230,8 +254,90 @@ window.__TRAVEL_INITIAL_BACKEND_HEALTH__ = $initialHealthJson;
 )
 }
 
+function Get-BackendDatabaseSettings {
+  $localPostgresDataRoot = Join-Path $backendRoot '.postgres-dev\data'
+  $localPostgresPgCtl = 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe'
+  $localPostgresReady = 'C:\Program Files\PostgreSQL\18\bin\pg_isready.exe'
+
+  if (
+    -not $env:TRAVEL_DB_URL -and
+    -not $env:TRAVEL_DB_DRIVER -and
+    -not $env:TRAVEL_DB_USER -and
+    $null -eq $env:TRAVEL_DB_PASSWORD -and
+    (Test-Path (Join-Path $localPostgresDataRoot 'PG_VERSION')) -and
+    (Test-Path $localPostgresPgCtl) -and
+    (Test-Path $localPostgresReady)
+  ) {
+    & $localPostgresReady -h 127.0.0.1 -p 5432 | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      $localPostgresLog = Join-Path $templateRoot '.launcher-logs\postgres.local.log'
+      & $localPostgresPgCtl -D $localPostgresDataRoot -l $localPostgresLog -o '-p 5432' start | Out-Null
+      Start-Sleep -Seconds 3
+      & $localPostgresReady -h 127.0.0.1 -p 5432 | Out-Null
+    }
+
+    if ($LASTEXITCODE -eq 0) {
+      return @{
+        Url = 'jdbc:postgresql://127.0.0.1:5432/travel_platform'
+        Driver = 'org.postgresql.Driver'
+        User = 'postgres'
+        Password = 'root'
+      }
+    }
+  }
+
+  $defaultDatabasePath = (Join-Path $backendRoot 'data\travel-platform').Replace('\', '/')
+
+  return @{
+    Url =
+      if ($env:TRAVEL_DB_URL -and $env:TRAVEL_DB_URL.Trim().Length -gt 0) {
+        $env:TRAVEL_DB_URL.Trim()
+      } else {
+        "jdbc:h2:file:$defaultDatabasePath;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
+      }
+    Driver =
+      if ($env:TRAVEL_DB_DRIVER -and $env:TRAVEL_DB_DRIVER.Trim().Length -gt 0) {
+        $env:TRAVEL_DB_DRIVER.Trim()
+      } else {
+        'org.h2.Driver'
+      }
+    User =
+      if ($env:TRAVEL_DB_USER -and $env:TRAVEL_DB_USER.Trim().Length -gt 0) {
+        $env:TRAVEL_DB_USER.Trim()
+      } else {
+        'sa'
+      }
+    Password =
+      if ($null -ne $env:TRAVEL_DB_PASSWORD) {
+        $env:TRAVEL_DB_PASSWORD
+      } else {
+        ''
+      }
+  }
+}
+
 New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 Set-Content -Path $launcherLog -Value "[travel-platform] launcher started $(Get-Date -Format o)" -Encoding UTF8
+
+try {
+
+$npmCommand = Get-CommandPath -Candidates @(
+  'npm.cmd',
+  'C:\Program Files\nodejs\npm.cmd'
+) -DisplayName 'npm.cmd'
+$sbtCommand = Get-CommandPath -Candidates @(
+  'sbt',
+  'sbt.bat',
+  'C:\typesafe\sbt\bin\sbt.bat'
+) -DisplayName 'sbt'
+$pythonCommand = Get-CommandPath -Candidates @(
+  'python',
+  'py',
+  'py.exe',
+  'C:\Windows\py.exe'
+) -DisplayName 'python'
+
+Write-LauncherLog "resolved commands npm=$npmCommand sbt=$sbtCommand python=$pythonCommand"
 
 $lanHost = Get-LanHost
 $publicHost =
@@ -253,9 +359,32 @@ $bootToken = Get-Date -Format yyyyMMddHHmmssfff
 $frontendLaunchUrl = "$localFrontendOrigin/?boot=$bootToken"
 
 if (-not (Test-Path (Join-Path $distDir 'index.html'))) {
-  Write-Host "[travel-platform] Frontend dist was not found at $distDir. Run npm.cmd run build once before using the shortcut."
-  Write-LauncherLog "frontend dist missing at $distDir"
-  exit 1
+  Write-LauncherLog "frontend dist missing at $distDir, preparing build"
+
+  if (-not (Test-Path (Join-Path $frontendRoot 'node_modules'))) {
+    Write-LauncherLog "frontend node_modules missing, running npm install"
+    Push-Location $frontendRoot
+    try {
+      & $npmCommand install
+      if ($LASTEXITCODE -ne 0) {
+        throw "npm install failed with exit code $LASTEXITCODE"
+      }
+    } finally {
+      Pop-Location
+    }
+  }
+
+  Push-Location $frontendRoot
+  try {
+    & $npmCommand run build
+    if ($LASTEXITCODE -ne 0) {
+      throw "npm run build failed with exit code $LASTEXITCODE"
+    }
+  } finally {
+    Pop-Location
+  }
+
+  Write-LauncherLog "frontend dist build completed"
 }
 
 $runtimeConfigPath = Join-Path $distDir 'runtime-config.js'
@@ -269,6 +398,7 @@ if (Test-Path $indexHtmlPath) {
   [System.IO.File]::WriteAllText($indexHtmlPath, $indexHtmlContent, (New-Object System.Text.UTF8Encoding($false)))
   Write-LauncherLog "index html updated with runtime-config cache bust token $bootToken"
 }
+Write-LauncherLog "static assets prepared"
 
 $backendHealthUrl = "$backendOrigin/api/health"
 $localBackendHealthUrl = "http://127.0.0.1:$BackendPort/api/health"
@@ -278,38 +408,26 @@ $allowedOrigins =
   } else {
     "$frontendOrigin,$localFrontendOrigin,http://localhost:$FrontendPort"
   }
+Write-LauncherLog "allowed origins resolved"
 
 if (-not (Test-StableBackendHealthy $localBackendHealthUrl)) {
+  Write-LauncherLog "backend not healthy before launch"
   try {
     $savedPostgresPassword = Get-PgAdminSavedPassword
-    $databaseUrl =
-      if ($env:TRAVEL_DB_URL -and $env:TRAVEL_DB_URL.Trim().Length -gt 0) {
-        $env:TRAVEL_DB_URL.Trim()
-      } else {
-        "jdbc:postgresql://127.0.0.1:5432/travel_platform"
-      }
-    $databaseDriver =
-      if ($env:TRAVEL_DB_DRIVER -and $env:TRAVEL_DB_DRIVER.Trim().Length -gt 0) {
-        $env:TRAVEL_DB_DRIVER.Trim()
-      } else {
-        "org.postgresql.Driver"
-      }
-    $databaseUser =
-      if ($env:TRAVEL_DB_USER -and $env:TRAVEL_DB_USER.Trim().Length -gt 0) {
-        $env:TRAVEL_DB_USER.Trim()
-      } else {
-        "postgres"
-      }
+    Write-LauncherLog "pgAdmin password lookup completed"
+    $databaseSettings = Get-BackendDatabaseSettings
+    Write-LauncherLog "database settings resolved"
+    $databaseUrl = $databaseSettings.Url
+    $databaseDriver = $databaseSettings.Driver
+    $databaseUser = $databaseSettings.User
     $databasePassword =
-      if ($null -ne $env:TRAVEL_DB_PASSWORD) {
-        $env:TRAVEL_DB_PASSWORD
-      } elseif ($savedPostgresPassword) {
+      if ($databaseDriver -eq 'org.postgresql.Driver' -and -not $env:TRAVEL_DB_PASSWORD -and $savedPostgresPassword) {
         $savedPostgresPassword
       } else {
-        "hzhishengheng"
+        $databaseSettings.Password
       }
     Remove-Item $backendStdout, $backendStderr -Force -ErrorAction SilentlyContinue
-    $backendCommand = "/c cd /d ""$backendRoot"" && set ""TRAVEL_REPOSITORY_MODE=database"" && set ""TRAVEL_BACKEND_PORT=$BackendPort"" && set ""TRAVEL_DB_URL=$databaseUrl"" && set ""TRAVEL_DB_DRIVER=$databaseDriver"" && set ""TRAVEL_DB_USER=$databaseUser"" && set ""TRAVEL_DB_PASSWORD=$databasePassword"" && set ""TRAVEL_ALLOWED_ORIGINS=$allowedOrigins"" && set ""TRAVEL_AVATAR_UPLOAD_ROOT=$backendRoot\uploads\avatars"" && set ""TRAVEL_CONTENT_UPLOAD_ROOT=$backendRoot\uploads\content"" && set ""TRAVEL_FRONTEND_DIST_ROOT=$distDir"" && sbt --batch ""api-gateway / runMain com.typesafe.travel.api.Main"" 1>>""$backendStdout"" 2>>""$backendStderr"""
+    $backendCommand = "/c cd /d ""$backendRoot"" && set ""TRAVEL_REPOSITORY_MODE=database"" && set ""TRAVEL_BACKEND_PORT=$BackendPort"" && set ""TRAVEL_DB_URL=$databaseUrl"" && set ""TRAVEL_DB_DRIVER=$databaseDriver"" && set ""TRAVEL_DB_USER=$databaseUser"" && set ""TRAVEL_DB_PASSWORD=$databasePassword"" && set ""TRAVEL_ALLOWED_ORIGINS=$allowedOrigins"" && set ""TRAVEL_AVATAR_UPLOAD_ROOT=$backendRoot\uploads\avatars"" && set ""TRAVEL_CONTENT_UPLOAD_ROOT=$backendRoot\uploads\content"" && set ""TRAVEL_FRONTEND_DIST_ROOT=$distDir"" && call ""$sbtCommand"" --batch ""api-gateway / runMain com.typesafe.travel.api.Main"" 1>>""$backendStdout"" 2>>""$backendStderr"""
     $backendProcess = Start-BackgroundCommand -FilePath 'cmd.exe' -Arguments $backendCommand -WorkingDirectory $backendRoot
     Write-LauncherLog "backend process started pid=$($backendProcess.Id) via=sbt db=$databaseUrl driver=$databaseDriver"
   } catch {
@@ -321,9 +439,9 @@ if (-not (Test-StableBackendHealthy $localBackendHealthUrl)) {
 }
 
 if (-not (Test-HttpReady $frontendOrigin)) {
-  $pythonExe = 'python'
+  Write-LauncherLog "frontend not healthy before launch"
   Remove-Item $frontendStdout, $frontendStderr -Force -ErrorAction SilentlyContinue
-  $frontendCommand = "/c cd /d ""$distDir"" && $pythonExe -m http.server $FrontendPort --bind 0.0.0.0 1>>""$frontendStdout"" 2>>""$frontendStderr"""
+  $frontendCommand = "/c cd /d ""$distDir"" && call ""$pythonCommand"" -m http.server $FrontendPort --bind 0.0.0.0 1>>""$frontendStdout"" 2>>""$frontendStderr"""
   $frontendProcess = Start-BackgroundCommand -FilePath 'cmd.exe' -Arguments $frontendCommand -WorkingDirectory $distDir
   Write-LauncherLog "frontend process started pid=$($frontendProcess.Id)"
 } else {
@@ -348,3 +466,8 @@ Write-LauncherLog "timed out waiting for backend/frontend readiness"
 Write-RuntimeConfig -BackendHealthy (Test-BackendHealthy -BackendHealthUrl $localBackendHealthUrl)
 & cmd.exe /c start "" $frontendLaunchUrl | Out-Null
 exit 0
+
+} catch {
+  Write-LauncherLog "fatal launcher error: $($_.Exception.Message)"
+  throw
+}

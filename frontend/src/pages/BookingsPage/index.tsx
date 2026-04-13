@@ -1,28 +1,34 @@
 import { useEffect, useState } from 'react'
 
+import { AuthRequiredDialog } from '../../components/AuthRequiredDialog'
 import { OrderPanel } from '../../components/OrderPanel'
 import { PaymentModal } from '../../components/PaymentModal'
 import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '../../lib/mvp-types'
+import type { AppLanguage, AppViewKey, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '../../lib/mvp-types'
 import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
 
 type BookingsPageProps = {
   currentLanguage: AppLanguage
+  isSessionReady: boolean
   signedInUser: UserResponse | null
   translate: (translationKey: string) => string
+  onNavigate: (viewKey: AppViewKey) => void
   onShowNotice: PageNoticeHandler
 }
 
 export function BookingsPage({
   currentLanguage,
+  isSessionReady,
   signedInUser,
   translate,
+  onNavigate,
   onShowNotice,
 }: BookingsPageProps) {
   const [orders, setOrders] = useState<OrderResponse[]>([])
   const [reviews, setReviews] = useState<ReviewResponse[]>([])
   const [travelers, setTravelers] = useState<TravelerResponse[]>([])
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<OrderResponse | null>(null)
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const { isBusy, runPageAction, runPageActionWithResult } = usePageActions(currentLanguage, translate, onShowNotice)
 
   function requireSignedInUser() {
@@ -70,17 +76,22 @@ export function BookingsPage({
       <OrderPanel
         currentLanguage={currentLanguage}
         isBusy={isBusy}
-        isGuestMode={signedInUser === null}
+        isGuestMode={isSessionReady && signedInUser === null}
         orders={orders}
         reviews={reviews}
         travelers={travelers}
         translate={translate}
+        onRequireLogin={() => setIsAuthDialogOpen(true)}
         onReloadOrders={async () => {
           await runPageAction(async () => {
             await reloadOrders()
           }, translate('bookings.refresh'), translate('notice.actionSuccess'))
         }}
         onOpenPayment={order => {
+          if (!signedInUser) {
+            setIsAuthDialogOpen(true)
+            return
+          }
           setPendingPaymentOrder(order)
         }}
         onCancelOrder={async orderId => {
@@ -156,6 +167,19 @@ export function BookingsPage({
         onCreatePaymentLink={payload =>
           travelMvpApiClient.createPaymentLink(payload.orderId, payload.paymentMethod, currentLanguage)
         }
+      />
+
+      <AuthRequiredDialog
+        isOpen={isAuthDialogOpen}
+        title={translate('authRequired.paymentTitle')}
+        description={translate('authRequired.paymentDescription')}
+        translate={translate}
+        onClose={() => setIsAuthDialogOpen(false)}
+        onConfirm={() => {
+          setIsAuthDialogOpen(false)
+          setPendingPaymentOrder(null)
+          onNavigate('account')
+        }}
       />
     </>
   )

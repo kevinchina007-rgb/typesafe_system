@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 
 import { toBackendAssetUrl } from '../lib/view-models'
@@ -6,9 +7,10 @@ type BackendAssetImageProps = {
   assetUrl: string | null | undefined
   alt: string
   className?: string
+  fallbackContent?: ReactNode
 }
 
-export function BackendAssetImage({ assetUrl, alt, className }: BackendAssetImageProps) {
+export function BackendAssetImage({ assetUrl, alt, className, fallbackContent }: BackendAssetImageProps) {
   const [resolvedImageUrl, setResolvedImageUrl] = useState<string>('')
 
   useEffect(() => {
@@ -41,7 +43,11 @@ export function BackendAssetImage({ assetUrl, alt, className }: BackendAssetImag
   }, [assetUrl])
 
   if (!resolvedImageUrl) {
-    return <span className={className} aria-label={alt}>{alt}</span>
+    return (
+      <span className={className} aria-label={alt}>
+        {fallbackContent ?? alt}
+      </span>
+    )
   }
 
   return <img src={resolvedImageUrl} alt={alt} className={className} />

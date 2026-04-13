@@ -26,15 +26,15 @@ export function ReviewListDialog({
   }
 
   return (
-    <div className="dialog-backdrop">
-      <section className="dialog-card">
+    <div className="dialog-backdrop" onClick={onClose}>
+      <section className="dialog-card" onClick={event => event.stopPropagation()}>
         <div className="panel-heading">
           <div>
             <p className="eyebrow-label">{translate('reviews.dialogEyebrow')}</p>
             <h3>{title}</h3>
           </div>
-          <button type="button" className="secondary-button" disabled={isBusy} onClick={onClose}>
-            {translate('tourGroups.cancel')}
+          <button type="button" className="secondary-button modal-close-button" disabled={isBusy} onClick={onClose}>
+            ×
           </button>
         </div>
 

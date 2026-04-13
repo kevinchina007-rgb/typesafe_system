@@ -10,10 +10,12 @@
 
 .modal-card {
   width: min(520px, 100%);
-  background: #ffffff;
+  background: var(--color-surface-strong);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
   border-radius: 24px;
   padding: 1.25rem;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.32);
   display: grid;
   gap: 1rem;
 }
@@ -30,8 +32,15 @@
   justify-items: center;
   padding: 1rem;
   border-radius: 20px;
-  background: #f8fbff;
-  border: 1px solid #d7e4f1;
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+}
+
+.modal-close-button {
+  min-width: 2.75rem;
+  padding-inline: 0;
+  font-size: 1.1rem;
+  line-height: 1;
 }
 
 .fake-qr-grid {

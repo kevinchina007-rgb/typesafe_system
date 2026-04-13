@@ -63,7 +63,6 @@ export function AvatarUploader({
           {selectedAvatarFile?.name ??
             (account.avatarUrl ? translate('account.avatarUploadedState') : translate('account.avatarEmpty'))}
         </strong>
-        <p className="hero-copy">{translate('account.avatarHint')}</p>
       </div>
 
       <div className="action-cluster">

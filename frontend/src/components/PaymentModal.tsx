@@ -50,7 +50,7 @@ export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onCrea
     return () => {
       cancelled = true
     }
-  }, [isOpen, order?.orderId, selectedPaymentMethod])
+  }, [isOpen, order?.orderId, selectedPaymentMethod, onCreatePaymentLink])
 
   if (!isOpen || !order) {
     return null
@@ -64,15 +64,21 @@ export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onCrea
         : translate('payment.method.nailong')
 
   return (
-    <div className="modal-backdrop" role="presentation">
-      <div className="modal-card" role="dialog" aria-modal="true" aria-label={translate('payment.title')}>
+    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+      <div
+        className="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label={translate('payment.title')}
+        onClick={event => event.stopPropagation()}
+      >
         <div className="panel-heading">
           <div>
             <p className="eyebrow-label">{translate('payment.title')}</p>
             <h3>{`${order.totalPrice} ${order.orderCurrency}`}</h3>
           </div>
-          <button type="button" className="secondary-button" disabled={isBusy} onClick={onClose}>
-            {translate('payment.close')}
+          <button type="button" className="secondary-button modal-close-button" disabled={isBusy} onClick={onClose}>
+            ×
           </button>
         </div>
 
@@ -115,6 +121,14 @@ export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onCrea
               ) : (
                 <p className="detail-label">{translate('payment.linkUnavailable')}</p>
               )}
+            </div>
+            <div className="action-row">
+              <button type="button" className="secondary-button" disabled={isBusy} onClick={() => setSelectedPaymentMethod(null)}>
+                {translate('payment.changeMethod')}
+              </button>
+              <button type="button" className="secondary-button" disabled={isBusy} onClick={onClose}>
+                {translate('payment.close')}
+              </button>
             </div>
           </div>
         )}
