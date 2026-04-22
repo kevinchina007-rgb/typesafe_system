@@ -1,32 +1,19 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 
-import type { AppLanguage, AttractionResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse } from '../lib/mvp-types'
-import { ResourceReviewSummaryLoader } from './ResourceReviewSummaryLoader'
-import { mapBackendStatusToProductLabel } from '../lib/view-models'
-
-type AttractionsPanelProps = {
-  currentLanguage: AppLanguage
-  isBusy: boolean
-  isGuestMode: boolean
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onRequireLogin: () => void
-  onSearchAttractions: (payload: { city?: string; useDate?: string }) => Promise<AttractionResponse[]>
-  onBookAttraction: (payload: {
-    attractionId: string
-    ticketTypeId: string
-    sessionId?: string | null
-    travelerIds: string[]
-    useDate: string
-    orderCurrency: string
-  }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
-}
-
-function renderTravelerOptionLabel(traveler: TravelerResponse): string {
-  return `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
-}
+import { useAdvertisingStore, useDeliverableAdvertisements } from '../app/stores/advertising-store'
+import { AdvertisementCardRail } from './advertising/sections/AdvertisementCardRail'
+import { travelMvpApiClient } from '../lib/api-client'
+import { useAttractionSearchState } from './attractions/hooks/useAttractionSearchState'
+import {
+  attractionHotSpots,
+  attractionRecentSearches,
+  formatAttractionInsight,
+} from './attractions/attractionBookingModel'
+import { AttractionFilterBar } from './attractions/sections/AttractionFilterBar'
+import { AttractionPageHero } from './attractions/sections/AttractionPageHero'
+import { AttractionResultsSection } from './attractions/sections/AttractionResultsSection'
+import { AttractionSearchCard } from './attractions/sections/AttractionSearchCard'
+import type { AttractionsPanelProps } from './attractions/attractionBookingModel'
 
 export function AttractionsPanel({
   currentLanguage,
@@ -40,170 +27,129 @@ export function AttractionsPanel({
   onLoadReviewSummary,
   onLoadReviews,
 }: AttractionsPanelProps) {
-  const [attractionResponses, setAttractionResponses] = useState<AttractionResponse[]>([])
-  const [hasSearchedAttractions, setHasSearchedAttractions] = useState(false)
-  const [searchCity, setSearchCity] = useState('')
-  const [useDateDraft, setUseDateDraft] = useState('2026-04-10')
+  const {
+    attractionResponses,
+    hasSearchedAttractions,
+    searchCity,
+    keyword,
+    useDateDraft,
+    travelerCount,
+    attractionType,
+    sortPreference,
+    selectedQuickDatePreset,
+    setAttractionResponses,
+    setHasSearchedAttractions,
+    setSearchCity,
+    setKeyword,
+    setUseDateDraft,
+    setTravelerCount,
+    setAttractionType,
+    setSortPreference,
+    setSelectedQuickDatePreset,
+  } = useAttractionSearchState()
+  const deliveryAdvertisements = useDeliverableAdvertisements('attractionBooking')
+  const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
+
+  useEffect(() => {
+    void loadDeliverableAdvertisements('attractionBooking')
+    const reloadDeliverableAdvertisements = () => {
+      void loadDeliverableAdvertisements('attractionBooking')
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        reloadDeliverableAdvertisements()
+      }
+    }
+
+    window.addEventListener('focus', reloadDeliverableAdvertisements)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', reloadDeliverableAdvertisements)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [loadDeliverableAdvertisements])
 
   return (
     <section className="page-card">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow-label">{translate('nav.attractions')}</p>
-          <h2>{translate('attractions.title')}</h2>
-        </div>
-      </div>
+      <AttractionPageHero title={translate('attractions.title')} description={translate('attractions.description')} />
 
-      <p className="hero-copy">{translate('attractions.description')}</p>
-
-      <form
-        className="stack-form panel-card"
-        onSubmit={async event => {
-          event.preventDefault()
-          const formData = new FormData(event.currentTarget)
-          const nextCity = String(formData.get('city') ?? '').trim()
-          setSearchCity(nextCity)
+      <AttractionSearchCard
+        attractionType={attractionType}
+        hotAttractions={attractionHotSpots}
+        insight={formatAttractionInsight(attractionResponses, translate)}
+        isBusy={isBusy}
+        keyword={keyword}
+        recentSearches={attractionRecentSearches}
+        searchCity={searchCity}
+        selectedQuickDatePreset={selectedQuickDatePreset}
+        sortPreference={sortPreference}
+        travelerCount={travelerCount}
+        translate={translate}
+        useDateDraft={useDateDraft}
+        onSearchCityChange={setSearchCity}
+        onKeywordChange={setKeyword}
+        onUseDateChange={setUseDateDraft}
+        onTravelerCountChange={setTravelerCount}
+        onAttractionTypeChange={setAttractionType}
+        onSortPreferenceChange={setSortPreference}
+        onSelectQuickDatePreset={(preset, nextDate) => {
+          setSelectedQuickDatePreset(preset)
+          setUseDateDraft(nextDate)
+        }}
+        onSelectHotAttraction={value => {
+          const [city, ...restParts] = value.split(' ')
+          setSearchCity(city)
+          setKeyword(restParts.join(' '))
+        }}
+        onSearch={async () => {
           const nextAttractions = await onSearchAttractions({
-            city: nextCity || undefined,
-            useDate: useDateDraft || undefined,
+            city: searchCity,
+            keyword,
+            useDate: useDateDraft,
+            travelerCount,
+            attractionType,
+            sortPreference,
           })
           setHasSearchedAttractions(true)
           setAttractionResponses(nextAttractions)
         }}
-      >
-        <div className="three-column-grid">
-          <label>
-            {translate('attractions.city')}
-            <input name="city" placeholder={translate('attractions.cityPlaceholder')} defaultValue={searchCity} />
-          </label>
-          <label>
-            {translate('attractions.useDate')}
-            <input
-              name="useDateDraft"
-              type="date"
-              value={useDateDraft}
-              onChange={event => setUseDateDraft(event.target.value)}
-              required
-            />
-          </label>
-        </div>
+      />
 
-        <button type="submit" disabled={isBusy}>
-          {translate('attractions.search')}
-        </button>
-      </form>
+      <AdvertisementCardRail
+        advertisements={deliveryAdvertisements}
+        translate={translate}
+        onOpenAdvertisement={async advertisement => {
+          const nextAttraction = await travelMvpApiClient.getAttraction(advertisement.targetResourceId, {
+            useDate: useDateDraft,
+          })
+          setSearchCity(nextAttraction.city)
+          setKeyword(nextAttraction.attractionName)
+          setHasSearchedAttractions(true)
+          setAttractionResponses([nextAttraction])
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }}
+      />
+
+      <AttractionFilterBar translate={translate} />
 
       {isGuestMode ? <p className="empty-state">{translate('attractions.guest')}</p> : null}
 
       {hasSearchedAttractions ? (
-        <div className="entity-list flights-list">
-          {attractionResponses.length > 0 ? (
-            attractionResponses.map(attractionResponse => (
-              <article key={attractionResponse.attractionId} className="panel-card hotel-card">
-                <div className="panel-heading">
-                  <div>
-                    <strong>{attractionResponse.attractionName}</strong>
-                    <p>{`${attractionResponse.city} | ${attractionResponse.location}`}</p>
-                    <ResourceReviewSummaryLoader
-                      currentLanguage={currentLanguage}
-                      isBusy={isBusy}
-                      isEnabled={!isGuestMode}
-                      resourceType="Attraction"
-                      resourceId={attractionResponse.attractionId}
-                      title={attractionResponse.attractionName}
-                      translate={translate}
-                      onLoadSummary={onLoadReviewSummary}
-                      onLoadReviews={onLoadReviews}
-                    />
-                  </div>
-                  <span className="tag-chip">{mapBackendStatusToProductLabel(attractionResponse.status, currentLanguage)}</span>
-                </div>
-
-                <p>{attractionResponse.description}</p>
-
-                <ul className="entity-list">
-                  {attractionResponse.ticketTypes.map(ticketType => (
-                    <li key={ticketType.ticketTypeId}>
-                      <div>
-                        <strong>{ticketType.ticketTypeName}</strong>
-                        <p>{ticketType.description}</p>
-                        <p>{`${translate('attractions.ticketPrice')}: ${ticketType.priceAmount} ${ticketType.priceCurrency}`}</p>
-                        <p>{`${translate('attractions.availableDateRange')}: ${ticketType.availableFromDate} - ${ticketType.availableToDate}`}</p>
-                        <p>{`${translate('attractions.totalQuantity')}: ${ticketType.totalQuantity}`}</p>
-                        <p>{`${translate('attractions.remainingTickets')}: ${ticketType.availableQuantityForRequestedDate ?? '-'}`}</p>
-                        <p>{`${translate('attractions.validWeekdays')}: ${ticketType.validWeekdays.map(weekday => translate(`weekdays.${weekday.toLowerCase()}`)).join(' / ')}`}</p>
-                        {!ticketType.isAvailableForRequestedDate ? <p>{translate('attractions.unavailableForDate')}</p> : null}
-                        <p>{`${translate('attractions.ticketRules')}: ${ticketType.rules.length > 0 ? ticketType.rules.map(rule => rule.summary).join(' | ') : translate('attractions.noRules')}`}</p>
-                      </div>
-
-                      <form
-                        className="compact-action-block"
-                        onSubmit={async event => {
-                          event.preventDefault()
-                          if (isGuestMode) {
-                            onRequireLogin()
-                            return
-                          }
-                          const formData = new FormData(event.currentTarget)
-                          const travelerIds = formData.getAll('travelerIds').map(value => String(value)).filter(Boolean)
-                          const useDate = String(formData.get('useDate') ?? '').trim()
-
-                          await onBookAttraction({
-                            attractionId: attractionResponse.attractionId,
-                            ticketTypeId: ticketType.ticketTypeId,
-                            sessionId: String(formData.get('sessionId') ?? '').trim() || null,
-                            travelerIds,
-                            useDate,
-                            orderCurrency: ticketType.priceCurrency,
-                          })
-                        }}
-                      >
-                        <label>
-                          {translate('attractions.useDate')}
-                          <input name="useDate" type="date" defaultValue={useDateDraft} required disabled={isBusy} />
-                        </label>
-                        {ticketType.sessions.length > 0 ? (
-                          <label>
-                            {translate('attractions.session')}
-                            <select name="sessionId" defaultValue="" required disabled={isBusy}>
-                              <option value="" disabled>{translate('attractions.selectSession')}</option>
-                              {ticketType.sessions
-                                .filter(session => session.useDate === useDateDraft)
-                                .map(session => (
-                                  <option key={session.sessionId} value={session.sessionId}>
-                                    {`${session.sessionName} · ${session.startsAt.slice(11, 16)}-${session.endsAt.slice(11, 16)}`}
-                                  </option>
-                                ))}
-                            </select>
-                          </label>
-                        ) : null}
-
-                        <div className="checkbox-list">
-                          <p className="detail-label">{translate('attractions.selectTravelers')}</p>
-                          {travelers.map(traveler => (
-                            <label key={traveler.travelerId} className="checkbox-row">
-                              <input type="checkbox" name="travelerIds" value={traveler.travelerId} disabled={isBusy} />
-                              {renderTravelerOptionLabel(traveler)}
-                            </label>
-                          ))}
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={isBusy || !ticketType.isAvailableForRequestedDate || (ticketType.availableQuantityForRequestedDate ?? 0) <= 0}
-                        >
-                          {translate('attractions.bookNow')}
-                        </button>
-                      </form>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))
-          ) : (
-            <p className="empty-state">{translate('attractions.empty')}</p>
-          )}
-        </div>
+        <AttractionResultsSection
+          attractionResponses={attractionResponses}
+          currentLanguage={currentLanguage}
+          isBusy={isBusy}
+          isGuestMode={isGuestMode}
+          travelers={travelers}
+          translate={translate}
+          useDateDraft={useDateDraft}
+          onRequireLogin={onRequireLogin}
+          onBookAttraction={onBookAttraction}
+          onLoadReviewSummary={onLoadReviewSummary}
+          onLoadReviews={onLoadReviews}
+        />
       ) : null}
     </section>
   )

@@ -321,6 +321,23 @@ final class LiveAuthApplicationService[F[_]: MonadThrow: Sync](
             expiresAt = Instant.EPOCH
           )
         )
+      case AuthManagerType.SiteAdmin =>
+        authRepository
+          .findManagerCredential(AuthManagerType.SiteAdmin, managerId)
+          .flatMap(_.liftTo[F](AuthError.ManagerCredentialWasNotFound(AuthManagerType.SiteAdmin, managerId)))
+          .map(siteAdminCredential =>
+            CurrentManagerSessionView(
+              managerId = siteAdminCredential.managerId,
+              managerType = AuthManagerType.SiteAdmin,
+              emailAddress = siteAdminCredential.loginEmail,
+              displayName = PersonName.unsafe("网站管理者"),
+              statusLabel = siteAdminCredential.status.toString,
+              scopeId = "site-admin",
+              createdAt = siteAdminCredential.createdAt,
+              sessionId = SessionId(""),
+              expiresAt = Instant.EPOCH
+            )
+          )
 
 object LiveAuthApplicationService:
   def apply[F[_]: MonadThrow: Sync](

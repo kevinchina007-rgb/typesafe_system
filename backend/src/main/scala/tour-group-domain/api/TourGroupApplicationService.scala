@@ -1,6 +1,7 @@
 package com.typesafe.travel.api.application
 
 import cats.MonadThrow
+import cats.effect.LiftIO
 import cats.syntax.all.*
 import com.typesafe.travel.identity.domain.UserRepository
 import com.typesafe.travel.order.domain.{Order, OrderError, OrderService, PaymentMethod, PaymentStatus, RefundStatus, SupplierReviewStatus}
@@ -13,14 +14,14 @@ import java.time.{Instant, LocalDate, ZoneOffset}
 // TourGroup application service 负责协调 group / plan / selection / chat / order projection。
 // 它驱动“计划和选择”，但真实交易仍然由 Order 聚合根承担。
 
-final class LiveTourGroupApplicationService[F[_]: MonadThrow](
+final class LiveTourGroupApplicationService[F[_]: MonadThrow: LiftIO](
     protected val tourGroupRepository: TourGroupRepository[F],
     protected val userRepository: UserRepository[F],
     protected val travelerProfileRepository: TravelerProfileRepository[F],
     protected val orderService: OrderService[F],
     protected val orderLifecycleApplicationService: OrderLifecycleApplicationService[F],
     protected val orderRepository: com.typesafe.travel.order.domain.OrderRepository[F],
-    protected val flightBookingApplicationService: FlightBookingApplicationService[F],
+    protected val flightBookingApplicationService: FlightBookingApplicationService,
     protected val hotelBookingApplicationService: HotelBookingApplicationService[F],
     protected val trainBookingApplicationService: TrainBookingApplicationService[F],
     protected val attractionBookingApplicationService: AttractionBookingApplicationService[F],

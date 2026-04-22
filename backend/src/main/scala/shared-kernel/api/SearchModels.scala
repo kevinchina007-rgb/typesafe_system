@@ -8,6 +8,12 @@ enum SearchResourceType(val value: String):
   case Blog extends SearchResourceType("blog")
 
 object SearchResourceType:
+  val all: Vector[SearchResourceType] =
+    Vector(Flight, Hotel, Train, Attraction, Blog)
+
+  def fromText(value: String): SearchResourceType =
+    fromSearchScope(value).getOrElse(throw new IllegalArgumentException(s"Unknown search resource type: $value"))
+
   def fromSearchScope(value: String): Option[SearchResourceType] =
     value.trim.toLowerCase match
       case "flight"     => Some(Flight)

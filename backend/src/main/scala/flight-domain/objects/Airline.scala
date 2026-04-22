@@ -3,8 +3,19 @@ package com.typesafe.travel.flight.domain
 import com.typesafe.travel.shared.kernel.*
 import java.time.Instant
 
-enum AirlineStatus:
-  case Active, Suspended, Retired
+final case class AirlineStatus(value: String):
+  override def toString: String = value
+
+object AirlineStatus:
+  val Active = AirlineStatus("Active")
+  val Suspended = AirlineStatus("Suspended")
+  val Retired = AirlineStatus("Retired")
+
+  def fromText(value: String): AirlineStatus =
+    value.trim match
+      case "Suspended" => Suspended
+      case "Retired"   => Retired
+      case _           => Active
 
 final case class Airline private[domain] (
     airlineId: AirlineId,

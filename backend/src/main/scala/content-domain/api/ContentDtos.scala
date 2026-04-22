@@ -172,6 +172,42 @@ final case class ReviewResponseDto(
 )
 
 final case class ReviewListResponseDto(reviews: List[ReviewResponseDto])
+final case class CreateReviewFeedbackThreadRequestDto(reviewId: String)
+final case class SendFeedbackMessageRequestDto(senderRole: String, senderDisplayName: String, body: String)
+final case class MarkFeedbackThreadReadRequestDto(audience: String)
+final case class EscalateFeedbackThreadRequestDto(senderDisplayName: String, body: String)
+
+final case class FeedbackMessageResponseDto(
+    messageId: String,
+    senderRole: String,
+    senderDisplayName: String,
+    body: String,
+    sentAt: String
+)
+
+final case class FeedbackThreadResponseDto(
+    threadId: String,
+    kind: String,
+    managerType: String,
+    ownerUserId: Option[String],
+    ownerUserDisplayName: String,
+    title: String,
+    subtitle: String,
+    resourceType: String,
+    resourceSummaryTitle: String,
+    orderId: Option[String],
+    orderItemId: Option[String],
+    reviewId: Option[String],
+    relatedThreadId: Option[String],
+    unreadByUser: Int,
+    unreadByManager: Int,
+    unreadBySiteAdmin: Int,
+    createdAt: String,
+    updatedAt: String,
+    messages: List[FeedbackMessageResponseDto]
+)
+
+final case class FeedbackThreadListResponseDto(threads: List[FeedbackThreadResponseDto])
 
 object ContentImageResponseDto:
   def fromBlogImageRef(imageRef: BlogImageRef): ContentImageResponseDto =
@@ -235,4 +271,38 @@ object ResourceReviewSummaryResponseDto:
       resourceId = view.resourceId,
       averageRating = view.averageRating.toString(),
       reviewCount = view.reviewCount
+    )
+
+object FeedbackMessageResponseDto:
+  def fromView(view: FeedbackMessageView): FeedbackMessageResponseDto =
+    FeedbackMessageResponseDto(
+      messageId = view.messageId,
+      senderRole = view.senderRole,
+      senderDisplayName = view.senderDisplayName,
+      body = view.body,
+      sentAt = view.sentAt.toString
+    )
+
+object FeedbackThreadResponseDto:
+  def fromView(view: FeedbackThreadView): FeedbackThreadResponseDto =
+    FeedbackThreadResponseDto(
+      threadId = view.threadId,
+      kind = view.kind,
+      managerType = view.managerType,
+      ownerUserId = view.ownerUserId,
+      ownerUserDisplayName = view.ownerUserDisplayName,
+      title = view.title,
+      subtitle = view.subtitle,
+      resourceType = view.resourceType,
+      resourceSummaryTitle = view.resourceSummaryTitle,
+      orderId = view.orderId,
+      orderItemId = view.orderItemId,
+      reviewId = view.reviewId,
+      relatedThreadId = view.relatedThreadId,
+      unreadByUser = view.unreadByUser,
+      unreadByManager = view.unreadByManager,
+      unreadBySiteAdmin = view.unreadBySiteAdmin,
+      createdAt = view.createdAt.toString,
+      updatedAt = view.updatedAt.toString,
+      messages = view.messages.map(FeedbackMessageResponseDto.fromView)
     )

@@ -84,8 +84,8 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
         TourGroupConversation(
           conversationId = conversationId,
           groupId = TourGroupId(groupId),
-          conversationType = TourGroupConversationType.valueOf(conversationType),
-          status = TourGroupConversationStatus.valueOf(status),
+        conversationType = TourGroupConversationType.fromText(conversationType),
+        status = TourGroupConversationStatus.fromText(status),
           directMemberAUserId = directMemberAUserId.map(UserId.apply),
           directMemberBUserId = directMemberBUserId.map(UserId.apply),
           createdAt = createdAt,
@@ -103,7 +103,7 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
       fetch first 1 row only
     """.query[(String, String, Instant, Instant)].option.transact(transactor).map(
       _.map { case (conversationId, status, createdAt, updatedAt) =>
-        TourGroupConversation(TourGroupConversationId(conversationId), groupId, TourGroupConversationType.GroupPublic, TourGroupConversationStatus.valueOf(status), None, None, createdAt, updatedAt)
+      TourGroupConversation(TourGroupConversationId(conversationId), groupId, TourGroupConversationType.GroupPublic, TourGroupConversationStatus.fromText(status), None, None, createdAt, updatedAt)
       }
     )
 
@@ -120,7 +120,7 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
       fetch first 1 row only
     """.query[(String, String, Instant, Instant)].option.transact(transactor).map(
       _.map { case (conversationId, status, createdAt, updatedAt) =>
-        TourGroupConversation(TourGroupConversationId(conversationId), groupId, TourGroupConversationType.Direct, TourGroupConversationStatus.valueOf(status), Some(leftUserId), Some(rightUserId), createdAt, updatedAt)
+      TourGroupConversation(TourGroupConversationId(conversationId), groupId, TourGroupConversationType.Direct, TourGroupConversationStatus.fromText(status), Some(leftUserId), Some(rightUserId), createdAt, updatedAt)
       }
     )
 
@@ -138,7 +138,7 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
           conversationId = TourGroupConversationId(conversationId),
           groupId = groupId,
           conversationType = TourGroupConversationType.Direct,
-          status = TourGroupConversationStatus.valueOf(status),
+        status = TourGroupConversationStatus.fromText(status),
           directMemberAUserId = directMemberAUserId.map(UserId.apply),
           directMemberBUserId = directMemberBUserId.map(UserId.apply),
           createdAt = createdAt,
@@ -161,8 +161,8 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
         TourGroupConversation(
           conversationId = TourGroupConversationId(conversationId),
           groupId = groupId,
-          conversationType = TourGroupConversationType.valueOf(conversationType),
-          status = TourGroupConversationStatus.valueOf(status),
+        conversationType = TourGroupConversationType.fromText(conversationType),
+        status = TourGroupConversationStatus.fromText(status),
           directMemberAUserId = directMemberAUserId.map(UserId.apply),
           directMemberBUserId = directMemberBUserId.map(UserId.apply),
           createdAt = createdAt,
@@ -221,9 +221,9 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
           participantId = TourGroupConversationParticipantId(participantId),
           conversationId = conversationId,
           userId = userId,
-          role = TourGroupConversationParticipantRole.valueOf(role),
+        role = TourGroupConversationParticipantRole.fromText(role),
           joinedAt = joinedAt,
-          status = TourGroupConversationParticipantStatus.valueOf(status),
+        status = TourGroupConversationParticipantStatus.fromText(status),
           lastReadAt = lastReadAt,
           lastReadMessageId = lastReadMessageId.map(TourGroupMessageId.apply),
           mutedAt = mutedAt,
@@ -244,9 +244,9 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
           participantId = TourGroupConversationParticipantId(participantId),
           conversationId = conversationId,
           userId = UserId(userId),
-          role = TourGroupConversationParticipantRole.valueOf(role),
+        role = TourGroupConversationParticipantRole.fromText(role),
           joinedAt = joinedAt,
-          status = TourGroupConversationParticipantStatus.valueOf(status),
+        status = TourGroupConversationParticipantStatus.fromText(status),
           lastReadAt = lastReadAt,
           lastReadMessageId = lastReadMessageId.map(TourGroupMessageId.apply),
           mutedAt = mutedAt,
@@ -309,11 +309,11 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
           messageId = messageId,
           conversationId = TourGroupConversationId(conversationId),
           senderUserId = UserId(senderUserId),
-          messageType = TourGroupMessageType.valueOf(messageType),
+        messageType = TourGroupMessageType.fromText(messageType),
           content = content,
           replyToMessageId = replyToMessageId.map(TourGroupMessageId.apply),
           forwardedFromMessageId = forwardedFromMessageId.map(TourGroupMessageId.apply),
-          status = TourGroupMessageStatus.valueOf(status),
+        status = TourGroupMessageStatus.fromText(status),
           createdAt = createdAt,
           updatedAt = updatedAt,
           deletedAt = deletedAt,
@@ -334,11 +334,11 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
           messageId = TourGroupMessageId(messageId),
           conversationId = conversationId,
           senderUserId = UserId(senderUserId),
-          messageType = TourGroupMessageType.valueOf(messageType),
+        messageType = TourGroupMessageType.fromText(messageType),
           content = content,
           replyToMessageId = replyToMessageId.map(TourGroupMessageId.apply),
           forwardedFromMessageId = forwardedFromMessageId.map(TourGroupMessageId.apply),
-          status = TourGroupMessageStatus.valueOf(status),
+        status = TourGroupMessageStatus.fromText(status),
           createdAt = createdAt,
           updatedAt = updatedAt,
           deletedAt = deletedAt,
@@ -375,7 +375,7 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
       order by sort_order, attachment_id
     """.query[(String, String, String, String, String, String, Long, Int, Instant)].to[List].transact(transactor).map(
       _.map { case (attachmentId, attachmentType, publicUrl, storagePath, originalFileName, mimeType, fileSize, sortOrder, createdAt) =>
-        TourGroupMessageAttachment(TourGroupMessageAttachmentId(attachmentId), messageId, TourGroupMessageAttachmentType.valueOf(attachmentType), publicUrl, storagePath, originalFileName, mimeType, fileSize, sortOrder, createdAt)
+      TourGroupMessageAttachment(TourGroupMessageAttachmentId(attachmentId), messageId, TourGroupMessageAttachmentType.fromText(attachmentType), publicUrl, storagePath, originalFileName, mimeType, fileSize, sortOrder, createdAt)
       }
     )
 
@@ -391,7 +391,7 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
         .transact(transactor)
         .map(
           _.map { case (messageId, attachmentId, attachmentType, publicUrl, storagePath, originalFileName, mimeType, fileSize, sortOrder, createdAt) =>
-            TourGroupMessageId(messageId) -> TourGroupMessageAttachment(TourGroupMessageAttachmentId(attachmentId), TourGroupMessageId(messageId), TourGroupMessageAttachmentType.valueOf(attachmentType), publicUrl, storagePath, originalFileName, mimeType, fileSize, sortOrder, createdAt)
+      TourGroupMessageId(messageId) -> TourGroupMessageAttachment(TourGroupMessageAttachmentId(attachmentId), TourGroupMessageId(messageId), TourGroupMessageAttachmentType.fromText(attachmentType), publicUrl, storagePath, originalFileName, mimeType, fileSize, sortOrder, createdAt)
           }.groupBy(_._1).view.mapValues(_.map(_._2).sortBy(_.sortOrder)).toMap
         )
 
@@ -443,6 +443,6 @@ trait DoobieTourGroupRepositoryChatSupport[F[_]: Async]:
       order by m.created_at desc, m.message_id desc
     """.query[(String, String, String, String, String, Option[String], Option[String], String, Instant, Instant, Option[Instant], Option[Instant])].to[List].transact(transactor).map(
       _.map { case (messageId, conversationId, senderUserId, messageType, content, replyToMessageId, forwardedFromMessageId, status, createdAt, updatedAt, deletedAt, recalledAt) =>
-        TourGroupMessage(TourGroupMessageId(messageId), TourGroupConversationId(conversationId), UserId(senderUserId), TourGroupMessageType.valueOf(messageType), content, replyToMessageId.map(TourGroupMessageId.apply), forwardedFromMessageId.map(TourGroupMessageId.apply), TourGroupMessageStatus.valueOf(status), createdAt, updatedAt, deletedAt, recalledAt)
+      TourGroupMessage(TourGroupMessageId(messageId), TourGroupConversationId(conversationId), UserId(senderUserId), TourGroupMessageType.fromText(messageType), content, replyToMessageId.map(TourGroupMessageId.apply), forwardedFromMessageId.map(TourGroupMessageId.apply), TourGroupMessageStatus.fromText(status), createdAt, updatedAt, deletedAt, recalledAt)
       }
     )

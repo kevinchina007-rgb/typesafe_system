@@ -1,8 +1,22 @@
 import type { AppIcon } from '../components/icons/Icons'
 import type { AppViewKey, CurrentManagerSessionResponse, UserResponse } from '../lib/mvp-types'
 
-export type TopNavKey = 'overview' | 'booking' | 'travelManagement' | 'community' | 'smartPlanner' | 'profile'
-export type NavSectionKey = 'workspace' | 'booking' | 'travelManagement' | 'community' | 'profile'
+export type TopNavKey =
+  | 'overview'
+  | 'booking'
+  | 'travelManagement'
+  | 'community'
+  | 'smartPlanner'
+  | 'customerFeedback'
+  | 'userCenter'
+  | 'managerCenter'
+  | 'managerWorkspace'
+  | 'managerFeedback'
+  | 'managerAdvertising'
+  | 'siteAdminBlogAudit'
+  | 'siteAdminAdvertisingReview'
+
+export type NavSectionKey = 'workspace' | 'booking' | 'travelManagement' | 'community' | 'userCenter' | 'managerCenter'
 
 export type RoutePrerequisite = 'account' | 'traveler' | 'orders' | 'upcomingTrip'
 export type RouteBadgeMap = Partial<Record<AppViewKey, number>>
@@ -28,6 +42,7 @@ export type TopNavItem = {
   titleKey: string
   icon: AppIcon
   defaultViewKey: AppViewKey
+  badgeCount?: number
 }
 
 export const topNavItems: TopNavItem[] = [
@@ -36,7 +51,14 @@ export const topNavItems: TopNavItem[] = [
   { key: 'travelManagement', titleKey: 'topnav.travelManagement', icon: 'group', defaultViewKey: 'travelers' },
   { key: 'community', titleKey: 'topnav.community', icon: 'blog', defaultViewKey: 'blog' },
   { key: 'smartPlanner', titleKey: 'topnav.smartPlanner', icon: 'planner', defaultViewKey: 'smartPlanner' },
-  { key: 'profile', titleKey: 'topnav.profile', icon: 'account', defaultViewKey: 'account' },
+  { key: 'customerFeedback', titleKey: 'topnav.customerFeedback', icon: 'review', defaultViewKey: 'customerFeedback' },
+  { key: 'userCenter', titleKey: 'topnav.userCenter', icon: 'account', defaultViewKey: 'account' },
+  { key: 'managerCenter', titleKey: 'topnav.managerCenter', icon: 'account', defaultViewKey: 'manager' },
+  { key: 'managerWorkspace', titleKey: 'topnav.managerWorkspace', icon: 'operations', defaultViewKey: 'managerWorkspace' },
+  { key: 'managerFeedback', titleKey: 'topnav.managerFeedback', icon: 'review', defaultViewKey: 'managerFeedback' },
+  { key: 'managerAdvertising', titleKey: 'topnav.managerAdvertising', icon: 'orders', defaultViewKey: 'managerAdvertising' },
+  { key: 'siteAdminBlogAudit', titleKey: 'topnav.siteAdminBlogAudit', icon: 'blog', defaultViewKey: 'siteAdminBlogAudit' },
+  { key: 'siteAdminAdvertisingReview', titleKey: 'topnav.siteAdminAdvertisingReview', icon: 'orders', defaultViewKey: 'siteAdminAdvertisingReview' },
 ]
 
 export const appRoutes: RouteMeta[] = [
@@ -145,24 +167,78 @@ export const appRoutes: RouteMeta[] = [
     supportsGuests: true,
   },
   {
-    viewKey: 'reviews',
-    titleKey: 'nav.reviews',
-    descriptionKey: 'community.reviewsDescription',
-    section: 'community',
-    topNav: 'community',
-    icon: 'review',
-    sortOrder: 20,
-    prerequisiteState: 'orders',
-  },
-  {
     viewKey: 'account',
     titleKey: 'nav.account',
     descriptionKey: 'profile.accountDescription',
-    section: 'profile',
-    topNav: 'profile',
+    section: 'userCenter',
+    topNav: 'userCenter',
     icon: 'account',
     sortOrder: 10,
     supportsGuests: true,
+  },
+  {
+    viewKey: 'customerFeedback',
+    titleKey: 'nav.customerFeedback',
+    descriptionKey: 'profile.customerFeedbackDescription',
+    section: 'userCenter',
+    topNav: 'customerFeedback',
+    icon: 'review',
+    sortOrder: 20,
+  },
+  {
+    viewKey: 'manager',
+    titleKey: 'nav.managerCenter',
+    descriptionKey: 'manager.centerDescription',
+    section: 'managerCenter',
+    topNav: 'managerCenter',
+    icon: 'account',
+    sortOrder: 10,
+    supportsGuests: true,
+  },
+  {
+    viewKey: 'managerWorkspace',
+    titleKey: 'nav.managerWorkspace',
+    descriptionKey: 'manager.centerDescription',
+    section: 'managerCenter',
+    topNav: 'managerWorkspace',
+    icon: 'operations',
+    sortOrder: 20,
+  },
+  {
+    viewKey: 'managerFeedback',
+    titleKey: 'nav.managerFeedback',
+    descriptionKey: 'manager.feedback.title',
+    section: 'managerCenter',
+    topNav: 'managerFeedback',
+    icon: 'review',
+    sortOrder: 30,
+  },
+  {
+    viewKey: 'managerAdvertising',
+    titleKey: 'nav.managerAdvertising',
+    descriptionKey: 'advertising.submitDescription',
+    section: 'managerCenter',
+    topNav: 'managerAdvertising',
+    icon: 'orders',
+    sortOrder: 35,
+  },
+  {
+    viewKey: 'siteAdminBlogAudit',
+    titleKey: 'nav.siteAdminBlogAudit',
+    descriptionKey: 'manager.siteAdmin.blogAuditDescription',
+    section: 'managerCenter',
+    topNav: 'siteAdminBlogAudit',
+    icon: 'blog',
+    sortOrder: 40,
+  },
+  {
+    viewKey: 'siteAdminAdvertisingReview',
+    titleKey: 'nav.siteAdminAdvertisingReview',
+    descriptionKey: 'advertising.reviewDescription',
+    section: 'managerCenter',
+    topNav: 'siteAdminAdvertisingReview',
+    icon: 'orders',
+    sortOrder: 45,
   },
 ]
 
@@ -195,7 +271,7 @@ function isRouteVisible(params: {
   }
 
   if (isManagerOnlyMode) {
-    return route.viewKey === 'overview' || route.viewKey === 'blog' || route.viewKey === 'account'
+    return route.viewKey === 'manager'
   }
 
   return true
@@ -204,20 +280,49 @@ function isRouteVisible(params: {
 export function getVisibleTopNavItems(params: {
   signedInUser: UserResponse | null
   signedInManager: CurrentManagerSessionResponse | null
+  badgeCounts?: RouteBadgeMap
 }) {
-  const { signedInUser, signedInManager } = params
+  const { signedInUser, signedInManager, badgeCounts } = params
 
   return topNavItems.filter(item => {
     if (signedInUser) {
-      return true
+      return (
+        item.key !== 'managerCenter' &&
+        item.key !== 'managerWorkspace' &&
+        item.key !== 'managerFeedback' &&
+        item.key !== 'managerAdvertising' &&
+        item.key !== 'siteAdminBlogAudit' &&
+        item.key !== 'siteAdminAdvertisingReview'
+      )
     }
 
     if (signedInManager) {
-      return item.key === 'overview' || item.key === 'community' || item.key === 'profile'
+      if (signedInManager.managerType === 'SiteAdmin') {
+        return (
+          item.key === 'siteAdminBlogAudit' ||
+          item.key === 'siteAdminAdvertisingReview'
+        )
+      }
+
+      if (signedInManager.managerType === 'Hotel' || signedInManager.managerType === 'Attraction') {
+        return item.key === 'managerWorkspace' || item.key === 'managerFeedback' || item.key === 'managerAdvertising'
+      }
+
+      return item.key === 'managerWorkspace' || item.key === 'managerFeedback'
     }
 
-    return item.key !== 'travelManagement'
-  })
+    return (
+      item.key === 'overview' ||
+      item.key === 'booking' ||
+      item.key === 'community' ||
+      item.key === 'smartPlanner' ||
+      item.key === 'userCenter' ||
+      item.key === 'managerCenter'
+    )
+  }).map(item => ({
+    ...item,
+    badgeCount: badgeCounts?.[item.defaultViewKey],
+  }))
 }
 
 export function getSidebarItemsForTopNav(params: {
@@ -238,14 +343,7 @@ export function getSidebarItemsForTopNav(params: {
     }))
 }
 
-export function shouldShowSidebar(topNav: TopNavKey, sidebarItems: NavItem[]) {
-  if (topNav === 'overview' && sidebarItems.length <= 1) {
-    return false
-  }
-
-  if (topNav === 'smartPlanner' && sidebarItems.length <= 1) {
-    return false
-  }
-
-  return sidebarItems.length > 0
+export function shouldShowSidebar(sidebarItems: NavItem[]) {
+  return sidebarItems.length > 1
 }
+

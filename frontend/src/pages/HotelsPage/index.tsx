@@ -81,7 +81,6 @@ export function HotelsPage({
           }
           await runPageAction(async () => {
             await travelMvpApiClient.createHotelOrder({
-              buyerUserId: signedInUser.userId,
               roomTypeId: payload.roomTypeId,
               guestTravelerIds: payload.guestTravelerIds,
               checkInDate: payload.checkInDate,

@@ -1,5 +1,6 @@
 package com.typesafe.travel.api.routes
 
+import cats.effect.LiftIO
 import cats.effect.kernel.Async
 import cats.syntax.all.*
 import com.typesafe.travel.api.*
@@ -11,7 +12,7 @@ import org.http4s.*
 import org.http4s.circe.*
 import org.http4s.dsl.Http4sDsl
 
-trait ExploreApiRoutes[F[_]: Async] extends Http4sDsl[F]:
+trait ExploreApiRoutes[F[_]: Async: LiftIO] extends Http4sDsl[F]:
   this: ApiRouter[F] =>
 
   import JsonCodecs.given
@@ -34,7 +35,7 @@ trait ExploreApiRoutes[F[_]: Async] extends Http4sDsl[F]:
 
   private def buildExploreSuggestions(queryText: String): F[List[SearchSuggestion]] =
     (
-      flightBookingApplicationService.suggestFlights(queryText),
+      LiftIO[F].liftIO(flightBookingApplicationService.suggestFlights(queryText)),
       hotelBookingApplicationService.suggestHotels(queryText),
       trainBookingApplicationService.suggestTrains(queryText),
       attractionBookingApplicationService.suggestAttractions(queryText),
@@ -64,8 +65,8 @@ trait ExploreApiRoutes[F[_]: Async] extends Http4sDsl[F]:
     if requestedResourceType.exists(_ != SearchResourceType.Flight) then Async[F].pure(List.empty)
     else
       (
-        flightBookingApplicationService.browseFlights(Some(queryText), None, None),
-        flightBookingApplicationService.browseFlights(None, Some(queryText), None)
+        LiftIO[F].liftIO(flightBookingApplicationService.browseFlights(Some(queryText), None, None)),
+        LiftIO[F].liftIO(flightBookingApplicationService.browseFlights(None, Some(queryText), None))
       ).mapN { (departureMatches, arrivalMatches) =>
         (departureMatches ++ arrivalMatches)
           .groupBy(_._2.flightId.value)

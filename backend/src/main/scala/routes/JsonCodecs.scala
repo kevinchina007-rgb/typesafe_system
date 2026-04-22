@@ -34,6 +34,7 @@ object JsonCodecs:
   given Decoder[ManagerLoginRequestDto] = deriveDecoder
   given Decoder[RegisterAirlineManagerRequestDto] = deriveDecoder
   given Decoder[RegisterHotelManagerRequestDto] = deriveDecoder
+  given Decoder[RegisterSiteAdminRequestDto] = deriveDecoder
   given Decoder[CreateManagerFlightRequestDto] = deriveDecoder
   given Decoder[CreateManagerRoomTypeRequestDto] = deriveDecoder
   given Decoder[RegisterRailwayManagerRequestDto] = deriveDecoder
@@ -87,6 +88,13 @@ object JsonCodecs:
   given Decoder[CreateReviewRequestDto] = deriveDecoder
   given Decoder[UpdateReviewRequestDto] = deriveDecoder
   given Decoder[DeleteReviewRequestDto] = deriveDecoder
+  given Decoder[CreateReviewFeedbackThreadRequestDto] = deriveDecoder
+  given Decoder[SendFeedbackMessageRequestDto] = deriveDecoder
+  given Decoder[MarkFeedbackThreadReadRequestDto] = deriveDecoder
+  given Decoder[EscalateFeedbackThreadRequestDto] = deriveDecoder
+  given Decoder[CreateAdvertisementRequestDto] = deriveDecoder
+  given Decoder[UpdateAdvertisementRequestDto] = deriveDecoder
+  given Decoder[AdvertisementReviewDecisionRequestDto] = deriveDecoder
 
   given Encoder[CabinInventoryResponseDto] = deriveEncoder
   given Encoder[FlightResponseDto] = deriveEncoder
@@ -156,3 +164,10 @@ object JsonCodecs:
   given Encoder[ResourceReviewSummaryResponseDto] = deriveEncoder
   given Encoder[ReviewResponseDto] = deriveEncoder
   given Encoder[ReviewListResponseDto] = deriveEncoder
+  given Encoder[FeedbackMessageResponseDto] = deriveEncoder
+  given Encoder[FeedbackThreadResponseDto] = deriveEncoder
+  given Encoder[FeedbackThreadListResponseDto] = deriveEncoder
+  given Encoder[AdvertisementReviewResponseDto] = deriveEncoder
+  given Encoder[AdvertisementImageUploadResponseDto] = deriveEncoder
+  given Encoder[AdvertisementResponseDto] = deriveEncoder
+  given Encoder[AdvertisementListResponseDto] = deriveEncoder

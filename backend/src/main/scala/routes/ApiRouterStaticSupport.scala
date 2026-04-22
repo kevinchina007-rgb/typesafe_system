@@ -131,10 +131,10 @@ trait ApiRouterStaticSupport[F[_]: Async]:
     if assetId.isEmpty then
       NotFound()
     else
-      uploadedBinaryAssetReader match
+      uploadedBinaryAssetRepository match
         case None => NotFound()
-        case Some(assetReader) =>
-          assetReader.findAssetByAssetId(assetId).flatMap {
+        case Some(assetRepository) =>
+          assetRepository.findAssetByAssetId(assetId).flatMap {
             case None => NotFound()
             case Some(asset) =>
               Ok(Stream.emits(asset.binaryContent).covary[F]).map(
@@ -165,10 +165,13 @@ trait ApiRouterStaticSupport[F[_]: Async]:
       throwable match
         case UserError.UserEmailAddressAlreadyExists(_) => Status.Conflict -> ApiErrorResponseDto("user_email_exists", throwable.getMessage)
         case UserError.UserWasNotFoundByEmail(_) | UserError.UserWasNotFound(_) => Status.NotFound -> ApiErrorResponseDto("user_not_found", throwable.getMessage)
-        case FlightError.FlightWasNotFound(_) => Status.NotFound -> ApiErrorResponseDto("flight_not_found", throwable.getMessage)
-        case FlightBookingApplicationError.CabinWasNotFound(_, _) => Status.BadRequest -> ApiErrorResponseDto("cabin_not_found", throwable.getMessage)
-        case FlightBookingApplicationError.CabinWasNotBookable(_, _) => Status.BadRequest -> ApiErrorResponseDto("cabin_not_bookable", throwable.getMessage)
-        case FlightBookingApplicationError.TravelerSelectionWasInvalid(_) => Status.BadRequest -> ApiErrorResponseDto("invalid_traveler_selection", throwable.getMessage)
+        case flightError: FlightError if flightError.code == "flight_not_found" => Status.NotFound -> ApiErrorResponseDto("flight_not_found", throwable.getMessage)
+        case applicationError: FlightBookingApplicationError if applicationError.code == "flight_cabin_not_found" =>
+          Status.BadRequest -> ApiErrorResponseDto("cabin_not_found", applicationError.message)
+        case applicationError: FlightBookingApplicationError if applicationError.code == "flight_cabin_not_bookable" =>
+          Status.BadRequest -> ApiErrorResponseDto("cabin_not_bookable", applicationError.message)
+        case applicationError: FlightBookingApplicationError if applicationError.code == "flight_traveler_selection_invalid" =>
+          Status.BadRequest -> ApiErrorResponseDto("invalid_traveler_selection", applicationError.message)
         case InventoryReservationError.InventoryWasNotAvailable(_, _, _) => Status.Conflict -> ApiErrorResponseDto("inventory_not_available", throwable.getMessage)
         case AttractionError.AttractionWasNotFound(_) => Status.NotFound -> ApiErrorResponseDto("attraction_not_found", throwable.getMessage)
         case AttractionError.TicketTypeWasNotFound(_) => Status.NotFound -> ApiErrorResponseDto("ticket_type_not_found", throwable.getMessage)

@@ -17,6 +17,8 @@ enum SharedValidationError(val message: String) extends SharedKernelError:
       extends SharedValidationError(s"Country code '$countryCodeValue' is invalid")
   case AirportCodeWasInvalid(airportCodeValue: String)
       extends SharedValidationError(s"Airport code '$airportCodeValue' is invalid")
+  case CurrencyWasInvalid(currencyValue: String)
+      extends SharedValidationError(s"Currency '$currencyValue' is invalid")
   case AirlineCodeWasInvalid(airlineCodeValue: String)
       extends SharedValidationError(s"Airline code '$airlineCodeValue' is invalid")
   case CabinClassWasInvalid(cabinClassValue: String)

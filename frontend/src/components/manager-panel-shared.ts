@@ -1,6 +1,7 @@
 import type {
   AppLanguage,
   FlightResponse,
+  HotelResponse,
   ManagerRefundTaskResponse,
   ManagerSessionResponse,
   ManagerTaskResponse,
@@ -26,6 +27,7 @@ export type ManagerPanelProps = {
   isBusy: boolean
   managerSession: ManagerSessionResponse | null
   managedFlights: FlightResponse[]
+  managedHotels: HotelResponse[]
   managerTasks: ManagerTaskResponse[]
   managerRefundTasks: ManagerRefundTaskResponse[]
   translate: (translationKey: string) => string

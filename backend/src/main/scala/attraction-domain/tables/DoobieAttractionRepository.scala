@@ -144,7 +144,7 @@ final class DoobieAttractionRepository[F[_]: Async](
         city = cityValue,
         location = locationValue,
         description = descriptionValue,
-        attractionStatus = AttractionStatus.valueOf(statusValue),
+        attractionStatus = AttractionStatus.fromText(statusValue),
         ticketTypes = ticketTypes,
         createdAt = createdAtValue
       )
@@ -173,7 +173,7 @@ final class DoobieAttractionRepository[F[_]: Async](
           availableToDate = availableToDateValue,
           totalQuantity = totalQuantityValue,
           validWeekdays = decodeWeekdays(validWeekdaysValue),
-          ticketTypeStatus = TicketTypeStatus.valueOf(statusValue),
+          ticketTypeStatus = TicketTypeStatus.fromText(statusValue),
           sessions = sessions,
           eligibilityRules = rules,
           createdAt = createdAtValue
@@ -192,7 +192,7 @@ final class DoobieAttractionRepository[F[_]: Async](
         restorePersistedTicketEligibilityRule(
           ruleId = TicketEligibilityRuleId(ruleIdValue),
           ticketTypeId = ticketTypeId,
-          ruleType = TicketEligibilityRuleType.valueOf(ruleTypeValue),
+          ruleType = TicketEligibilityRuleType.fromText(ruleTypeValue),
           ruleConfigJson = ruleConfigJsonValue,
           createdAt = createdAtValue
         )
@@ -215,7 +215,7 @@ final class DoobieAttractionRepository[F[_]: Async](
           startsAt = startsAtValue,
           endsAt = endsAtValue,
           capacity = capacityValue,
-          status = AttractionTicketSessionStatus.valueOf(statusValue),
+          status = AttractionTicketSessionStatus.fromText(statusValue),
           createdAt = createdAtValue
         )
       }.toVector

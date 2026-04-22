@@ -1,5 +1,6 @@
 package com.typesafe.travel.api.routes
 
+import cats.effect.LiftIO
 import cats.effect.kernel.Async
 import cats.syntax.all.*
 import com.typesafe.travel.api.*
@@ -12,7 +13,7 @@ import org.http4s.*
 import org.http4s.circe.*
 import org.http4s.dsl.Http4sDsl
 
-trait FlightApiRoutes[F[_]: Async] extends Http4sDsl[F]:
+trait FlightApiRoutes[F[_]: Async: LiftIO] extends Http4sDsl[F]:
   this: ApiRouter[F] =>
 
   import JsonCodecs.given
@@ -21,7 +22,7 @@ trait FlightApiRoutes[F[_]: Async] extends Http4sDsl[F]:
     case GET -> Root / "api" / "flights" / "suggestions" :? SearchQueryParamMatcher(queryValue) =>
       for
         queryText <- fromEither(queryValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
-        suggestions <- flightBookingApplicationService.suggestFlights(queryText)
+        suggestions <- LiftIO[F].liftIO(flightBookingApplicationService.suggestFlights(queryText))
         response <- Ok(SearchSuggestionListResponseDto(suggestions.map(SearchSuggestionResponseDto.fromApplication)).asJson)
       yield response
 
@@ -32,20 +33,20 @@ trait FlightApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         departureAirportQuery <- parseOptionalSearchText(departureAirportValue)
         arrivalAirportQuery <- parseOptionalSearchText(arrivalAirportValue)
         departureDate <- parseOptionalDate(departureDateValue)
-        flights <- flightBookingApplicationService.browseFlights(departureAirportQuery, arrivalAirportQuery, departureDate)
+        flights <- LiftIO[F].liftIO(flightBookingApplicationService.browseFlights(departureAirportQuery, arrivalAirportQuery, departureDate))
         currentTime <- currentInstantF
         flightResponseDtos <- flights.traverse { case (airline, flight) =>
-          loadRemainingFlightSeats(flight, currentTime).map(remainingSeats => FlightResponseDto.fromDomain(airline, flight, remainingSeats))
+          loadRemainingFlightSeats(flight, currentTime).map(remainingSeats => flightResponseDto(airline, flight, currentTime, remainingSeats))
         }
         response <- Ok(FlightListResponseDto(flightResponseDtos).asJson)
       yield response
 
     case GET -> Root / "api" / "flights" / flightIdValue =>
-      flightBookingApplicationService
-        .getFlightDetails(FlightId(flightIdValue))
+      LiftIO[F]
+        .liftIO(flightBookingApplicationService.getFlightDetails(FlightId(flightIdValue)))
         .flatMap { case (airline, flight) =>
           currentInstantF.flatMap { currentTime =>
-            loadRemainingFlightSeats(flight, currentTime).flatMap(remainingSeats => Ok(FlightResponseDto.fromDomain(airline, flight, remainingSeats).asJson))
+            loadRemainingFlightSeats(flight, currentTime).flatMap(remainingSeats => Ok(flightResponseDto(airline, flight, currentTime, remainingSeats).asJson))
           }
         }
 
@@ -54,11 +55,13 @@ trait FlightApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         addFlightItemRequestDto <- request.as[BookFlightRequestDto]
         selectedCabinClass <- fromEither(OrderDtoMappers.toCabinClass(addFlightItemRequestDto.cabinClass))
-        updatedOrder <- flightBookingApplicationService.createFlightOrder(
-          actingUserId = currentUserId,
-          flightId = FlightId(addFlightItemRequestDto.flightId),
-          travelerIds = addFlightItemRequestDto.travelerIds.map(TravelerId.apply),
-          cabinClass = selectedCabinClass
+        updatedOrder <- LiftIO[F].liftIO(
+          flightBookingApplicationService.createFlightOrder(
+            actingUserId = currentUserId,
+            flightId = FlightId(addFlightItemRequestDto.flightId),
+            travelerIds = addFlightItemRequestDto.travelerIds.map(TravelerId.apply),
+            cabinClass = selectedCabinClass
+          )
         )
         orderResponseDto <- toOrderResponseDto(updatedOrder)
         response <- Created(orderResponseDto.asJson)

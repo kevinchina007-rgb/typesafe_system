@@ -5,6 +5,16 @@ import java.time.LocalDate
 enum Currency:
   case USD, EUR, CNY
 
+object Currency:
+  val all: Vector[Currency] = Vector(Currency.USD, Currency.EUR, Currency.CNY)
+
+  def fromText(value: String): Currency =
+    value.trim.toUpperCase match
+      case "USD" => Currency.USD
+      case "EUR" => Currency.EUR
+      case "CNY" => Currency.CNY
+      case other => throw SharedValidationError.CurrencyWasInvalid(other)
+
 final case class Money private (amount: BigDecimal, currency: Currency):
   def add(otherMoney: Money): Either[SharedValidationError, Money] =
     if currency == otherMoney.currency then

@@ -4,11 +4,31 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.time.Instant
 
-enum AuthActorType:
-  case User, Manager
+final case class AuthActorType(value: String):
+  override def toString: String = value
 
-enum AuthSessionStatus:
-  case Active, Expired, Revoked
+object AuthActorType:
+  val User: AuthActorType = AuthActorType("User")
+  val Manager: AuthActorType = AuthActorType("Manager")
+
+  def fromText(value: String): AuthActorType =
+    value.trim.toLowerCase match
+      case "manager" => Manager
+      case _ => User
+
+final case class AuthSessionStatus(value: String):
+  override def toString: String = value
+
+object AuthSessionStatus:
+  val Active: AuthSessionStatus = AuthSessionStatus("Active")
+  val Expired: AuthSessionStatus = AuthSessionStatus("Expired")
+  val Revoked: AuthSessionStatus = AuthSessionStatus("Revoked")
+
+  def fromText(value: String): AuthSessionStatus =
+    value.trim.toLowerCase match
+      case "expired" => Expired
+      case "revoked" => Revoked
+      case _ => Active
 
 final case class AuthSession(
     sessionId: SessionId,
@@ -29,4 +49,3 @@ final case class CurrentUserPrincipal(userId: UserId) extends CurrentPrincipal:
 
 final case class CurrentManagerPrincipal(managerType: AuthManagerType, managerId: ManagerId) extends CurrentPrincipal:
   val actorType: AuthActorType = AuthActorType.Manager
-

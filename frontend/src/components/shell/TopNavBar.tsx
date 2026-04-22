@@ -50,6 +50,7 @@ export function TopNavBar({
         {items.map(item => (
           <TopNavButton
             key={item.key}
+            badgeCount={item.badgeCount}
             icon={item.icon}
             isActive={currentTopNav === item.key}
             label={translate(item.titleKey)}

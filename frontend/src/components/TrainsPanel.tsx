@@ -1,82 +1,17 @@
-import { useState } from 'react'
-
-import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainResponse, TravelerResponse } from '../lib/mvp-types'
-import { ResourceReviewSummaryLoader } from './ResourceReviewSummaryLoader'
-import { formatIsoDateTime, localizeTrainSeatClass, mapBackendStatusToProductLabel } from '../lib/view-models'
-
-type TrainsPanelProps = {
-  currentLanguage: AppLanguage
-  isBusy: boolean
-  isGuestMode: boolean
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onRequireLogin: () => void
-  onSearchTrains: (payload: {
-    fromStation?: string
-    toStation?: string
-    date?: string
-  }) => Promise<TrainResponse[]>
-  onBookTrain: (payload: {
-    trainId: string
-    travelerIds: string[]
-    fromStationCode: string
-    toStationCode: string
-    seatClass: string
-    seatPreference?: string | null
-    orderCurrency: string
-  }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
-}
-
-function renderTravelerOptionLabel(traveler: TravelerResponse): string {
-  return `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
-}
-
-function quoteTrainSegmentAmount(
-  train: TrainResponse,
-  fromStationCode: string,
-  toStationCode: string,
-  seatClass: string,
-): { amount: string; currency: string } | null {
-  const normalizedFrom = fromStationCode.trim().toUpperCase()
-  const normalizedTo = toStationCode.trim().toUpperCase()
-  const normalizedSeatClass = seatClass.trim().toLowerCase()
-  const fromIndex = train.stops.findIndex(stop => stop.stationCode.toUpperCase() === normalizedFrom)
-  const toIndex = train.stops.findIndex(stop => stop.stationCode.toUpperCase() === normalizedTo)
-
-  if (fromIndex < 0 || toIndex < 0 || fromIndex >= toIndex) {
-    return null
-  }
-
-  const pathStops = train.stops.slice(fromIndex, toIndex + 1)
-  const matchingSegmentPrices = pathStops.slice(0, -1).map((currentStop, index) =>
-    train.segmentPrices.find(
-      segmentPrice =>
-        segmentPrice.fromStationCode.toUpperCase() === currentStop.stationCode.toUpperCase() &&
-        segmentPrice.toStationCode.toUpperCase() === pathStops[index + 1].stationCode.toUpperCase() &&
-        segmentPrice.seatClass.trim().toLowerCase() === normalizedSeatClass,
-    ),
-  )
-
-  if (matchingSegmentPrices.some(segmentPrice => !segmentPrice)) {
-    return null
-  }
-
-  const segmentPrices = matchingSegmentPrices.flatMap(segmentPrice => (segmentPrice ? [segmentPrice] : []))
-  const currency = segmentPrices[0]?.currency
-
-  if (!currency || segmentPrices.some(segmentPrice => segmentPrice.currency !== currency)) {
-    return null
-  }
-
-  const amount = segmentPrices.reduce((currentAmount, segmentPrice) => currentAmount + Number(segmentPrice.amount), 0)
-  return { amount: amount.toString(), currency }
-}
-
-function renderStopSummary(train: TrainResponse): string {
-  return train.stops.map(stop => stop.stationCode).join(' -> ')
-}
+import { useTrainSearchState } from './trains/hooks/useTrainSearchState'
+import {
+  applyTrainQuickDatePreset,
+  formatTrainPriceInsight,
+  formatTrainRecommendation,
+  trainHotRoutes,
+  trainPopularStations,
+  trainRecentSearches,
+} from './trains/trainBookingModel'
+import { TrainFilterBar } from './trains/sections/TrainFilterBar'
+import { TrainPageHero } from './trains/sections/TrainPageHero'
+import { TrainResultsSection } from './trains/sections/TrainResultsSection'
+import { TrainSearchCard } from './trains/sections/TrainSearchCard'
+import type { TrainsPanelProps } from './trains/trainBookingModel'
 
 export function TrainsPanel({
   currentLanguage,
@@ -90,180 +25,110 @@ export function TrainsPanel({
   onLoadReviewSummary,
   onLoadReviews,
 }: TrainsPanelProps) {
-  const [trainResponses, setTrainResponses] = useState<TrainResponse[]>([])
-  const [hasSearchedTrains, setHasSearchedTrains] = useState(false)
-  const [searchDate, setSearchDate] = useState('2026-04-05')
-  const [searchFromStation, setSearchFromStation] = useState('SHH')
-  const [searchToStation, setSearchToStation] = useState('NJN')
+  const {
+    trainResponses,
+    hasSearchedTrains,
+    tripType,
+    searchDate,
+    returnDate,
+    searchFromStation,
+    searchToStation,
+    passengerCount,
+    seatPreference,
+    trainTypePreference,
+    selectedQuickDatePreset,
+    setTrainResponses,
+    setHasSearchedTrains,
+    setTripType,
+    setSearchDate,
+    setReturnDate,
+    setSearchFromStation,
+    setSearchToStation,
+    setPassengerCount,
+    setSeatPreference,
+    setTrainTypePreference,
+    setSelectedQuickDatePreset,
+  } = useTrainSearchState()
 
   return (
     <section className="page-card">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow-label">{translate('nav.trains')}</p>
-          <h2>{translate('trains.title')}</h2>
-        </div>
-      </div>
+      <TrainPageHero title={translate('trains.title')} description={translate('trains.description')} />
 
-      <p className="hero-copy">{translate('trains.description')}</p>
-      <p className="empty-state">{translate('trains.searchHint')}</p>
-
-      <form
-        className="stack-form panel-card"
-        onSubmit={async event => {
-          event.preventDefault()
-          const formData = new FormData(event.currentTarget)
-          const nextFromStation = String(formData.get('fromStation') ?? '').trim()
-          const nextToStation = String(formData.get('toStation') ?? '').trim()
-          const nextDate = String(formData.get('date') ?? '').trim()
-          setSearchFromStation(nextFromStation)
-          setSearchToStation(nextToStation)
+      <TrainSearchCard
+        earliestDepartureHint={translate('trains.earliestDepartureValue')}
+        hotRoutes={trainHotRoutes}
+        isBusy={isBusy}
+        lowestPriceHint={formatTrainPriceInsight(trainResponses, translate)}
+        passengerCount={passengerCount}
+        recentSearches={trainRecentSearches}
+        popularStations={trainPopularStations}
+        returnDate={returnDate}
+        searchDate={searchDate}
+        searchFromStation={searchFromStation}
+        searchToStation={searchToStation}
+        seatPreference={seatPreference}
+        selectedQuickDatePreset={selectedQuickDatePreset}
+        trainTypePreference={trainTypePreference}
+        translate={translate}
+        tripType={tripType}
+        onTripTypeChange={setTripType}
+        onSearchDateChange={setSearchDate}
+        onReturnDateChange={setReturnDate}
+        onSearchFromStationChange={setSearchFromStation}
+        onSearchToStationChange={setSearchToStation}
+        onPassengerCountChange={setPassengerCount}
+        onSeatPreferenceChange={setSeatPreference}
+        onTrainTypePreferenceChange={setTrainTypePreference}
+        onSelectQuickDatePreset={preset => {
+          setSelectedQuickDatePreset(preset)
+          const nextDate = applyTrainQuickDatePreset(preset)
           setSearchDate(nextDate)
+          if (tripType === 'roundTrip') {
+            setReturnDate(applyTrainQuickDatePreset('nextWeek', new Date(nextDate)))
+          }
+        }}
+        onSelectRoute={route => {
+          setSearchFromStation(route.departureLabel)
+          setSearchToStation(route.arrivalLabel)
+        }}
+        onSearch={async () => {
           const nextTrains = await onSearchTrains({
-            fromStation: nextFromStation || undefined,
-            toStation: nextToStation || undefined,
-            date: nextDate || undefined,
+            fromStation: searchFromStation,
+            toStation: searchToStation,
+            date: searchDate,
+            returnDate,
+            tripType,
+            passengerCount,
+            seatPreference,
+            trainTypePreference,
           })
           setHasSearchedTrains(true)
           setTrainResponses(nextTrains)
         }}
-      >
-        <div className="three-column-grid">
-          <label>
-            {translate('trains.fromStation')}
-            <input name="fromStation" placeholder="SHH" defaultValue={searchFromStation} />
-          </label>
-          <label>
-            {translate('trains.toStation')}
-            <input name="toStation" placeholder="NJN" defaultValue={searchToStation} />
-          </label>
-          <label>
-            {translate('trains.date')}
-            <input name="date" type="date" defaultValue={searchDate} />
-          </label>
-        </div>
+      />
 
-        <button type="submit" disabled={isBusy}>
-          {translate('trains.search')}
-        </button>
-      </form>
+      <TrainFilterBar translate={translate} />
 
       {isGuestMode ? <p className="empty-state">{translate('trains.guest')}</p> : null}
 
       {hasSearchedTrains ? (
-        <div className="entity-list flights-list">
-          {trainResponses.length > 0 ? (
-            trainResponses.map(trainResponse => (
-              <article key={trainResponse.trainId} className="panel-card hotel-card">
-                <div className="panel-heading">
-                  <div>
-                    <strong>{trainResponse.trainNumber}</strong>
-                    <p>{renderStopSummary(trainResponse)}</p>
-                    <ResourceReviewSummaryLoader
-                      currentLanguage={currentLanguage}
-                      isBusy={isBusy}
-                      isEnabled={!isGuestMode}
-                      resourceType="Train"
-                      resourceId={trainResponse.trainId}
-                      title={trainResponse.trainNumber}
-                      translate={translate}
-                      onLoadSummary={onLoadReviewSummary}
-                      onLoadReviews={onLoadReviews}
-                    />
-                  </div>
-                  <span className="tag-chip">{mapBackendStatusToProductLabel(trainResponse.status, currentLanguage)}</span>
-                </div>
-
-                <div className="detail-grid">
-                  <div>
-                    <span className="detail-label">{translate('trains.saleStartsAt')}</span>
-                    <strong>{formatIsoDateTime(trainResponse.saleStartsAt, '-')}</strong>
-                  </div>
-                  <div>
-                    <span className="detail-label">{translate('trains.stopCount')}</span>
-                    <strong>{trainResponse.stops.length}</strong>
-                  </div>
-                </div>
-
-                <ul className="entity-list">
-                  {trainResponse.seatInventories.map(seatInventory => {
-                    const quote = quoteTrainSegmentAmount(trainResponse, searchFromStation, searchToStation, seatInventory.seatClass)
-
-                    return (
-                      <li key={seatInventory.inventoryId}>
-                        <div>
-                          <strong>{localizeTrainSeatClass(seatInventory.seatClass, currentLanguage)}</strong>
-                          <p>{`${translate('trains.saleableSeats')}: ${seatInventory.saleableSeats} / ${seatInventory.totalSeats}`}</p>
-                          <p>{`${translate('trains.routePrice')}: ${quote ? `${quote.amount} ${quote.currency}` : translate('trains.routePriceUnavailable')}`}</p>
-                        </div>
-
-                        <form
-                          className="compact-action-block"
-                          onSubmit={async event => {
-                            event.preventDefault()
-                            if (isGuestMode) {
-                              onRequireLogin()
-                              return
-                            }
-                            if (!quote) {
-                              throw new Error('train_price_not_defined')
-                            }
-
-                            const formData = new FormData(event.currentTarget)
-                            const selectedTravelerIds = formData
-                              .getAll('travelerIds')
-                              .map(value => String(value))
-                              .filter(Boolean)
-
-                            await onBookTrain({
-                              trainId: trainResponse.trainId,
-                              travelerIds: selectedTravelerIds,
-                              fromStationCode: searchFromStation,
-                              toStationCode: searchToStation,
-                              seatClass: seatInventory.seatClass,
-                              seatPreference: String(formData.get('seatPreference') ?? '').trim() || null,
-                              orderCurrency: quote.currency,
-                            })
-                          }}
-                        >
-                          <label>
-                            {translate('trains.seatPreference')}
-                            <select name="seatPreference" defaultValue="no_preference" disabled={isBusy || !quote}>
-                              <option value="no_preference">{translate('trains.noPreference')}</option>
-                              <option value="window">{translate('trains.window')}</option>
-                              <option value="aisle">{translate('trains.aisle')}</option>
-                              <option value="middle">{translate('trains.middle')}</option>
-                            </select>
-                          </label>
-                          <div className="checkbox-list">
-                            <p className="detail-label">{translate('trains.selectTravelers')}</p>
-                            {travelers.map(traveler => (
-                              <label key={traveler.travelerId} className="checkbox-row">
-                                <input
-                                  type="checkbox"
-                                  name="travelerIds"
-                                  value={traveler.travelerId}
-                                  disabled={isBusy || !quote}
-                                />
-                                {renderTravelerOptionLabel(traveler)}
-                              </label>
-                            ))}
-                          </div>
-                          <button type="submit" disabled={isBusy || !quote}>
-                            {translate('trains.bookNow')}
-                          </button>
-                        </form>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </article>
-            ))
-          ) : (
-            <p className="empty-state">{translate('trains.empty')}</p>
-          )}
-        </div>
-      ) : null}
+        <TrainResultsSection
+          currentLanguage={currentLanguage}
+          isBusy={isBusy}
+          isGuestMode={isGuestMode}
+          searchFromStation={searchFromStation}
+          searchToStation={searchToStation}
+          trainResponses={trainResponses}
+          travelers={travelers}
+          translate={translate}
+          onRequireLogin={onRequireLogin}
+          onBookTrain={onBookTrain}
+          onLoadReviewSummary={onLoadReviewSummary}
+          onLoadReviews={onLoadReviews}
+        />
+      ) : (
+        <p className="empty-state">{formatTrainRecommendation(searchFromStation, searchToStation, translate)}</p>
+      )}
     </section>
   )
 }

@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { ActionBar, AppCard, PrimaryButton, SecondaryButton, SectionHeader, StatCard } from './ui/UIComponents'
 import { AvatarUploader } from './AvatarUploader'
-import type { AppLanguage, AuthSessionResponse, TravelerResponse, UserResponse } from '../lib/mvp-types'
+import type { AppLanguage, TravelerResponse, UserResponse } from '../lib/mvp-types'
 import { formatTravelerReference, localizeAccountStatus, localizeMembershipLevel } from '../lib/view-models'
 
 type AccountEntryMode = 'register' | 'login'
@@ -29,11 +29,8 @@ type UserPanelProps = {
   onAvatarValidationError: (message: string) => void
   onValidationError: (message: string) => void
   onRefreshAccount: () => Promise<void>
-  sessions: AuthSessionResponse[]
-  onRefreshSessions: () => Promise<void>
   onChangePassword: (payload: { currentPassword: string; newPassword: string }) => Promise<void>
   onLogoutCurrentSession: () => void
-  onLogoutOtherSessions: () => Promise<void>
   onLogout: () => void
 }
 
@@ -58,16 +55,11 @@ export function UserPanel({
   onAvatarValidationError,
   onValidationError,
   onRefreshAccount,
-  sessions,
-  onRefreshSessions,
   onChangePassword,
   onLogoutCurrentSession,
-  onLogoutOtherSessions,
   onLogout,
 }: UserPanelProps) {
-  const currentSession = sessions.find(session => session.isCurrent)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
-  const [isSessionsOpen, setIsSessionsOpen] = useState(false)
   const defaultTraveler =
     account?.defaultTravelerProfileId
       ? travelers.find(traveler => traveler.travelerId === account.defaultTravelerProfileId) ?? null
@@ -248,9 +240,6 @@ export function UserPanel({
           <SecondaryButton type="button" disabled={isBusy} onClick={() => void onRefreshAccount()}>
             {translate('account.refresh')}
           </SecondaryButton>
-          <SecondaryButton type="button" disabled={isBusy} onClick={() => void onLogoutOtherSessions()}>
-            {translate('account.logoutOtherSessions')}
-          </SecondaryButton>
           <SecondaryButton type="button" disabled={isBusy} onClick={onLogout}>
             {translate('account.logout')}
           </SecondaryButton>
@@ -293,121 +282,63 @@ export function UserPanel({
             <strong>{formatTravelerReference(defaultTraveler)}</strong>
           </div>
           <div>
-            <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
-            <strong>{currentSession ? new Date(currentSession.expiresAt).toLocaleString() : '-'}</strong>
-          </div>
-          <div>
             <span className="detail-label">{translate('account.createdAt')}</span>
             <strong>{new Date(account!.createdAt).toLocaleString()}</strong>
           </div>
         </div>
       </AppCard>
 
-      <div className="account-security-grid">
-        <AppCard className="account-secondary-card">
-          <SectionHeader
-            eyebrow={translate('account.security')}
-            title={translate('account.changePassword')}
-            actions={
-              <SecondaryButton
-                type="button"
-                disabled={isBusy}
-                onClick={() => setIsChangePasswordOpen(open => !open)}
-              >
-                {translate(isChangePasswordOpen ? 'account.hideChangePassword' : 'account.showChangePassword')}
-              </SecondaryButton>
-            }
-          />
-
-          {isChangePasswordOpen ? (
-            <form
-              className="stack-form"
-              onSubmit={async event => {
-                event.preventDefault()
-                const formData = new FormData(event.currentTarget)
-                const currentPassword = String(formData.get('currentPassword') ?? '')
-                const newPassword = String(formData.get('newPassword') ?? '')
-                const confirmPassword = String(formData.get('confirmPassword') ?? '')
-                if (newPassword !== confirmPassword) {
-                  onValidationError(translate('error.passwordMismatch'))
-                  return
-                }
-                await onChangePassword({ currentPassword, newPassword })
-                event.currentTarget.reset()
-                setIsChangePasswordOpen(false)
-              }}
+      <AppCard className="account-secondary-card">
+        <SectionHeader
+          eyebrow={translate('account.security')}
+          title={translate('account.changePassword')}
+          actions={
+            <SecondaryButton
+              type="button"
+              disabled={isBusy}
+              onClick={() => setIsChangePasswordOpen(open => !open)}
             >
-              <label>
-                {translate('account.currentPassword')}
-                <input name="currentPassword" type="password" placeholder={translate('account.currentPassword')} required />
-              </label>
-              <label>
-                {translate('account.newPassword')}
-                <input name="newPassword" type="password" placeholder={translate('account.newPassword')} required />
-              </label>
-              <label>
-                {translate('account.confirmPassword')}
-                <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
-              </label>
-              <PrimaryButton type="submit" disabled={isBusy}>
-                {translate('account.changePassword')}
-              </PrimaryButton>
-            </form>
-          ) : (
-            null
-          )}
-        </AppCard>
+              {translate(isChangePasswordOpen ? 'account.hideChangePassword' : 'account.showChangePassword')}
+            </SecondaryButton>
+          }
+        />
 
-        <AppCard className="account-tertiary-card">
-          <SectionHeader
-            eyebrow={translate('account.security')}
-            title={translate('account.sessions')}
-            actions={
-              <ActionBar>
-                <SecondaryButton
-                  type="button"
-                  disabled={isBusy}
-                  onClick={() => setIsSessionsOpen(open => !open)}
-                >
-                  {translate(isSessionsOpen ? 'account.hideSessions' : 'account.showSessions')}
-                </SecondaryButton>
-                <SecondaryButton type="button" disabled={isBusy} onClick={() => void onRefreshSessions()}>
-                  {translate('account.refreshSessions')}
-                </SecondaryButton>
-              </ActionBar>
-            }
-          />
-
-          {isSessionsOpen ? sessions.length > 0 ? (
-            <div className="stack-list">
-              {sessions.map(session => (
-                <article key={session.sessionId} className="list-card">
-                  <div className="detail-grid">
-                    <div>
-                      <span className="detail-label">{translate('account.sessionStatus')}</span>
-                      <strong>{session.isCurrent ? translate('account.currentSession') : session.status}</strong>
-                    </div>
-                    <div>
-                      <span className="detail-label">{translate('account.createdAt')}</span>
-                      <strong>{new Date(session.createdAt).toLocaleString()}</strong>
-                    </div>
-                    <div>
-                      <span className="detail-label">{translate('account.lastSeenAt')}</span>
-                      <strong>{new Date(session.lastSeenAt).toLocaleString()}</strong>
-                    </div>
-                    <div>
-                      <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
-                      <strong>{new Date(session.expiresAt).toLocaleString()}</strong>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="empty-state">{translate('account.noSessions')}</p>
-          ) : null}
-        </AppCard>
-      </div>
+        {isChangePasswordOpen ? (
+          <form
+            className="stack-form"
+            onSubmit={async event => {
+              event.preventDefault()
+              const formData = new FormData(event.currentTarget)
+              const currentPassword = String(formData.get('currentPassword') ?? '')
+              const newPassword = String(formData.get('newPassword') ?? '')
+              const confirmPassword = String(formData.get('confirmPassword') ?? '')
+              if (newPassword !== confirmPassword) {
+                onValidationError(translate('error.passwordMismatch'))
+                return
+              }
+              await onChangePassword({ currentPassword, newPassword })
+              event.currentTarget.reset()
+              setIsChangePasswordOpen(false)
+            }}
+          >
+            <label>
+              {translate('account.currentPassword')}
+              <input name="currentPassword" type="password" placeholder={translate('account.currentPassword')} required />
+            </label>
+            <label>
+              {translate('account.newPassword')}
+              <input name="newPassword" type="password" placeholder={translate('account.newPassword')} required />
+            </label>
+            <label>
+              {translate('account.confirmPassword')}
+              <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+            </label>
+            <PrimaryButton type="submit" disabled={isBusy}>
+              {translate('account.changePassword')}
+            </PrimaryButton>
+          </form>
+        ) : null}
+      </AppCard>
     </section>
   )
 }

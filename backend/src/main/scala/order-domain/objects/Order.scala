@@ -333,3 +333,53 @@ enum OrderError(val message: String) extends DomainError:
   case OrderItemDidNotSupportSupplierReview(orderItemId: OrderItemId) extends OrderError(s"Order item '${orderItemId.value}' does not support supplier review")
   case OrderItemWasNotAwaitingSupplierDecision(orderItemId: OrderItemId, supplierReviewStatus: SupplierReviewStatus) extends OrderError(s"Order item '${orderItemId.value}' cannot be decided from supplier review status $supplierReviewStatus")
   case SupplierRejectReasonWasEmpty(orderItemId: OrderItemId) extends OrderError(s"Order item '${orderItemId.value}' requires a non-empty reject reason")
+
+def newDraftOrder(
+    orderId: OrderId,
+    ownerUserId: UserId,
+    orderCurrency: Currency,
+    createdAt: Instant
+): Order =
+  Order(
+    orderId = orderId,
+    ownerUserId = ownerUserId,
+    orderStatus = OrderStatus.Draft,
+    orderCurrency = orderCurrency,
+    orderLineItems = Vector.empty,
+    orderPayments = Vector.empty,
+    orderRefunds = Vector.empty,
+    createdAt = createdAt,
+    paidAt = None,
+    confirmedAt = None,
+    completedAt = None,
+    cancelledAt = None
+  )
+
+def restoreOrder(
+    orderId: OrderId,
+    ownerUserId: UserId,
+    orderStatus: OrderStatus,
+    orderCurrency: Currency,
+    orderLineItems: Vector[OrderLineItem],
+    orderPayments: Vector[Payment],
+    orderRefunds: Vector[Refund],
+    createdAt: Instant,
+    paidAt: Option[Instant],
+    confirmedAt: Option[Instant],
+    completedAt: Option[Instant],
+    cancelledAt: Option[Instant]
+): Order =
+  Order(
+    orderId = orderId,
+    ownerUserId = ownerUserId,
+    orderStatus = orderStatus,
+    orderCurrency = orderCurrency,
+    orderLineItems = orderLineItems,
+    orderPayments = orderPayments,
+    orderRefunds = orderRefunds,
+    createdAt = createdAt,
+    paidAt = paidAt,
+    confirmedAt = confirmedAt,
+    completedAt = completedAt,
+    cancelledAt = cancelledAt
+  )

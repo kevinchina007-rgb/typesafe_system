@@ -85,8 +85,6 @@ export function TrainsPage({
               orderCurrency: payload.orderCurrency,
             })
             await travelMvpApiClient.addTrainItemToOrder(createdOrder.orderId, {
-              buyerUserId: signedInUser.userId,
-              orderId: createdOrder.orderId,
               trainId: payload.trainId,
               travelerIds: payload.travelerIds,
               fromStationCode: payload.fromStationCode,

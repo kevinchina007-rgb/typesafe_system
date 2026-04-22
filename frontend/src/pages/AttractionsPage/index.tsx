@@ -94,8 +94,6 @@ export function AttractionsPage({
               orderCurrency: payload.orderCurrency,
             })
             await travelMvpApiClient.addAttractionItemToOrder(createdOrder.orderId, {
-              buyerUserId: signedInUser.userId,
-              orderId: createdOrder.orderId,
               attractionId: payload.attractionId,
               ticketTypeId: payload.ticketTypeId,
               sessionId: payload.sessionId,

@@ -144,7 +144,7 @@ final class DoobieHotelRepository[F[_]: Async](
       hotelId = HotelId(hotelIdValue),
       hotelName = hotelName,
       hotelLocation = hotelLocation,
-      hotelStatus = HotelStatus.valueOf(hotelStatusValue),
+      hotelStatus = HotelStatus.fromText(hotelStatusValue),
       roomTypes = roomTypes,
       createdAt = createdAtValue
     )
@@ -178,7 +178,7 @@ final class DoobieHotelRepository[F[_]: Async](
       roomCapacity = roomCapacity,
       bedType = bedType,
       basePrice = basePrice,
-      roomTypeStatus = RoomTypeStatus.valueOf(statusValue),
+      roomTypeStatus = RoomTypeStatus.fromText(statusValue),
       roomInventories = roomInventories
     )
 
@@ -206,6 +206,6 @@ final class DoobieHotelRepository[F[_]: Async](
       inventoryDate = inventoryDateValue,
       availableRooms = availableRooms,
       unitPrice = unitPrice,
-      roomInventoryStatus = RoomInventoryStatus.valueOf(statusValue)
+      roomInventoryStatus = RoomInventoryStatus.fromText(statusValue)
     )
 

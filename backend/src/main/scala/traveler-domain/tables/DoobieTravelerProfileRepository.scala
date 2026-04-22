@@ -168,16 +168,16 @@ final class DoobieTravelerProfileRepository[F[_]: Async](
       travelerId = TravelerId(travelerRow.travelerId),
       ownerUserId = UserId(travelerRow.ownerUserId),
       travelerFullName = travelerFullName,
-      travelerDocumentType = TravelerDocumentType.valueOf(travelerRow.documentType),
+      travelerDocumentType = TravelerDocumentType.fromText(travelerRow.documentType),
       travelerDocumentNumber = travelerDocumentNumber,
       travelerPhoneNumber = travelerPhoneNumber,
       travelerBirthDate = travelerBirthDate,
-      travelerType = TravelerType.valueOf(travelerRow.travelerType),
+      travelerType = TravelerType.fromText(travelerRow.travelerType),
       travelerIdentityDocuments = travelerIdentityDocuments,
       travelerEmergencyContact = travelerEmergencyContact,
       travelerLoyaltyMemberships = travelerLoyaltyMemberships,
       travelerPreferences = travelerPreferences,
-      travelerProfileStatus = TravelerProfileStatus.valueOf(travelerRow.status),
+      travelerProfileStatus = TravelerProfileStatus.fromText(travelerRow.status),
       isDefaultTravelerProfile = travelerRow.isDefault
     )
 

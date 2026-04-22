@@ -130,7 +130,7 @@ final class DoobieReviewRepository[F[_]: Async](transactor: Transactor[F]) exten
     restorePersistedReview(
       reviewId = ReviewId(row._1),
       authorUserId = UserId(row._2),
-      resourceType = ReviewResourceType.valueOf(row._3),
+      resourceType = ReviewResourceType.fromText(row._3),
       resourceId = row._4,
       orderId = OrderId(row._5),
       orderItemId = OrderItemId(row._6),
@@ -138,7 +138,7 @@ final class DoobieReviewRepository[F[_]: Async](transactor: Transactor[F]) exten
       title = row._8,
       content = row._9,
       imageRefs = imageRefs,
-      status = ReviewStatus.valueOf(row._10),
+      status = ReviewStatus.fromText(row._10),
       createdAt = row._11,
       updatedAt = row._12
     )

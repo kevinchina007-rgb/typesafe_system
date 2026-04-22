@@ -4,27 +4,58 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.time.Instant
 
-enum ReviewResourceType:
-  case Flight, Hotel, Train, Attraction
+final case class ReviewResourceType(value: String):
+  override def toString: String = value
 
-enum ReviewStatus:
-  case Published, Deleted
+object ReviewResourceType:
+  val Flight: ReviewResourceType = ReviewResourceType("Flight")
+  val Hotel: ReviewResourceType = ReviewResourceType("Hotel")
+  val Train: ReviewResourceType = ReviewResourceType("Train")
+  val Attraction: ReviewResourceType = ReviewResourceType("Attraction")
 
-enum ReviewError(val message: String) extends DomainError:
-  case ReviewWasNotFound(reviewId: ReviewId)
-      extends ReviewError(s"Review '${reviewId.value}' was not found")
-  case ReviewTitleWasInvalid(reviewId: ReviewId)
-      extends ReviewError(s"Review '${reviewId.value}' must have a title")
-  case ReviewContentWasInvalid(reviewId: ReviewId)
-      extends ReviewError(s"Review '${reviewId.value}' must have content")
-  case ReviewAlreadyExistsForOrderItem(authorUserId: UserId, orderItemId: OrderItemId)
-      extends ReviewError(s"User '${authorUserId.value}' has already reviewed order item '${orderItemId.value}'")
-  case ReviewWasNotAllowed(authorUserId: UserId, orderItemId: OrderItemId, reason: String)
-      extends ReviewError(s"User '${authorUserId.value}' cannot review order item '${orderItemId.value}': $reason")
-  case ReviewAuthorMismatch(reviewId: ReviewId, userId: UserId)
-      extends ReviewError(s"User '${userId.value}' cannot manage review '${reviewId.value}'")
-  case ReviewImageCountWasInvalid(reviewId: ReviewId, maximumImageCount: Int)
-      extends ReviewError(s"Review '${reviewId.value}' exceeded the maximum of $maximumImageCount images")
+  def fromText(value: String): ReviewResourceType =
+    value.trim.toLowerCase match
+      case "hotel" => Hotel
+      case "train" => Train
+      case "attraction" => Attraction
+      case _ => Flight
+
+final case class ReviewStatus(value: String):
+  override def toString: String = value
+
+object ReviewStatus:
+  val Published: ReviewStatus = ReviewStatus("Published")
+  val Deleted: ReviewStatus = ReviewStatus("Deleted")
+
+  def fromText(value: String): ReviewStatus =
+    value.trim.toLowerCase match
+      case "deleted" => Deleted
+      case _ => Published
+
+sealed trait ReviewError extends DomainError:
+  def message: String
+
+object ReviewError:
+  final case class ReviewWasNotFound(reviewId: ReviewId) extends ReviewError:
+    override val message: String = s"Review '${reviewId.value}' was not found"
+
+  final case class ReviewTitleWasInvalid(reviewId: ReviewId) extends ReviewError:
+    override val message: String = s"Review '${reviewId.value}' must have a title"
+
+  final case class ReviewContentWasInvalid(reviewId: ReviewId) extends ReviewError:
+    override val message: String = s"Review '${reviewId.value}' must have content"
+
+  final case class ReviewAlreadyExistsForOrderItem(authorUserId: UserId, orderItemId: OrderItemId) extends ReviewError:
+    override val message: String = s"User '${authorUserId.value}' has already reviewed order item '${orderItemId.value}'"
+
+  final case class ReviewWasNotAllowed(authorUserId: UserId, orderItemId: OrderItemId, reason: String) extends ReviewError:
+    override val message: String = s"User '${authorUserId.value}' cannot review order item '${orderItemId.value}': $reason"
+
+  final case class ReviewAuthorMismatch(reviewId: ReviewId, userId: UserId) extends ReviewError:
+    override val message: String = s"User '${userId.value}' cannot manage review '${reviewId.value}'"
+
+  final case class ReviewImageCountWasInvalid(reviewId: ReviewId, maximumImageCount: Int) extends ReviewError:
+    override val message: String = s"Review '${reviewId.value}' exceeded the maximum of $maximumImageCount images"
 
 final case class ReviewImageRef(
     imageId: ReviewImageId,
@@ -34,7 +65,7 @@ final case class ReviewImageRef(
     createdAt: Instant
 )
 
-final case class Review private[domain] (
+final case class Review(
     reviewId: ReviewId,
     authorUserId: UserId,
     resourceType: ReviewResourceType,
@@ -49,4 +80,3 @@ final case class Review private[domain] (
     createdAt: Instant,
     updatedAt: Instant
 )
-

@@ -26,7 +26,7 @@ object Main extends IOApp.Simple:
     }
 
   private def serverResource(backendPort: Port) =
-    ApplicationWiring.resource[IO].flatMap { applicationWiring =>
+    ApplicationWiring.resource.flatMap { applicationWiring =>
       EmberServerBuilder
         .default[IO]
         .withHost(host"0.0.0.0")

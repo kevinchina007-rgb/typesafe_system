@@ -5,9 +5,6 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.time.{Duration, Instant}
 
-// TrainJourney 是火车域的核心聚合：
-// 它把站点序列、座位库存、具体座位、区间价格和退票规则收拢在一起，
-// 这样 quote / allocate / refund 这类纯规则都能围绕一个主类型阅读。
 final case class TrainStop(
     stopId: TrainStopId,
     stationCode: TrainStationCode,
@@ -18,8 +15,6 @@ final case class TrainStop(
 )
 
 object TrainStop:
-  // 对火车来说，起点站依赖 departureTime，终点站依赖 arrivalTime。
-  // 这个 helper 统一了“取站点可用时间”的最小规则。
   def departureOrArrivalTime(trainId: TrainId, trainStop: TrainStop): Either[TrainError, Instant] =
     trainStop.arrivalTime
       .orElse(trainStop.departureTime)
@@ -53,8 +48,6 @@ final case class TrainRefundPolicySegment(
       case TrainRefundType.PartialRefund =>
         Money.unsafe(ticketMoney.amount * refundRate.value, ticketMoney.currency)
 
-// TrainQuote 是下单前的纯报价结果。
-// 它故意不直接等同于订单快照，避免把 order 语义塞回 train 域。
 final case class TrainQuote(
     fromStop: TrainStop,
     toStop: TrainStop,
@@ -64,8 +57,6 @@ final case class TrainQuote(
     arrivalTime: Instant
 )
 
-// TrainSeatAllocationPlan 表示一次选座计算的结果：
-// 真正落单后还会进入订单快照和 seat allocation 持久化。
 final case class TrainSeatAllocationPlan(
     assignments: Vector[TrainTravelerSeatAssignment],
     requestedPreference: Option[TrainSeatPreference],
@@ -73,7 +64,6 @@ final case class TrainSeatAllocationPlan(
     adjacencySatisfied: Boolean
 )
 
-// journeyWindow 主要服务于“同代码时间重叠校验”等运营规则。
 final case class TrainJourneyWindow(
     departureTime: Instant,
     arrivalTime: Instant
@@ -81,7 +71,7 @@ final case class TrainJourneyWindow(
   def overlaps(other: TrainJourneyWindow): Boolean =
     departureTime.isBefore(other.arrivalTime) && arrivalTime.isAfter(other.departureTime)
 
-final case class TrainJourney private[domain] (
+final case class TrainJourney(
     trainId: TrainId,
     managerId: ManagerId,
     trainNumber: TrainNumber,
@@ -129,8 +119,6 @@ final case class TrainJourney private[domain] (
       seatPreference: Option[TrainSeatPreference],
       existingAllocations: Vector[TrainSegmentSeatAllocation]
   ): Either[TrainError, TrainSeatAllocationPlan] =
-    // 这里的筛选顺序对应当前 Phase 2 的选座语义：
-    // 先找区间可用座位，再尽量满足偏好，再尽量相邻/同车厢。
     val availableSeats =
       seats
         .filter(seat => seat.inventoryId == seatInventory.inventoryId && seat.isBookable)
@@ -207,13 +195,12 @@ final case class TrainJourney private[domain] (
 
   private def positionTypeForPreference(seatPreference: TrainSeatPreference): TrainSeatPositionType =
     seatPreference match
-      case TrainSeatPreference.Window      => TrainSeatPositionType.Window
-      case TrainSeatPreference.Aisle       => TrainSeatPositionType.Aisle
-      case TrainSeatPreference.Middle      => TrainSeatPositionType.Middle
+      case TrainSeatPreference.Window => TrainSeatPositionType.Window
+      case TrainSeatPreference.Aisle => TrainSeatPositionType.Aisle
+      case TrainSeatPreference.Middle => TrainSeatPositionType.Middle
       case TrainSeatPreference.NoPreference => TrainSeatPositionType.Other
 
   private def chooseAdjacentSeats(availableSeats: Vector[TrainSeat], requestedQuantity: Int): Option[Vector[TrainSeat]] =
-    // 当前“相邻”规则保持可解释：同车厢、同行、seatCode 连续。
     availableSeats
       .groupBy(seat => (seat.carriageNo, seat.rowNo.value))
       .values
@@ -243,61 +230,31 @@ final case class TrainJourney private[domain] (
         .sliding(2)
         .forall {
           case Vector(leftSeat, rightSeat) => rightSeat.seatCode.headOption.exists(_.toInt - leftSeat.seatCode.headOption.getOrElse('A').toInt == 1) || rightSeat.seatCode.compareTo(leftSeat.seatCode) == 1
-          case _                           => true
+          case _ => true
         }
 
-object TrainJourney:
-  // create 面向管理员录入或业务创建，集中完成 stops / seats 这类结构校验。
-  def create(
-      trainId: TrainId,
-      managerId: ManagerId,
-      trainNumber: TrainNumber,
-      saleStartsAt: Instant,
-      stops: Vector[TrainStop],
-      seatInventories: Vector[TrainSeatInventory],
-      seats: Vector[TrainSeat],
-      segmentPrices: Vector[TrainSegmentPrice],
-      refundPolicySegments: Vector[TrainRefundPolicySegment],
-      createdAt: Instant
-  ): Either[TrainError, TrainJourney] =
-    for
-      _ <- validateStops(trainId, stops)
-      _ <- validateSeats(trainId, seatInventories, seats)
-    yield
-      TrainJourney(
-        trainId = trainId,
-        managerId = managerId,
-        trainNumber = trainNumber,
-        saleStartsAt = saleStartsAt,
-        trainJourneyStatus = TrainJourneyStatus.OnSale,
-        stops = stops.sortBy(_.sequenceNo),
-        seatInventories = seatInventories,
-        seats = seats.sortBy(seat => (seat.carriageNo, seat.rowNo.value, seat.seatCode)),
-        segmentPrices = segmentPrices,
-        refundPolicySegments = refundPolicySegments.sortBy(_.startOffsetBeforeDeparture.toMinutes).reverse,
-        createdAt = createdAt
-      )
-
-  // restore 只负责恢复持久化状态，不重新触发 create 的默认值逻辑。
-  def restore(
-      trainId: TrainId,
-      managerId: ManagerId,
-      trainNumber: TrainNumber,
-      saleStartsAt: Instant,
-      trainJourneyStatus: TrainJourneyStatus,
-      stops: Vector[TrainStop],
-      seatInventories: Vector[TrainSeatInventory],
-      seats: Vector[TrainSeat],
-      segmentPrices: Vector[TrainSegmentPrice],
-      refundPolicySegments: Vector[TrainRefundPolicySegment],
-      createdAt: Instant
-  ): TrainJourney =
+def createTrainJourney(
+    trainId: TrainId,
+    managerId: ManagerId,
+    trainNumber: TrainNumber,
+    saleStartsAt: Instant,
+    stops: Vector[TrainStop],
+    seatInventories: Vector[TrainSeatInventory],
+    seats: Vector[TrainSeat],
+    segmentPrices: Vector[TrainSegmentPrice],
+    refundPolicySegments: Vector[TrainRefundPolicySegment],
+    createdAt: Instant
+): Either[TrainError, TrainJourney] =
+  for
+    _ <- validateTrainStops(trainId, stops)
+    _ <- validateTrainSeats(trainId, seatInventories, seats)
+  yield
     TrainJourney(
       trainId = trainId,
       managerId = managerId,
       trainNumber = trainNumber,
       saleStartsAt = saleStartsAt,
-      trainJourneyStatus = trainJourneyStatus,
+      trainJourneyStatus = TrainJourneyStatus.OnSale,
       stops = stops.sortBy(_.sequenceNo),
       seatInventories = seatInventories,
       seats = seats.sortBy(seat => (seat.carriageNo, seat.rowNo.value, seat.seatCode)),
@@ -306,79 +263,103 @@ object TrainJourney:
       createdAt = createdAt
     )
 
-  // generateSeats 负责把“车厢数 + 排数 + 座位布局”物化成具体座位。
-  // 这是 Train admin 配置里最关键的一步，因为后续下单会落到具体座位。
-  def generateSeats(
-      trainId: TrainId,
-      inventory: TrainSeatInventory,
-      carriageCount: Int,
-      rowsPerCarriage: Int,
-      layoutColumns: Vector[TrainSeatLayoutColumn],
-      seatIds: Vector[TrainSeatId]
-  ): Either[TrainError, Vector[TrainSeat]] =
-    if carriageCount <= 0 || rowsPerCarriage <= 0 || layoutColumns.isEmpty then
-      Left(TrainError.TrainSeatGenerationWasInvalid(trainId, "carriageCount, rowsPerCarriage, and layoutColumns must all be positive"))
-    else
-      val preparedSeatSpecs =
-        (1 to carriageCount).toVector.flatMap { carriageNo =>
-          (1 to rowsPerCarriage).toVector.flatMap { rowNo =>
-            layoutColumns.map { column =>
-              (column, carriageNo, rowNo, f"$rowNo%02d${column.code}")
-            }
+def restorePersistedTrainJourney(
+    trainId: TrainId,
+    managerId: ManagerId,
+    trainNumber: TrainNumber,
+    saleStartsAt: Instant,
+    trainJourneyStatus: TrainJourneyStatus,
+    stops: Vector[TrainStop],
+    seatInventories: Vector[TrainSeatInventory],
+    seats: Vector[TrainSeat],
+    segmentPrices: Vector[TrainSegmentPrice],
+    refundPolicySegments: Vector[TrainRefundPolicySegment],
+    createdAt: Instant
+): TrainJourney =
+  TrainJourney(
+    trainId = trainId,
+    managerId = managerId,
+    trainNumber = trainNumber,
+    saleStartsAt = saleStartsAt,
+    trainJourneyStatus = trainJourneyStatus,
+    stops = stops.sortBy(_.sequenceNo),
+    seatInventories = seatInventories,
+    seats = seats.sortBy(seat => (seat.carriageNo, seat.rowNo.value, seat.seatCode)),
+    segmentPrices = segmentPrices,
+    refundPolicySegments = refundPolicySegments.sortBy(_.startOffsetBeforeDeparture.toMinutes).reverse,
+    createdAt = createdAt
+  )
+
+def generateTrainSeats(
+    trainId: TrainId,
+    inventory: TrainSeatInventory,
+    carriageCount: Int,
+    rowsPerCarriage: Int,
+    layoutColumns: Vector[TrainSeatLayoutColumn],
+    seatIds: Vector[TrainSeatId]
+): Either[TrainError, Vector[TrainSeat]] =
+  if carriageCount <= 0 || rowsPerCarriage <= 0 || layoutColumns.isEmpty then
+    Left(TrainError.TrainSeatGenerationWasInvalid(trainId, "carriageCount, rowsPerCarriage, and layoutColumns must all be positive"))
+  else
+    val preparedSeatSpecs =
+      (1 to carriageCount).toVector.flatMap { carriageNo =>
+        (1 to rowsPerCarriage).toVector.flatMap { rowNo =>
+          layoutColumns.map { column =>
+            (column, carriageNo, rowNo, f"$rowNo%02d${column.code}")
           }
         }
-      if preparedSeatSpecs.size != seatIds.size then
-        Left(TrainError.TrainSeatGenerationWasInvalid(trainId, s"Prepared ${preparedSeatSpecs.size} seats but got ${seatIds.size} ids"))
-      else
-        val materializedSeats = preparedSeatSpecs.zip(seatIds).map { case ((column, carriageNo, rowNo, seatNo), seatId) =>
-          TrainSeat(
-            seatId = seatId,
-            trainId = trainId,
-            inventoryId = inventory.inventoryId,
-            seatClass = inventory.seatClass,
-            carriageNo = carriageNo,
-            rowNo = TrainSeatRowNo.create(rowNo).fold(throw _, identity),
-            seatCode = column.code,
-            seatNo = seatNo,
-            seatLabel = s"${carriageNo}杞?seatNo",
-            seatPositionType = column.positionType,
-            seatStatus = TrainSeatStatus.Available
-          )
-        }
-        Either.cond(
-          materializedSeats.size == inventory.totalSeats.value,
-          materializedSeats,
-          TrainError.TrainSeatGenerationWasInvalid(trainId, s"Generated ${materializedSeats.size} seats but inventory declares ${inventory.totalSeats.value}")
-        )
-
-  private def validateStops(trainId: TrainId, stops: Vector[TrainStop]): Either[TrainError, Unit] =
-    if stops.size < 2 then Left(TrainError.TrainHadTooFewStops(trainId))
+      }
+    if preparedSeatSpecs.size != seatIds.size then
+      Left(TrainError.TrainSeatGenerationWasInvalid(trainId, s"Prepared ${preparedSeatSpecs.size} seats but got ${seatIds.size} ids"))
     else
-      stops
-        .sortBy(_.sequenceNo)
-        .sliding(2)
-        .toVector
-        .traverse_ {
-          case Vector(leftStop, rightStop) if leftStop.sequenceNo + 1 == rightStop.sequenceNo => Right(())
-          case Vector(leftStop, _) => Left(TrainError.TrainStopSequenceWasInvalid(trainId, leftStop.stationCode.value))
-          case _ => Right(())
-        }
-
-  private def validateSeats(
-      trainId: TrainId,
-      seatInventories: Vector[TrainSeatInventory],
-      seats: Vector[TrainSeat]
-  ): Either[TrainError, Unit] =
-    val seatsByInventoryId = seats.groupBy(_.inventoryId)
-    seatInventories.traverse_ { inventory =>
-      val generatedSeats = seatsByInventoryId.getOrElse(inventory.inventoryId, Vector.empty)
-      Either.cond(
-        generatedSeats.size == inventory.totalSeats.value,
-        (),
-        TrainError.TrainSeatGenerationWasInvalid(
-          trainId,
-          s"Inventory '${inventory.inventoryId.value}' expected ${inventory.totalSeats.value} seats but found ${generatedSeats.size}"
+      val materializedSeats = preparedSeatSpecs.zip(seatIds).map { case ((column, carriageNo, rowNo, seatNo), seatId) =>
+        TrainSeat(
+          seatId = seatId,
+          trainId = trainId,
+          inventoryId = inventory.inventoryId,
+          seatClass = inventory.seatClass,
+          carriageNo = carriageNo,
+          rowNo = TrainSeatRowNo.create(rowNo).fold(throw _, identity),
+          seatCode = column.code,
+          seatNo = seatNo,
+          seatLabel = s"${carriageNo}车$seatNo",
+          seatPositionType = column.positionType,
+          seatStatus = TrainSeatStatus.Available
         )
+      }
+      Either.cond(
+        materializedSeats.size == inventory.totalSeats.value,
+        materializedSeats,
+        TrainError.TrainSeatGenerationWasInvalid(trainId, s"Generated ${materializedSeats.size} seats but inventory declares ${inventory.totalSeats.value}")
       )
-    }
 
+private def validateTrainStops(trainId: TrainId, stops: Vector[TrainStop]): Either[TrainError, Unit] =
+  if stops.size < 2 then Left(TrainError.TrainHadTooFewStops(trainId))
+  else
+    stops
+      .sortBy(_.sequenceNo)
+      .sliding(2)
+      .toVector
+      .traverse_ {
+        case Vector(leftStop, rightStop) if leftStop.sequenceNo + 1 == rightStop.sequenceNo => Right(())
+        case Vector(leftStop, _) => Left(TrainError.TrainStopSequenceWasInvalid(trainId, leftStop.stationCode.value))
+        case _ => Right(())
+      }
+
+private def validateTrainSeats(
+    trainId: TrainId,
+    seatInventories: Vector[TrainSeatInventory],
+    seats: Vector[TrainSeat]
+): Either[TrainError, Unit] =
+  val seatsByInventoryId = seats.groupBy(_.inventoryId)
+  seatInventories.traverse_ { inventory =>
+    val generatedSeats = seatsByInventoryId.getOrElse(inventory.inventoryId, Vector.empty)
+    Either.cond(
+      generatedSeats.size == inventory.totalSeats.value,
+      (),
+      TrainError.TrainSeatGenerationWasInvalid(
+        trainId,
+        s"Inventory '${inventory.inventoryId.value}' expected ${inventory.totalSeats.value} seats but found ${generatedSeats.size}"
+      )
+    )
+  }

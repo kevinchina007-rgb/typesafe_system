@@ -117,17 +117,26 @@ final case class TourGroupConversationDetailView(
     messages: List[TourGroupMessageView]
 )
 
-enum TourGroupApplicationError(val message: String) extends DomainError:
-  case ResourceContextWasInvalid(optionId: GroupPlanOptionId, resourceType: GroupPlanOptionResourceType)
-      extends TourGroupApplicationError(
-        s"Option '${optionId.value}' has invalid resource context for resource type $resourceType"
-      )
-  case MembershipTravelerWasNotFound(travelerId: TravelerId)
-      extends TourGroupApplicationError(s"Traveler '${travelerId.value}' was not found")
-  case MembershipTravelerWasNotOwnedByUser(travelerId: TravelerId, userId: UserId)
-      extends TourGroupApplicationError(s"Traveler '${travelerId.value}' is not owned by user '${userId.value}'")
-  case SelectionOrderCreationFailed(selectionId: GroupPlanSelectionId)
-      extends TourGroupApplicationError(s"Selection '${selectionId.value}' could not be converted into an order")
+sealed trait TourGroupApplicationError extends DomainError
+
+object TourGroupApplicationError:
+  final case class ResourceContextWasInvalid(optionId: GroupPlanOptionId, resourceType: GroupPlanOptionResourceType)
+      extends TourGroupApplicationError:
+    override val message: String =
+      s"Option '${optionId.value}' has invalid resource context for resource type $resourceType"
+
+  final case class MembershipTravelerWasNotFound(travelerId: TravelerId) extends TourGroupApplicationError:
+    override val message: String =
+      s"Traveler '${travelerId.value}' was not found"
+
+  final case class MembershipTravelerWasNotOwnedByUser(travelerId: TravelerId, userId: UserId)
+      extends TourGroupApplicationError:
+    override val message: String =
+      s"Traveler '${travelerId.value}' is not owned by user '${userId.value}'"
+
+  final case class SelectionOrderCreationFailed(selectionId: GroupPlanSelectionId) extends TourGroupApplicationError:
+    override val message: String =
+      s"Selection '${selectionId.value}' could not be converted into an order"
 
 trait TourGroupApplicationService[F[_]]:
   def createGroup(

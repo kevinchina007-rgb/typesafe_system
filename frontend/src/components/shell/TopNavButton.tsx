@@ -3,6 +3,7 @@ import type { AppIcon } from '../icons/Icons'
 import { Icon } from '../icons/Icons'
 
 type TopNavButtonProps = {
+  badgeCount?: number
   icon: AppIcon
   isActive: boolean
   label: string
@@ -10,7 +11,7 @@ type TopNavButtonProps = {
   onSelect: (viewKey: AppViewKey) => void
 }
 
-export function TopNavButton({ icon, isActive, label, targetViewKey, onSelect }: TopNavButtonProps) {
+export function TopNavButton({ badgeCount, icon, isActive, label, targetViewKey, onSelect }: TopNavButtonProps) {
   return (
     <button
       type="button"
@@ -21,6 +22,7 @@ export function TopNavButton({ icon, isActive, label, targetViewKey, onSelect }:
         <Icon icon={icon} size={18} />
         <span className="top-nav-button-label">{label}</span>
       </span>
+      {badgeCount && badgeCount > 0 ? <span className="top-nav-button-badge">{badgeCount}</span> : null}
     </button>
   )
 }

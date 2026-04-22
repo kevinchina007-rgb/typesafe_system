@@ -22,4 +22,4 @@ final class LiveFlightService[F[_]: MonadThrow](flightRepository: FlightReposito
     flightRepository.searchFlights(FlightSearchCriteria(departureAirport, arrivalAirport, departureDate))
 
   override def getFlightDetails(flightId: FlightId): F[Flight] =
-    flightRepository.findFlightById(flightId).flatMap(_.liftTo[F](FlightError.FlightWasNotFound(flightId)))
+    flightRepository.findFlightById(flightId).flatMap(_.liftTo[F](FlightError.flightWasNotFound(flightId)))

@@ -235,3 +235,87 @@ final case class AttractionOrderItem private[domain] (
           )
         case _ =>
           Left(OrderError.OrderItemWasNotAwaitingSupplierDecision(orderItemId, supplierReviewStatus))
+
+def createReservedFlightOrderItem(
+    orderItemId: OrderItemId,
+    flightBookingSnapshot: FlightBookingSnapshot
+): FlightOrderItem =
+  FlightOrderItem(
+    orderItemId = orderItemId,
+    flightBookingSnapshot = flightBookingSnapshot,
+    orderItemStatus = OrderItemStatus.Reserved,
+    supplierReviewStatus = SupplierReviewStatus.NotSubmitted,
+    supplierReviewDecision = None
+  )
+
+def restorePersistedFlightOrderItem(
+    orderItemId: OrderItemId,
+    flightBookingSnapshot: FlightBookingSnapshot,
+    orderItemStatus: OrderItemStatus,
+    supplierReviewStatus: SupplierReviewStatus,
+    supplierReviewDecision: Option[SupplierReviewDecision]
+): FlightOrderItem =
+  FlightOrderItem(orderItemId, flightBookingSnapshot, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
+
+def createReservedHotelOrderItem(
+    orderItemId: OrderItemId,
+    hotelBookingSnapshot: HotelBookingSnapshot
+): HotelOrderItem =
+  HotelOrderItem(
+    orderItemId = orderItemId,
+    hotelBookingSnapshot = hotelBookingSnapshot,
+    orderItemStatus = OrderItemStatus.Reserved,
+    supplierReviewStatus = SupplierReviewStatus.NotSubmitted,
+    supplierReviewDecision = None
+  )
+
+def restorePersistedHotelOrderItem(
+    orderItemId: OrderItemId,
+    hotelBookingSnapshot: HotelBookingSnapshot,
+    orderItemStatus: OrderItemStatus,
+    supplierReviewStatus: SupplierReviewStatus,
+    supplierReviewDecision: Option[SupplierReviewDecision]
+): HotelOrderItem =
+  HotelOrderItem(orderItemId, hotelBookingSnapshot, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
+
+def createReservedTrainOrderItem(
+    orderItemId: OrderItemId,
+    trainBookingSnapshot: TrainBookingSnapshot
+): TrainOrderItem =
+  TrainOrderItem(
+    orderItemId = orderItemId,
+    trainBookingSnapshot = trainBookingSnapshot,
+    orderItemStatus = OrderItemStatus.Reserved,
+    supplierReviewStatus = SupplierReviewStatus.NotSubmitted,
+    supplierReviewDecision = None
+  )
+
+def restorePersistedTrainOrderItem(
+    orderItemId: OrderItemId,
+    trainBookingSnapshot: TrainBookingSnapshot,
+    orderItemStatus: OrderItemStatus,
+    supplierReviewStatus: SupplierReviewStatus,
+    supplierReviewDecision: Option[SupplierReviewDecision]
+): TrainOrderItem =
+  TrainOrderItem(orderItemId, trainBookingSnapshot, orderItemStatus, supplierReviewStatus, supplierReviewDecision)
+
+def createReservedAttractionOrderItem(
+    orderItemId: OrderItemId,
+    attractionTicketSnapshot: AttractionTicketSnapshot
+): AttractionOrderItem =
+  AttractionOrderItem(
+    orderItemId = orderItemId,
+    attractionTicketSnapshot = attractionTicketSnapshot,
+    orderItemStatus = OrderItemStatus.Reserved,
+    supplierReviewStatus = SupplierReviewStatus.NotSubmitted,
+    supplierReviewDecision = None
+  )
+
+def restorePersistedAttractionOrderItem(
+    orderItemId: OrderItemId,
+    attractionTicketSnapshot: AttractionTicketSnapshot,
+    orderItemStatus: OrderItemStatus,
+    supplierReviewStatus: SupplierReviewStatus,
+    supplierReviewDecision: Option[SupplierReviewDecision]
+): AttractionOrderItem =
+  AttractionOrderItem(orderItemId, attractionTicketSnapshot, orderItemStatus, supplierReviewStatus, supplierReviewDecision)

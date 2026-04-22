@@ -116,8 +116,6 @@ final case class TrainAdminSessionResponseDto(
 )
 
 final case class BookTrainItemRequestDto(
-    buyerUserId: String,
-    orderId: String,
     trainId: String,
     travelerIds: List[String],
     fromStationCode: String,
@@ -136,76 +134,74 @@ final case class TrainSeatResponseDto(
     status: String
 )
 
-object TrainResponseDto:
-  def fromDomain(
-      trainJourney: TrainJourney,
-      remainingSaleableSeatsByInventoryId: Map[String, Int] = Map.empty
-  ): TrainResponseDto =
-    TrainResponseDto(
-      trainId = trainJourney.trainId.value,
-      trainNumber = trainJourney.trainNumber.value,
-      saleStartsAt = trainJourney.saleStartsAt.toString,
-      status = trainJourney.trainJourneyStatus.toString,
-      stops = trainJourney.stops.sortBy(_.sequenceNo).map { stop =>
-        TrainStopResponseDto(
-          stopId = stop.stopId.value,
-          stationCode = stop.stationCode.value,
-          stationName = stop.stationName.value,
-          sequenceNo = stop.sequenceNo,
-          arrivalTime = stop.arrivalTime.map(_.toString),
-          departureTime = stop.departureTime.map(_.toString)
-        )
-      }.toList,
-      seatInventories = trainJourney.seatInventories.map { seatInventory =>
-        val remainingSeats = remainingSaleableSeatsByInventoryId.getOrElse(seatInventory.inventoryId.value, seatInventory.saleableSeats.value)
-        TrainSeatInventoryResponseDto(
-          inventoryId = seatInventory.inventoryId.value,
-          seatClass = seatInventory.seatClass.value,
-          totalSeats = seatInventory.totalSeats.value,
-          saleableSeats = remainingSeats,
-          status = seatInventory.seatInventoryStatus.toString
-        )
-      }.toList,
-      seats = trainJourney.seats.map { seat =>
-        TrainSeatResponseDto(
-          seatId = seat.seatId.value,
-          carriageNo = seat.carriageNo,
-          seatNo = seat.seatNo,
-          seatLabel = seat.seatLabel,
-          seatClass = seat.seatClass.value,
-          seatPositionType = seat.seatPositionType.toString,
-          status = seat.seatStatus.toString
-        )
-      }.toList,
-      segmentPrices = trainJourney.segmentPrices.map { segmentPrice =>
-        TrainSegmentPriceResponseDto(
-          fromStationCode = trainJourney.stops.find(_.stopId == segmentPrice.fromStopId).map(_.stationCode.value).getOrElse(""),
-          toStationCode = trainJourney.stops.find(_.stopId == segmentPrice.toStopId).map(_.stationCode.value).getOrElse(""),
-          seatClass = segmentPrice.seatClass.value,
-          amount = segmentPrice.price.amount.toString,
-          currency = segmentPrice.price.currency.toString
-        )
-      }.toList,
-      refundPolicies = trainJourney.refundPolicySegments.map { refundPolicy =>
-        TrainRefundPolicyResponseDto(
-          startOffsetMinutesBeforeDeparture = refundPolicy.startOffsetBeforeDeparture.toMinutes,
-          endOffsetMinutesBeforeDeparture = refundPolicy.endOffsetBeforeDeparture.toMinutes,
-          refundType = refundPolicy.refundType.toString,
-          refundRate = refundPolicy.refundRate.value.toString
-        )
-      }.toList
-    )
+def trainResponseDto(
+    trainJourney: TrainJourney,
+    remainingSaleableSeatsByInventoryId: Map[String, Int] = Map.empty
+): TrainResponseDto =
+  TrainResponseDto(
+    trainId = trainJourney.trainId.value,
+    trainNumber = trainJourney.trainNumber.value,
+    saleStartsAt = trainJourney.saleStartsAt.toString,
+    status = trainJourney.trainJourneyStatus.toString,
+    stops = trainJourney.stops.sortBy(_.sequenceNo).map { stop =>
+      TrainStopResponseDto(
+        stopId = stop.stopId.value,
+        stationCode = stop.stationCode.value,
+        stationName = stop.stationName.value,
+        sequenceNo = stop.sequenceNo,
+        arrivalTime = stop.arrivalTime.map(_.toString),
+        departureTime = stop.departureTime.map(_.toString)
+      )
+    }.toList,
+    seatInventories = trainJourney.seatInventories.map { seatInventory =>
+      val remainingSeats = remainingSaleableSeatsByInventoryId.getOrElse(seatInventory.inventoryId.value, seatInventory.saleableSeats.value)
+      TrainSeatInventoryResponseDto(
+        inventoryId = seatInventory.inventoryId.value,
+        seatClass = seatInventory.seatClass.value,
+        totalSeats = seatInventory.totalSeats.value,
+        saleableSeats = remainingSeats,
+        status = seatInventory.seatInventoryStatus.toString
+      )
+    }.toList,
+    seats = trainJourney.seats.map { seat =>
+      TrainSeatResponseDto(
+        seatId = seat.seatId.value,
+        carriageNo = seat.carriageNo,
+        seatNo = seat.seatNo,
+        seatLabel = seat.seatLabel,
+        seatClass = seat.seatClass.value,
+        seatPositionType = seat.seatPositionType.toString,
+        status = seat.seatStatus.toString
+      )
+    }.toList,
+    segmentPrices = trainJourney.segmentPrices.map { segmentPrice =>
+      TrainSegmentPriceResponseDto(
+        fromStationCode = trainJourney.stops.find(_.stopId == segmentPrice.fromStopId).map(_.stationCode.value).getOrElse(""),
+        toStationCode = trainJourney.stops.find(_.stopId == segmentPrice.toStopId).map(_.stationCode.value).getOrElse(""),
+        seatClass = segmentPrice.seatClass.value,
+        amount = segmentPrice.price.amount.toString,
+        currency = segmentPrice.price.currency.toString
+      )
+    }.toList,
+    refundPolicies = trainJourney.refundPolicySegments.map { refundPolicy =>
+      TrainRefundPolicyResponseDto(
+        startOffsetMinutesBeforeDeparture = refundPolicy.startOffsetBeforeDeparture.toMinutes,
+        endOffsetMinutesBeforeDeparture = refundPolicy.endOffsetBeforeDeparture.toMinutes,
+        refundType = refundPolicy.refundType.toString,
+        refundRate = refundPolicy.refundRate.value.toString
+      )
+    }.toList
+  )
 
-object TrainAdminSessionResponseDto:
-  def fromApplication(trainAdminSession: com.typesafe.travel.api.application.TrainAdminSession): TrainAdminSessionResponseDto =
-    TrainAdminSessionResponseDto(
-      managerId = trainAdminSession.railwayManager.managerId.value,
-      operatorCode = trainAdminSession.railwayManager.operatorCode,
-      email = trainAdminSession.railwayManager.primaryEmailAddress.value,
-      displayName = trainAdminSession.railwayManager.displayName.value,
-      status = trainAdminSession.railwayManager.managerStatus.toString,
-      managedTrains = trainAdminSession.managedTrains.map(trainJourney => TrainResponseDto.fromDomain(trainJourney))
-    )
+def trainAdminSessionResponseDto(trainAdminSession: com.typesafe.travel.api.application.TrainAdminSession): TrainAdminSessionResponseDto =
+  TrainAdminSessionResponseDto(
+    managerId = trainAdminSession.railwayManager.managerId.value,
+    operatorCode = trainAdminSession.railwayManager.operatorCode,
+    email = trainAdminSession.railwayManager.primaryEmailAddress.value,
+    displayName = trainAdminSession.railwayManager.displayName.value,
+    status = trainAdminSession.railwayManager.managerStatus.toString,
+    managedTrains = trainAdminSession.managedTrains.map(trainJourney => trainResponseDto(trainJourney))
+  )
 
 object TrainDtoMappers:
   def toTrainStationCode(stationCodeValue: String) =

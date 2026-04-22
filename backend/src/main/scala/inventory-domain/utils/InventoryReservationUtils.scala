@@ -16,7 +16,7 @@ def createActiveReservation(
     checkInDate: Option[LocalDate] = None,
     checkOutDate: Option[LocalDate] = None
 ): Either[InventoryReservationError, InventoryReservation] =
-  InventoryReservation.createActive(
+  createActiveInventoryReservation(
     reservationId,
     resourceType,
     resourceId,
@@ -45,7 +45,7 @@ def restorePersistedReservation(
     checkInDate: Option[LocalDate],
     checkOutDate: Option[LocalDate]
 ): InventoryReservation =
-  InventoryReservation.restore(
+  restorePersistedInventoryReservation(
     reservationId,
     resourceType,
     resourceId,

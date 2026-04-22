@@ -7,7 +7,7 @@ import com.typesafe.travel.hotel.domain.*
 import com.typesafe.travel.operations.domain.ManagerType
 import com.typesafe.travel.order.domain.{Order, SupplierReviewStatus}
 import com.typesafe.travel.shared.kernel.*
-import com.typesafe.travel.traveler.domain.TravelerEmergencyContact
+import com.typesafe.travel.traveler.domain.{TravelerEmergencyContact, travelerEmergencyContact}
 import com.typesafe.travel.inventory.domain.InventoryReservationRepository
 import io.circe.syntax.*
 import org.http4s.EntityDecoder
@@ -34,6 +34,7 @@ trait ApiRouterRequestSupport[F[_]: Async]:
   protected given managerBatchDecisionDecoder: EntityDecoder[F, ManagerBatchDecisionRequestDto] = jsonOf[F, ManagerBatchDecisionRequestDto]
   protected given registerAirlineManagerDecoder: EntityDecoder[F, RegisterAirlineManagerRequestDto] = jsonOf[F, RegisterAirlineManagerRequestDto]
   protected given registerHotelManagerDecoder: EntityDecoder[F, RegisterHotelManagerRequestDto] = jsonOf[F, RegisterHotelManagerRequestDto]
+  protected given registerSiteAdminDecoder: EntityDecoder[F, RegisterSiteAdminRequestDto] = jsonOf[F, RegisterSiteAdminRequestDto]
   protected given createManagerFlightDecoder: EntityDecoder[F, CreateManagerFlightRequestDto] = jsonOf[F, CreateManagerFlightRequestDto]
   protected given createManagerRoomTypeDecoder: EntityDecoder[F, CreateManagerRoomTypeRequestDto] = jsonOf[F, CreateManagerRoomTypeRequestDto]
   protected given registerRailwayManagerDecoder: EntityDecoder[F, RegisterRailwayManagerRequestDto] = jsonOf[F, RegisterRailwayManagerRequestDto]
@@ -113,7 +114,7 @@ trait ApiRouterRequestSupport[F[_]: Async]:
         for
           parsedContactName <- fromEither(PersonName.create(contactName))
           parsedContactNumber <- fromEither(ContactNumber.create(contactPhoneNumber))
-        yield Some(TravelerEmergencyContact.create(parsedContactName, parsedContactNumber))
+        yield Some(travelerEmergencyContact(parsedContactName, parsedContactNumber))
       case _ =>
         Async[F].pure(None)
 

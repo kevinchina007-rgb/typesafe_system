@@ -1,8 +1,10 @@
 import type {
   AttractionAdminSessionResponse,
   AttractionListResponse,
+  CurrentManagerSessionResponse,
   FlightListResponse,
   FlightResponse,
+  HotelListResponse,
   HotelResponse,
   ManagerBatchDecisionResponse,
   ManagerRefundTaskListResponse,
@@ -34,6 +36,13 @@ export const managerApiClient = {
     password: string
   }): Promise<ManagerSessionResponse> =>
     executeJsonApiRequest('/manager/hotel/register', 'POST', payload),
+
+  registerSiteAdmin: (payload: {
+    email: string
+    displayName: string
+    password: string
+  }): Promise<CurrentManagerSessionResponse> =>
+    executeJsonApiRequest('/manager/site-admin/register', 'POST', payload),
 
   registerRailwayManager: (payload: { operatorCode: string; email: string; displayName: string; password: string }): Promise<TrainAdminSessionResponse> =>
     executeJsonApiRequest('/train-admin/managers', 'POST', payload),
@@ -118,6 +127,9 @@ export const managerApiClient = {
     inventoryEndDate: string
   }): Promise<HotelResponse> =>
     executeJsonApiRequest('/manager/hotel-room-types', 'POST', payload),
+
+  listManagedHotels: (managerId: string): Promise<HotelListResponse> =>
+    executeApiRequest(`/manager/hotels${createQueryString({ managerId })}`),
 
   listManagerTasks: (query: { managerId: string; managerType: string; status?: string; resourceType?: string }): Promise<ManagerTaskListResponse> =>
     executeApiRequest(`/manager/tasks${createQueryString(query)}`),

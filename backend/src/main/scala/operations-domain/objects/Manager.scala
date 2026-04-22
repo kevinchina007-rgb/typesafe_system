@@ -3,11 +3,31 @@ package com.typesafe.travel.operations.domain
 import com.typesafe.travel.shared.kernel.*
 import java.time.Instant
 
-enum ManagerStatus:
-  case Active, Inactive
+final case class ManagerStatus(value: String):
+  override def toString: String = value
 
-enum ManagerType:
-  case Airline, Hotel, Attraction
+object ManagerStatus:
+  val Active: ManagerStatus = ManagerStatus("Active")
+  val Inactive: ManagerStatus = ManagerStatus("Inactive")
+
+  def fromText(value: String): ManagerStatus =
+    value.trim.toLowerCase match
+      case "inactive" => Inactive
+      case _ => Active
+
+final case class ManagerType(value: String):
+  override def toString: String = value
+
+object ManagerType:
+  val Airline: ManagerType = ManagerType("Airline")
+  val Hotel: ManagerType = ManagerType("Hotel")
+  val Attraction: ManagerType = ManagerType("Attraction")
+
+  def fromText(value: String): ManagerType =
+    value.trim.toLowerCase match
+      case "hotel" => Hotel
+      case "attraction" => Attraction
+      case _ => Airline
 
 sealed trait ManagerContext:
   def managerId: ManagerId
@@ -17,7 +37,7 @@ sealed trait ManagerContext:
   def createdAt: Instant
   def managerType: ManagerType
 
-final case class AirlineManager private[domain] (
+final case class AirlineManager(
     managerId: ManagerId,
     airlineId: AirlineId,
     primaryEmailAddress: EmailAddress,
@@ -27,27 +47,7 @@ final case class AirlineManager private[domain] (
 ) extends ManagerContext:
   val managerType: ManagerType = ManagerType.Airline
 
-object AirlineManager:
-  def register(
-      managerId: ManagerId,
-      airlineId: AirlineId,
-      primaryEmailAddress: EmailAddress,
-      displayName: PersonName,
-      createdAt: Instant
-  ): AirlineManager =
-    AirlineManager(managerId, airlineId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
-
-  def restore(
-      managerId: ManagerId,
-      airlineId: AirlineId,
-      primaryEmailAddress: EmailAddress,
-      displayName: PersonName,
-      managerStatus: ManagerStatus,
-      createdAt: Instant
-  ): AirlineManager =
-    AirlineManager(managerId, airlineId, primaryEmailAddress, displayName, managerStatus, createdAt)
-
-final case class HotelManager private[domain] (
+final case class HotelManager(
     managerId: ManagerId,
     hotelId: HotelId,
     primaryEmailAddress: EmailAddress,
@@ -57,27 +57,7 @@ final case class HotelManager private[domain] (
 ) extends ManagerContext:
   val managerType: ManagerType = ManagerType.Hotel
 
-object HotelManager:
-  def register(
-      managerId: ManagerId,
-      hotelId: HotelId,
-      primaryEmailAddress: EmailAddress,
-      displayName: PersonName,
-      createdAt: Instant
-  ): HotelManager =
-    HotelManager(managerId, hotelId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
-
-  def restore(
-      managerId: ManagerId,
-      hotelId: HotelId,
-      primaryEmailAddress: EmailAddress,
-      displayName: PersonName,
-      managerStatus: ManagerStatus,
-      createdAt: Instant
-  ): HotelManager =
-    HotelManager(managerId, hotelId, primaryEmailAddress, displayName, managerStatus, createdAt)
-
-final case class AttractionManager private[domain] (
+final case class AttractionManager(
     managerId: ManagerId,
     primaryEmailAddress: EmailAddress,
     displayName: PersonName,
@@ -86,32 +66,76 @@ final case class AttractionManager private[domain] (
 ) extends ManagerContext:
   val managerType: ManagerType = ManagerType.Attraction
 
-object AttractionManager:
-  def register(
-      managerId: ManagerId,
-      primaryEmailAddress: EmailAddress,
-      displayName: PersonName,
-      createdAt: Instant
-  ): AttractionManager =
-    AttractionManager(managerId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
+def registerAirlineManager(
+    managerId: ManagerId,
+    airlineId: AirlineId,
+    primaryEmailAddress: EmailAddress,
+    displayName: PersonName,
+    createdAt: Instant
+): AirlineManager =
+  AirlineManager(managerId, airlineId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
 
-  def restore(
-      managerId: ManagerId,
-      primaryEmailAddress: EmailAddress,
-      displayName: PersonName,
-      managerStatus: ManagerStatus,
-      createdAt: Instant
-  ): AttractionManager =
-    AttractionManager(managerId, primaryEmailAddress, displayName, managerStatus, createdAt)
+def restorePersistedAirlineManager(
+    managerId: ManagerId,
+    airlineId: AirlineId,
+    primaryEmailAddress: EmailAddress,
+    displayName: PersonName,
+    managerStatus: ManagerStatus,
+    createdAt: Instant
+): AirlineManager =
+  AirlineManager(managerId, airlineId, primaryEmailAddress, displayName, managerStatus, createdAt)
 
-enum ManagerError(val message: String) extends DomainError:
-  case ManagerWasNotFoundByEmail(managerType: ManagerType, primaryEmailAddress: EmailAddress)
-      extends ManagerError(s"$managerType manager '${primaryEmailAddress.value}' was not found")
-  case ManagerWasNotFoundById(managerType: ManagerType, managerId: ManagerId)
-      extends ManagerError(s"$managerType manager '${managerId.value}' was not found")
-  case ManagerEmailAlreadyExists(primaryEmailAddress: EmailAddress)
-      extends ManagerError(s"Manager email '${primaryEmailAddress.value}' already exists")
-  case ManagerWasInactive(managerType: ManagerType, managerId: ManagerId)
-      extends ManagerError(s"$managerType manager '${managerId.value}' is inactive")
-  case ManagerScopeDidNotMatch(managerType: ManagerType, managerId: ManagerId, orderItemId: OrderItemId)
-      extends ManagerError(s"$managerType manager '${managerId.value}' cannot act on booking item '${orderItemId.value}'")
+def registerHotelManager(
+    managerId: ManagerId,
+    hotelId: HotelId,
+    primaryEmailAddress: EmailAddress,
+    displayName: PersonName,
+    createdAt: Instant
+): HotelManager =
+  HotelManager(managerId, hotelId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
+
+def restorePersistedHotelManager(
+    managerId: ManagerId,
+    hotelId: HotelId,
+    primaryEmailAddress: EmailAddress,
+    displayName: PersonName,
+    managerStatus: ManagerStatus,
+    createdAt: Instant
+): HotelManager =
+  HotelManager(managerId, hotelId, primaryEmailAddress, displayName, managerStatus, createdAt)
+
+def registerAttractionManager(
+    managerId: ManagerId,
+    primaryEmailAddress: EmailAddress,
+    displayName: PersonName,
+    createdAt: Instant
+): AttractionManager =
+  AttractionManager(managerId, primaryEmailAddress, displayName, ManagerStatus.Active, createdAt)
+
+def restorePersistedAttractionManager(
+    managerId: ManagerId,
+    primaryEmailAddress: EmailAddress,
+    displayName: PersonName,
+    managerStatus: ManagerStatus,
+    createdAt: Instant
+): AttractionManager =
+  AttractionManager(managerId, primaryEmailAddress, displayName, managerStatus, createdAt)
+
+sealed trait ManagerError extends DomainError:
+  def message: String
+
+object ManagerError:
+  final case class ManagerWasNotFoundByEmail(managerType: ManagerType, primaryEmailAddress: EmailAddress) extends ManagerError:
+    override val message: String = s"$managerType manager '${primaryEmailAddress.value}' was not found"
+
+  final case class ManagerWasNotFoundById(managerType: ManagerType, managerId: ManagerId) extends ManagerError:
+    override val message: String = s"$managerType manager '${managerId.value}' was not found"
+
+  final case class ManagerEmailAlreadyExists(primaryEmailAddress: EmailAddress) extends ManagerError:
+    override val message: String = s"Manager email '${primaryEmailAddress.value}' already exists"
+
+  final case class ManagerWasInactive(managerType: ManagerType, managerId: ManagerId) extends ManagerError:
+    override val message: String = s"$managerType manager '${managerId.value}' is inactive"
+
+  final case class ManagerScopeDidNotMatch(managerType: ManagerType, managerId: ManagerId, orderItemId: OrderItemId) extends ManagerError:
+    override val message: String = s"$managerType manager '${managerId.value}' cannot act on booking item '${orderItemId.value}'"

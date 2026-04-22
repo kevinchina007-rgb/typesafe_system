@@ -30,7 +30,7 @@ trait TravelerApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentDate <- currentLocalDateF
         travelerBirthDate <- fromEither(BirthDate.create(LocalDate.parse(createTravelerRequestDto.birthDate), currentDate))
         travelerPreferences <- fromEither(
-          TravelerPreferences.create(
+          travelerPreferences(
             travelerSeatPreference = TravelerDtoMappers.toSeatPreference(createTravelerRequestDto.seatPreference),
             travelerMealPreference = TravelerDtoMappers.toMealPreference(createTravelerRequestDto.mealPreference),
             accessibilityRequestNotes = createTravelerRequestDto.accessibilityRequestNotes
@@ -78,7 +78,7 @@ trait TravelerApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentDate <- currentLocalDateF
         travelerBirthDate <- fromEither(BirthDate.create(LocalDate.parse(updateTravelerRequestDto.birthDate), currentDate))
         travelerPreferences <- fromEither(
-          TravelerPreferences.create(
+          travelerPreferences(
             travelerSeatPreference = TravelerDtoMappers.toSeatPreference(updateTravelerRequestDto.seatPreference),
             travelerMealPreference = TravelerDtoMappers.toMealPreference(updateTravelerRequestDto.mealPreference),
             accessibilityRequestNotes = updateTravelerRequestDto.accessibilityRequestNotes

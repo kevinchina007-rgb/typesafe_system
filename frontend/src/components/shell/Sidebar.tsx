@@ -1,6 +1,5 @@
-import { useState } from 'react'
-
-import type { NavItem, TopNavKey } from '../../app/navigation'
+﻿import type { NavItem, TopNavKey } from '../../app/navigation'
+import { useNavigationUiStore } from '../../app/stores/navigation-ui-store'
 import type { AppViewKey } from '../../lib/mvp-types'
 import { Icon } from '../icons/Icons'
 
@@ -13,7 +12,8 @@ type SidebarProps = {
 }
 
 export function Sidebar({ currentTopNav, currentViewKey, items, onSelectView, translate }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const isCollapsed = useNavigationUiStore(state => state.isSidebarCollapsed)
+  const toggleSidebarCollapsed = useNavigationUiStore(state => state.toggleSidebarCollapsed)
 
   return (
     <aside className={`context-sidebar app-card ${isCollapsed ? 'is-collapsed' : ''}`}>
@@ -24,7 +24,7 @@ export function Sidebar({ currentTopNav, currentViewKey, items, onSelectView, tr
         <button
           type="button"
           className="secondary-button context-sidebar-toggle"
-          onClick={() => setIsCollapsed(previous => !previous)}
+          onClick={toggleSidebarCollapsed}
         >
           {translate(isCollapsed ? 'sidebar.expand' : 'sidebar.collapse')}
         </button>

@@ -126,12 +126,12 @@ final class DoobieManagerRepository[F[_]: Async](
     for
       primaryEmailAddress <- Async[F].fromEither(EmailAddress.create(emailValue))
       displayName <- Async[F].fromEither(PersonName.create(displayNameValue))
-    yield restorePersistedAirlineManager(
+    yield com.typesafe.travel.operations.domain.restorePersistedAirlineManager(
       managerId = ManagerId(managerIdValue),
       airlineId = AirlineId(airlineIdValue),
       primaryEmailAddress = primaryEmailAddress,
       displayName = displayName,
-      managerStatus = ManagerStatus.valueOf(statusValue),
+      managerStatus = ManagerStatus.fromText(statusValue),
       createdAt = createdAtValue
     )
 
@@ -140,12 +140,12 @@ final class DoobieManagerRepository[F[_]: Async](
     for
       primaryEmailAddress <- Async[F].fromEither(EmailAddress.create(emailValue))
       displayName <- Async[F].fromEither(PersonName.create(displayNameValue))
-    yield restorePersistedHotelManager(
+    yield com.typesafe.travel.operations.domain.restorePersistedHotelManager(
       managerId = ManagerId(managerIdValue),
       hotelId = HotelId(hotelIdValue),
       primaryEmailAddress = primaryEmailAddress,
       displayName = displayName,
-      managerStatus = ManagerStatus.valueOf(statusValue),
+      managerStatus = ManagerStatus.fromText(statusValue),
       createdAt = createdAtValue
     )
 
@@ -154,11 +154,10 @@ final class DoobieManagerRepository[F[_]: Async](
     for
       primaryEmailAddress <- Async[F].fromEither(EmailAddress.create(emailValue))
       displayName <- Async[F].fromEither(PersonName.create(displayNameValue))
-    yield restorePersistedAttractionManager(
+    yield com.typesafe.travel.operations.domain.restorePersistedAttractionManager(
       managerId = ManagerId(managerIdValue),
       primaryEmailAddress = primaryEmailAddress,
       displayName = displayName,
-      managerStatus = ManagerStatus.valueOf(statusValue),
+      managerStatus = ManagerStatus.fromText(statusValue),
       createdAt = createdAtValue
     )
-

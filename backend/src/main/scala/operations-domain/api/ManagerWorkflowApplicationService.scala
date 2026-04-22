@@ -101,12 +101,18 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
   override def listFlightsForAirlineManager(managerId: ManagerId): F[List[(Airline, Flight)]] =
     for
       airlineManager <- managerService.loadAirlineManager(managerId)
-      airline <- flightRepository.findAirlineById(airlineManager.airlineId).flatMap(_.liftTo[F](FlightError.AirlineWasNotFound(airlineManager.airlineId)))
+      airline <- flightRepository.findAirlineById(airlineManager.airlineId).flatMap(_.liftTo[F](FlightError.airlineWasNotFound(airlineManager.airlineId)))
       flights <- flightRepository.searchFlights(FlightSearchCriteria(None, None, None))
     yield flights
       .filter(_.airlineId == airline.airlineId)
       .sortBy(flight => (flight.flightSchedule.departureAt.toInstant.toEpochMilli, flight.flightId.value))
       .map(airline -> _)
+
+  override def listHotelsForHotelManager(managerId: ManagerId): F[List[Hotel]] =
+    for
+      hotelManager <- managerService.loadHotelManager(managerId)
+      hotel <- hotelRepository.findHotelById(hotelManager.hotelId).flatMap(_.liftTo[F](HotelError.HotelWasNotFound(hotelManager.hotelId)))
+    yield List(hotel)
 
   override def createFlightForAirlineManager(
       managerId: ManagerId,
@@ -123,12 +129,12 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
   ): F[(Airline, Flight)] =
     for
       airlineManager <- managerService.loadAirlineManager(managerId)
-      airline <- flightRepository.findAirlineById(airlineManager.airlineId).flatMap(_.liftTo[F](FlightError.AirlineWasNotFound(airlineManager.airlineId)))
+      airline <- flightRepository.findAirlineById(airlineManager.airlineId).flatMap(_.liftTo[F](FlightError.airlineWasNotFound(airlineManager.airlineId)))
       flightId <- flightRepository.nextFlightId
       economyInventoryId <- flightRepository.nextCabinInventoryId
       businessInventoryId <- flightRepository.nextCabinInventoryId
       flightSchedule <- FlightSchedule.create(departureAt, arrivalAt).liftTo[F]
-      flight <- createFlight(
+      flight <- buildFlight(
         flightId = flightId,
         airlineId = airline.airlineId,
         flightNumber = flightNumber,
@@ -137,8 +143,8 @@ final class LiveManagerWorkflowApplicationService[F[_]: MonadThrow](
         flightSchedule = flightSchedule,
         basePrice = economyPrice,
         cabinInventories = Vector(
-          createCabinInventory(economyInventoryId, flightId, CabinClass.unsafe("economy"), economySeatCount, economyPrice, InventoryStatus.Open),
-          createCabinInventory(businessInventoryId, flightId, CabinClass.unsafe("business"), businessSeatCount, businessPrice, InventoryStatus.Open)
+          buildCabinInventory(economyInventoryId, flightId, CabinClass.unsafe("economy"), economySeatCount, economyPrice, InventoryStatus.Open),
+          buildCabinInventory(businessInventoryId, flightId, CabinClass.unsafe("business"), businessSeatCount, businessPrice, InventoryStatus.Open)
         ),
         createdAt = createdAt
       )

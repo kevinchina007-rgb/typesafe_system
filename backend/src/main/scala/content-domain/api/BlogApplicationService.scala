@@ -9,10 +9,13 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.time.Instant
 
-// Blog application service 负责把 Blog 核心数据组装成前端直接可用的展示模型。
-// 点赞数、评论数、作者展示信息、搜索摘要等字段都在这一层计算，不回写成权威字段。
+// Blog application service 璐熻矗鎶?Blog 鏍稿績鏁版嵁缁勮鎴愬墠绔洿鎺ュ彲鐢ㄧ殑灞曠ず妯″瀷銆?
+// 鐐硅禐鏁般€佽瘎璁烘暟銆佷綔鑰呭睍绀轰俊鎭€佹悳绱㈡憳瑕佺瓑瀛楁閮藉湪杩欎竴灞傝绠楋紝涓嶅洖鍐欐垚鏉冨▉瀛楁銆?
 enum BlogPostScope:
   case Latest, Mine
+
+enum BlogModerationScope:
+  case Pending, Reviewed
 
 enum BlogImageUploadError(val message: String) extends DomainError:
   case ImageWasMissing
@@ -57,16 +60,19 @@ final case class BlogCommentView(
     canDelete: Boolean
 )
 
-// 详情页把列表摘要和正文/评论合在一起返回，避免前端再拼多次请求结果。
+// 璇︽儏椤垫妸鍒楄〃鎽樿鍜屾鏂?璇勮鍚堝湪涓€璧疯繑鍥烇紝閬垮厤鍓嶇鍐嶆嫾澶氭璇锋眰缁撴灉銆?
 final case class BlogPostDetailsView(post: BlogPostView, content: String, comments: List[BlogCommentView])
 
 trait BlogApplicationService[F[_]]:
   def listPosts(currentUserId: Option[UserId], scope: BlogPostScope, query: Option[String]): F[List[BlogPostView]]
+  def listPostsForModeration(scope: BlogModerationScope): F[List[BlogPostView]]
   def suggestPublishedPosts(query: String): F[List[SearchSuggestion]]
   def getPost(postId: BlogId, currentUserId: Option[UserId]): F[BlogPostDetailsView]
-  def createPublishedPost(authorUserId: UserId, title: String, summary: String, content: String, imageRefs: List[BlogImageRef], now: Instant): F[BlogPostDetailsView]
+  def createPendingReviewPost(authorUserId: UserId, title: String, summary: String, content: String, imageRefs: List[BlogImageRef], now: Instant): F[BlogPostDetailsView]
   def updatePost(postId: BlogId, authorUserId: UserId, title: String, summary: String, content: String, imageRefs: List[BlogImageRef], now: Instant): F[BlogPostDetailsView]
   def archivePost(postId: BlogId, authorUserId: UserId, now: Instant): F[BlogPostDetailsView]
+  def approvePost(postId: BlogId, approvedAt: Instant): F[BlogPostDetailsView]
+  def rejectPost(postId: BlogId, rejectedAt: Instant): F[BlogPostDetailsView]
   def addComment(postId: BlogId, authorUserId: UserId, content: String, now: Instant): F[BlogPostDetailsView]
   def deleteComment(commentId: BlogCommentId, authorUserId: UserId): F[BlogPostDetailsView]
   def likePost(postId: BlogId, userId: UserId, now: Instant): F[BlogPostDetailsView]
@@ -87,7 +93,7 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
   private val maximumImageBytes: Long = 5L * 1024L * 1024L
 
   override def listPosts(currentUserId: Option[UserId], scope: BlogPostScope, query: Option[String]): F[List[BlogPostView]] =
-    // latest / mine 共享同一套 view 投影逻辑，差别只在可读范围。
+    // latest / mine 鍏变韩鍚屼竴濂?view 鎶曞奖閫昏緫锛屽樊鍒彧鍦ㄥ彲璇昏寖鍥淬€?
     scope match
       case BlogPostScope.Latest =>
         for
@@ -110,6 +116,19 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
             yield views
           case None =>
             MonadThrow[F].raiseError(UserError.UserWasNotFound(UserId("guest")))
+
+  override def listPostsForModeration(scope: BlogModerationScope): F[List[BlogPostView]] =
+    for
+      posts <- blogRepository.listAllPosts
+      filteredPosts = scope match
+        case BlogModerationScope.Pending =>
+          posts.filter(post => post.status == BlogPostStatus.PendingReview)
+        case BlogModerationScope.Reviewed =>
+          posts.filter(post =>
+            post.status == BlogPostStatus.Published || post.status == BlogPostStatus.Rejected
+          )
+      views <- filteredPosts.traverse(toPostView(_, None, None))
+    yield views
 
   override def suggestPublishedPosts(query: String): F[List[SearchSuggestion]] =
     SearchRanking.usableKeyword(query) match
@@ -138,11 +157,11 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
       comments <- buildCommentViews(post.postId, currentUserId)
     yield BlogPostDetailsView(postView, post.content, comments)
 
-  override def createPublishedPost(authorUserId: UserId, title: String, summary: String, content: String, imageRefs: List[BlogImageRef], now: Instant): F[BlogPostDetailsView] =
+  override def createPendingReviewPost(authorUserId: UserId, title: String, summary: String, content: String, imageRefs: List[BlogImageRef], now: Instant): F[BlogPostDetailsView] =
     for
       _ <- requireUser(authorUserId)
       postId <- blogRepository.nextPostId
-      post <- MonadThrow[F].fromEither(createPublishedBlogPost(postId, authorUserId, title, summary, content, imageRefs, now))
+      post <- MonadThrow[F].fromEither(createPendingReviewBlogPost(postId, authorUserId, title, summary, content, imageRefs, now))
       _ <- blogRepository.savePost(post)
       view <- getPost(post.postId, Some(authorUserId))
     yield view
@@ -163,6 +182,22 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
       archivedPost <- MonadThrow[F].fromEither(archiveBlogPost(post, authorUserId, now))
       _ <- blogRepository.savePost(archivedPost)
       view <- getPost(postId, Some(authorUserId))
+    yield view
+
+  override def approvePost(postId: BlogId, approvedAt: Instant): F[BlogPostDetailsView] =
+    for
+      post <- blogRepository.findPostById(postId).flatMap(_.liftTo[F](BlogError.BlogPostWasNotFound(postId)))
+      approvedPost = approveBlogPost(post, approvedAt)
+      _ <- blogRepository.savePost(approvedPost)
+      view <- getPost(postId, None)
+    yield view
+
+  override def rejectPost(postId: BlogId, rejectedAt: Instant): F[BlogPostDetailsView] =
+    for
+      post <- blogRepository.findPostById(postId).flatMap(_.liftTo[F](BlogError.BlogPostWasNotFound(postId)))
+      rejectedPost = rejectBlogPost(post, rejectedAt)
+      _ <- blogRepository.savePost(rejectedPost)
+      view <- getPost(postId, None)
     yield view
 
   override def addComment(postId: BlogId, authorUserId: UserId, content: String, now: Instant): F[BlogPostDetailsView] =
@@ -264,7 +299,7 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
   private def buildCommentViews(postId: BlogId, currentUserId: Option[UserId]): F[List[BlogCommentView]] =
     for
       comments <- blogRepository.listCommentsByPostId(postId)
-      // 评论表里没有 authorDisplayName / canDelete 这类前端字段，这里统一投影出来。
+      // 璇勮琛ㄩ噷娌℃湁 authorDisplayName / canDelete 杩欑被鍓嶇瀛楁锛岃繖閲岀粺涓€鎶曞奖鍑烘潵銆?
       visibleComments = comments.filter(_.isVisible)
       views <- visibleComments.traverse { comment =>
         loadAuthor(comment.authorUserId).map { author =>
@@ -284,8 +319,8 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
     yield views
 
   private def toPostView(post: BlogPost, currentUserId: Option[UserId], query: Option[String]): F[BlogPostView] =
-    // 这里是 Blog core data -> BlogPostView 的主要收口点。
-    // 是否我的文章、是否已点赞、评论数、搜索摘要等都在运行时生成。
+    // 杩欓噷鏄?Blog core data -> BlogPostView 鐨勪富瑕佹敹鍙ｇ偣銆?
+    // 鏄惁鎴戠殑鏂囩珷銆佹槸鍚﹀凡鐐硅禐銆佽瘎璁烘暟銆佹悳绱㈡憳瑕佺瓑閮藉湪杩愯鏃剁敓鎴愩€?
     for
       author <- loadAuthor(post.authorUserId)
       comments <- blogRepository.listCommentsByPostId(post.postId)
@@ -315,7 +350,7 @@ final class LiveBlogApplicationService[F[_]: MonadThrow](
     userRepository.findByUserId(authorUserId).flatMap(_.liftTo[F](UserError.UserWasNotFound(authorUserId)))
 
   private def buildSearchSnippet(post: BlogPost, query: String): Option[String] =
-    // snippet 只服务搜索展示，不是 Blog 持久化字段。
+    // snippet 鍙湇鍔℃悳绱㈠睍绀猴紝涓嶆槸 Blog 鎸佷箙鍖栧瓧娈点€?
     val normalizedQuery = query.trim.toLowerCase
     if normalizedQuery.isEmpty then None
     else

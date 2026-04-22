@@ -255,7 +255,7 @@ final class DoobieTrainRepository[F[_]: Async](
       managerId = ManagerId(managerIdValue),
       trainNumber = trainNumber,
       saleStartsAt = saleStartsAtValue,
-      trainJourneyStatus = TrainJourneyStatus.valueOf(statusValue),
+      trainJourneyStatus = TrainJourneyStatus.fromText(statusValue),
       stops = stops,
       seatInventories = seatInventories,
       seats = seats,
@@ -296,7 +296,7 @@ final class DoobieTrainRepository[F[_]: Async](
           seatClass = seatClass,
           totalSeats = totalSeats,
           saleableSeats = saleableSeats,
-          seatInventoryStatus = TrainSeatInventoryStatus.valueOf(statusValue)
+          seatInventoryStatus = TrainSeatInventoryStatus.fromText(statusValue)
         )
       }.map(_.toVector))
 
@@ -321,8 +321,8 @@ final class DoobieTrainRepository[F[_]: Async](
           seatCode = seatCodeValue,
           seatNo = seatNoValue,
           seatLabel = seatLabelValue,
-          seatPositionType = TrainSeatPositionType.valueOf(seatPositionTypeValue),
-          seatStatus = TrainSeatStatus.valueOf(statusValue)
+          seatPositionType = TrainSeatPositionType.fromText(seatPositionTypeValue),
+          seatStatus = TrainSeatStatus.fromText(statusValue)
         )
       }.map(_.toVector))
 
@@ -363,7 +363,7 @@ final class DoobieTrainRepository[F[_]: Async](
           trainId = trainId,
           startOffsetBeforeDeparture = Duration.ofMinutes(startOffsetValue),
           endOffsetBeforeDeparture = Duration.ofMinutes(endOffsetValue),
-          refundType = TrainRefundType.valueOf(refundTypeValue),
+          refundType = TrainRefundType.fromText(refundTypeValue),
           refundRate = refundRate
         )
       }.map(_.toVector))

@@ -166,7 +166,7 @@ final class DoobieFlightRepository[F[_]: Async](
       airlineId = AirlineId(airlineIdValue),
       airlineName = airlineName,
       airlineCode = airlineCode,
-      airlineStatus = AirlineStatus.valueOf(airlineStatusValue),
+      airlineStatus = AirlineStatus.fromText(airlineStatusValue),
       createdAt = createdAtValue
     )
 
@@ -179,14 +179,14 @@ final class DoobieFlightRepository[F[_]: Async](
       basePrice <- Async[F].fromEither(Money.create(flightRow.basePriceAmount, basePriceCurrency))
       cabinInventories <- loadCabinInventories(FlightId(flightRow.flightId))
       flightSchedule <- Async[F].fromEither(FlightSchedule.create(flightRow.departureTime, flightRow.arrivalTime))
-      builtFlight = restorePersistedFlight(
+      builtFlight = restoreFlight(
         flightId = FlightId(flightRow.flightId),
         airlineId = AirlineId(flightRow.airlineId),
         flightNumber = flightNumber,
         departureAirport = departureAirport,
         arrivalAirport = arrivalAirport,
         flightSchedule = flightSchedule,
-        flightStatus = FlightStatus.valueOf(flightRow.status),
+        flightStatus = FlightStatus.fromText(flightRow.status),
         basePrice = basePrice,
         cabinInventories = cabinInventories,
         createdAt = flightRow.createdAt
@@ -203,22 +203,22 @@ final class DoobieFlightRepository[F[_]: Async](
       .query[(String, String, String, Int, BigDecimal, String, String)]
       .to[List]
       .transact(transactor)
-      .flatMap(_.traverse(buildCabinInventory).map(_.toVector))
+      .flatMap(_.traverse(hydrateCabinInventory).map(_.toVector))
 
-  private def buildCabinInventory(row: (String, String, String, Int, BigDecimal, String, String)): F[CabinInventory] =
+  private def hydrateCabinInventory(row: (String, String, String, Int, BigDecimal, String, String)): F[CabinInventory] =
     val (inventoryIdValue, flightIdValue, cabinClassValue, availableSeatsValue, unitPriceAmountValue, unitPriceCurrencyValue, inventoryStatusValue) = row
     for
       cabinClass <- Async[F].fromEither(CabinClass.create(cabinClassValue))
       availableSeats <- Async[F].fromEither(SeatCount.create(availableSeatsValue))
       unitPriceCurrency <- Async[F].fromEither(Either.catchNonFatal(Currency.valueOf(unitPriceCurrencyValue)))
       unitPrice <- Async[F].fromEither(Money.create(unitPriceAmountValue, unitPriceCurrency))
-    yield createCabinInventory(
+    yield com.typesafe.travel.flight.domain.buildCabinInventory(
       cabinInventoryId = CabinInventoryId(inventoryIdValue),
       flightId = FlightId(flightIdValue),
       cabinClass = cabinClass,
       availableSeats = availableSeats,
       unitPrice = unitPrice,
-      inventoryStatus = InventoryStatus.valueOf(inventoryStatusValue)
+      inventoryStatus = InventoryStatus.fromText(inventoryStatusValue)
     )
 
   private final case class FlightRow(

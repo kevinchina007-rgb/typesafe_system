@@ -91,3 +91,65 @@ export type ResourceReviewSummaryResponse = {
   averageRating: string
   reviewCount: number
 }
+
+export type FeedbackSenderRole = 'User' | 'Manager' | 'SiteAdmin' | 'System'
+export type FeedbackAudience = 'User' | 'Manager' | 'SiteAdmin'
+export type FeedbackThreadKind = 'ServiceReview' | 'ManagerEscalation'
+export type FeedbackManagerType = 'Airline' | 'Hotel' | 'Train' | 'Attraction' | 'SiteAdmin'
+export type FeedbackSiteAdminChannel = 'user' | 'manager'
+
+export type FeedbackMessageResponse = {
+  messageId: string
+  senderRole: FeedbackSenderRole
+  senderDisplayName: string
+  body: string
+  sentAt: string
+}
+
+export type FeedbackThreadResponse = {
+  threadId: string
+  kind: FeedbackThreadKind
+  managerType: FeedbackManagerType
+  ownerUserId: string | null
+  ownerUserDisplayName: string
+  title: string
+  subtitle: string
+  resourceType: string
+  resourceSummaryTitle: string
+  orderId: string | null
+  orderItemId: string | null
+  reviewId: string | null
+  relatedThreadId: string | null
+  unreadByUser: number
+  unreadByManager: number
+  unreadBySiteAdmin: number
+  createdAt: string
+  updatedAt: string
+  messages: FeedbackMessageResponse[]
+}
+
+export type FeedbackThreadListResponse = {
+  threads: FeedbackThreadResponse[]
+}
+
+export type FeedbackMessage = FeedbackMessageResponse
+export type FeedbackThread = FeedbackThreadResponse
+
+export type CreateReviewFeedbackThreadRequest = {
+  reviewId: string
+}
+
+export type SendFeedbackMessageRequest = {
+  senderRole: FeedbackSenderRole
+  senderDisplayName: string
+  body: string
+}
+
+export type MarkFeedbackThreadReadRequest = {
+  audience: FeedbackAudience
+}
+
+export type EscalateFeedbackThreadRequest = {
+  senderDisplayName: string
+  body: string
+}

@@ -25,6 +25,12 @@ final case class RegisterHotelManagerRequestDto(
     password: String
 )
 
+final case class RegisterSiteAdminRequestDto(
+    email: String,
+    displayName: String,
+    password: String
+)
+
 final case class CreateManagerRoomTypeRequestDto(
     managerId: String,
     roomTypeName: String,

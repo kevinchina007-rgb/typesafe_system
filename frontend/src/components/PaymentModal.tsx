@@ -11,9 +11,18 @@ type PaymentModalProps = {
   translate: (translationKey: string) => string
   onClose: () => void
   onCreatePaymentLink: (payload: { orderId: string; paymentMethod: PaymentMethodValue }) => Promise<PaymentLinkResponse>
+  onConfirmPayment: (payload: { orderId: string; paymentMethod: PaymentMethodValue }) => Promise<void>
 }
 
-export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onCreatePaymentLink }: PaymentModalProps) {
+export function PaymentModal({
+  isOpen,
+  order,
+  isBusy,
+  translate,
+  onClose,
+  onCreatePaymentLink,
+  onConfirmPayment,
+}: PaymentModalProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodValue | null>(null)
   const [paymentLink, setPaymentLink] = useState<PaymentLinkResponse | null>(null)
   const [isLoadingPaymentLink, setIsLoadingPaymentLink] = useState(false)
@@ -125,6 +134,13 @@ export function PaymentModal({ isOpen, order, isBusy, translate, onClose, onCrea
             <div className="action-row">
               <button type="button" className="secondary-button" disabled={isBusy} onClick={() => setSelectedPaymentMethod(null)}>
                 {translate('payment.changeMethod')}
+              </button>
+              <button
+                type="button"
+                disabled={isBusy || isLoadingPaymentLink || !paymentLink || !selectedPaymentMethod}
+                onClick={() => void (selectedPaymentMethod ? onConfirmPayment({ orderId: order.orderId, paymentMethod: selectedPaymentMethod }) : Promise.resolve())}
+              >
+                {translate('payment.confirmCompleted')}
               </button>
               <button type="button" className="secondary-button" disabled={isBusy} onClick={onClose}>
                 {translate('payment.close')}

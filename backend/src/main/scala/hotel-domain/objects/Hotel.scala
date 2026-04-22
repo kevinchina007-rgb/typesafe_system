@@ -4,34 +4,74 @@ import cats.syntax.all.*
 import com.typesafe.travel.shared.kernel.*
 import java.time.{Instant, LocalDate}
 
-enum HotelStatus:
-  case Active, Inactive
+final case class HotelStatus(value: String):
+  override def toString: String = value
 
-enum RoomTypeStatus:
-  case OpenForBooking, ClosedForBooking
+object HotelStatus:
+  val Active = HotelStatus("Active")
+  val Inactive = HotelStatus("Inactive")
 
-enum RoomInventoryStatus:
-  case Available, SoldOut, Closed
+  def fromText(value: String): HotelStatus =
+    value.trim match
+      case "Active" => Active
+      case "Inactive" => Inactive
+      case other => HotelStatus(other)
 
-enum HotelError(val message: String) extends DomainError:
-  case HotelWasNotFound(hotelId: HotelId)
-      extends HotelError(s"Hotel '${hotelId.value}' was not found")
-  case RoomTypeWasNotFound(roomTypeId: RoomTypeId)
-      extends HotelError(s"Room type '${roomTypeId.value}' was not found")
-  case HotelWasNotActive(hotelId: HotelId, hotelStatus: HotelStatus)
-      extends HotelError(s"Hotel '${hotelId.value}' is not active while in status $hotelStatus")
-  case RoomTypeWasNotOpenForBooking(roomTypeId: RoomTypeId, roomTypeStatus: RoomTypeStatus)
-      extends HotelError(s"Room type '${roomTypeId.value}' is not open for booking while in status $roomTypeStatus")
-  case RoomInventoryWasMissing(roomTypeId: RoomTypeId, inventoryDate: LocalDate)
-      extends HotelError(s"Room type '${roomTypeId.value}' has no inventory on $inventoryDate")
-  case RoomInventoryWasNotBookable(roomTypeId: RoomTypeId, inventoryDate: LocalDate)
-      extends HotelError(s"Room type '${roomTypeId.value}' is not bookable on $inventoryDate")
-  case GuestCapacityWasExceeded(roomTypeId: RoomTypeId, allowedGuestCount: Int, actualGuestCount: Int)
-      extends HotelError(
-        s"Room type '${roomTypeId.value}' allows $allowedGuestCount guests for this stay but received $actualGuestCount"
-      )
+final case class RoomTypeStatus(value: String):
+  override def toString: String = value
 
-final case class RoomInventory private[domain] (
+object RoomTypeStatus:
+  val OpenForBooking = RoomTypeStatus("OpenForBooking")
+  val ClosedForBooking = RoomTypeStatus("ClosedForBooking")
+
+  def fromText(value: String): RoomTypeStatus =
+    value.trim match
+      case "OpenForBooking" => OpenForBooking
+      case "ClosedForBooking" => ClosedForBooking
+      case other => RoomTypeStatus(other)
+
+final case class RoomInventoryStatus(value: String):
+  override def toString: String = value
+
+object RoomInventoryStatus:
+  val Available = RoomInventoryStatus("Available")
+  val SoldOut = RoomInventoryStatus("SoldOut")
+  val Closed = RoomInventoryStatus("Closed")
+
+  def fromText(value: String): RoomInventoryStatus =
+    value.trim match
+      case "Available" => Available
+      case "SoldOut" => SoldOut
+      case "Closed" => Closed
+      case other => RoomInventoryStatus(other)
+
+sealed trait HotelError extends DomainError:
+  def message: String
+
+object HotelError:
+  final case class HotelWasNotFound(hotelId: HotelId) extends HotelError:
+    override val message: String = s"Hotel '${hotelId.value}' was not found"
+
+  final case class RoomTypeWasNotFound(roomTypeId: RoomTypeId) extends HotelError:
+    override val message: String = s"Room type '${roomTypeId.value}' was not found"
+
+  final case class HotelWasNotActive(hotelId: HotelId, hotelStatus: HotelStatus) extends HotelError:
+    override val message: String = s"Hotel '${hotelId.value}' is not active while in status ${hotelStatus.value}"
+
+  final case class RoomTypeWasNotOpenForBooking(roomTypeId: RoomTypeId, roomTypeStatus: RoomTypeStatus) extends HotelError:
+    override val message: String = s"Room type '${roomTypeId.value}' is not open for booking while in status ${roomTypeStatus.value}"
+
+  final case class RoomInventoryWasMissing(roomTypeId: RoomTypeId, inventoryDate: LocalDate) extends HotelError:
+    override val message: String = s"Room type '${roomTypeId.value}' has no inventory on $inventoryDate"
+
+  final case class RoomInventoryWasNotBookable(roomTypeId: RoomTypeId, inventoryDate: LocalDate) extends HotelError:
+    override val message: String = s"Room type '${roomTypeId.value}' is not bookable on $inventoryDate"
+
+  final case class GuestCapacityWasExceeded(roomTypeId: RoomTypeId, allowedGuestCount: Int, actualGuestCount: Int) extends HotelError:
+    override val message: String =
+      s"Room type '${roomTypeId.value}' allows $allowedGuestCount guests for this stay but received $actualGuestCount"
+
+final case class RoomInventory(
     roomInventoryId: RoomInventoryId,
     roomTypeId: RoomTypeId,
     inventoryDate: LocalDate,
@@ -42,18 +82,7 @@ final case class RoomInventory private[domain] (
   def isBookable(requiredRoomCount: RoomCount): Boolean =
     roomInventoryStatus == RoomInventoryStatus.Available && availableRooms.value >= requiredRoomCount.value
 
-object RoomInventory:
-  def create(
-      roomInventoryId: RoomInventoryId,
-      roomTypeId: RoomTypeId,
-      inventoryDate: LocalDate,
-      availableRooms: RoomCount,
-      unitPrice: Money,
-      roomInventoryStatus: RoomInventoryStatus
-  ): RoomInventory =
-    RoomInventory(roomInventoryId, roomTypeId, inventoryDate, availableRooms, unitPrice, roomInventoryStatus)
-
-final case class RoomType private[domain] (
+final case class RoomType(
     roomTypeId: RoomTypeId,
     hotelId: HotelId,
     roomTypeName: RoomTypeName,
@@ -89,41 +118,7 @@ final case class RoomType private[domain] (
       .takeWhile(_.isBefore(stayPeriod.checkOut))
       .toVector
 
-object RoomType:
-  def create(
-      roomTypeId: RoomTypeId,
-      hotelId: HotelId,
-      roomTypeName: RoomTypeName,
-      roomCapacity: Capacity,
-      bedType: BedType,
-      basePrice: Money,
-      roomTypeStatus: RoomTypeStatus,
-      roomInventories: Vector[RoomInventory]
-  ): RoomType =
-    RoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
-
-  def restore(
-      roomTypeId: RoomTypeId,
-      hotelId: HotelId,
-      roomTypeName: RoomTypeName,
-      roomCapacity: Capacity,
-      bedType: BedType,
-      basePrice: Money,
-      roomTypeStatus: RoomTypeStatus,
-      roomInventories: Vector[RoomInventory]
-  ): RoomType =
-    RoomType(
-      roomTypeId = roomTypeId,
-      hotelId = hotelId,
-      roomTypeName = roomTypeName,
-      roomCapacity = roomCapacity,
-      bedType = bedType,
-      basePrice = basePrice,
-      roomTypeStatus = roomTypeStatus,
-      roomInventories = roomInventories
-    )
-
-final case class Hotel private[domain] (
+final case class Hotel(
     hotelId: HotelId,
     hotelName: HotelName,
     hotelLocation: HotelLocation,
@@ -158,37 +153,78 @@ final case class Hotel private[domain] (
       roomInventories <- roomType.ensureBookableForStay(stayPeriod, roomCount)
     yield roomInventories
 
-object Hotel:
-  def create(
-      hotelId: HotelId,
-      hotelName: HotelName,
-      hotelLocation: HotelLocation,
-      roomTypes: Vector[RoomType],
-      createdAt: Instant
-  ): Hotel =
-    Hotel(
-      hotelId = hotelId,
-      hotelName = hotelName,
-      hotelLocation = hotelLocation,
-      hotelStatus = HotelStatus.Active,
-      roomTypes = roomTypes,
-      createdAt = createdAt
-    )
+def roomInventory(
+    roomInventoryId: RoomInventoryId,
+    roomTypeId: RoomTypeId,
+    inventoryDate: LocalDate,
+    availableRooms: RoomCount,
+    unitPrice: Money,
+    roomInventoryStatus: RoomInventoryStatus
+): RoomInventory =
+  RoomInventory(roomInventoryId, roomTypeId, inventoryDate, availableRooms, unitPrice, roomInventoryStatus)
 
-  def restore(
-      hotelId: HotelId,
-      hotelName: HotelName,
-      hotelLocation: HotelLocation,
-      hotelStatus: HotelStatus,
-      roomTypes: Vector[RoomType],
-      createdAt: Instant
-  ): Hotel =
-    Hotel(
-      hotelId = hotelId,
-      hotelName = hotelName,
-      hotelLocation = hotelLocation,
-      hotelStatus = hotelStatus,
-      roomTypes = roomTypes,
-      createdAt = createdAt
-    )
+def roomType(
+    roomTypeId: RoomTypeId,
+    hotelId: HotelId,
+    roomTypeName: RoomTypeName,
+    roomCapacity: Capacity,
+    bedType: BedType,
+    basePrice: Money,
+    roomTypeStatus: RoomTypeStatus,
+    roomInventories: Vector[RoomInventory]
+): RoomType =
+  RoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
 
+def persistedRoomType(
+    roomTypeId: RoomTypeId,
+    hotelId: HotelId,
+    roomTypeName: RoomTypeName,
+    roomCapacity: Capacity,
+    bedType: BedType,
+    basePrice: Money,
+    roomTypeStatus: RoomTypeStatus,
+    roomInventories: Vector[RoomInventory]
+): RoomType =
+  RoomType(
+    roomTypeId = roomTypeId,
+    hotelId = hotelId,
+    roomTypeName = roomTypeName,
+    roomCapacity = roomCapacity,
+    bedType = bedType,
+    basePrice = basePrice,
+    roomTypeStatus = roomTypeStatus,
+    roomInventories = roomInventories
+  )
+
+def hotel(
+    hotelId: HotelId,
+    hotelName: HotelName,
+    hotelLocation: HotelLocation,
+    roomTypes: Vector[RoomType],
+    createdAt: Instant
+): Hotel =
+  Hotel(
+    hotelId = hotelId,
+    hotelName = hotelName,
+    hotelLocation = hotelLocation,
+    hotelStatus = HotelStatus.Active,
+    roomTypes = roomTypes,
+    createdAt = createdAt
+  )
+
+def persistedHotel(
+    hotelId: HotelId,
+    hotelName: HotelName,
+    hotelLocation: HotelLocation,
+    hotelStatus: HotelStatus,
+    roomTypes: Vector[RoomType],
+    createdAt: Instant
+): Hotel =
+  Hotel(
+    hotelId = hotelId,
+    hotelName = hotelName,
+    hotelLocation = hotelLocation,
+    hotelStatus = hotelStatus,
+    roomTypes = roomTypes,
+    createdAt = createdAt
+  )

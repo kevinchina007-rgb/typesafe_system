@@ -40,7 +40,7 @@ final class LiveManagerService[F[_]: MonadThrow](
     ensureManagerEmailAvailable(primaryEmailAddress) *>
       managerRepository.nextManagerId.flatMap { managerId =>
         managerRepository.saveAirlineManager(
-          AirlineManager.register(managerId, airlineId, primaryEmailAddress, displayName, createdAt)
+          com.typesafe.travel.operations.domain.registerAirlineManager(managerId, airlineId, primaryEmailAddress, displayName, createdAt)
         )
       }
 
@@ -53,7 +53,7 @@ final class LiveManagerService[F[_]: MonadThrow](
     ensureManagerEmailAvailable(primaryEmailAddress) *>
       managerRepository.nextManagerId.flatMap { managerId =>
         managerRepository.saveHotelManager(
-          HotelManager.register(managerId, hotelId, primaryEmailAddress, displayName, createdAt)
+          com.typesafe.travel.operations.domain.registerHotelManager(managerId, hotelId, primaryEmailAddress, displayName, createdAt)
         )
       }
 
@@ -65,7 +65,7 @@ final class LiveManagerService[F[_]: MonadThrow](
     ensureManagerEmailAvailable(primaryEmailAddress) *>
       managerRepository.nextManagerId.flatMap { managerId =>
         managerRepository.saveAttractionManager(
-          AttractionManager.register(managerId, primaryEmailAddress, displayName, createdAt)
+          com.typesafe.travel.operations.domain.registerAttractionManager(managerId, primaryEmailAddress, displayName, createdAt)
         )
       }
 
@@ -107,8 +107,8 @@ final class LiveManagerService[F[_]: MonadThrow](
 
   private def validateActiveManager[A <: ManagerContext](managerContext: A): F[A] =
     managerContext.managerStatus match
-      case ManagerStatus.Active   => managerContext.pure[F]
-      case ManagerStatus.Inactive => MonadThrow[F].raiseError(ManagerError.ManagerWasInactive(managerContext.managerType, managerContext.managerId))
+      case status if status == ManagerStatus.Active => managerContext.pure[F]
+      case _ => MonadThrow[F].raiseError(ManagerError.ManagerWasInactive(managerContext.managerType, managerContext.managerId))
 
   private def ensureManagerEmailAvailable(primaryEmailAddress: EmailAddress): F[Unit] =
     (

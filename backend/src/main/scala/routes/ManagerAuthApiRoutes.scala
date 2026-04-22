@@ -81,4 +81,5 @@ trait ManagerAuthApiRoutes[F[_]: Async] extends Http4sDsl[F]:
       case "hotel"      => Right(AuthManagerType.Hotel)
       case "train"      => Right(AuthManagerType.Train)
       case "attraction" => Right(AuthManagerType.Attraction)
+      case "siteadmin" | "site-admin" => Right(AuthManagerType.SiteAdmin)
       case _            => Left(SharedValidationError.RequiredFieldWasEmpty("managerType"))

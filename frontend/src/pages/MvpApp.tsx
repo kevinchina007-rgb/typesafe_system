@@ -1,17 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { getActiveTopNav, getSidebarItemsForTopNav, getVisibleTopNavItems, shouldShowSidebar } from '../app/navigation'
+import { clearAppNotice, setAppLanguage, setAppNotice, setAppTheme, setAppView, useAppShellStore } from '../app/stores/app-shell-store'
+import {
+  setCurrentManagerSession,
+  setCurrentUserSession,
+  setPrincipalStateResolved,
+  useAuthStore,
+} from '../app/stores/auth-store'
+import { clearAllThreads, useFeedbackChatStore } from '../app/stores/feedback-chat-store'
 import { AppShell } from '../components/shell/AppShell'
 import { ToastNotice } from '../components/ToastNotice'
 import { travelMvpApiClient } from '../lib/api-client'
 import { isUnauthorizedApiError } from '../lib/api-transport'
 import { createTranslator } from '../lib/i18n'
-import type { AppLanguage, AppNotice, AppViewKey, CurrentManagerSessionResponse, HealthResponse, UserResponse } from '../lib/mvp-types'
+import type { AppNotice, AppViewKey, HealthResponse } from '../lib/mvp-types'
 import { getInitialBackendHealth } from '../lib/runtime-config'
 import { AccountPage } from './AccountPage'
 import { AttractionsPage } from './AttractionsPage'
 import { BlogPage } from './BlogPage'
 import { BookingsPage } from './BookingsPage'
+import { CustomerFeedbackPage } from './CustomerFeedbackPage'
 import { FlightsPage } from './FlightsPage'
 import { HotelsPage } from './HotelsPage'
 import { ManagerPage } from './ManagerPage'
@@ -21,12 +30,6 @@ import { TourGroupsPage } from './TourGroupsPage'
 import { TrainsPage } from './TrainsPage'
 import { TravelersPage } from './TravelersPage'
 import { WorkspaceOverviewPage } from './WorkspaceOverviewPage'
-
-type ThemeMode = 'dark' | 'light'
-
-const languageStorageKey = 'travel-workbench.language'
-const viewStorageKey = 'travel-workbench.view'
-const themeStorageKey = 'travel-workbench.theme'
 
 function normalizeViewKey(viewKey: AppViewKey): AppViewKey {
   if (viewKey === 'bookings') {
@@ -45,59 +48,75 @@ function normalizeViewKey(viewKey: AppViewKey): AppViewKey {
 }
 
 export function MvpApp() {
-  const [currentLanguage, setCurrentLanguage] = useState<AppLanguage>(() => {
-    if (typeof window === 'undefined') {
-      return 'en'
-    }
+  const currentLanguage = useAppShellStore(state => state.currentLanguage)
+  const currentViewKey = useAppShellStore(state => state.currentViewKey)
+  const themeMode = useAppShellStore(state => state.themeMode)
+  const currentNotice = useAppShellStore(state => state.currentNotice)
 
-    const savedLanguage = window.localStorage.getItem(languageStorageKey)
-    return savedLanguage === 'zh' ? 'zh' : 'en'
-  })
-  const [currentViewKey, setCurrentViewKey] = useState<AppViewKey>(() => {
-    if (typeof window === 'undefined') {
-      return 'overview'
-    }
+  const hasResolvedPrincipalState = useAuthStore(state => state.hasResolvedPrincipalState)
+  const signedInUserResponse = useAuthStore(state => state.signedInUser)
+  const signedInManagerSessionResponse = useAuthStore(state => state.signedInManagerSession)
+  const userFeedbackThreads = useFeedbackChatStore(state => state.userThreads)
+  const managerFeedbackThreads = useFeedbackChatStore(state => state.managerThreads)
+  const loadUserFeedbackThreads = useFeedbackChatStore(state => state.loadUserThreads)
+  const loadManagerFeedbackThreads = useFeedbackChatStore(state => state.loadManagerThreads)
 
-    const savedView = window.localStorage.getItem(viewStorageKey)
-    return (savedView as AppViewKey) ?? 'overview'
-  })
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    if (typeof window === 'undefined') {
-      return 'dark'
-    }
-
-    return window.localStorage.getItem(themeStorageKey) === 'light' ? 'light' : 'dark'
-  })
-  const [accountEntryMode] = useState<'register' | 'login'>('login')
-  const [, setBackendHealthResponse] = useState<HealthResponse | null>(() => getInitialBackendHealth())
-  const [hasResolvedPrincipalState, setHasResolvedPrincipalState] = useState(false)
-  const [signedInUserResponse, setSignedInUserResponse] = useState<UserResponse | null>(null)
-  const [signedInManagerSessionResponse, setSignedInManagerSessionResponse] = useState<CurrentManagerSessionResponse | null>(null)
-  const [currentNotice, setCurrentNotice] = useState<AppNotice | null>(null)
   const backendFailureCountRef = useRef(0)
 
   const translate = createTranslator(currentLanguage)
   const isGuestMode = signedInUserResponse === null && signedInManagerSessionResponse === null
   const isManagerOnlyMode = signedInUserResponse === null && signedInManagerSessionResponse !== null
+  const isUserOnlyMode = signedInUserResponse !== null && signedInManagerSessionResponse === null
 
   const normalizedViewKey = normalizeViewKey(currentViewKey)
   const currentTopNav = getActiveTopNav(normalizedViewKey)
+  const routeBadgeCounts = {
+    customerFeedback: userFeedbackThreads.reduce((total, thread) => total + thread.unreadByUser, 0),
+    managerFeedback: managerFeedbackThreads.reduce((total, thread) => total + thread.unreadByManager, 0),
+  }
   const topNavItems = getVisibleTopNavItems({
+    badgeCounts: routeBadgeCounts,
     signedInManager: signedInManagerSessionResponse,
     signedInUser: signedInUserResponse,
   })
   const sidebarItems = getSidebarItemsForTopNav({
+    badgeCounts: routeBadgeCounts,
     topNav: currentTopNav,
     signedInManager: signedInManagerSessionResponse,
     signedInUser: signedInUserResponse,
   })
-  const showSidebar = shouldShowSidebar(currentTopNav, sidebarItems)
+  const showSidebar = shouldShowSidebar(sidebarItems)
+
+  const [, setBackendHealthResponse] = useState<HealthResponse | null>(() => getInitialBackendHealth())
+
+  const withTimeout = useCallback(
+    <T,>(promise: Promise<T>, timeoutMessage: string, timeoutMs = 2500): Promise<T> =>
+      new Promise<T>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error(timeoutMessage))
+        }, timeoutMs)
+
+        promise
+          .then(value => {
+            clearTimeout(timeoutId)
+            resolve(value)
+          })
+          .catch(error => {
+            clearTimeout(timeoutId)
+            reject(error)
+          })
+      }),
+    [],
+  )
 
   const reloadBackendHealth = useCallback(async () => {
     try {
-      const healthResponse = await travelMvpApiClient.getHealth()
+      const healthResponse = await withTimeout(
+        travelMvpApiClient.getHealth(),
+        'backend_health_timeout',
+      )
       backendFailureCountRef.current = 0
-      setBackendHealthResponse(healthResponse)
+      void healthResponse
       return true
     } catch {
       backendFailureCountRef.current += 1
@@ -106,38 +125,33 @@ export function MvpApp() {
       }
       return false
     }
-  }, [])
+  }, [setBackendHealthResponse, withTimeout])
 
   const reloadPrincipalState = useCallback(async () => {
     const [currentUserSessionResult, currentManagerSessionResult] = await Promise.allSettled([
-      travelMvpApiClient.getCurrentUserSession(),
-      travelMvpApiClient.getCurrentManagerSession(),
+      withTimeout(travelMvpApiClient.getCurrentUserSession(), 'user_session_timeout'),
+      withTimeout(travelMvpApiClient.getCurrentManagerSession(), 'manager_session_timeout'),
     ])
 
-    let didRecoverPrincipalState = true
-
     if (currentUserSessionResult.status === 'fulfilled') {
-      setSignedInUserResponse(currentUserSessionResult.value.user)
+      setCurrentUserSession(currentUserSessionResult.value.user)
     } else if (isUnauthorizedApiError(currentUserSessionResult.reason)) {
-      setSignedInUserResponse(null)
+      setCurrentUserSession(null)
     } else {
-      didRecoverPrincipalState = false
+      setCurrentUserSession(null)
     }
 
     if (currentManagerSessionResult.status === 'fulfilled') {
-      setSignedInManagerSessionResponse(currentManagerSessionResult.value)
+      setCurrentManagerSession(currentManagerSessionResult.value)
     } else if (isUnauthorizedApiError(currentManagerSessionResult.reason)) {
-      setSignedInManagerSessionResponse(null)
+      setCurrentManagerSession(null)
     } else {
-      didRecoverPrincipalState = false
+      setCurrentManagerSession(null)
     }
 
-    if (didRecoverPrincipalState) {
-      setHasResolvedPrincipalState(true)
-    }
-
-    return didRecoverPrincipalState
-  }, [])
+    setPrincipalStateResolved(true)
+    return true
+  }, [withTimeout])
 
   useEffect(() => {
     let isDisposed = false
@@ -173,33 +187,12 @@ export function MvpApp() {
   }, [reloadBackendHealth, reloadPrincipalState])
 
   useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    window.localStorage.setItem(languageStorageKey, currentLanguage)
-  }, [currentLanguage])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    window.localStorage.setItem(viewStorageKey, normalizedViewKey)
-  }, [normalizedViewKey])
-
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    window.localStorage.setItem(themeStorageKey, themeMode)
     document.documentElement.dataset.theme = themeMode
   }, [themeMode])
 
   useEffect(() => {
     if (normalizedViewKey !== currentViewKey) {
-      setCurrentViewKey(normalizedViewKey)
+      setAppView(normalizedViewKey)
     }
   }, [currentViewKey, normalizedViewKey])
 
@@ -208,8 +201,26 @@ export function MvpApp() {
       return
     }
 
-    if (isGuestMode && normalizedViewKey === 'reviews') {
-      setCurrentViewKey('blog')
+    if (
+      isGuestMode &&
+      (normalizedViewKey === 'orders' ||
+        normalizedViewKey === 'travelers' ||
+        normalizedViewKey === 'tourGroups' ||
+        normalizedViewKey === 'customerFeedback')
+    ) {
+      setAppView('blog')
+      return
+    }
+
+    if (
+      isGuestMode &&
+      (normalizedViewKey === 'managerWorkspace' ||
+        normalizedViewKey === 'managerFeedback' ||
+        normalizedViewKey === 'managerAdvertising' ||
+        normalizedViewKey === 'siteAdminBlogAudit' ||
+        normalizedViewKey === 'siteAdminAdvertisingReview')
+    ) {
+      setAppView('manager')
     }
   }, [hasResolvedPrincipalState, isGuestMode, normalizedViewKey])
 
@@ -218,13 +229,80 @@ export function MvpApp() {
       return
     }
 
-    if (isManagerOnlyMode && normalizedViewKey !== 'overview' && normalizedViewKey !== 'blog' && normalizedViewKey !== 'account' && normalizedViewKey !== 'manager') {
-      setCurrentViewKey('manager')
+    if (normalizedViewKey === 'reviews') {
+      setAppView(signedInUserResponse ? 'customerFeedback' : 'blog')
     }
-  }, [hasResolvedPrincipalState, isManagerOnlyMode, normalizedViewKey])
+  }, [hasResolvedPrincipalState, normalizedViewKey, signedInUserResponse])
+
+  useEffect(() => {
+    if (!hasResolvedPrincipalState) {
+      return
+    }
+
+    if (isManagerOnlyMode && normalizedViewKey !== 'manager') {
+      if (signedInManagerSessionResponse?.managerType === 'SiteAdmin') {
+        if (
+          normalizedViewKey !== 'siteAdminBlogAudit' &&
+          normalizedViewKey !== 'siteAdminAdvertisingReview'
+        ) {
+          setAppView('siteAdminBlogAudit')
+        }
+      } else if (
+        normalizedViewKey !== 'managerWorkspace' &&
+        normalizedViewKey !== 'managerFeedback' &&
+        !(normalizedViewKey === 'managerAdvertising' &&
+          (signedInManagerSessionResponse?.managerType === 'Hotel' || signedInManagerSessionResponse?.managerType === 'Attraction'))
+      ) {
+        setAppView('managerWorkspace')
+      }
+    }
+  }, [hasResolvedPrincipalState, isManagerOnlyMode, normalizedViewKey, signedInManagerSessionResponse])
+
+  useEffect(() => {
+    if (!hasResolvedPrincipalState) {
+      return
+    }
+
+    if (
+      isUserOnlyMode &&
+      (normalizedViewKey === 'manager' ||
+        normalizedViewKey === 'managerWorkspace' ||
+        normalizedViewKey === 'managerFeedback' ||
+        normalizedViewKey === 'managerAdvertising' ||
+        normalizedViewKey === 'siteAdminBlogAudit' ||
+        normalizedViewKey === 'siteAdminAdvertisingReview')
+    ) {
+      setAppView('account')
+    }
+  }, [hasResolvedPrincipalState, isUserOnlyMode, normalizedViewKey])
+
+  useEffect(() => {
+    if (!hasResolvedPrincipalState) {
+      return
+    }
+
+    if (signedInUserResponse) {
+      void loadUserFeedbackThreads()
+      return
+    }
+
+    if (signedInManagerSessionResponse) {
+      void loadManagerFeedbackThreads()
+      return
+    }
+
+    clearAllThreads()
+  }, [
+    hasResolvedPrincipalState,
+    loadManagerFeedbackThreads,
+    loadUserFeedbackThreads,
+    signedInManagerSessionResponse?.managerId,
+    signedInManagerSessionResponse?.managerType,
+    signedInUserResponse?.userId,
+  ])
 
   function showNotice(kind: AppNotice['kind'], title: string, description: string, technicalMessage?: string) {
-    setCurrentNotice({
+    setAppNotice({
       id: Date.now(),
       kind,
       title,
@@ -234,23 +312,22 @@ export function MvpApp() {
   }
 
   function renderCurrentPage() {
+    if (normalizedViewKey === 'smartPlanner') {
+      return <SmartTripPlannerPage translate={translate} onSelectView={setAppView} />
+    }
+
     if (normalizedViewKey === 'overview') {
       return (
         <WorkspaceOverviewPage
           isSessionReady={hasResolvedPrincipalState}
           signedInUser={signedInUserResponse}
           translate={translate}
-          onSelectView={setCurrentViewKey}
+          onSelectView={setAppView}
         />
       )
     }
 
-    if (normalizedViewKey === 'smartPlanner') {
-      return <SmartTripPlannerPage translate={translate} onSelectView={setCurrentViewKey} />
-    }
-
     if (normalizedViewKey === 'blog') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <BlogPage
           currentLanguage={currentLanguage}
@@ -262,7 +339,6 @@ export function MvpApp() {
     }
 
     if (normalizedViewKey === 'reviews') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <ReviewsPage
           currentLanguage={currentLanguage}
@@ -274,109 +350,112 @@ export function MvpApp() {
     }
 
     if (normalizedViewKey === 'account') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <AccountPage
           currentLanguage={currentLanguage}
           signedInManager={signedInManagerSessionResponse}
           signedInUser={signedInUserResponse}
-          requestedEntryMode={accountEntryMode}
+          requestedEntryMode="login"
           translate={translate}
-          onSignedInManagerChange={setSignedInManagerSessionResponse}
-          onSignedInUserChange={setSignedInUserResponse}
-          onNavigate={setCurrentViewKey}
+          onSignedInManagerChange={setCurrentManagerSession}
+          onSignedInUserChange={setCurrentUserSession}
+          onNavigate={setAppView}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (normalizedViewKey === 'customerFeedback') {
+      return (
+        <CustomerFeedbackPage
+          currentLanguage={currentLanguage}
+          signedInUser={signedInUserResponse}
+          translate={translate}
           onShowNotice={showNotice}
         />
       )
     }
 
     if (normalizedViewKey === 'travelers') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <TravelersPage
           currentLanguage={currentLanguage}
           signedInUser={signedInUserResponse}
           translate={translate}
-          onSignedInUserChange={setSignedInUserResponse}
+          onSignedInUserChange={setCurrentUserSession}
           onShowNotice={showNotice}
         />
       )
     }
 
     if (normalizedViewKey === 'flights') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <FlightsPage
           currentLanguage={currentLanguage}
           signedInUser={signedInUserResponse}
           translate={translate}
-          onNavigate={setCurrentViewKey}
+          onNavigate={setAppView}
           onShowNotice={showNotice}
         />
       )
     }
 
     if (normalizedViewKey === 'hotels') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <HotelsPage
           currentLanguage={currentLanguage}
           signedInUser={signedInUserResponse}
           translate={translate}
-          onNavigate={setCurrentViewKey}
+          onNavigate={setAppView}
           onShowNotice={showNotice}
         />
       )
     }
 
     if (normalizedViewKey === 'trains') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <TrainsPage
           currentLanguage={currentLanguage}
           signedInUser={signedInUserResponse}
           translate={translate}
-          onNavigate={setCurrentViewKey}
+          onNavigate={setAppView}
           onShowNotice={showNotice}
         />
       )
     }
 
     if (normalizedViewKey === 'attractions') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <AttractionsPage
           currentLanguage={currentLanguage}
           signedInUser={signedInUserResponse}
           translate={translate}
-          onNavigate={setCurrentViewKey}
+          onNavigate={setAppView}
           onShowNotice={showNotice}
         />
       )
     }
 
     if (normalizedViewKey === 'tourGroups') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <TourGroupsPage
           currentLanguage={currentLanguage}
           signedInUser={signedInUserResponse}
           translate={translate}
-          onNavigate={setCurrentViewKey}
+          onNavigate={setAppView}
           onShowNotice={showNotice}
         />
       )
     }
 
     if (normalizedViewKey === 'orders') {
-      // Existing module mount preserved inside the new Travel Workbench shell.
       return (
         <BookingsPage
           currentLanguage={currentLanguage}
           isSessionReady={hasResolvedPrincipalState}
           signedInUser={signedInUserResponse}
           translate={translate}
-          onNavigate={setCurrentViewKey}
+          onNavigate={setAppView}
           onShowNotice={showNotice}
         />
       )
@@ -386,10 +465,35 @@ export function MvpApp() {
       return (
         <ManagerPage
           currentLanguage={currentLanguage}
+          currentViewKey={normalizedViewKey}
           currentManagerSession={signedInManagerSessionResponse}
+          signedInUser={signedInUserResponse}
           translate={translate}
-          onManagerSessionChange={setSignedInManagerSessionResponse}
-          onNavigate={setCurrentViewKey}
+          onManagerSessionChange={setCurrentManagerSession}
+          onSignedInUserChange={setCurrentUserSession}
+          onNavigate={setAppView}
+          onShowNotice={showNotice}
+        />
+      )
+    }
+
+    if (
+      normalizedViewKey === 'managerWorkspace' ||
+      normalizedViewKey === 'managerFeedback' ||
+      normalizedViewKey === 'managerAdvertising' ||
+      normalizedViewKey === 'siteAdminBlogAudit' ||
+      normalizedViewKey === 'siteAdminAdvertisingReview'
+    ) {
+      return (
+        <ManagerPage
+          currentLanguage={currentLanguage}
+          currentViewKey={normalizedViewKey}
+          currentManagerSession={signedInManagerSessionResponse}
+          signedInUser={signedInUserResponse}
+          translate={translate}
+          onManagerSessionChange={setCurrentManagerSession}
+          onSignedInUserChange={setCurrentUserSession}
+          onNavigate={setAppView}
           onShowNotice={showNotice}
         />
       )
@@ -403,7 +507,7 @@ export function MvpApp() {
       <main className="layout-shell">
         <section className="content-shell">
           <section className="app-card empty-state-panel">
-            <strong>{currentLanguage === 'zh' ? '正在恢复页面状态' : 'Restoring workspace state'}</strong>
+            <strong>{currentLanguage === 'zh' ? '正在恢复工作台状态' : 'Restoring workspace state'}</strong>
           </section>
         </section>
       </main>
@@ -420,9 +524,9 @@ export function MvpApp() {
           items: topNavItems,
           signedInManager: signedInManagerSessionResponse,
           signedInUser: signedInUserResponse,
-          onChangeLanguage: setCurrentLanguage,
-          onChangeTheme: setThemeMode,
-          onSelectTopNav: (_topNav, defaultViewKey) => setCurrentViewKey(defaultViewKey),
+          onChangeLanguage: setAppLanguage,
+          onChangeTheme: setAppTheme,
+          onSelectTopNav: (_topNav, defaultViewKey) => setAppView(defaultViewKey),
           translate,
         }}
         sidebar={
@@ -431,7 +535,7 @@ export function MvpApp() {
                 currentTopNav,
                 currentViewKey: normalizedViewKey,
                 items: sidebarItems,
-                onSelectView: setCurrentViewKey,
+                onSelectView: setAppView,
                 translate,
               }
             : undefined
@@ -440,7 +544,11 @@ export function MvpApp() {
         {renderCurrentPage()}
       </AppShell>
 
-      <ToastNotice notice={currentNotice} onDismiss={() => setCurrentNotice(null)} />
+      <ToastNotice notice={currentNotice} onDismiss={clearAppNotice} />
     </>
   )
 }
+
+
+
+

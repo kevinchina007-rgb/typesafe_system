@@ -10,6 +10,18 @@ import java.time.{Instant, LocalDate}
 enum TourGroupStatus:
   case Draft, Open, Closed, Cancelled
 
+object TourGroupStatus:
+  val all: Vector[TourGroupStatus] =
+    Vector(TourGroupStatus.Draft, TourGroupStatus.Open, TourGroupStatus.Closed, TourGroupStatus.Cancelled)
+
+  def fromText(value: String): TourGroupStatus =
+    value.trim match
+      case "Draft"     => TourGroupStatus.Draft
+      case "Open"      => TourGroupStatus.Open
+      case "Closed"    => TourGroupStatus.Closed
+      case "Cancelled" => TourGroupStatus.Cancelled
+      case other       => throw new IllegalArgumentException(s"Unknown tour group status: $other")
+
 final case class TourGroup(
     groupId: TourGroupId,
     organizerUserId: UserId,
@@ -62,4 +74,54 @@ final case class TourGroupDetails(
 
   def selectionTravelersFor(selectionId: GroupPlanSelectionId): Vector[GroupPlanSelectionTraveler] =
     selectionTravelers.filter(_.selectionId == selectionId)
+
+def createTourGroup(
+    groupId: TourGroupId,
+    organizerUserId: UserId,
+    title: String,
+    description: String,
+    destination: String,
+    startDate: LocalDate,
+    endDate: LocalDate,
+    capacity: Int,
+    createdAt: Instant
+): Either[TourGroupError, TourGroup] =
+  for
+    _ <- Either.cond(capacity > 0, (), TourGroupError.GroupCapacityWasInvalid(capacity))
+    _ <- Either.cond(startDate.isBefore(endDate), (), TourGroupError.GroupDateRangeWasInvalid(startDate, endDate))
+    normalizedTitle <- normalizeRequiredTourGroupText("tour-group-title", title)
+    normalizedDescription <- normalizeRequiredTourGroupText("tour-group-description", description)
+    normalizedDestination <- normalizeRequiredTourGroupText("tour-group-destination", destination)
+  yield TourGroup(
+    groupId,
+    organizerUserId,
+    normalizedTitle,
+    normalizedDescription,
+    normalizedDestination,
+    startDate,
+    endDate,
+    capacity,
+    TourGroupStatus.Open,
+    createdAt
+  )
+
+def createOrganizerMembership(
+    membershipId: TourGroupMembershipId,
+    groupId: TourGroupId,
+    organizerUserId: UserId,
+    joinedAt: Instant
+): TourGroupMembership =
+  TourGroupMembership(membershipId, groupId, organizerUserId, joinedAt, TourGroupMembershipStatus.Active)
+
+def createMemberMembership(
+    membershipId: TourGroupMembershipId,
+    groupId: TourGroupId,
+    userId: UserId,
+    joinedAt: Instant
+): TourGroupMembership =
+  TourGroupMembership(membershipId, groupId, userId, joinedAt, TourGroupMembershipStatus.Active)
+
+private def normalizeRequiredTourGroupText(fieldName: String, value: String): Either[TourGroupError, String] =
+  val normalized = value.trim
+  Either.cond(normalized.nonEmpty, normalized, TourGroupError.RequiredFieldWasEmpty(fieldName))
 

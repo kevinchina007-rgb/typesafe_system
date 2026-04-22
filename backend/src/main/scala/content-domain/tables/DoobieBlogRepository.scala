@@ -33,6 +33,9 @@ final class DoobieBlogRepository[F[_]: Async](transactor: Transactor[F]) extends
       imagesByPostId <- loadImagesByPostIds(postRow.toList.map(row => BlogId(row._1)))
     yield postRow.map(row => toBlogPost(row, imagesByPostId.getOrElse(BlogId(row._1), Nil)))).transact(transactor)
 
+  override def listAllPosts: F[List[BlogPost]] =
+    selectAllPosts.transact(transactor).flatMap(buildPosts)
+
   override def findCommentById(commentId: BlogCommentId): F[Option[BlogComment]] =
     sql"""
       select comment_id, post_id, author_user_id, content, status, created_at
@@ -195,6 +198,13 @@ final class DoobieBlogRepository[F[_]: Async](transactor: Transactor[F]) extends
       order by published_at desc nulls last, created_at desc
     """.query[BlogPostRow].to[List]
 
+  private def selectAllPosts: ConnectionIO[List[BlogPostRow]] =
+    sql"""
+      select post_id, author_user_id, title, summary, content, status, created_at, updated_at, published_at
+      from blog_posts
+      order by updated_at desc, created_at desc
+    """.query[BlogPostRow].to[List]
+
   private def selectPublishedPostsByQuery(query: String): ConnectionIO[List[BlogPostRow]] =
     val pattern = wildcard(query)
     sql"""
@@ -255,7 +265,7 @@ final class DoobieBlogRepository[F[_]: Async](transactor: Transactor[F]) extends
       summary = row._4,
       content = row._5,
       imageRefs = imageRefs,
-      status = BlogPostStatus.valueOf(row._6),
+      status = BlogPostStatus.fromText(row._6),
       createdAt = row._7,
       updatedAt = row._8,
       publishedAt = row._9
@@ -267,7 +277,7 @@ final class DoobieBlogRepository[F[_]: Async](transactor: Transactor[F]) extends
       postId = BlogId(row._2),
       authorUserId = UserId(row._3),
       content = row._4,
-      status = BlogCommentStatus.valueOf(row._5),
+      status = BlogCommentStatus.fromText(row._5),
       createdAt = row._6
     )
 

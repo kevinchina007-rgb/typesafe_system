@@ -81,7 +81,6 @@ export function FlightsPage({
           }
           await runPageAction(async () => {
             await travelMvpApiClient.createFlightOrder({
-              buyerUserId: signedInUser.userId,
               flightId: payload.flightId,
               travelerIds: payload.travelerIds,
               cabinClass: payload.cabinClass,

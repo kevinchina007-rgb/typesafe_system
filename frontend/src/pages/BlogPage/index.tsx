@@ -56,7 +56,7 @@ export function BlogPage({
               images: payload.images,
             }),
           translate('blog.publish'),
-          translate('notice.actionSuccess'),
+          translate('blog.pendingReviewSuccess'),
         )
       }}
       onUpdatePost={async (postId, payload) => {

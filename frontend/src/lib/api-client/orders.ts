@@ -1,52 +1,24 @@
-import type { OrderListResponse, OrderResponse, PaymentLinkResponse } from '../api-dtos'
+import type {
+  BookAttractionItemRequestDto,
+  BookHotelRequestDto,
+  BookTrainItemRequestDto,
+  OrderListResponse,
+  OrderResponse,
+  PaymentLinkResponse,
+} from '../api-dtos'
 import { createQueryString, executeApiRequest, executeJsonApiRequest } from '../api-transport'
 
 export const orderApiClient = {
   createOrder: (payload: { ownerUserId: string; orderCurrency: string }): Promise<OrderResponse> =>
     executeJsonApiRequest('/orders', 'POST', payload),
 
-  addTrainItemToOrder: (
-    orderId: string,
-    payload: {
-      buyerUserId: string
-      orderId: string
-      trainId: string
-      travelerIds: string[]
-      fromStationCode: string
-      toStationCode: string
-      seatClass: string
-      seatPreference?: string | null
-    },
-  ): Promise<OrderResponse> =>
+  addTrainItemToOrder: (orderId: string, payload: BookTrainItemRequestDto): Promise<OrderResponse> =>
     executeJsonApiRequest(`/orders/${orderId}/train-items`, 'POST', payload),
 
-  addAttractionItemToOrder: (
-    orderId: string,
-    payload: {
-      buyerUserId: string
-      orderId: string
-      attractionId: string
-      ticketTypeId: string
-      sessionId?: string | null
-      travelerIds: string[]
-      useDate: string
-    },
-  ): Promise<OrderResponse> =>
+  addAttractionItemToOrder: (orderId: string, payload: BookAttractionItemRequestDto): Promise<OrderResponse> =>
     executeJsonApiRequest(`/orders/${orderId}/attraction-items`, 'POST', payload),
 
-  createFlightOrder: (payload: { buyerUserId: string; flightId: string; travelerIds: string[]; cabinClass: string }): Promise<OrderResponse> =>
-    executeJsonApiRequest('/flights/book', 'POST', payload),
-
-  createHotelOrder: (
-    payload: {
-      buyerUserId: string
-      roomTypeId: string
-      guestTravelerIds: string[]
-      checkInDate: string
-      checkOutDate: string
-      roomCount: number
-    },
-  ): Promise<OrderResponse> =>
+  createHotelOrder: (payload: BookHotelRequestDto): Promise<OrderResponse> =>
     executeJsonApiRequest('/hotels/book', 'POST', payload),
 
   getOrder: (orderId: string): Promise<OrderResponse> =>

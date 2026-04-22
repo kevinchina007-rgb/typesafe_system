@@ -52,6 +52,10 @@ lazy val postgresqlDependency =
 lazy val root = (project in file("."))
   .aggregate(
     sharedKernel,
+    advertisingDomain,
+    plannerDomain,
+    plannerApplication,
+    plannerInfrastructure,
     authDomain,
     identityDomain,
     travelerDomain,
@@ -78,6 +82,30 @@ lazy val root = (project in file("."))
   )
 
 lazy val sharedKernel = module("shared-kernel")
+
+lazy val advertisingDomain = module("advertising-domain")
+  .dependsOn(sharedKernel)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, catsEffectDependency, munitDependency)
+  )
+
+lazy val plannerDomain = module("planner-domain")
+  .dependsOn(sharedKernel)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+  )
+
+lazy val plannerApplication = module("planner-application")
+  .dependsOn(sharedKernel, plannerDomain)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+  )
+
+lazy val plannerInfrastructure = module("planner-infrastructure")
+  .dependsOn(sharedKernel, plannerDomain, plannerApplication)
+  .settings(
+    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+  )
 
 lazy val authDomain = module("auth-domain")
   .dependsOn(sharedKernel, identityDomain, operationsDomain, trainDomain)
@@ -140,10 +168,11 @@ lazy val orderDomain = module("order-domain")
   )
 
 lazy val persistenceJdbc = module("persistence-jdbc")
-  .dependsOn(sharedKernel, authDomain, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, contentDomain, tourGroupDomain, inventoryDomain, orderDomain, operationsDomain)
+  .dependsOn(sharedKernel, advertisingDomain, authDomain, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, contentDomain, tourGroupDomain, inventoryDomain, orderDomain, operationsDomain)
   .settings(
     Compile / unmanagedSourceDirectories ++= Seq(
       backendSourceRoot / "database",
+      backendSourceRoot / "advertising-domain" / "tables",
       backendSourceRoot / "auth-domain" / "tables",
       backendSourceRoot / "identity-domain" / "tables",
       backendSourceRoot / "traveler-domain" / "tables",
@@ -185,6 +214,7 @@ lazy val operationsDomain = module("operations-domain")
 lazy val apiGateway = module("api-gateway")
   .dependsOn(
     sharedKernel,
+    advertisingDomain,
     authDomain,
     identityDomain,
       travelerDomain,
@@ -202,6 +232,7 @@ lazy val apiGateway = module("api-gateway")
   .settings(
     Compile / unmanagedSourceDirectories ++= Seq(
         backendSourceRoot / "routes",
+      backendSourceRoot / "advertising-domain" / "api",
       backendSourceRoot / "auth-domain" / "api",
       backendSourceRoot / "identity-domain" / "api",
       backendSourceRoot / "traveler-domain" / "api",

@@ -1,35 +1,19 @@
-import { useState } from 'react'
+import { useEffect } from 'react'
 
-import type { AppLanguage, HotelResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse } from '../lib/mvp-types'
-import { ResourceReviewSummaryLoader } from './ResourceReviewSummaryLoader'
-import { formatIsoDateTime, localizeBedType, mapBackendStatusToProductLabel } from '../lib/view-models'
-
-type HotelsPanelProps = {
-  currentLanguage: AppLanguage
-  isBusy: boolean
-  isGuestMode: boolean
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onRequireLogin: () => void
-  onSearchHotels: (payload: {
-    location?: string
-    checkInDate?: string
-    checkOutDate?: string
-  }) => Promise<HotelResponse[]>
-  onBookHotel: (payload: {
-    roomTypeId: string
-    guestTravelerIds: string[]
-    checkInDate: string
-    checkOutDate: string
-    roomCount: number
-  }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
-}
-
-function renderTravelerOptionLabel(traveler: TravelerResponse): string {
-  return `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
-}
+import { useAdvertisingStore, useDeliverableAdvertisements } from '../app/stores/advertising-store'
+import { AdvertisementCardRail } from './advertising/sections/AdvertisementCardRail'
+import { travelMvpApiClient } from '../lib/api-client'
+import { useHotelSearchState } from './hotels/hooks/useHotelSearchState'
+import {
+  formatHotelPriceInsight,
+  hotelHotDestinations,
+  hotelRecentSearches,
+} from './hotels/hotelBookingModel'
+import { HotelFilterBar } from './hotels/sections/HotelFilterBar'
+import { HotelPageHero } from './hotels/sections/HotelPageHero'
+import { HotelResultsSection } from './hotels/sections/HotelResultsSection'
+import { HotelSearchCard } from './hotels/sections/HotelSearchCard'
+import type { HotelsPanelProps } from './hotels/hotelBookingModel'
 
 export function HotelsPanel({
   currentLanguage,
@@ -43,179 +27,132 @@ export function HotelsPanel({
   onLoadReviewSummary,
   onLoadReviews,
 }: HotelsPanelProps) {
-  const [hotelResponses, setHotelResponses] = useState<HotelResponse[]>([])
-  const [hasSearchedHotels, setHasSearchedHotels] = useState(false)
-  const [searchCheckInDate, setSearchCheckInDate] = useState('2026-04-05')
-  const [searchCheckOutDate, setSearchCheckOutDate] = useState('2026-04-07')
+  const {
+    hotelResponses,
+    hasSearchedHotels,
+    searchLocation,
+    searchCheckInDate,
+    searchCheckOutDate,
+    roomCount,
+    guestCount,
+    hotelPreference,
+    nearbyPreference,
+    selectedQuickDatePreset,
+    setHotelResponses,
+    setHasSearchedHotels,
+    setSearchLocation,
+    setSearchCheckInDate,
+    setSearchCheckOutDate,
+    setRoomCount,
+    setGuestCount,
+    setHotelPreference,
+    setNearbyPreference,
+    setSelectedQuickDatePreset,
+  } = useHotelSearchState()
+  const deliveryAdvertisements = useDeliverableAdvertisements('hotelBooking')
+  const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
+
+  useEffect(() => {
+    void loadDeliverableAdvertisements('hotelBooking')
+    const reloadDeliverableAdvertisements = () => {
+      void loadDeliverableAdvertisements('hotelBooking')
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        reloadDeliverableAdvertisements()
+      }
+    }
+
+    window.addEventListener('focus', reloadDeliverableAdvertisements)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', reloadDeliverableAdvertisements)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [loadDeliverableAdvertisements])
 
   return (
     <section className="page-card">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow-label">{translate('nav.hotels')}</p>
-          <h2>{translate('hotels.title')}</h2>
-        </div>
-      </div>
+      <HotelPageHero title={translate('hotels.title')} description={translate('hotels.description')} />
 
-      <p className="hero-copy">{translate('hotels.description')}</p>
-      <p className="empty-state">{translate('hotels.searchHint')}</p>
-
-      <form
-        className="stack-form panel-card"
-        onSubmit={async event => {
-          event.preventDefault()
-          const formData = new FormData(event.currentTarget)
-          const nextCheckInDate = String(formData.get('checkInDate') ?? '').trim()
-          const nextCheckOutDate = String(formData.get('checkOutDate') ?? '').trim()
-          setSearchCheckInDate(nextCheckInDate)
-          setSearchCheckOutDate(nextCheckOutDate)
+      <HotelSearchCard
+        averagePriceInsight={formatHotelPriceInsight(hotelResponses, translate)}
+        guestCount={guestCount}
+        hotelPreference={hotelPreference}
+        hotDestinations={hotelHotDestinations}
+        isBusy={isBusy}
+        nearbyPreference={nearbyPreference}
+        recentSearches={hotelRecentSearches}
+        roomCount={roomCount}
+        searchCheckInDate={searchCheckInDate}
+        searchCheckOutDate={searchCheckOutDate}
+        searchLocation={searchLocation}
+        selectedQuickDatePreset={selectedQuickDatePreset}
+        translate={translate}
+        onSearchLocationChange={setSearchLocation}
+        onSearchCheckInDateChange={setSearchCheckInDate}
+        onSearchCheckOutDateChange={setSearchCheckOutDate}
+        onRoomCountChange={setRoomCount}
+        onGuestCountChange={setGuestCount}
+        onHotelPreferenceChange={setHotelPreference}
+        onNearbyPreferenceChange={setNearbyPreference}
+        onSelectQuickDatePreset={(preset, nextDates) => {
+          setSelectedQuickDatePreset(preset)
+          setSearchCheckInDate(nextDates.checkInDate)
+          setSearchCheckOutDate(nextDates.checkOutDate)
+        }}
+        onSelectDestination={setSearchLocation}
+        onSearch={async () => {
           const nextHotelResponses = await onSearchHotels({
-            location: String(formData.get('location') ?? '').trim() || undefined,
-            checkInDate: nextCheckInDate || undefined,
-            checkOutDate: nextCheckOutDate || undefined,
+            location: searchLocation,
+            checkInDate: searchCheckInDate,
+            checkOutDate: searchCheckOutDate,
+            roomCount,
+            guestCount,
+            hotelPreference,
+            nearbyPreference,
           })
           setHasSearchedHotels(true)
           setHotelResponses(nextHotelResponses)
         }}
-      >
-        <div className="three-column-grid">
-          <label>
-            {translate('hotels.location')}
-            <input name="location" placeholder="Hangzhou / West Lake / 杭州 / 外滩" />
-          </label>
-          <label>
-            {translate('hotels.checkInDate')}
-            <input name="checkInDate" type="date" defaultValue={searchCheckInDate} />
-          </label>
-          <label>
-            {translate('hotels.checkOutDate')}
-            <input name="checkOutDate" type="date" defaultValue={searchCheckOutDate} />
-          </label>
-        </div>
+      />
 
-        <button type="submit" disabled={isBusy}>
-          {translate('hotels.search')}
-        </button>
-      </form>
+      <AdvertisementCardRail
+        advertisements={deliveryAdvertisements}
+        translate={translate}
+        onOpenAdvertisement={async advertisement => {
+          const nextHotelResponse = await travelMvpApiClient.getHotel(advertisement.targetResourceId, {
+            checkInDate: searchCheckInDate,
+            checkOutDate: searchCheckOutDate,
+          })
+          setSearchLocation(nextHotelResponse.location)
+          setHasSearchedHotels(true)
+          setHotelResponses([nextHotelResponse])
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        }}
+      />
+
+      <HotelFilterBar translate={translate} />
 
       {isGuestMode ? <p className="empty-state">{translate('hotels.guest')}</p> : null}
 
       {hasSearchedHotels ? (
-        <div className="entity-list flights-list">
-          {hotelResponses.length > 0 ? (
-            hotelResponses.map(hotelResponse => (
-              <article key={hotelResponse.hotelId} className="panel-card hotel-card">
-                <div className="panel-heading">
-                  <div>
-                    <strong>{hotelResponse.hotelName}</strong>
-                    <p>{hotelResponse.location}</p>
-                    <ResourceReviewSummaryLoader
-                      currentLanguage={currentLanguage}
-                      isBusy={isBusy}
-                      isEnabled={!isGuestMode}
-                      resourceType="Hotel"
-                      resourceId={hotelResponse.hotelId}
-                      title={hotelResponse.hotelName}
-                      translate={translate}
-                      onLoadSummary={onLoadReviewSummary}
-                      onLoadReviews={onLoadReviews}
-                    />
-                  </div>
-                  <span className="tag-chip">{mapBackendStatusToProductLabel(hotelResponse.status, currentLanguage)}</span>
-                </div>
-
-                <div className="detail-grid">
-                  <div>
-                    <span className="detail-label">{translate('hotels.createdAt')}</span>
-                    <strong>{formatIsoDateTime(hotelResponse.createdAt, '-')}</strong>
-                  </div>
-                  <div>
-                    <span className="detail-label">{translate('hotels.status')}</span>
-                    <strong>{mapBackendStatusToProductLabel(hotelResponse.status, currentLanguage)}</strong>
-                  </div>
-                </div>
-
-                <ul className="entity-list">
-                  {hotelResponse.roomTypes.map(roomTypeResponse => (
-                    <li key={roomTypeResponse.roomTypeId}>
-                      <div>
-                        <strong>{roomTypeResponse.roomTypeName}</strong>
-                        <p>
-                          {`${translate('hotels.bedType')}: ${localizeBedType(roomTypeResponse.bedType, currentLanguage)} | ${translate('hotels.capacity')}: ${roomTypeResponse.capacity}`}
-                        </p>
-                        <p>{`${translate('hotels.priceFrom')}: ${roomTypeResponse.basePrice} ${roomTypeResponse.currency}`}</p>
-                        {roomTypeResponse.availableRoomsForRequestedStay !== null ? (
-                          <p>{`${translate('hotels.availableRooms')}: ${roomTypeResponse.availableRoomsForRequestedStay}`}</p>
-                        ) : null}
-                      </div>
-                      <form
-                        className="compact-action-block"
-                        onSubmit={async event => {
-                          event.preventDefault()
-                          if (isGuestMode) {
-                            onRequireLogin()
-                            return
-                          }
-                          const formData = new FormData(event.currentTarget)
-                          const selectedGuestTravelerIds = formData
-                            .getAll('guestTravelerIds')
-                            .map(value => String(value))
-                            .filter(Boolean)
-                          await onBookHotel({
-                            roomTypeId: roomTypeResponse.roomTypeId,
-                            guestTravelerIds: selectedGuestTravelerIds,
-                            checkInDate: String(formData.get('checkInDate') ?? searchCheckInDate),
-                            checkOutDate: String(formData.get('checkOutDate') ?? searchCheckOutDate),
-                            roomCount: Number(formData.get('roomCount') ?? 1),
-                          })
-                        }}
-                      >
-                        <label>
-                          {translate('hotels.checkInDate')}
-                          <input name="checkInDate" type="date" defaultValue={searchCheckInDate} />
-                        </label>
-                        <label>
-                          {translate('hotels.checkOutDate')}
-                          <input name="checkOutDate" type="date" defaultValue={searchCheckOutDate} />
-                        </label>
-                        <label>
-                          {translate('hotels.roomCount')}
-                          <input
-                            name="roomCount"
-                            type="number"
-                            min={1}
-                            max={roomTypeResponse.availableRoomsForRequestedStay ?? undefined}
-                            defaultValue={1}
-                            disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}
-                          />
-                        </label>
-                        <div className="checkbox-list">
-                          <p className="detail-label">{translate('hotels.selectGuests')}</p>
-                          {travelers.map(traveler => (
-                            <label key={traveler.travelerId} className="checkbox-row">
-                              <input
-                                type="checkbox"
-                                name="guestTravelerIds"
-                                value={traveler.travelerId}
-                                disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}
-                              />
-                              {renderTravelerOptionLabel(traveler)}
-                            </label>
-                          ))}
-                        </div>
-                        <button type="submit" disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}>
-                          {translate('hotels.bookNow')}
-                        </button>
-                      </form>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))
-          ) : (
-            <p className="empty-state">{translate('hotels.empty')}</p>
-          )}
-        </div>
+        <HotelResultsSection
+          currentLanguage={currentLanguage}
+          hotelResponses={hotelResponses}
+          isBusy={isBusy}
+          isGuestMode={isGuestMode}
+          searchCheckInDate={searchCheckInDate}
+          searchCheckOutDate={searchCheckOutDate}
+          travelers={travelers}
+          translate={translate}
+          onRequireLogin={onRequireLogin}
+          onBookHotel={onBookHotel}
+          onLoadReviewSummary={onLoadReviewSummary}
+          onLoadReviews={onLoadReviews}
+        />
       ) : null}
     </section>
   )

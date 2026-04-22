@@ -1,6 +1,13 @@
 import { useState } from 'react'
 
-import { formatIsoDateTime, localizeCabinClass, localizeManagerTaskType, localizeSupplierReviewStatus, mapBackendStatusToProductLabel } from '../lib/view-models'
+import {
+  formatIsoDateTime,
+  localizeBedType,
+  localizeCabinClass,
+  localizeManagerTaskType,
+  localizeSupplierReviewStatus,
+  mapBackendStatusToProductLabel,
+} from '../lib/view-models'
 import type { ManagerPanelProps } from './manager-panel-shared'
 import { normalizeDateTimeInput } from './manager-panel-shared'
 
@@ -10,6 +17,7 @@ type ManagerPanelWorkspaceProps = Pick<
   | 'isBusy'
   | 'managerSession'
   | 'managedFlights'
+  | 'managedHotels'
   | 'managerTasks'
   | 'managerRefundTasks'
   | 'translate'
@@ -30,6 +38,7 @@ export function ManagerPanelWorkspace({
   isBusy,
   managerSession,
   managedFlights,
+  managedHotels,
   managerTasks,
   managerRefundTasks,
   translate,
@@ -158,54 +167,87 @@ export function ManagerPanelWorkspace({
       ) : null}
 
       {managerSession?.managerType === 'Hotel' ? (
-        <form
-          className="stack-form panel-card"
-          onSubmit={async event => {
-            event.preventDefault()
-            const formData = new FormData(event.currentTarget)
-            await onCreateManagerRoomType({
-              managerId: managerSession.managerId,
-              roomTypeName: String(formData.get('roomTypeName') ?? ''),
-              capacity: Number(formData.get('capacity') ?? 2),
-              bedType: String(formData.get('bedType') ?? 'queen'),
-              nightlyPrice: String(formData.get('nightlyPrice') ?? '699'),
-              currency: String(formData.get('currency') ?? 'CNY'),
-              availableRooms: Number(formData.get('availableRooms') ?? 5),
-              inventoryStartDate: String(formData.get('inventoryStartDate') ?? ''),
-              inventoryEndDate: String(formData.get('inventoryEndDate') ?? ''),
-            })
-            event.currentTarget.reset()
-          }}
-        >
-          <h3>{translate('manager.createRoomType')}</h3>
-          <div className="three-column-grid">
-            <label>{translate('manager.roomTypeName')}<input name="roomTypeName" placeholder={translate('manager.roomTypeName')} required /></label>
-            <label>{translate('manager.capacity')}<input name="capacity" type="number" min={1} defaultValue={2} required /></label>
-            <label>
-              {translate('manager.bedType')}
-              <select name="bedType" defaultValue="queen">
-                <option value="single">Single</option>
-                <option value="double">Double</option>
-                <option value="twin">Twin</option>
-                <option value="queen">Queen</option>
-                <option value="king">King</option>
-              </select>
-            </label>
-            <label>{translate('manager.nightlyPrice')}<input name="nightlyPrice" type="number" min={1} defaultValue={699} required /></label>
-            <label>
-              {translate('manager.currency')}
-              <select name="currency" defaultValue="CNY">
-                <option value="CNY">CNY</option>
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-              </select>
-            </label>
-            <label>{translate('manager.availableRooms')}<input name="availableRooms" type="number" min={1} defaultValue={5} required /></label>
-            <label>{translate('manager.inventoryStartDate')}<input name="inventoryStartDate" type="date" defaultValue="2026-04-01" required /></label>
-            <label>{translate('manager.inventoryEndDate')}<input name="inventoryEndDate" type="date" defaultValue="2026-04-30" required /></label>
+        <>
+          <form
+            className="stack-form panel-card"
+            onSubmit={async event => {
+              event.preventDefault()
+              const formData = new FormData(event.currentTarget)
+              await onCreateManagerRoomType({
+                managerId: managerSession.managerId,
+                roomTypeName: String(formData.get('roomTypeName') ?? ''),
+                capacity: Number(formData.get('capacity') ?? 2),
+                bedType: String(formData.get('bedType') ?? 'queen'),
+                nightlyPrice: String(formData.get('nightlyPrice') ?? '699'),
+                currency: String(formData.get('currency') ?? 'CNY'),
+                availableRooms: Number(formData.get('availableRooms') ?? 5),
+                inventoryStartDate: String(formData.get('inventoryStartDate') ?? ''),
+                inventoryEndDate: String(formData.get('inventoryEndDate') ?? ''),
+              })
+              event.currentTarget.reset()
+            }}
+          >
+            <h3>{translate('manager.createRoomType')}</h3>
+            <div className="three-column-grid">
+              <label>{translate('manager.roomTypeName')}<input name="roomTypeName" placeholder={translate('manager.roomTypeName')} required /></label>
+              <label>{translate('manager.capacity')}<input name="capacity" type="number" min={1} defaultValue={2} required /></label>
+              <label>
+                {translate('manager.bedType')}
+                <select name="bedType" defaultValue="queen">
+                  <option value="single">Single</option>
+                  <option value="double">Double</option>
+                  <option value="twin">Twin</option>
+                  <option value="queen">Queen</option>
+                  <option value="king">King</option>
+                </select>
+              </label>
+              <label>{translate('manager.nightlyPrice')}<input name="nightlyPrice" type="number" min={1} defaultValue={699} required /></label>
+              <label>
+                {translate('manager.currency')}
+                <select name="currency" defaultValue="CNY">
+                  <option value="CNY">CNY</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </label>
+              <label>{translate('manager.availableRooms')}<input name="availableRooms" type="number" min={1} defaultValue={5} required /></label>
+              <label>{translate('manager.inventoryStartDate')}<input name="inventoryStartDate" type="date" defaultValue="2026-04-01" required /></label>
+              <label>{translate('manager.inventoryEndDate')}<input name="inventoryEndDate" type="date" defaultValue="2026-04-30" required /></label>
+            </div>
+            <button type="submit" disabled={isBusy}>{translate('manager.createRoomType')}</button>
+          </form>
+
+          <div className="list-surface">
+            <h3>{translate('manager.hotelName')}</h3>
+            {managedHotels.length === 0 ? (
+              <p className="empty-state">{translate('manager.empty')}</p>
+            ) : (
+              <ul className="entity-list">
+                {managedHotels.map(hotel => (
+                  <li key={hotel.hotelId}>
+                    <div>
+                      <strong>{hotel.hotelName}</strong>
+                      <p>{`${translate('manager.hotelLocation')}: ${hotel.location}`}</p>
+                      <p>{`${translate('manager.status')}: ${hotel.status}`}</p>
+                      <p>{`${translate('manager.enteredAt')}: ${formatIsoDateTime(hotel.createdAt, '-')}`}</p>
+                      {hotel.roomTypes.length === 0 ? (
+                        <p>{translate('manager.empty')}</p>
+                      ) : (
+                        <div className="manager-roomtype-list">
+                          {hotel.roomTypes.map(roomType => (
+                            <div key={roomType.roomTypeId} className="tag-chip">
+                              {`${roomType.roomTypeName} \u00B7 ${localizeBedType(roomType.bedType, currentLanguage)} \u00B7 ${roomType.capacity} \u00B7 ${roomType.basePrice} ${roomType.currency}`}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
-          <button type="submit" disabled={isBusy}>{translate('manager.createRoomType')}</button>
-        </form>
+        </>
       ) : null}
 
       <div className="action-cluster">

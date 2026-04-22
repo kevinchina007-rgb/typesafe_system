@@ -35,7 +35,7 @@ trait HotelApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         stayPeriod <- parseOptionalStayPeriod(checkInDateValue, checkOutDateValue)
         hotels <- hotelBookingApplicationService.browseHotels(locationQuery, stayPeriod)
         currentTime <- currentInstantF
-        hotelResponseDtos <- hotels.traverse(hotel => loadRemainingHotelRooms(hotel, stayPeriod, currentTime).map(remainingRooms => HotelResponseDto.fromDomain(hotel, stayPeriod, remainingRooms)))
+        hotelResponseDtos <- hotels.traverse(hotel => loadRemainingHotelRooms(hotel, stayPeriod, currentTime).map(remainingRooms => hotelResponseDto(hotel, stayPeriod, remainingRooms)))
         response <- Ok(HotelListResponseDto(hotelResponseDtos).asJson)
       yield response
 
@@ -46,7 +46,7 @@ trait HotelApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         hotel <- hotelBookingApplicationService.getHotelDetails(HotelId(hotelIdValue))
         currentTime <- currentInstantF
         remainingRooms <- loadRemainingHotelRooms(hotel, stayPeriod, currentTime)
-        response <- Ok(HotelResponseDto.fromDomain(hotel, stayPeriod, remainingRooms).asJson)
+        response <- Ok(hotelResponseDto(hotel, stayPeriod, remainingRooms).asJson)
       yield response
 
     case request @ POST -> Root / "api" / "hotels" / "book" =>

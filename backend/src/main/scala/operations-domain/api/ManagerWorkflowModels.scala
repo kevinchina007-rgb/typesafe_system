@@ -73,6 +73,7 @@ trait ManagerWorkflowApplicationService[F[_]]:
   ): F[List[ManagerBookingTaskView]]
   def listManagerRefundTasks(managerId: ManagerId, managerType: ManagerType): F[List[ManagerRefundTaskView]]
   def listFlightsForAirlineManager(managerId: ManagerId): F[List[(Airline, Flight)]]
+  def listHotelsForHotelManager(managerId: ManagerId): F[List[Hotel]]
   def createFlightForAirlineManager(
       managerId: ManagerId,
       flightNumber: FlightNumber,

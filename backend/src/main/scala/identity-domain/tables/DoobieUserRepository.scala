@@ -121,16 +121,15 @@ final class DoobieUserRepository[F[_]: Async](
       userPhoneNumber <- Async[F].fromEither(ContactNumber.create(phoneValue))
       avatarUrl <- avatarUrlValue.traverse(avatarUrlText => Async[F].fromEither(AvatarUrl.create(avatarUrlText)))
       loyaltyPoints <- Async[F].fromEither(Points.create(pointsValue))
-    yield restorePersistedUser(
+    yield com.typesafe.travel.identity.domain.restorePersistedUser(
       userId = UserId(userIdValue),
       primaryEmailAddress = primaryEmailAddress,
       userDisplayName = userDisplayName,
       userPhoneNumber = userPhoneNumber,
       avatarUrl = avatarUrl,
-      userAccountStatus = UserAccountStatus.valueOf(statusValue),
-      membershipLevel = UserMembershipLevel.valueOf(membershipLevelValue),
+      userAccountStatus = UserAccountStatus.fromText(statusValue),
+      membershipLevel = UserMembershipLevel.fromText(membershipLevelValue),
       loyaltyPoints = loyaltyPoints,
       defaultTravelerProfileId = defaultTravelerIdValue.map(TravelerId.apply),
       registeredAt = createdAtValue
     )
-

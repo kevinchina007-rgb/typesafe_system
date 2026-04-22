@@ -1,6 +1,7 @@
 export * from './mvp-types/common'
 export * from './mvp-types/content'
 export * from './mvp-types/auth'
+export * from './mvp-types/flights'
 export * from './mvp-types/traveler'
 export * from './mvp-types/resources'
 export * from './mvp-types/orders'

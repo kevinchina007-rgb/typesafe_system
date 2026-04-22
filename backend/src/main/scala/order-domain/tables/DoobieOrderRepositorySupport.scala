@@ -26,7 +26,7 @@ trait DoobieOrderRepositorySupport[F[_]: Async]:
     yield restoreOrder(
       orderId = OrderId(orderRow.orderId),
       ownerUserId = UserId(orderRow.buyerUserId),
-      orderStatus = OrderStatus.valueOf(orderRow.status),
+      orderStatus = OrderStatus.fromText(orderRow.status),
       orderCurrency = orderCurrency,
       orderLineItems = orderLineItems,
       orderPayments = orderPayments,
@@ -118,9 +118,9 @@ trait DoobieOrderRepositorySupport[F[_]: Async]:
       .flatMap(_.traverse(buildRefund).map(_.toVector))
 
   protected def buildOrderLineItem(orderLineItemRow: OrderLineItemRow): F[OrderLineItem] =
-    val orderItemStatus = OrderItemStatus.valueOf(orderLineItemRow.itemStatus)
+    val orderItemStatus = OrderItemStatus.fromText(orderLineItemRow.itemStatus)
     val supplierReviewDecision = buildSupplierReviewDecision(orderLineItemRow)
-    val supplierReviewStatus = SupplierReviewStatus.valueOf(orderLineItemRow.supplierReviewStatus)
+    val supplierReviewStatus = SupplierReviewStatus.fromText(orderLineItemRow.supplierReviewStatus)
 
     orderLineItemRow.itemKind match
       case "flight" =>
@@ -175,8 +175,8 @@ trait DoobieOrderRepositorySupport[F[_]: Async]:
     yield restorePersistedPayment(
       paymentId = PaymentId(paymentIdValue),
       paymentAmount = paymentAmount,
-      paymentMethod = PaymentMethod.valueOf(paymentMethodValue),
-      paymentStatus = PaymentStatus.valueOf(paymentStatusValue),
+      paymentMethod = PaymentMethod.fromText(paymentMethodValue),
+      paymentStatus = PaymentStatus.fromText(paymentStatusValue),
       authorizedAt = authorizedAtValue,
       capturedAt = capturedAtValue
     )
@@ -202,7 +202,7 @@ trait DoobieOrderRepositorySupport[F[_]: Async]:
       refundId = RefundId(refundIdValue),
       refundAmount = refundAmount,
       refundReason = refundReasonValue,
-      refundStatus = RefundStatus.valueOf(refundStatusValue),
+      refundStatus = RefundStatus.fromText(refundStatusValue),
       requestedAt = requestedAtValue,
       approvedAt = approvedAtValue,
       settledAt = settledAtValue
@@ -300,7 +300,7 @@ trait DoobieOrderRepositorySupport[F[_]: Async]:
       case (Some(reviewDecisionValue), Some(reviewedAtValue), Some(reviewedByManagerIdValue)) =>
         Some(
           SupplierReviewDecision(
-            decision = SupplierReviewDecisionType.valueOf(reviewDecisionValue),
+            decision = SupplierReviewDecisionType.fromText(reviewDecisionValue),
             reason = orderLineItemRow.reviewReason,
             decidedAt = reviewedAtValue,
             managerId = ManagerId(reviewedByManagerIdValue)

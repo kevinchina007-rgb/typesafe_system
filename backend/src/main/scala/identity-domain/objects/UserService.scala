@@ -42,7 +42,7 @@ final class LiveUserService[F[_]: MonadThrow](
         case None =>
           userRepository.nextUserId.flatMap { generatedUserId =>
             userRepository.saveUser(
-              registerNewUser(
+              com.typesafe.travel.identity.domain.registerUser(
                 userId = generatedUserId,
                 primaryEmailAddress = primaryEmailAddress,
                 userDisplayName = userDisplayName,
@@ -87,4 +87,3 @@ final class LiveUserService[F[_]: MonadThrow](
     userRepository
       .findByUserId(userId)
       .flatMap(_.liftTo[F](UserError.UserWasNotFound(userId)))
-

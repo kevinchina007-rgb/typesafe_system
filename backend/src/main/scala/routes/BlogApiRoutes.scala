@@ -3,8 +3,9 @@ package com.typesafe.travel.api.routes
 import cats.effect.kernel.Async
 import cats.syntax.all.*
 import com.typesafe.travel.api.*
-import com.typesafe.travel.api.application.{BlogImageUploadError, BlogPostScope}
+import com.typesafe.travel.api.application.{BlogImageUploadError, BlogModerationScope, BlogPostScope}
 import com.typesafe.travel.api.dto.*
+import com.typesafe.travel.auth.domain.AuthManagerType
 import com.typesafe.travel.content.domain.BlogImageRef
 import com.typesafe.travel.shared.kernel.*
 import org.http4s.*
@@ -19,7 +20,38 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
 
   import JsonCodecs.given
 
+  private def ensureSiteAdmin(managerType: AuthManagerType): F[Unit] =
+    if managerType == AuthManagerType.SiteAdmin then Async[F].unit
+    else Async[F].raiseError(com.typesafe.travel.auth.domain.AuthError.ManagerSessionWasRequired)
+
   protected final def blogRoutes: HttpRoutes[F] = HttpRoutes.of[F] {
+    case request @ GET -> Root / "api" / "blog" / "moderation" / "posts" =>
+      val scope = parseBlogModerationScope(request.params.get("scope").map(_.trim.toLowerCase).getOrElse("pending"))
+      for
+        currentManager <- requireCurrentManager(request)
+        _ <- ensureSiteAdmin(currentManager.managerType)
+        posts <- blogApplicationService.listPostsForModeration(scope)
+        response <- okJson(BlogPostListResponseDto(posts.map(BlogPostSummaryResponseDto.fromView)))
+      yield response
+
+    case request @ POST -> Root / "api" / "blog" / "moderation" / "posts" / postIdValue / "approve" =>
+      for
+        currentManager <- requireCurrentManager(request)
+        _ <- ensureSiteAdmin(currentManager.managerType)
+        now <- currentInstantF
+        post <- blogApplicationService.approvePost(BlogId(postIdValue), now)
+        response <- okJson(BlogPostResponseDto.fromView(post))
+      yield response
+
+    case request @ POST -> Root / "api" / "blog" / "moderation" / "posts" / postIdValue / "reject" =>
+      for
+        currentManager <- requireCurrentManager(request)
+        _ <- ensureSiteAdmin(currentManager.managerType)
+        now <- currentInstantF
+        post <- blogApplicationService.rejectPost(BlogId(postIdValue), now)
+        response <- okJson(BlogPostResponseDto.fromView(post))
+      yield response
+
     case GET -> Root / "api" / "blog" / "suggestions" :? SearchQueryParamMatcher(queryValue) =>
       for
         queryText <- fromEither(queryValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("q")))
@@ -67,7 +99,7 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         currentUserId <- requireCurrentUserId(request)
         createRequest <- request.as[CreateBlogPostRequestDto]
         now <- currentInstantF
-        post <- blogApplicationService.createPublishedPost(
+        post <- blogApplicationService.createPendingReviewPost(
           currentUserId,
           createRequest.title,
           createRequest.summary,
@@ -143,6 +175,11 @@ trait BlogApiRoutes[F[_]: Async] extends Http4sDsl[F]:
     value match
       case "mine" => BlogPostScope.Mine
       case _      => BlogPostScope.Latest
+
+  private def parseBlogModerationScope(value: String): BlogModerationScope =
+    value match
+      case "reviewed" => BlogModerationScope.Reviewed
+      case _          => BlogModerationScope.Pending
 
   private def parseBlogImages(images: List[ContentImageResponseDto]): List[BlogImageRef] =
     images.zipWithIndex.map { case (image, index) =>

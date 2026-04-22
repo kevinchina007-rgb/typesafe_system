@@ -28,7 +28,6 @@ final case class HotelListResponseDto(
 )
 
 final case class BookHotelRequestDto(
-    buyerUserId: String,
     roomTypeId: String,
     guestTravelerIds: List[String],
     checkInDate: String,
@@ -36,39 +35,38 @@ final case class BookHotelRequestDto(
     roomCount: Int
 )
 
-object HotelResponseDto:
-  def fromDomain(
-      hotel: Hotel,
-      requestedStayPeriod: Option[com.typesafe.travel.shared.kernel.StayPeriod],
-      remainingAvailableRoomsByRoomTypeId: Map[String, Int] = Map.empty
-  ): HotelResponseDto =
-    HotelResponseDto(
-      hotelId = hotel.hotelId.value,
-      hotelName = hotel.hotelName.value,
-      location = hotel.hotelLocation.value,
-      status = hotel.hotelStatus.toString,
-      createdAt = hotel.createdAt.toString,
-      roomTypes = hotel.roomTypes.toList.map(roomType =>
-        val overriddenAvailableRooms = remainingAvailableRoomsByRoomTypeId.get(roomType.roomTypeId.value)
-        RoomTypeSummaryResponseDto(
-          roomTypeId = roomType.roomTypeId.value,
-          roomTypeName = roomType.roomTypeName.value,
-          capacity = roomType.roomCapacity.value,
-          bedType = roomType.bedType.value,
-          basePrice = roomType.basePrice.amount.toString,
-          currency = roomType.basePrice.currency.toString,
-          status = roomType.roomTypeStatus.toString,
-          isBookableForRequestedStay = requestedStayPeriod match
-            case Some(_) => overriddenAvailableRooms.forall(_ > 0)
-            case None    => true,
-          availableRoomsForRequestedStay = requestedStayPeriod.flatMap { period =>
-            overriddenAvailableRooms.orElse(
-              roomType
-                .ensureBookableForStay(period, com.typesafe.travel.shared.kernel.RoomCount.unsafe(1))
-                .toOption
-                .map(_.map(_.availableRooms.value).min)
-            )
-          }
-        )
+def hotelResponseDto(
+    hotel: Hotel,
+    requestedStayPeriod: Option[com.typesafe.travel.shared.kernel.StayPeriod],
+    remainingAvailableRoomsByRoomTypeId: Map[String, Int] = Map.empty
+): HotelResponseDto =
+  HotelResponseDto(
+    hotelId = hotel.hotelId.value,
+    hotelName = hotel.hotelName.value,
+    location = hotel.hotelLocation.value,
+    status = hotel.hotelStatus.toString,
+    createdAt = hotel.createdAt.toString,
+    roomTypes = hotel.roomTypes.toList.map(roomType =>
+      val overriddenAvailableRooms = remainingAvailableRoomsByRoomTypeId.get(roomType.roomTypeId.value)
+      RoomTypeSummaryResponseDto(
+        roomTypeId = roomType.roomTypeId.value,
+        roomTypeName = roomType.roomTypeName.value,
+        capacity = roomType.roomCapacity.value,
+        bedType = roomType.bedType.value,
+        basePrice = roomType.basePrice.amount.toString,
+        currency = roomType.basePrice.currency.toString,
+        status = roomType.roomTypeStatus.toString,
+        isBookableForRequestedStay = requestedStayPeriod match
+          case Some(_) => overriddenAvailableRooms.forall(_ > 0)
+          case None    => true,
+        availableRoomsForRequestedStay = requestedStayPeriod.flatMap { period =>
+          overriddenAvailableRooms.orElse(
+            roomType
+              .ensureBookableForStay(period, com.typesafe.travel.shared.kernel.RoomCount.unsafe(1))
+              .toOption
+              .map(_.map(_.availableRooms.value).min)
+          )
+        }
       )
     )
+  )

@@ -4,11 +4,35 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.time.Instant
 
-enum CredentialStatus:
-  case Active, Disabled
+final case class CredentialStatus(value: String):
+  override def toString: String = value
 
-enum AuthManagerType:
-  case Airline, Hotel, Train, Attraction
+object CredentialStatus:
+  val Active: CredentialStatus = CredentialStatus("Active")
+  val Disabled: CredentialStatus = CredentialStatus("Disabled")
+
+  def fromText(value: String): CredentialStatus =
+    value.trim.toLowerCase match
+      case "disabled" => Disabled
+      case _ => Active
+
+final case class AuthManagerType(value: String):
+  override def toString: String = value
+
+object AuthManagerType:
+  val Airline: AuthManagerType = AuthManagerType("Airline")
+  val Hotel: AuthManagerType = AuthManagerType("Hotel")
+  val Train: AuthManagerType = AuthManagerType("Train")
+  val Attraction: AuthManagerType = AuthManagerType("Attraction")
+  val SiteAdmin: AuthManagerType = AuthManagerType("SiteAdmin")
+
+  def fromText(value: String): AuthManagerType =
+    value.trim.toLowerCase match
+      case "hotel" => Hotel
+      case "train" => Train
+      case "attraction" => Attraction
+      case "siteadmin" | "site-admin" => SiteAdmin
+      case _ => Airline
 
 final case class UserCredential(
     credentialId: CredentialId,
@@ -32,4 +56,3 @@ final case class ManagerCredential(
     updatedAt: Instant,
     passwordUpdatedAt: Instant
 )
-

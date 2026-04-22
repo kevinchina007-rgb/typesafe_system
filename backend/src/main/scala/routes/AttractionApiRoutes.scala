@@ -43,7 +43,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           rawPassword = registerAttractionManagerRequestDto.password,
           now = createdAt
         )
-        response <- Created(AttractionAdminSessionResponseDto.fromApplication(adminSession).asJson)
+        response <- Created(attractionAdminSessionResponseDto(adminSession).asJson)
       yield response
 
     case request @ GET -> Root / "api" / "attraction-admin" / "attractions" :? ManagerIdQueryParamMatcher(managerIdValue) =>
@@ -52,7 +52,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         managerIdText <- fromEither(managerIdValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
         _ <- if currentManager.managerType == com.typesafe.travel.auth.domain.AuthManagerType.Attraction && currentManager.managerId == ManagerId(managerIdText) then Async[F].unit else Async[F].raiseError(com.typesafe.travel.auth.domain.AuthError.ManagerSessionWasRequired)
         attractions <- attractionAdminApplicationService.listManagedAttractions(ManagerId(managerIdText))
-        response <- Ok(AttractionListResponseDto(attractions.map(attraction => AttractionResponseDto.fromDomain(attraction))).asJson)
+        response <- Ok(AttractionListResponseDto(attractions.map(attraction => attractionResponseDto(attraction))).asJson)
       yield response
 
     case request @ POST -> Root / "api" / "attraction-admin" / "attractions" =>
@@ -69,7 +69,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           description = createAttractionRequestDto.description,
           createdAt = createdAt
         )
-        response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
+        response <- Created(attractionResponseDto(attraction).asJson)
       yield response
 
     case request @ POST -> Root / "api" / "attraction-admin" / "ticket-types" =>
@@ -97,7 +97,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           validWeekdays = validWeekdays,
           createdAt = createdAt
         )
-        response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
+        response <- Created(attractionResponseDto(attraction).asJson)
       yield response
 
     case request @ POST -> Root / "api" / "attraction-admin" / "ticket-sessions" =>
@@ -117,7 +117,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           capacity = createTicketSessionRequestDto.capacity,
           createdAt = createdAt
         )
-        response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
+        response <- Created(attractionResponseDto(attraction).asJson)
       yield response
 
     case request @ POST -> Root / "api" / "attraction-admin" / "ticket-types" / "rules" =>
@@ -135,7 +135,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           ruleConfig = ruleConfig,
           createdAt = createdAt
         )
-        response <- Created(AttractionResponseDto.fromDomain(attraction).asJson)
+        response <- Created(attractionResponseDto(attraction).asJson)
       yield response
 
     case GET -> Root / "api" / "attractions" :? AttractionCityQueryParamMatcher(cityValue) +& UseDateQueryParamMatcher(useDateValue) =>
@@ -145,7 +145,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         soldQuantities <- loadSoldAttractionQuantities
         response <- Ok(
           AttractionListResponseDto(
-            attractions.map(attraction => AttractionResponseDto.fromDomain(attraction, requestedUseDate, remainingAttractionQuantities(attraction, requestedUseDate, soldQuantities)))
+            attractions.map(attraction => attractionResponseDto(attraction, requestedUseDate, remainingAttractionQuantities(attraction, requestedUseDate, soldQuantities)))
           ).asJson
         )
       yield response
@@ -155,7 +155,7 @@ trait AttractionApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         requestedUseDate <- parseOptionalDate(useDateValue)
         attraction <- attractionBookingApplicationService.getAttractionDetails(AttractionId(attractionIdValue))
         soldQuantities <- loadSoldAttractionQuantities
-        response <- Ok(AttractionResponseDto.fromDomain(attraction, requestedUseDate, remainingAttractionQuantities(attraction, requestedUseDate, soldQuantities)).asJson)
+        response <- Ok(attractionResponseDto(attraction, requestedUseDate, remainingAttractionQuantities(attraction, requestedUseDate, soldQuantities)).asJson)
       yield response
 
     case request @ POST -> Root / "api" / "orders" / orderIdValue / "attraction-items" =>

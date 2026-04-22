@@ -1,0 +1,29 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Runtime artifacts
+.launcher-logs/
+gcm-diagnose.log
+backend/.postgres-dev/
+backend/uploads/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Backend / JVM / Scala
+backend/target/
+backend/project/target/
+backend/project/project/
+backend/.bloop/
+backend/.metals/
+backend/.scala-build/
+backend/*.log
+
+# Environment files
+.env
+.env.*

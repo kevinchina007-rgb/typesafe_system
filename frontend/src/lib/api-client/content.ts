@@ -2,12 +2,19 @@ import type {
   BlogPostListResponse,
   BlogPostResponse,
   ContentImageResponse,
+  CreateReviewFeedbackThreadRequest,
+  EscalateFeedbackThreadRequest,
   ExploreSearchResponse,
+  FeedbackThreadListResponse,
+  FeedbackThreadResponse,
+  FeedbackSiteAdminChannel,
+  MarkFeedbackThreadReadRequest,
   ResourceReviewSummaryResponse,
   ReviewEligibilityResponse,
   ReviewListResponse,
   ReviewResponse,
   SearchSuggestionListResponse,
+  SendFeedbackMessageRequest,
 } from '../api-dtos'
 import { createQueryString, createSingleFileFormData, executeApiRequest, executeJsonApiRequest, executeMultipartApiRequest } from '../api-transport'
 
@@ -33,6 +40,15 @@ export const contentApiClient = {
 
   getBlogPost: (postId: string, userId?: string): Promise<BlogPostResponse> =>
     executeApiRequest(`/blog/posts/${postId}${createQueryString({ userId })}`),
+
+  listBlogModerationPosts: (scope: 'pending' | 'reviewed' = 'pending'): Promise<BlogPostListResponse> =>
+    executeApiRequest(`/blog/moderation/posts${createQueryString({ scope })}`),
+
+  approveBlogPost: (postId: string): Promise<BlogPostResponse> =>
+    executeJsonApiRequest(`/blog/moderation/posts/${postId}/approve`, 'POST', {}),
+
+  rejectBlogPost: (postId: string): Promise<BlogPostResponse> =>
+    executeJsonApiRequest(`/blog/moderation/posts/${postId}/reject`, 'POST', {}),
 
   createBlogPost: (payload: {
     userId: string
@@ -114,4 +130,25 @@ export const contentApiClient = {
 
   deleteReview: (reviewId: string, payload: { userId: string }): Promise<void> =>
     executeJsonApiRequest(`/reviews/${reviewId}`, 'DELETE', payload),
+
+  createReviewFeedbackThread: (payload: CreateReviewFeedbackThreadRequest): Promise<FeedbackThreadResponse> =>
+    executeJsonApiRequest('/feedback/review-threads', 'POST', payload),
+
+  listMyFeedbackThreads: (): Promise<FeedbackThreadListResponse> =>
+    executeApiRequest('/feedback/threads/mine'),
+
+  listManagerFeedbackThreads: (): Promise<FeedbackThreadListResponse> =>
+    executeApiRequest('/feedback/threads/manager'),
+
+  listSiteAdminFeedbackThreads: (channel: FeedbackSiteAdminChannel): Promise<FeedbackThreadListResponse> =>
+    executeApiRequest(`/feedback/threads/site-admin${createQueryString({ channel })}`),
+
+  sendFeedbackMessage: (threadId: string, payload: SendFeedbackMessageRequest): Promise<FeedbackThreadResponse> =>
+    executeJsonApiRequest(`/feedback/threads/${threadId}/messages`, 'POST', payload),
+
+  markFeedbackThreadRead: (threadId: string, payload: MarkFeedbackThreadReadRequest): Promise<FeedbackThreadResponse> =>
+    executeJsonApiRequest(`/feedback/threads/${threadId}/read`, 'POST', payload),
+
+  escalateFeedbackThread: (threadId: string, payload: EscalateFeedbackThreadRequest): Promise<FeedbackThreadResponse> =>
+    executeJsonApiRequest(`/feedback/threads/${threadId}/escalate`, 'POST', payload),
 }

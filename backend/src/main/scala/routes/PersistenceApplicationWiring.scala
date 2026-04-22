@@ -1,7 +1,7 @@
 package com.typesafe.travel.api
 
 import com.typesafe.travel.api.application.*
-import cats.effect.kernel.Async
+import cats.effect.IO
 import cats.effect.kernel.Clock
 import cats.effect.kernel.Resource
 import cats.syntax.all.*
@@ -18,6 +18,7 @@ import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.*
 import com.typesafe.travel.persistence.attraction.*
+import com.typesafe.travel.persistence.advertising.*
 import com.typesafe.travel.persistence.auth.*
 import com.typesafe.travel.persistence.content.*
 import com.typesafe.travel.persistence.flight.*
@@ -37,59 +38,61 @@ import org.http4s.HttpApp
 import ApplicationWiringPaths.resolveConfiguredPath
 
 object PersistenceApplicationWiring:
-  def resource[F[_]: Async]: Resource[F, ApplicationWiring[F]] =
+  def resource: Resource[IO, ApplicationWiring] =
     val databaseConfig = DatabaseConfig.loadFromEnvironment
     val avatarUploadRootDirectoryPath = resolveConfiguredPath("TRAVEL_AVATAR_UPLOAD_ROOT", "TRAVEL_UPLOAD_ROOT", "uploads", "avatars")
     val contentUploadRootDirectoryPath = resolveConfiguredPath("TRAVEL_CONTENT_UPLOAD_ROOT", "TRAVEL_UPLOAD_ROOT", "uploads", "content")
     val frontendDistRootDirectoryPath = resolveConfiguredPath("TRAVEL_FRONTEND_DIST_ROOT", "TRAVEL_STATIC_ROOT", "..", "frontend", "dist")
-    DatabaseTransactor.resource[F](databaseConfig).evalMap { databaseTransactor =>
+    DatabaseTransactor.resource[IO](databaseConfig).evalMap { databaseTransactor =>
       for
         _ <- SchemaInitializer.initialize(databaseTransactor)
-        doobieUploadedBinaryAssetRepository = DoobieUploadedBinaryAssetRepository[F](databaseTransactor)
-        doobieUserRepository = DoobieUserRepository[F](databaseTransactor)
-        doobieAuthRepository = DoobieAuthRepository[F](databaseTransactor)
-        doobieTravelerProfileRepository = DoobieTravelerProfileRepository[F](databaseTransactor)
-        doobieFlightRepository = DoobieFlightRepository[F](databaseTransactor)
-        doobieHotelRepository = DoobieHotelRepository[F](databaseTransactor)
-        doobieTrainRepository = DoobieTrainRepository[F](databaseTransactor)
-        doobieAttractionRepository = DoobieAttractionRepository[F](databaseTransactor)
-        doobieBlogRepository = DoobieBlogRepository[F](databaseTransactor)
-        doobieReviewRepository = DoobieReviewRepository[F](databaseTransactor)
-        doobieTourGroupRepository = DoobieTourGroupRepository[F](databaseTransactor)
-        doobieOrderRepository = DoobieOrderRepository[F](databaseTransactor)
-        doobieInventoryReservationRepository = DoobieInventoryReservationRepository[F](databaseTransactor)
-        doobieManagerRepository = DoobieManagerRepository[F](databaseTransactor)
-        databaseAvatarStorage = DatabaseAvatarStorage.create[F](doobieUploadedBinaryAssetRepository)
-        databaseContentImageStorage = DatabaseContentImageStorage.create[F](doobieUploadedBinaryAssetRepository)
-        databaseTourGroupChatAttachmentStorage = DatabaseTourGroupChatAttachmentStorage.create[F](doobieUploadedBinaryAssetRepository)
-        liveUserService = LiveUserService[F](doobieUserRepository)
+        doobieUploadedBinaryAssetRepository = DoobieUploadedBinaryAssetRepository[IO](databaseTransactor)
+        doobieUserRepository = DoobieUserRepository[IO](databaseTransactor)
+        doobieAuthRepository = DoobieAuthRepository[IO](databaseTransactor)
+        doobieTravelerProfileRepository = DoobieTravelerProfileRepository[IO](databaseTransactor)
+        doobieFlightRepository = DoobieFlightRepository[IO](databaseTransactor)
+        doobieHotelRepository = DoobieHotelRepository[IO](databaseTransactor)
+        doobieTrainRepository = DoobieTrainRepository[IO](databaseTransactor)
+        doobieAttractionRepository = DoobieAttractionRepository[IO](databaseTransactor)
+        doobieBlogRepository = DoobieBlogRepository[IO](databaseTransactor)
+        doobieReviewRepository = DoobieReviewRepository[IO](databaseTransactor)
+        doobieFeedbackRepository = DoobieFeedbackRepository[IO](databaseTransactor)
+        doobieAdvertisementRepository = DoobieAdvertisementRepository[IO](databaseTransactor)
+        doobieTourGroupRepository = DoobieTourGroupRepository[IO](databaseTransactor)
+        doobieOrderRepository = DoobieOrderRepository[IO](databaseTransactor)
+        doobieInventoryReservationRepository = DoobieInventoryReservationRepository[IO](databaseTransactor)
+        doobieManagerRepository = DoobieManagerRepository[IO](databaseTransactor)
+        databaseAvatarStorage = DatabaseAvatarStorage.create[IO](doobieUploadedBinaryAssetRepository)
+        databaseContentImageStorage = DatabaseContentImageStorage.create[IO](doobieUploadedBinaryAssetRepository)
+        databaseTourGroupChatAttachmentStorage = DatabaseTourGroupChatAttachmentStorage.create[IO](doobieUploadedBinaryAssetRepository)
+        liveUserService = LiveUserService[IO](doobieUserRepository)
         liveTravelerProfileService =
-          LiveTravelerProfileService[F](
+          LiveTravelerProfileService[IO](
             doobieTravelerProfileRepository,
             doobieUserRepository,
-            () => Clock[F].realTimeInstant.map(_.atZone(java.time.ZoneId.systemDefault()).toLocalDate)
+            () => Clock[IO].realTimeInstant.map(_.atZone(java.time.ZoneId.systemDefault()).toLocalDate)
           )
-        liveFlightService = LiveFlightService[F](doobieFlightRepository)
-        liveHotelService = LiveHotelService[F](doobieHotelRepository)
-        liveTrainService = TrainService[F](doobieTrainRepository)
-        liveTicketEligibilityService = TicketEligibilityService[F]()
-        reservationLifecycle = LiveReservationLifecycle[F](doobieInventoryReservationRepository)
+        liveFlightService = LiveFlightService[IO](doobieFlightRepository)
+        liveHotelService = LiveHotelService[IO](doobieHotelRepository)
+        liveTrainService = TrainService[IO](doobieTrainRepository)
+        liveTicketEligibilityService = TicketEligibilityService[IO]()
+        reservationLifecycle = LiveReservationLifecycle[IO](doobieInventoryReservationRepository)
         liveFlightInventoryLockingService =
-          LiveFlightInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
+          LiveFlightInventoryLockingService[IO](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
         liveHotelInventoryLockingService =
-          LiveHotelInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
+          LiveHotelInventoryLockingService[IO](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
         liveTrainInventoryLockingService =
-          LiveTrainInventoryLockingService[F](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
-        liveOrderService = LiveOrderService[F](doobieOrderRepository)
+          LiveTrainInventoryLockingService[IO](doobieInventoryReservationRepository, java.time.Duration.ofMinutes(15), reservationLifecycle)
+        liveOrderService = LiveOrderService[IO](doobieOrderRepository)
         liveOrderLifecycleApplicationService =
-          LiveOrderLifecycleApplicationService[F](
+          LiveOrderLifecycleApplicationService[IO](
             orderService = liveOrderService,
             orderRepository = doobieOrderRepository,
             reservationLifecycle = reservationLifecycle
           )
-        liveManagerService = LiveManagerService[F](doobieManagerRepository)
+        liveManagerService = LiveManagerService[IO](doobieManagerRepository)
         liveAuthApplicationService =
-          LiveAuthApplicationService[F](
+          LiveAuthApplicationService[IO](
             authRepository = doobieAuthRepository,
             userService = liveUserService,
             userRepository = doobieUserRepository,
@@ -97,7 +100,7 @@ object PersistenceApplicationWiring:
             trainRepository = doobieTrainRepository
           )
         liveFlightBookingApplicationService =
-          LiveFlightBookingApplicationService[F](
+          new FlightBookingApplicationService(
             flightService = liveFlightService,
             flightRepository = doobieFlightRepository,
             flightInventoryLockingService = liveFlightInventoryLockingService,
@@ -105,7 +108,7 @@ object PersistenceApplicationWiring:
             travelerProfileRepository = doobieTravelerProfileRepository
           )
         liveHotelBookingApplicationService =
-          LiveHotelBookingApplicationService[F](
+          LiveHotelBookingApplicationService[IO](
             hotelService = liveHotelService,
             hotelRepository = doobieHotelRepository,
             orderRepository = doobieOrderRepository,
@@ -113,7 +116,7 @@ object PersistenceApplicationWiring:
             hotelInventoryLockingService = liveHotelInventoryLockingService
           )
         liveTrainBookingApplicationService =
-          LiveTrainBookingApplicationService[F](
+          LiveTrainBookingApplicationService[IO](
             trainService = liveTrainService,
             trainRepository = doobieTrainRepository,
             trainInventoryLockingService = liveTrainInventoryLockingService,
@@ -121,7 +124,7 @@ object PersistenceApplicationWiring:
             travelerProfileRepository = doobieTravelerProfileRepository
           )
         liveAttractionBookingApplicationService =
-          LiveAttractionBookingApplicationService[F](
+          LiveAttractionBookingApplicationService[IO](
             attractionRepository = doobieAttractionRepository,
             ticketEligibilityService = liveTicketEligibilityService,
             orderRepository = doobieOrderRepository,
@@ -129,20 +132,32 @@ object PersistenceApplicationWiring:
             travelerProfileRepository = doobieTravelerProfileRepository
           )
         liveBlogApplicationService =
-          LiveBlogApplicationService[F](
+          LiveBlogApplicationService[IO](
             blogRepository = doobieBlogRepository,
             userRepository = doobieUserRepository,
             contentImageStorage = databaseContentImageStorage
           )
         liveReviewApplicationService =
-          LiveReviewApplicationService[F](
+          LiveReviewApplicationService[IO](
             reviewRepository = doobieReviewRepository,
             orderRepository = doobieOrderRepository,
             userRepository = doobieUserRepository,
             contentImageStorage = databaseContentImageStorage
           )
+        liveFeedbackApplicationService =
+          LiveFeedbackApplicationService[IO](
+            feedbackRepository = doobieFeedbackRepository,
+            reviewRepository = doobieReviewRepository,
+            userRepository = doobieUserRepository
+          )
+        liveAdvertisementApplicationService =
+          LiveAdvertisementApplicationService[IO](
+            advertisementRepository = doobieAdvertisementRepository,
+            hotelRepository = doobieHotelRepository,
+            attractionRepository = doobieAttractionRepository
+          )
         liveTourGroupApplicationService =
-          LiveTourGroupApplicationService[F](
+          LiveTourGroupApplicationService[IO](
             tourGroupRepository = doobieTourGroupRepository,
             userRepository = doobieUserRepository,
             travelerProfileRepository = doobieTravelerProfileRepository,
@@ -156,17 +171,17 @@ object PersistenceApplicationWiring:
             chatAttachmentStorage = databaseTourGroupChatAttachmentStorage
           )
         liveTrainAdminApplicationService =
-          LiveTrainAdminApplicationService[F](
+          LiveTrainAdminApplicationService[IO](
             trainService = liveTrainService,
             trainRepository = doobieTrainRepository
           )
         liveAttractionAdminApplicationService =
-          LiveAttractionAdminApplicationService[F](
+          LiveAttractionAdminApplicationService[IO](
             managerService = liveManagerService,
             attractionRepository = doobieAttractionRepository
           )
         liveManagerWorkflowApplicationService =
-          LiveManagerWorkflowApplicationService[F](
+          LiveManagerWorkflowApplicationService[IO](
             managerService = liveManagerService,
             managerRepository = doobieManagerRepository,
             orderRepository = doobieOrderRepository,
@@ -177,12 +192,12 @@ object PersistenceApplicationWiring:
             attractionRepository = doobieAttractionRepository
           )
         liveAvatarApplicationService =
-          LiveAvatarApplicationService[F](
+          LiveAvatarApplicationService[IO](
             userService = liveUserService,
             avatarStorage = databaseAvatarStorage
           )
         apiRouter =
-          ApiRouter[F](
+          ApiRouter[IO](
             userService = liveUserService,
             travelerProfileService = liveTravelerProfileService,
             orderService = liveOrderService,
@@ -194,6 +209,8 @@ object PersistenceApplicationWiring:
             attractionBookingApplicationService = liveAttractionBookingApplicationService,
             blogApplicationService = liveBlogApplicationService,
             reviewApplicationService = liveReviewApplicationService,
+            feedbackApplicationService = liveFeedbackApplicationService,
+            advertisementApplicationService = liveAdvertisementApplicationService,
             tourGroupApplicationService = liveTourGroupApplicationService,
             trainAdminApplicationService = liveTrainAdminApplicationService,
             attractionAdminApplicationService = liveAttractionAdminApplicationService,
@@ -203,7 +220,7 @@ object PersistenceApplicationWiring:
             travelerProfileRepository = doobieTravelerProfileRepository,
             orderRepository = doobieOrderRepository,
             inventoryReservationRepository = doobieInventoryReservationRepository,
-            uploadedBinaryAssetReader = Some(doobieUploadedBinaryAssetRepository),
+            uploadedBinaryAssetRepository = Some(doobieUploadedBinaryAssetRepository),
             avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
             contentUploadRootDirectoryPath = contentUploadRootDirectoryPath,
             frontendDistRootDirectoryPath = frontendDistRootDirectoryPath
@@ -228,6 +245,8 @@ object PersistenceApplicationWiring:
         attractionBookingApplicationService = liveAttractionBookingApplicationService,
         blogApplicationService = liveBlogApplicationService,
         reviewApplicationService = liveReviewApplicationService,
+        feedbackApplicationService = liveFeedbackApplicationService,
+        advertisementApplicationService = liveAdvertisementApplicationService,
         tourGroupApplicationService = liveTourGroupApplicationService,
         trainAdminApplicationService = liveTrainAdminApplicationService,
         attractionAdminApplicationService = liveAttractionAdminApplicationService,
@@ -241,6 +260,8 @@ object PersistenceApplicationWiring:
         attractionRepository = doobieAttractionRepository,
         blogRepository = doobieBlogRepository,
         reviewRepository = doobieReviewRepository,
+        feedbackRepository = doobieFeedbackRepository,
+        advertisementRepository = doobieAdvertisementRepository,
         authRepository = doobieAuthRepository,
         tourGroupRepository = doobieTourGroupRepository,
         orderRepository = doobieOrderRepository,
@@ -249,3 +270,4 @@ object PersistenceApplicationWiring:
         httpApp = apiRouter.routes.orNotFound
       )
     }
+

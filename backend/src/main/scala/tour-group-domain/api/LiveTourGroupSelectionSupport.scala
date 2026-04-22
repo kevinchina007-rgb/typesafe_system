@@ -1,6 +1,7 @@
 package com.typesafe.travel.api.application
 
 import cats.MonadThrow
+import cats.effect.LiftIO
 import cats.syntax.all.*
 import com.typesafe.travel.identity.domain.UserRepository
 import com.typesafe.travel.order.domain.{Order, OrderError, OrderService, PaymentMethod, PaymentStatus, RefundStatus, SupplierReviewStatus}
@@ -11,7 +12,7 @@ import com.typesafe.travel.traveler.domain.TravelerProfileRepository
 import java.time.{Instant, LocalDate, ZoneOffset}
 
 
-trait LiveTourGroupSelectionSupport[F[_]: MonadThrow]:
+trait LiveTourGroupSelectionSupport[F[_]: MonadThrow: LiftIO]:
   self: LiveTourGroupApplicationService[F] =>
   protected def mutateSelection(
       selectionId: GroupPlanSelectionId
@@ -192,11 +193,13 @@ trait LiveTourGroupSelectionSupport[F[_]: MonadThrow]:
         for
           cabinClassText <- option.resourceVariantCode.liftTo[F](TourGroupApplicationError.ResourceContextWasInvalid(option.optionId, option.resourceType))
           cabinClass <- CabinClass.create(cabinClassText).liftTo[F]
-          order <- flightBookingApplicationService.createFlightOrder(
-            actingUserId = actingUserId,
-            flightId = FlightId(option.resourceId),
-            travelerIds = travelerIds,
-            cabinClass = cabinClass
+          order <- LiftIO[F].liftIO(
+            flightBookingApplicationService.createFlightOrder(
+              actingUserId = actingUserId,
+              flightId = FlightId(option.resourceId),
+              travelerIds = travelerIds,
+              cabinClass = cabinClass
+            )
           )
         yield order
       case GroupPlanOptionResourceType.HotelRoomType =>

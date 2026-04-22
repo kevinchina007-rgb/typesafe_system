@@ -211,8 +211,8 @@ object DatabaseCodecs:
         for
           travelerDocumentNumber <- DocumentNumber.create(serializedTravelerIdentityDocument.travelerDocumentNumber)
           issuingCountryCode <- CountryCode.create(serializedTravelerIdentityDocument.issuingCountryCode)
-        yield TravelerIdentityDocument.create(
-          travelerDocumentType = TravelerDocumentType.valueOf(serializedTravelerIdentityDocument.travelerDocumentType),
+        yield travelerIdentityDocument(
+          travelerDocumentType = TravelerDocumentType.fromText(serializedTravelerIdentityDocument.travelerDocumentType),
           travelerDocumentNumber = travelerDocumentNumber,
           issuingCountryCode = issuingCountryCode,
           expirationDate = LocalDate.parse(serializedTravelerIdentityDocument.expirationDate)
@@ -233,7 +233,7 @@ object DatabaseCodecs:
       serializedTravelerLoyaltyMemberships.traverse { serializedTravelerLoyaltyMembership =>
         for
           loyaltyProgramName <- LoyaltyProgramName.create(serializedTravelerLoyaltyMembership.loyaltyProgramName)
-          travelerLoyaltyMembership <- TravelerLoyaltyMembership.create(
+          travelerLoyaltyMembership <- travelerLoyaltyMembership(
             loyaltyProgramName = loyaltyProgramName,
             loyaltyMembershipNumber = serializedTravelerLoyaltyMembership.loyaltyMembershipNumber
           )
@@ -250,9 +250,9 @@ object DatabaseCodecs:
 
   def decodeTravelerPreferences(serializedValue: String): Either[Throwable, TravelerPreferences] =
     decode[SerializedTravelerPreferences](serializedValue).flatMap { serializedTravelerPreferences =>
-      TravelerPreferences.create(
-        travelerSeatPreference = SeatPreference.valueOf(serializedTravelerPreferences.travelerSeatPreference),
-        travelerMealPreference = MealPreference.valueOf(serializedTravelerPreferences.travelerMealPreference),
+      travelerPreferences(
+        travelerSeatPreference = SeatPreference.fromText(serializedTravelerPreferences.travelerSeatPreference),
+        travelerMealPreference = MealPreference.fromText(serializedTravelerPreferences.travelerMealPreference),
         accessibilityRequestNotes = serializedTravelerPreferences.accessibilityRequestNotes
       )
     }.left.map(error => new IllegalArgumentException(s"Could not decode traveler preferences: ${error.getMessage}", error))
@@ -273,7 +273,7 @@ object DatabaseCodecs:
           for
             emergencyContactName <- PersonName.create(serializedTravelerEmergencyContact.emergencyContactName)
             emergencyContactPhoneNumber <- ContactNumber.create(serializedTravelerEmergencyContact.emergencyContactPhoneNumber)
-          yield Some(TravelerEmergencyContact.create(emergencyContactName, emergencyContactPhoneNumber))
+          yield Some(travelerEmergencyContact(emergencyContactName, emergencyContactPhoneNumber))
         }.left.map(error => new IllegalArgumentException(s"Could not decode traveler emergency contact: ${error.getMessage}", error))
 
   def encodeOrderLineItemSnapshot(orderLineItem: OrderLineItem): String =
@@ -441,7 +441,7 @@ object DatabaseCodecs:
         arrivalTime = Instant.parse(serializedTrainBookingSnapshot.arrivalTime),
         seatInventoryId = TrainSeatInventoryId(serializedTrainBookingSnapshot.seatInventoryId),
         seatClass = seatClass,
-        requestedSeatPreference = serializedTrainBookingSnapshot.requestedSeatPreference.map(TrainSeatPreference.valueOf),
+        requestedSeatPreference = serializedTrainBookingSnapshot.requestedSeatPreference.map(TrainSeatPreference.fromText),
         seatAssignments = serializedTrainBookingSnapshot.seatAssignments.getOrElse(Vector.empty).map(assignment =>
           TrainTravelerSeatAssignment(
             travelerId = TravelerId(assignment.travelerId),
@@ -449,7 +449,7 @@ object DatabaseCodecs:
             carriageNo = assignment.carriageNo,
             seatNo = assignment.seatNo,
             seatLabel = assignment.seatLabel,
-            seatPositionType = TrainSeatPositionType.valueOf(assignment.seatPositionType)
+            seatPositionType = TrainSeatPositionType.fromText(assignment.seatPositionType)
           )
         ),
         travelerIds = serializedTrainBookingSnapshot.travelerIds.map(TravelerId.apply),

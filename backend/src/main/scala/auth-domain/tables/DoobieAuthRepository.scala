@@ -173,24 +173,24 @@ final class DoobieAuthRepository[F[_]: Async](transactor: Transactor[F]) extends
   private def toUserCredential(row: (String, String, String, String, String, Instant, Instant, Instant)): F[UserCredential] =
     for
       loginEmail <- Async[F].fromEither(EmailAddress.create(row._3))
-    yield restorePersistedUserCredential(CredentialId(row._1), UserId(row._2), loginEmail, row._4, CredentialStatus.valueOf(row._5), row._6, row._7, row._8)
+    yield restorePersistedUserCredential(CredentialId(row._1), UserId(row._2), loginEmail, row._4, CredentialStatus.fromText(row._5), row._6, row._7, row._8)
 
   private def toManagerCredential(row: (String, String, String, String, String, String, Instant, Instant, Instant)): F[ManagerCredential] =
     for
       loginEmail <- Async[F].fromEither(EmailAddress.create(row._4))
-    yield restorePersistedManagerCredential(CredentialId(row._1), AuthManagerType.valueOf(row._2), ManagerId(row._3), loginEmail, row._5, CredentialStatus.valueOf(row._6), row._7, row._8, row._9)
+    yield restorePersistedManagerCredential(CredentialId(row._1), AuthManagerType.fromText(row._2), ManagerId(row._3), loginEmail, row._5, CredentialStatus.fromText(row._6), row._7, row._8, row._9)
 
   private def toSession(row: (String, String, String, Option[String], Instant, Instant, Instant, String)): F[AuthSession] =
     Async[F].pure(
       restorePersistedSession(
         SessionId(row._1),
-        AuthActorType.valueOf(row._2),
+        AuthActorType.fromText(row._2),
         row._3,
-        row._4.map(AuthManagerType.valueOf),
+        row._4.map(AuthManagerType.fromText),
         row._5,
         row._6,
         row._7,
-        AuthSessionStatus.valueOf(row._8)
+        AuthSessionStatus.fromText(row._8)
       )
     )
 

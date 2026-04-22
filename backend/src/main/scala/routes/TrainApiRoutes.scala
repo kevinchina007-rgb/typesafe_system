@@ -48,7 +48,7 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           rawPassword = registerRailwayManagerRequestDto.password,
           now = createdAt
         )
-        response <- Created(TrainAdminSessionResponseDto.fromApplication(managerSession).asJson)
+        response <- Created(trainAdminSessionResponseDto(managerSession).asJson)
       yield response
 
     case request @ GET -> Root / "api" / "train-admin" / "trains" :? ManagerIdQueryParamMatcher(managerIdValue) =>
@@ -58,7 +58,7 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         _ <- if currentManager.managerType == com.typesafe.travel.auth.domain.AuthManagerType.Train && currentManager.managerId == ManagerId(managerIdText) then Async[F].unit else Async[F].raiseError(com.typesafe.travel.auth.domain.AuthError.ManagerSessionWasRequired)
         trains <- trainAdminApplicationService.listManagedTrains(ManagerId(managerIdText))
         currentTime <- currentInstantF
-        trainResponseDtos <- trains.traverse(train => loadRemainingTrainSeats(train, currentTime).map(remainingSeats => TrainResponseDto.fromDomain(train, remainingSeats)))
+        trainResponseDtos <- trains.traverse(train => loadRemainingTrainSeats(train, currentTime).map(remainingSeats => trainResponseDto(train, remainingSeats)))
         response <- Ok(TrainListResponseDto(trainResponseDtos).asJson)
       yield response
 
@@ -122,7 +122,7 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           refundPolicies = refundPolicies,
           createdAt = createdAt
         )
-        response <- Created(TrainResponseDto.fromDomain(trainJourney).asJson)
+        response <- Created(trainResponseDto(trainJourney).asJson)
       yield response
 
     case GET -> Root / "api" / "trains" :? FromStationQueryParamMatcher(fromStationValue) +&
@@ -134,7 +134,7 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         departureDate <- parseOptionalDate(departureDateValue)
         trains <- trainBookingApplicationService.browseTrains(fromStationQuery, toStationQuery, departureDate)
         currentTime <- currentInstantF
-        trainResponseDtos <- trains.traverse(train => loadRemainingTrainSeats(train, currentTime).map(remainingSeats => TrainResponseDto.fromDomain(train, remainingSeats)))
+        trainResponseDtos <- trains.traverse(train => loadRemainingTrainSeats(train, currentTime).map(remainingSeats => trainResponseDto(train, remainingSeats)))
         response <- Ok(TrainListResponseDto(trainResponseDtos).asJson)
       yield response
 
@@ -142,7 +142,7 @@ trait TrainApiRoutes[F[_]: Async] extends Http4sDsl[F]:
       trainBookingApplicationService
         .getTrainDetails(TrainId(trainIdValue))
         .flatMap(trainJourney =>
-          currentInstantF.flatMap(currentTime => loadRemainingTrainSeats(trainJourney, currentTime).flatMap(remainingSeats => Ok(TrainResponseDto.fromDomain(trainJourney, remainingSeats).asJson)))
+          currentInstantF.flatMap(currentTime => loadRemainingTrainSeats(trainJourney, currentTime).flatMap(remainingSeats => Ok(trainResponseDto(trainJourney, remainingSeats).asJson)))
         )
 
     case request @ POST -> Root / "api" / "orders" / orderIdValue / "train-items" =>

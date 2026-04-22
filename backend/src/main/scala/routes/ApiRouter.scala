@@ -1,6 +1,8 @@
 package com.typesafe.travel.api
 
 import cats.MonadThrow
+import cats.effect.LiftIO
+import cats.effect.IO
 import cats.effect.kernel.{Async, Clock}
 import cats.syntax.all.*
 import com.typesafe.travel.api.application.*
@@ -19,25 +21,27 @@ import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.tourgroup.domain.*
 import com.typesafe.travel.train.domain.*
 import com.typesafe.travel.traveler.domain.*
-import com.typesafe.travel.persistence.UploadedBinaryAssetReader
+import com.typesafe.travel.persistence.UploadedBinaryAssetRepository
 import org.http4s.*
 import org.http4s.dsl.Http4sDsl
 
 import java.nio.file.Path
 
-final class ApiRouter[F[_]: Async: Clock](
+final class ApiRouter[F[_]: Async: Clock: LiftIO](
     protected val userService: UserService[F],
     protected val travelerProfileService: TravelerProfileService[F],
     protected val orderService: OrderService[F],
     protected val orderLifecycleApplicationService: OrderLifecycleApplicationService[F],
     protected val authApplicationService: AuthApplicationService[F],
-    protected val flightBookingApplicationService: FlightBookingApplicationService[F],
+    protected val flightBookingApplicationService: FlightBookingApplicationService,
     protected val hotelBookingApplicationService: HotelBookingApplicationService[F],
     protected val trainBookingApplicationService: TrainBookingApplicationService[F],
     protected val trainAdminApplicationService: TrainAdminApplicationService[F],
     protected val attractionBookingApplicationService: AttractionBookingApplicationService[F],
     protected val blogApplicationService: BlogApplicationService[F],
     protected val reviewApplicationService: ReviewApplicationService[F],
+    protected val feedbackApplicationService: FeedbackApplicationService[F],
+    protected val advertisementApplicationService: AdvertisementApplicationService[F],
     protected val attractionAdminApplicationService: AttractionAdminApplicationService[F],
     protected val tourGroupApplicationService: TourGroupApplicationService[F],
     protected val managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
@@ -46,7 +50,7 @@ final class ApiRouter[F[_]: Async: Clock](
     protected val travelerProfileRepository: TravelerProfileRepository[F],
     protected val orderRepository: OrderRepository[F],
     protected val inventoryReservationRepository: InventoryReservationRepository[F],
-    protected val uploadedBinaryAssetReader: Option[UploadedBinaryAssetReader[F]],
+    protected val uploadedBinaryAssetRepository: Option[UploadedBinaryAssetRepository[F]],
     protected val avatarUploadRootDirectoryPath: Path,
     protected val contentUploadRootDirectoryPath: Path,
     protected val frontendDistRootDirectoryPath: Path
@@ -65,6 +69,8 @@ final class ApiRouter[F[_]: Async: Clock](
     with AttractionApiRoutes[F]
     with BlogApiRoutes[F]
     with ReviewApiRoutes[F]
+    with FeedbackApiRoutes[F]
+    with AdvertisementApiRoutes[F]
     with ExploreApiRoutes[F]
     with ManagerApiRoutes[F]
     with OrderApiRoutes[F]
@@ -81,25 +87,29 @@ final class ApiRouter[F[_]: Async: Clock](
       attractionRoutes <+>
       blogRoutes <+>
       reviewRoutes <+>
+      feedbackRoutes <+>
+      advertisementRoutes <+>
       exploreRoutes <+>
       managerRoutes <+>
       orderRoutes <+>
       tourGroupRoutes
 
 object ApiRouter:
-  def apply[F[_]: Async: Clock](
+  def apply[F[_]: Async: Clock: LiftIO](
       userService: UserService[F],
       travelerProfileService: TravelerProfileService[F],
       orderService: OrderService[F],
       orderLifecycleApplicationService: OrderLifecycleApplicationService[F],
       authApplicationService: AuthApplicationService[F],
-      flightBookingApplicationService: FlightBookingApplicationService[F],
+      flightBookingApplicationService: FlightBookingApplicationService,
       hotelBookingApplicationService: HotelBookingApplicationService[F],
       trainBookingApplicationService: TrainBookingApplicationService[F],
       trainAdminApplicationService: TrainAdminApplicationService[F],
       attractionBookingApplicationService: AttractionBookingApplicationService[F],
       blogApplicationService: BlogApplicationService[F],
       reviewApplicationService: ReviewApplicationService[F],
+      feedbackApplicationService: FeedbackApplicationService[F],
+      advertisementApplicationService: AdvertisementApplicationService[F],
       attractionAdminApplicationService: AttractionAdminApplicationService[F],
       tourGroupApplicationService: TourGroupApplicationService[F],
       managerWorkflowApplicationService: ManagerWorkflowApplicationService[F],
@@ -108,7 +118,7 @@ object ApiRouter:
       travelerProfileRepository: TravelerProfileRepository[F],
       orderRepository: OrderRepository[F],
       inventoryReservationRepository: InventoryReservationRepository[F],
-      uploadedBinaryAssetReader: Option[UploadedBinaryAssetReader[F]],
+      uploadedBinaryAssetRepository: Option[UploadedBinaryAssetRepository[F]],
       avatarUploadRootDirectoryPath: Path,
       contentUploadRootDirectoryPath: Path,
       frontendDistRootDirectoryPath: Path
@@ -126,6 +136,8 @@ object ApiRouter:
       attractionBookingApplicationService,
       blogApplicationService,
       reviewApplicationService,
+      feedbackApplicationService,
+      advertisementApplicationService,
       attractionAdminApplicationService,
       tourGroupApplicationService,
       managerWorkflowApplicationService,
@@ -134,7 +146,7 @@ object ApiRouter:
       travelerProfileRepository,
       orderRepository,
       inventoryReservationRepository,
-      uploadedBinaryAssetReader,
+      uploadedBinaryAssetRepository,
       avatarUploadRootDirectoryPath,
       contentUploadRootDirectoryPath,
       frontendDistRootDirectoryPath

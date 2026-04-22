@@ -383,14 +383,7 @@ object OrderDtoMappers:
       case _     => com.typesafe.travel.shared.kernel.Currency.CNY
 
   def toPaymentMethod(paymentMethodValue: String): PaymentMethod =
-    paymentMethodValue.trim.toLowerCase match
-      case "alipay"       => PaymentMethod.Wallet
-      case "wechat-pay"   => PaymentMethod.Wallet
-      case "nailong-pay"  => PaymentMethod.Wallet
-      case "card"          => PaymentMethod.Card
-      case "bank-transfer" => PaymentMethod.BankTransfer
-      case "wallet"        => PaymentMethod.Wallet
-      case _               => PaymentMethod.LoyaltyPoints
+    PaymentMethod.fromText(paymentMethodValue)
 
   def toCabinClass(cabinClassValue: String) =
     CabinClass.create(cabinClassValue)

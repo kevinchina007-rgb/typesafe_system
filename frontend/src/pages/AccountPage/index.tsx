@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { UserPanel } from '../../components/UserPanel'
 import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, AppViewKey, AuthSessionResponse, CurrentManagerSessionResponse, ManagerType, TravelerResponse, UserResponse } from '../../lib/mvp-types'
+import type { AppLanguage, AppViewKey, CurrentManagerSessionResponse, TravelerResponse, UserResponse } from '../../lib/mvp-types'
 import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
 
 type AccountEntryMode = 'register' | 'login'
@@ -32,27 +32,12 @@ export function AccountPage({
 }: AccountPageProps) {
   const [accountEntryMode, setAccountEntryMode] = useState<AccountEntryMode>(requestedEntryMode)
   const [loginEmailDraft, setLoginEmailDraft] = useState('')
-  const [managerAuthMode, setManagerAuthMode] = useState<'login' | 'register'>('login')
-  const [managerTypeDraft, setManagerTypeDraft] = useState<ManagerType>('airline')
-  const [userSessions, setUserSessions] = useState<AuthSessionResponse[]>([])
   const [userTravelers, setUserTravelers] = useState<TravelerResponse[]>([])
-  const [managerSessions, setManagerSessions] = useState<AuthSessionResponse[]>([])
-  const [isManagerChangePasswordOpen, setIsManagerChangePasswordOpen] = useState(false)
-  const [isManagerSessionsOpen, setIsManagerSessionsOpen] = useState(false)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
 
   useEffect(() => {
     setAccountEntryMode(requestedEntryMode)
   }, [requestedEntryMode])
-
-  useEffect(() => {
-    if (!signedInUser) {
-      setUserSessions([])
-      setUserTravelers([])
-      return
-    }
-    void travelMvpApiClient.listUserSessions().then(response => setUserSessions(response.sessions)).catch(() => setUserSessions([]))
-  }, [signedInUser?.userId])
 
   useEffect(() => {
     if (!signedInUser) {
@@ -62,19 +47,17 @@ export function AccountPage({
     void travelMvpApiClient.listTravelers(signedInUser.userId).then(response => setUserTravelers(response.travelers)).catch(() => setUserTravelers([]))
   }, [signedInUser?.userId])
 
-  useEffect(() => {
+  async function ensureManagerLoggedOut() {
     if (!signedInManager) {
-      setManagerSessions([])
-      setIsManagerChangePasswordOpen(false)
-      setIsManagerSessionsOpen(false)
       return
     }
-    void travelMvpApiClient.listManagerSessions().then(response => setManagerSessions(response.sessions)).catch(() => setManagerSessions([]))
-  }, [signedInManager?.managerId, signedInManager?.managerType])
+
+    await travelMvpApiClient.logoutManagerAuth()
+    onSignedInManagerChange(null)
+  }
 
   return (
-    <>
-      <UserPanel
+    <UserPanel
       account={signedInUser}
       currentLanguage={currentLanguage}
       accountEntryMode={accountEntryMode}
@@ -87,6 +70,7 @@ export function AccountPage({
       onChangeLoginEmailDraft={setLoginEmailDraft}
       onRegisterAccount={async payload => {
         await runPageAction(async () => {
+          await ensureManagerLoggedOut()
           const createdSession = await travelMvpApiClient.signupUser(payload)
           onSignedInUserChange(createdSession.user)
           setLoginEmailDraft(createdSession.user.email)
@@ -95,6 +79,7 @@ export function AccountPage({
       }}
       onLoginAccount={async payload => {
         await runPageAction(async () => {
+          await ensureManagerLoggedOut()
           const nextSignedInSession = await travelMvpApiClient.loginUserWithPassword(payload)
           onSignedInUserChange(nextSignedInSession.user)
           onNavigate('travelers')
@@ -126,14 +111,6 @@ export function AccountPage({
           setUserTravelers(refreshedTravelers.travelers)
         }, translate('account.refresh'), translate('notice.actionSuccess'))
       }}
-      sessions={userSessions}
-      onRefreshSessions={async () => {
-        if (!signedInUser) return
-        await runPageAction(async () => {
-          const nextSessions = await travelMvpApiClient.listUserSessions()
-          setUserSessions(nextSessions.sessions)
-        }, translate('account.refreshSessions'), translate('notice.actionSuccess'))
-      }}
       onChangePassword={async payload => {
         await runPageAction(async () => {
           await travelMvpApiClient.changeUserPassword(payload)
@@ -143,358 +120,16 @@ export function AccountPage({
         void runPageAction(async () => {
           await travelMvpApiClient.logoutCurrentUserSession()
           onSignedInUserChange(null)
-          setUserSessions([])
-          onNavigate('blog')
+          onNavigate('account')
         }, translate('account.logoutCurrentSession'), translate('notice.logoutSuccess'))
-      }}
-      onLogoutOtherSessions={async () => {
-        await runPageAction(async () => {
-          await travelMvpApiClient.logoutOtherUserSessions()
-          const nextSessions = await travelMvpApiClient.listUserSessions()
-          setUserSessions(nextSessions.sessions)
-        }, translate('account.logoutOtherSessions'), translate('notice.actionSuccess'))
       }}
       onLogout={() => {
         void runPageAction(async () => {
           await travelMvpApiClient.logoutUser()
           onSignedInUserChange(null)
-          setUserSessions([])
-          onNavigate('blog')
+          onNavigate('account')
         }, translate('account.logout'), translate('notice.logoutSuccess'))
       }}
     />
-
-      <section className="page-card">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow-label">{translate('nav.manager')}</p>
-          <h2>{translate('account.managerAccess')}</h2>
-        </div>
-        {signedInManager ? (
-          <button
-            type="button"
-            className="secondary-button"
-            disabled={isBusy}
-            onClick={() => {
-              void runPageAction(async () => {
-                await travelMvpApiClient.logoutManagerAuth()
-                onSignedInManagerChange(null)
-                setManagerSessions([])
-                onNavigate('blog')
-              }, translate('manager.logout'), translate('notice.logoutSuccess'))
-            }}
-          >
-            {translate('manager.logout')}
-          </button>
-        ) : null}
-      </div>
-
-      {signedInManager ? (
-        <div className="stack-form">
-          <div className="detail-grid">
-            <div>
-              <span className="detail-label">{translate('manager.displayName')}</span>
-              <strong>{signedInManager.displayName}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('manager.scope')}</span>
-              <strong>{signedInManager.scopeId}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('manager.status')}</span>
-              <strong>{signedInManager.status}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
-              <strong>{new Date(signedInManager.expiresAt).toLocaleString()}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('manager.email')}</span>
-              <strong>{signedInManager.email}</strong>
-            </div>
-            <div>
-              <span className="detail-label">{translate('manager.profile')}</span>
-              <strong>{signedInManager.managerType}</strong>
-            </div>
-          </div>
-
-          <div className="page-card">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow-label">{translate('account.security')}</p>
-                <h3>{translate('account.changePassword')}</h3>
-              </div>
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={isBusy}
-                onClick={() => setIsManagerChangePasswordOpen(open => !open)}
-              >
-                {translate(isManagerChangePasswordOpen ? 'account.hideChangePassword' : 'account.showChangePassword')}
-              </button>
-            </div>
-            {isManagerChangePasswordOpen ? (
-              <form
-                className="stack-form"
-                onSubmit={async event => {
-                  event.preventDefault()
-                  const formData = new FormData(event.currentTarget)
-                  const currentPassword = String(formData.get('currentPassword') ?? '')
-                  const newPassword = String(formData.get('newPassword') ?? '')
-                  const confirmPassword = String(formData.get('confirmPassword') ?? '')
-                  if (newPassword !== confirmPassword) {
-                    onShowNotice('error', translate('error.friendly.default'), translate('error.passwordMismatch'))
-                    return
-                  }
-                  await runPageAction(async () => {
-                    await travelMvpApiClient.changeManagerPassword({ currentPassword, newPassword })
-                  }, translate('account.changePassword'), translate('notice.passwordChanged'))
-                  event.currentTarget.reset()
-                  setIsManagerChangePasswordOpen(false)
-                }}
-              >
-                <label>
-                  {translate('account.currentPassword')}
-                  <input name="currentPassword" type="password" placeholder={translate('account.currentPassword')} required />
-                </label>
-                <label>
-                  {translate('account.newPassword')}
-                  <input name="newPassword" type="password" placeholder={translate('account.newPassword')} required />
-                </label>
-                <label>
-                  {translate('account.confirmPassword')}
-                  <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
-                </label>
-                <button type="submit" disabled={isBusy}>
-                  {translate('account.changePassword')}
-                </button>
-              </form>
-            ) : null}
-          </div>
-
-          <div className="list-surface">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow-label">{translate('account.security')}</p>
-                <h3>{translate('account.sessions')}</h3>
-              </div>
-              <div className="action-row">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={isBusy}
-                  onClick={() => setIsManagerSessionsOpen(open => !open)}
-                >
-                  {translate(isManagerSessionsOpen ? 'account.hideSessions' : 'account.showSessions')}
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={isBusy}
-                  onClick={() => {
-                    void runPageAction(async () => {
-                      const nextSessions = await travelMvpApiClient.listManagerSessions()
-                      setManagerSessions(nextSessions.sessions)
-                    }, translate('account.refreshSessions'), translate('notice.actionSuccess'))
-                  }}
-                >
-                  {translate('account.refreshSessions')}
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={isBusy}
-                  onClick={() => {
-                    void runPageAction(async () => {
-                      await travelMvpApiClient.logoutOtherManagerSessions()
-                      const nextSessions = await travelMvpApiClient.listManagerSessions()
-                      setManagerSessions(nextSessions.sessions)
-                    }, translate('account.logoutOtherSessions'), translate('notice.actionSuccess'))
-                  }}
-                >
-                  {translate('account.logoutOtherSessions')}
-                </button>
-              </div>
-            </div>
-            {isManagerSessionsOpen ? managerSessions.length > 0 ? (
-              <div className="stack-list">
-                {managerSessions.map(session => (
-                  <article key={session.sessionId} className="list-card">
-                    <div className="detail-grid">
-                      <div>
-                        <span className="detail-label">{translate('account.sessionStatus')}</span>
-                        <strong>{session.isCurrent ? translate('account.currentSession') : session.status}</strong>
-                      </div>
-                      <div>
-                        <span className="detail-label">{translate('account.createdAt')}</span>
-                        <strong>{new Date(session.createdAt).toLocaleString()}</strong>
-                      </div>
-                      <div>
-                        <span className="detail-label">{translate('account.lastSeenAt')}</span>
-                        <strong>{new Date(session.lastSeenAt).toLocaleString()}</strong>
-                      </div>
-                      <div>
-                        <span className="detail-label">{translate('account.sessionExpiresAt')}</span>
-                        <strong>{new Date(session.expiresAt).toLocaleString()}</strong>
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <p className="empty-state">{translate('account.noSessions')}</p>
-            ) : null}
-          </div>
-        </div>
-      ) : (
-        <div className="stack-form">
-          <div className="action-row">
-            <button
-              type="button"
-              className={managerAuthMode === 'login' ? '' : 'secondary-button'}
-              disabled={isBusy}
-              onClick={() => setManagerAuthMode('login')}
-            >
-              {translate('account.managerLogin')}
-            </button>
-            <button
-              type="button"
-              className={managerAuthMode === 'register' ? '' : 'secondary-button'}
-              disabled={isBusy}
-              onClick={() => setManagerAuthMode('register')}
-            >
-              {translate('account.managerRegister')}
-            </button>
-          </div>
-
-          <form
-            className="stack-form panel-card"
-            onSubmit={async event => {
-              event.preventDefault()
-              const formData = new FormData(event.currentTarget)
-
-              if (managerAuthMode === 'login') {
-                await runPageAction(async () => {
-                  const nextManagerSession = await travelMvpApiClient.loginManagerAuth({
-                    managerType: managerTypeDraft,
-                    email: String(formData.get('email') ?? '').trim(),
-                    password: String(formData.get('password') ?? ''),
-                  })
-                  onSignedInManagerChange(nextManagerSession)
-                  onNavigate('manager')
-                }, translate('account.managerLogin'), translate('notice.loginSuccess'))
-                return
-              }
-
-              await runPageAction(async () => {
-                const commonPayload = {
-                  email: String(formData.get('email') ?? '').trim(),
-                  displayName: String(formData.get('displayName') ?? '').trim(),
-                  password: String(formData.get('password') ?? ''),
-                }
-                const confirmPassword = String(formData.get('confirmPassword') ?? '')
-                if (commonPayload.password !== confirmPassword) {
-                  throw new Error(translate('error.passwordMismatch'))
-                }
-
-                if (managerTypeDraft === 'airline') {
-                  await travelMvpApiClient.registerAirlineManager({
-                    ...commonPayload,
-                    airlineName: String(formData.get('airlineName') ?? '').trim(),
-                    airlineCode: String(formData.get('airlineCode') ?? '').trim(),
-                  })
-                } else if (managerTypeDraft === 'hotel') {
-                  await travelMvpApiClient.registerHotelManager({
-                    ...commonPayload,
-                    hotelName: String(formData.get('hotelName') ?? '').trim(),
-                    location: String(formData.get('location') ?? '').trim(),
-                  })
-                } else if (managerTypeDraft === 'train') {
-                  await travelMvpApiClient.registerRailwayManager({
-                    ...commonPayload,
-                    operatorCode: String(formData.get('operatorCode') ?? '').trim(),
-                  })
-                } else {
-                  await travelMvpApiClient.registerAttractionManager(commonPayload)
-                }
-
-                const nextManagerSession = await travelMvpApiClient.loginManagerAuth({
-                  managerType: managerTypeDraft,
-                  email: commonPayload.email,
-                  password: commonPayload.password,
-                })
-                onSignedInManagerChange(nextManagerSession)
-                onNavigate('manager')
-              }, translate('account.managerRegister'), translate('notice.registerSuccess'))
-            }}
-          >
-            <h3>{translate(managerAuthMode === 'login' ? 'account.managerLogin' : 'account.managerRegister')}</h3>
-            <label>
-              {translate('manager.type')}
-              <select value={managerTypeDraft} onChange={event => setManagerTypeDraft(event.target.value as ManagerType)}>
-                <option value="airline">{translate('manager.type.airline')}</option>
-                <option value="hotel">{translate('manager.type.hotel')}</option>
-                <option value="train">{translate('manager.type.train')}</option>
-                <option value="attraction">{translate('manager.type.attraction')}</option>
-              </select>
-            </label>
-            <label>
-              {translate('manager.email')}
-              <input name="email" type="email" placeholder={translate('manager.email')} required />
-            </label>
-            {managerAuthMode === 'register' ? (
-              <label>
-                {translate('manager.displayName')}
-                <input name="displayName" placeholder={translate('manager.displayName')} required />
-              </label>
-            ) : null}
-            <label>
-              {translate('account.password')}
-              <input name="password" type="password" placeholder={translate('account.password')} required />
-            </label>
-            {managerAuthMode === 'register' ? (
-              <label>
-                {translate('account.confirmPassword')}
-                <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
-              </label>
-            ) : null}
-            {managerAuthMode === 'register' && managerTypeDraft === 'airline' ? (
-              <>
-                <label>
-                  {translate('manager.airlineName')}
-                  <input name="airlineName" placeholder={translate('manager.airlineName')} required />
-                </label>
-                <label>
-                  {translate('manager.airlineCode')}
-                  <input name="airlineCode" placeholder="MU" required />
-                </label>
-              </>
-            ) : null}
-            {managerAuthMode === 'register' && managerTypeDraft === 'hotel' ? (
-              <>
-                <label>
-                  {translate('manager.hotelName')}
-                  <input name="hotelName" placeholder={translate('manager.hotelName')} required />
-                </label>
-                <label>
-                  {translate('manager.hotelLocation')}
-                  <input name="location" placeholder={translate('manager.hotelLocation')} required />
-                </label>
-              </>
-            ) : null}
-            {managerAuthMode === 'register' && managerTypeDraft === 'train' ? (
-              <label>
-                {translate('trainAdmin.operatorCode')}
-                <input name="operatorCode" placeholder="CRH" required />
-              </label>
-            ) : null}
-            <button type="submit" disabled={isBusy}>
-              {translate(managerAuthMode === 'login' ? 'account.managerLogin' : 'account.managerRegister')}
-            </button>
-          </form>
-        </div>
-      )}
-      </section>
-    </>
   )
 }

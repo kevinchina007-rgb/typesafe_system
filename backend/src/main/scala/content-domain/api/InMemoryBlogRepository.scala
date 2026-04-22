@@ -41,6 +41,9 @@ final class InMemoryBlogRepository[F[_]: Sync] private (
   override def findPostById(postId: BlogId): F[Option[BlogPost]] =
     postState.get.map(_.get(postId))
 
+  override def listAllPosts: F[List[BlogPost]] =
+    postState.get.map(_.values.toList.sortBy(_.updatedAt.toEpochMilli)(Ordering.Long.reverse))
+
   override def findCommentById(commentId: BlogCommentId): F[Option[BlogComment]] =
     commentState.get.map(_.get(commentId))
 

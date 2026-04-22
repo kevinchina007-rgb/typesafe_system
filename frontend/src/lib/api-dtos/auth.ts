@@ -31,7 +31,7 @@ export type AuthSessionListResponse = {
   sessions: AuthSessionResponse[]
 }
 
-export type ManagerType = 'airline' | 'hotel' | 'train' | 'attraction'
+export type ManagerType = 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin'
 
 export type ManagerSessionResponse = {
   managerId: string

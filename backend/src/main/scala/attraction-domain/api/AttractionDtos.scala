@@ -64,8 +64,6 @@ final case class CreateTicketEligibilityRuleRequestDto(
 )
 
 final case class BookAttractionItemRequestDto(
-    buyerUserId: String,
-    orderId: String,
     attractionId: String,
     ticketTypeId: String,
     sessionId: Option[String],
@@ -129,67 +127,65 @@ final case class AttractionAdminSessionResponseDto(
     managedAttractions: List[AttractionResponseDto]
 )
 
-object AttractionResponseDto:
-  def fromDomain(
-      attraction: Attraction,
-      requestedUseDate: Option[LocalDate] = None,
-      remainingQuantityByTicketTypeId: Map[TicketTypeId, Int] = Map.empty
-  ): AttractionResponseDto =
-    AttractionResponseDto(
-      attractionId = attraction.attractionId.value,
-      attractionName = attraction.attractionName,
-      city = attraction.city,
-      location = attraction.location,
-      description = attraction.description,
-      status = attraction.attractionStatus.toString,
-      ticketTypes = attraction.ticketTypes.map(ticketType =>
-        AttractionTicketTypeResponseDto(
-          ticketTypeId = ticketType.ticketTypeId.value,
-          ticketTypeName = ticketType.ticketTypeName,
-          description = ticketType.description,
-          priceAmount = ticketType.unitPrice.amount.toString,
-          priceCurrency = ticketType.unitPrice.currency.toString,
-          availableFromDate = ticketType.availableFromDate.toString,
-          availableToDate = ticketType.availableToDate.toString,
-          totalQuantity = ticketType.totalQuantity,
-          validWeekdays = ticketType.validWeekdays.toList.sortBy(_.getValue).map(_.toString),
-          availableQuantityForRequestedDate = requestedUseDate.map { _ =>
-            remainingQuantityByTicketTypeId.getOrElse(ticketType.ticketTypeId, ticketType.totalQuantity)
-          },
-          isAvailableForRequestedDate = requestedUseDate.forall(ticketType.supportsUseDate),
-          status = ticketType.ticketTypeStatus.toString,
-          sessions = ticketType.sessions.map(session =>
-            AttractionTicketSessionResponseDto(
-              sessionId = session.sessionId.value,
-              sessionName = session.sessionName,
-              useDate = session.useDate.toString,
-              startsAt = session.startsAt.toString,
-              endsAt = session.endsAt.toString,
-              capacity = session.capacity,
-              availableQuantity = None,
-              status = session.status.toString
-            )
-          ).toList,
-          rules = ticketType.eligibilityRules.map(rule =>
-            AttractionTicketTypeRuleResponseDto(
-              ruleId = rule.ruleId.value,
-              ruleType = rule.ruleType.toString,
-              summary = rule.humanReadableSummary
-            )
-          ).toList
-        )
-      ).toList
-    )
+def attractionResponseDto(
+    attraction: Attraction,
+    requestedUseDate: Option[LocalDate] = None,
+    remainingQuantityByTicketTypeId: Map[TicketTypeId, Int] = Map.empty
+): AttractionResponseDto =
+  AttractionResponseDto(
+    attractionId = attraction.attractionId.value,
+    attractionName = attraction.attractionName,
+    city = attraction.city,
+    location = attraction.location,
+    description = attraction.description,
+    status = attraction.attractionStatus.toString,
+    ticketTypes = attraction.ticketTypes.map(ticketType =>
+      AttractionTicketTypeResponseDto(
+        ticketTypeId = ticketType.ticketTypeId.value,
+        ticketTypeName = ticketType.ticketTypeName,
+        description = ticketType.description,
+        priceAmount = ticketType.unitPrice.amount.toString,
+        priceCurrency = ticketType.unitPrice.currency.toString,
+        availableFromDate = ticketType.availableFromDate.toString,
+        availableToDate = ticketType.availableToDate.toString,
+        totalQuantity = ticketType.totalQuantity,
+        validWeekdays = ticketType.validWeekdays.toList.sortBy(_.getValue).map(_.toString),
+        availableQuantityForRequestedDate = requestedUseDate.map { _ =>
+          remainingQuantityByTicketTypeId.getOrElse(ticketType.ticketTypeId, ticketType.totalQuantity)
+        },
+        isAvailableForRequestedDate = requestedUseDate.forall(ticketType.supportsUseDate),
+        status = ticketType.ticketTypeStatus.toString,
+        sessions = ticketType.sessions.map(session =>
+          AttractionTicketSessionResponseDto(
+            sessionId = session.sessionId.value,
+            sessionName = session.sessionName,
+            useDate = session.useDate.toString,
+            startsAt = session.startsAt.toString,
+            endsAt = session.endsAt.toString,
+            capacity = session.capacity,
+            availableQuantity = None,
+            status = session.status.toString
+          )
+        ).toList,
+        rules = ticketType.eligibilityRules.map(rule =>
+          AttractionTicketTypeRuleResponseDto(
+            ruleId = rule.ruleId.value,
+            ruleType = rule.ruleType.toString,
+            summary = rule.humanReadableSummary
+          )
+        ).toList
+      )
+    ).toList
+  )
 
-object AttractionAdminSessionResponseDto:
-  def fromApplication(attractionAdminSession: AttractionAdminSession): AttractionAdminSessionResponseDto =
-    AttractionAdminSessionResponseDto(
-      managerId = attractionAdminSession.attractionManager.managerId.value,
-      email = attractionAdminSession.attractionManager.primaryEmailAddress.value,
-      displayName = attractionAdminSession.attractionManager.displayName.value,
-      status = attractionAdminSession.attractionManager.managerStatus.toString,
-      managedAttractions = attractionAdminSession.managedAttractions.map(attraction => AttractionResponseDto.fromDomain(attraction))
-    )
+def attractionAdminSessionResponseDto(attractionAdminSession: AttractionAdminSession): AttractionAdminSessionResponseDto =
+  AttractionAdminSessionResponseDto(
+    managerId = attractionAdminSession.attractionManager.managerId.value,
+    email = attractionAdminSession.attractionManager.primaryEmailAddress.value,
+    displayName = attractionAdminSession.attractionManager.displayName.value,
+    status = attractionAdminSession.attractionManager.managerStatus.toString,
+    managedAttractions = attractionAdminSession.managedAttractions.map(attraction => attractionResponseDto(attraction))
+  )
 
 object AttractionDtoMappers:
   def toDayOfWeek(weekdayValue: String): Either[Throwable, DayOfWeek] =

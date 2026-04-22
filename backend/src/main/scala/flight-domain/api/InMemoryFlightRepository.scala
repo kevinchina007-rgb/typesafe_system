@@ -68,7 +68,7 @@ object InMemoryFlightRepository:
       )
 
     val sampleFlights = List(
-      buildFlight(
+      sampleFlight(
         flightId = FlightId("flight-mu5123"),
         airlineId = chinaEasternAirline.airlineId,
         flightNumber = FlightNumber.unsafe("MU5123"),
@@ -80,7 +80,7 @@ object InMemoryFlightRepository:
         basePriceAmount = BigDecimal(680),
         inventoryPrefix = "mu5123"
       ),
-      buildFlight(
+      sampleFlight(
         flightId = FlightId("flight-mu5210"),
         airlineId = chinaEasternAirline.airlineId,
         flightNumber = FlightNumber.unsafe("MU5210"),
@@ -92,7 +92,7 @@ object InMemoryFlightRepository:
         basePriceAmount = BigDecimal(2400),
         inventoryPrefix = "mu5210"
       ),
-      buildFlight(
+      sampleFlight(
         flightId = FlightId("flight-9c8821"),
         airlineId = springAirline.airlineId,
         flightNumber = FlightNumber.unsafe("9C8821"),
@@ -114,7 +114,7 @@ object InMemoryFlightRepository:
       inventorySequence = AtomicLong(1000)
     )
 
-  private def buildFlight(
+  private def sampleFlight(
       flightId: FlightId,
       airlineId: AirlineId,
       flightNumber: FlightNumber,
@@ -126,7 +126,7 @@ object InMemoryFlightRepository:
       basePriceAmount: BigDecimal,
       inventoryPrefix: String
   ): Flight =
-    createFlight(
+    buildFlight(
       flightId = flightId,
       airlineId = airlineId,
       flightNumber = flightNumber,
@@ -138,7 +138,7 @@ object InMemoryFlightRepository:
       ),
       basePrice = Money.unsafe(basePriceAmount, Currency.CNY),
       cabinInventories = Vector(
-        createCabinInventory(
+        buildCabinInventory(
           cabinInventoryId = CabinInventoryId(s"$inventoryPrefix-economy"),
           flightId = flightId,
           cabinClass = CabinClass.unsafe("economy"),
@@ -146,7 +146,7 @@ object InMemoryFlightRepository:
           unitPrice = Money.unsafe(basePriceAmount, Currency.CNY),
           inventoryStatus = InventoryStatus.Open
         ),
-        createCabinInventory(
+        buildCabinInventory(
           cabinInventoryId = CabinInventoryId(s"$inventoryPrefix-business"),
           flightId = flightId,
           cabinClass = CabinClass.unsafe("business"),

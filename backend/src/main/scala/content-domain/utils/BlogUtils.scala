@@ -29,10 +29,10 @@ def createPublishedBlogPost(
         summary = normalizedSummary,
         content = normalizedContent,
         imageRefs = imageRefs.sortBy(_.sortOrder),
-        status = BlogPostStatus.Published,
+        status = BlogPostStatus.PendingReview,
         createdAt = createdAt,
         updatedAt = createdAt,
-        publishedAt = Some(createdAt)
+        publishedAt = None
       )
     )
 
@@ -107,6 +107,25 @@ def archiveBlogPost(
       )
     )
 
+def approveBlogPost(
+    post: BlogPost,
+    approvedAt: Instant
+): BlogPost =
+  post.copy(
+    status = BlogPostStatus.Published,
+    updatedAt = approvedAt,
+    publishedAt = post.publishedAt.orElse(Some(approvedAt))
+  )
+
+def rejectBlogPost(
+    post: BlogPost,
+    rejectedAt: Instant
+): BlogPost =
+  post.copy(
+    status = BlogPostStatus.Rejected,
+    updatedAt = rejectedAt
+  )
+
 
 def createVisibleBlogComment(
     commentId: BlogCommentId,
@@ -169,3 +188,15 @@ def createBlogLike(
     userId = userId,
     createdAt = createdAt
   )
+
+
+def createPendingReviewBlogPost(
+    postId: BlogId,
+    authorUserId: UserId,
+    title: String,
+    summary: String,
+    content: String,
+    imageRefs: List[BlogImageRef],
+    createdAt: Instant
+): Either[BlogError, BlogPost] =
+  createPublishedBlogPost(postId, authorUserId, title, summary, content, imageRefs, createdAt)

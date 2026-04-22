@@ -12,7 +12,7 @@ def createRoomInventory(
     unitPrice: Money,
     roomInventoryStatus: RoomInventoryStatus
 ): RoomInventory =
-  RoomInventory.create(roomInventoryId, roomTypeId, inventoryDate, availableRooms, unitPrice, roomInventoryStatus)
+  roomInventory(roomInventoryId, roomTypeId, inventoryDate, availableRooms, unitPrice, roomInventoryStatus)
 
 
 def createRoomType(
@@ -25,7 +25,7 @@ def createRoomType(
     roomTypeStatus: RoomTypeStatus,
     roomInventories: Vector[RoomInventory]
 ): RoomType =
-  RoomType.create(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
+  roomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
 
 
 def restorePersistedRoomType(
@@ -38,7 +38,7 @@ def restorePersistedRoomType(
     roomTypeStatus: RoomTypeStatus,
     roomInventories: Vector[RoomInventory]
 ): RoomType =
-  RoomType.restore(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
+  persistedRoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
 
 
 def createHotel(
@@ -48,7 +48,7 @@ def createHotel(
     roomTypes: Vector[RoomType],
     createdAt: Instant
 ): Hotel =
-  Hotel.create(hotelId, hotelName, hotelLocation, roomTypes, createdAt)
+  hotel(hotelId, hotelName, hotelLocation, roomTypes, createdAt)
 
 
 def restorePersistedHotel(
@@ -59,4 +59,4 @@ def restorePersistedHotel(
     roomTypes: Vector[RoomType],
     createdAt: Instant
 ): Hotel =
-  Hotel.restore(hotelId, hotelName, hotelLocation, hotelStatus, roomTypes, createdAt)
+  persistedHotel(hotelId, hotelName, hotelLocation, hotelStatus, roomTypes, createdAt)

@@ -2,85 +2,87 @@ package com.typesafe.travel.attraction.domain
 
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.*
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.*
-import io.circe.syntax.*
-import io.circe.parser.decode
+import AttractionRuleJson.*
 
 import java.time.{DayOfWeek, Instant, LocalDate, Period}
 
-// Attraction 域当前把景点、票型、资格规则、场次放在同一处阅读，
-// 目的是让“能卖什么票、谁能买、何时可用”这几件事能一起看清楚。
-enum AttractionStatus:
-  case Draft, Published, Closed
+final case class AttractionStatus(value: String):
+  override def toString: String = value
 
-enum TicketTypeStatus:
-  case Active, Inactive
+object AttractionStatus:
+  val Draft: AttractionStatus = AttractionStatus("Draft")
+  val Published: AttractionStatus = AttractionStatus("Published")
+  val Closed: AttractionStatus = AttractionStatus("Closed")
 
-enum AttractionTicketSessionStatus:
-  case Active, Closed
+  def fromText(value: String): AttractionStatus =
+    value.trim.toLowerCase match
+      case "draft" => Draft
+      case "published" => Published
+      case "closed" => Closed
+      case _ => Draft
 
-enum TicketEligibilityRuleType:
-  case AgeLessThan, AgeBetween, AgeAtLeast, DocumentTypeEquals, DocumentNumberPrefix
+final case class TicketTypeStatus(value: String):
+  override def toString: String = value
+
+object TicketTypeStatus:
+  val Active: TicketTypeStatus = TicketTypeStatus("Active")
+  val Inactive: TicketTypeStatus = TicketTypeStatus("Inactive")
+
+  def fromText(value: String): TicketTypeStatus =
+    value.trim.toLowerCase match
+      case "active" => Active
+      case "inactive" => Inactive
+      case _ => Inactive
+
+final case class AttractionTicketSessionStatus(value: String):
+  override def toString: String = value
+
+object AttractionTicketSessionStatus:
+  val Active: AttractionTicketSessionStatus = AttractionTicketSessionStatus("Active")
+  val Closed: AttractionTicketSessionStatus = AttractionTicketSessionStatus("Closed")
+
+  def fromText(value: String): AttractionTicketSessionStatus =
+    value.trim.toLowerCase match
+      case "active" => Active
+      case "closed" => Closed
+      case _ => Closed
+
+final case class TicketEligibilityRuleType(value: String):
+  override def toString: String = value
+
+object TicketEligibilityRuleType:
+  val AgeLessThan: TicketEligibilityRuleType = TicketEligibilityRuleType("AgeLessThan")
+  val AgeBetween: TicketEligibilityRuleType = TicketEligibilityRuleType("AgeBetween")
+  val AgeAtLeast: TicketEligibilityRuleType = TicketEligibilityRuleType("AgeAtLeast")
+  val DocumentTypeEquals: TicketEligibilityRuleType = TicketEligibilityRuleType("DocumentTypeEquals")
+  val DocumentNumberPrefix: TicketEligibilityRuleType = TicketEligibilityRuleType("DocumentNumberPrefix")
+
+  def fromText(value: String): TicketEligibilityRuleType =
+    value.trim.toLowerCase match
+      case "agelessthan" | "age_less_than" => AgeLessThan
+      case "agebetween" | "age_between" => AgeBetween
+      case "ageatleast" | "age_at_least" => AgeAtLeast
+      case "documenttypeequals" | "document_type_equals" => DocumentTypeEquals
+      case "documentnumberprefix" | "document_number_prefix" => DocumentNumberPrefix
+      case _ => DocumentNumberPrefix
 
 sealed trait TicketEligibilityRuleConfig
 object TicketEligibilityRuleConfig:
-  // 资格规则配置本身是纯数据。
-  // 这里附带 Circe codec，只是为了把规则以 JSON 落库存储。
   final case class AgeLessThan(maxExclusive: Int) extends TicketEligibilityRuleConfig
   final case class AgeBetween(minInclusive: Int, maxInclusive: Int) extends TicketEligibilityRuleConfig
   final case class AgeAtLeast(minInclusive: Int) extends TicketEligibilityRuleConfig
   final case class DocumentTypeEquals(documentType: TravelerDocumentType) extends TicketEligibilityRuleConfig
   final case class DocumentNumberPrefix(prefix: String) extends TicketEligibilityRuleConfig
 
-  given Encoder[TravelerDocumentType] = Encoder.encodeString.contramap(_.toString)
-  given Decoder[TravelerDocumentType] = Decoder.decodeString.emap { rawValue =>
-    TravelerDocumentType.values
-      .find(_.toString == rawValue)
-      .toRight(s"Unknown traveler document type: $rawValue")
-  }
-
-  given Encoder[AgeLessThan] = deriveEncoder
-  given Decoder[AgeLessThan] = deriveDecoder
-  given Encoder[AgeBetween] = deriveEncoder
-  given Decoder[AgeBetween] = deriveDecoder
-  given Encoder[AgeAtLeast] = deriveEncoder
-  given Decoder[AgeAtLeast] = deriveDecoder
-  given Encoder[DocumentTypeEquals] = deriveEncoder
-  given Decoder[DocumentTypeEquals] = deriveDecoder
-  given Encoder[DocumentNumberPrefix] = deriveEncoder
-  given Decoder[DocumentNumberPrefix] = deriveDecoder
-
-final case class TicketEligibilityRule private[domain] (
+final case class TicketEligibilityRule(
     ruleId: TicketEligibilityRuleId,
     ticketTypeId: TicketTypeId,
     ruleType: TicketEligibilityRuleType,
     ruleConfigJson: String,
     createdAt: Instant
 ):
-  // parseConfig 把存储态 JSON 恢复成强类型规则配置。
   def parseConfig: Either[AttractionError, TicketEligibilityRuleConfig] =
-    ruleType match
-      case TicketEligibilityRuleType.AgeLessThan =>
-        decode[TicketEligibilityRuleConfig.AgeLessThan](ruleConfigJson)
-          .left
-          .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
-      case TicketEligibilityRuleType.AgeBetween =>
-        decode[TicketEligibilityRuleConfig.AgeBetween](ruleConfigJson)
-          .left
-          .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
-      case TicketEligibilityRuleType.AgeAtLeast =>
-        decode[TicketEligibilityRuleConfig.AgeAtLeast](ruleConfigJson)
-          .left
-          .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
-      case TicketEligibilityRuleType.DocumentTypeEquals =>
-        decode[TicketEligibilityRuleConfig.DocumentTypeEquals](ruleConfigJson)
-          .left
-          .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
-      case TicketEligibilityRuleType.DocumentNumberPrefix =>
-        decode[TicketEligibilityRuleConfig.DocumentNumberPrefix](ruleConfigJson)
-          .left
-          .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
+    decodeRuleConfig(ticketTypeId, ruleType, ruleConfigJson)
 
   def humanReadableSummary: String =
     parseConfig.fold(
@@ -110,7 +112,6 @@ final case class TicketType(
     eligibilityRules: Vector[TicketEligibilityRule],
     createdAt: Instant
 ):
-  // supportsUseDate 是票型“静态可售性”规则，不包含实时库存判断。
   def isActive: Boolean = ticketTypeStatus == TicketTypeStatus.Active
 
   def supportsUseDate(useDate: LocalDate): Boolean =
@@ -137,7 +138,6 @@ final case class AttractionTicketSession(
     status: AttractionTicketSessionStatus,
     createdAt: Instant
 ):
-  // session 负责更细粒度的场次 / 名额控制，是票型上的可选强化层。
   def isActive: Boolean = status == AttractionTicketSessionStatus.Active
 
 final case class Attraction(
@@ -151,7 +151,6 @@ final case class Attraction(
     ticketTypes: Vector[TicketType],
     createdAt: Instant
 ):
-  // Attraction 本体是管理员管理的资源入口，ticketTypes 挂在其下。
   def addTicketType(ticketType: TicketType): Either[AttractionError, Attraction] =
     if ticketType.attractionId != attractionId then Left(AttractionError.TicketTypeDidNotBelongToAttraction(ticketType.ticketTypeId, attractionId))
     else if ticketTypes.exists(_.ticketTypeName.equalsIgnoreCase(ticketType.ticketTypeName)) then
@@ -172,51 +171,75 @@ final case class TicketEligibilityResult(
     failureReasons: Vector[String]
 )
 
-enum AttractionError(val message: String) extends DomainError:
-  case AttractionWasNotFound(attractionId: AttractionId)
-      extends AttractionError(s"Attraction '${attractionId.value}' was not found")
-  case TicketTypeWasNotFound(ticketTypeId: TicketTypeId)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' was not found")
-  case TicketTypeWasInactive(ticketTypeId: TicketTypeId)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' is inactive")
-  case TicketTypeNameAlreadyExists(attractionId: AttractionId, ticketTypeName: String)
-      extends AttractionError(s"Attraction '${attractionId.value}' already has ticket type '$ticketTypeName'")
-  case TicketTypeDidNotBelongToAttraction(ticketTypeId: TicketTypeId, attractionId: AttractionId)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' does not belong to attraction '${attractionId.value}'")
-  case TicketEligibilityRuleDidNotBelongToTicketType(ruleId: TicketEligibilityRuleId, ticketTypeId: TicketTypeId)
-      extends AttractionError(s"Eligibility rule '${ruleId.value}' does not belong to ticket type '${ticketTypeId.value}'")
-  case TicketEligibilityRuleConfigWasInvalid(ticketTypeId: TicketTypeId, reason: String)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' has invalid eligibility rule config: $reason")
-  case AttractionManagerWasNotFound(managerId: ManagerId)
-      extends AttractionError(s"Attraction manager '${managerId.value}' was not found")
-  case AttractionWasNotOwnedByManager(attractionId: AttractionId, managerId: ManagerId)
-      extends AttractionError(s"Attraction '${attractionId.value}' is not managed by '${managerId.value}'")
-  case AttractionUseDateWasMissing
-      extends AttractionError("Attraction ticket requires a visit date")
-  case AttractionTravelerWasNotEligible(ticketTypeId: TicketTypeId, travelerId: TravelerId, reason: String)
-      extends AttractionError(s"Traveler '${travelerId.value}' is not eligible for ticket '${ticketTypeId.value}': $reason")
-  case AttractionTravelerSelectionWasInvalid(reason: String)
-      extends AttractionError(reason)
-  case TicketTypeAvailabilityWasInvalid(ticketTypeId: TicketTypeId, availableFromDate: LocalDate, availableToDate: LocalDate)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' has invalid date range '$availableFromDate' to '$availableToDate'")
-  case TicketTypeTotalQuantityWasInvalid(ticketTypeId: TicketTypeId, totalQuantity: Int)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' must have positive quantity but received '$totalQuantity'")
-  case TicketTypeWeekdaysWereInvalid(ticketTypeId: TicketTypeId)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' must have at least one valid weekday")
-  case TicketTypeUseDateWasUnavailable(ticketTypeId: TicketTypeId, useDate: LocalDate)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' is not available on '$useDate'")
-  case TicketTypeInventoryWasNotAvailable(ticketTypeId: TicketTypeId, useDate: LocalDate, requestedQuantity: Int, remainingQuantity: Int)
-      extends AttractionError(s"Ticket type '${ticketTypeId.value}' on '$useDate' has only '$remainingQuantity' remaining for request '$requestedQuantity'")
-  case AttractionTicketSessionDidNotBelongToTicketType(sessionId: AttractionTicketSessionId, ticketTypeId: TicketTypeId)
-      extends AttractionError(s"Session '${sessionId.value}' does not belong to ticket type '${ticketTypeId.value}'")
-  case AttractionTicketSessionWasNotFound(sessionId: AttractionTicketSessionId)
-      extends AttractionError(s"Session '${sessionId.value}' was not found")
-  case AttractionTicketSessionWasInactive(sessionId: AttractionTicketSessionId)
-      extends AttractionError(s"Session '${sessionId.value}' is inactive")
-  case AttractionTicketSessionCapacityWasInvalid(sessionId: AttractionTicketSessionId, capacity: Int)
-      extends AttractionError(s"Session '${sessionId.value}' must have positive capacity but received '$capacity'")
-  case AttractionTicketSessionTimeRangeWasInvalid(sessionId: AttractionTicketSessionId)
-      extends AttractionError(s"Session '${sessionId.value}' must end after it starts")
-  case AttractionTicketSessionInventoryWasNotAvailable(sessionId: AttractionTicketSessionId, requestedQuantity: Int, remainingQuantity: Int)
-      extends AttractionError(s"Session '${sessionId.value}' has only '$remainingQuantity' remaining for request '$requestedQuantity'")
+sealed trait AttractionError extends DomainError:
+  def message: String
 
+object AttractionError:
+  final case class AttractionWasNotFound(attractionId: AttractionId) extends AttractionError:
+    override val message: String = s"Attraction '${attractionId.value}' was not found"
+
+  final case class TicketTypeWasNotFound(ticketTypeId: TicketTypeId) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' was not found"
+
+  final case class TicketTypeWasInactive(ticketTypeId: TicketTypeId) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' is inactive"
+
+  final case class TicketTypeNameAlreadyExists(attractionId: AttractionId, ticketTypeName: String) extends AttractionError:
+    override val message: String = s"Attraction '${attractionId.value}' already has ticket type '$ticketTypeName'"
+
+  final case class TicketTypeDidNotBelongToAttraction(ticketTypeId: TicketTypeId, attractionId: AttractionId) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' does not belong to attraction '${attractionId.value}'"
+
+  final case class TicketEligibilityRuleDidNotBelongToTicketType(ruleId: TicketEligibilityRuleId, ticketTypeId: TicketTypeId) extends AttractionError:
+    override val message: String = s"Eligibility rule '${ruleId.value}' does not belong to ticket type '${ticketTypeId.value}'"
+
+  final case class TicketEligibilityRuleConfigWasInvalid(ticketTypeId: TicketTypeId, reason: String) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' has invalid eligibility rule config: $reason"
+
+  final case class AttractionManagerWasNotFound(managerId: ManagerId) extends AttractionError:
+    override val message: String = s"Attraction manager '${managerId.value}' was not found"
+
+  final case class AttractionWasNotOwnedByManager(attractionId: AttractionId, managerId: ManagerId) extends AttractionError:
+    override val message: String = s"Attraction '${attractionId.value}' is not managed by '${managerId.value}'"
+
+  final case class AttractionUseDateWasMissing() extends AttractionError:
+    override val message: String = "Attraction ticket requires a visit date"
+
+  final case class AttractionTravelerWasNotEligible(ticketTypeId: TicketTypeId, travelerId: TravelerId, reason: String) extends AttractionError:
+    override val message: String = s"Traveler '${travelerId.value}' is not eligible for ticket '${ticketTypeId.value}': $reason"
+
+  final case class AttractionTravelerSelectionWasInvalid(reason: String) extends AttractionError:
+    override val message: String = reason
+
+  final case class TicketTypeAvailabilityWasInvalid(ticketTypeId: TicketTypeId, availableFromDate: LocalDate, availableToDate: LocalDate) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' has invalid date range '$availableFromDate' to '$availableToDate'"
+
+  final case class TicketTypeTotalQuantityWasInvalid(ticketTypeId: TicketTypeId, totalQuantity: Int) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' must have positive quantity but received '$totalQuantity'"
+
+  final case class TicketTypeWeekdaysWereInvalid(ticketTypeId: TicketTypeId) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' must have at least one valid weekday"
+
+  final case class TicketTypeUseDateWasUnavailable(ticketTypeId: TicketTypeId, useDate: LocalDate) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' is not available on '$useDate'"
+
+  final case class TicketTypeInventoryWasNotAvailable(ticketTypeId: TicketTypeId, useDate: LocalDate, requestedQuantity: Int, remainingQuantity: Int) extends AttractionError:
+    override val message: String = s"Ticket type '${ticketTypeId.value}' on '$useDate' has only '$remainingQuantity' remaining for request '$requestedQuantity'"
+
+  final case class AttractionTicketSessionDidNotBelongToTicketType(sessionId: AttractionTicketSessionId, ticketTypeId: TicketTypeId) extends AttractionError:
+    override val message: String = s"Session '${sessionId.value}' does not belong to ticket type '${ticketTypeId.value}'"
+
+  final case class AttractionTicketSessionWasNotFound(sessionId: AttractionTicketSessionId) extends AttractionError:
+    override val message: String = s"Session '${sessionId.value}' was not found"
+
+  final case class AttractionTicketSessionWasInactive(sessionId: AttractionTicketSessionId) extends AttractionError:
+    override val message: String = s"Session '${sessionId.value}' is inactive"
+
+  final case class AttractionTicketSessionCapacityWasInvalid(sessionId: AttractionTicketSessionId, capacity: Int) extends AttractionError:
+    override val message: String = s"Session '${sessionId.value}' must have positive capacity but received '$capacity'"
+
+  final case class AttractionTicketSessionTimeRangeWasInvalid(sessionId: AttractionTicketSessionId) extends AttractionError:
+    override val message: String = s"Session '${sessionId.value}' must end after it starts"
+
+  final case class AttractionTicketSessionInventoryWasNotAvailable(sessionId: AttractionTicketSessionId, requestedQuantity: Int, remainingQuantity: Int) extends AttractionError:
+    override val message: String = s"Session '${sessionId.value}' has only '$remainingQuantity' remaining for request '$requestedQuantity'"

@@ -1,6 +1,6 @@
 package com.typesafe.travel.api.application
 
-import cats.MonadThrow
+import cats.effect.IO
 import cats.effect.kernel.Clock
 import cats.syntax.all.*
 import com.typesafe.travel.flight.domain.*
@@ -8,140 +8,157 @@ import com.typesafe.travel.inventory.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.TravelerProfileRepository
+
 import java.time.LocalDate
 
-enum FlightBookingApplicationError(val message: String) extends DomainError:
-  case OrderWasNotOwnedByUser(orderId: OrderId, actingUserId: UserId)
-      extends FlightBookingApplicationError(
-        s"Order '${orderId.value}' does not belong to user '${actingUserId.value}'"
-      )
-  case TravelerSelectionWasInvalid(reason: String)
-      extends FlightBookingApplicationError(reason)
-  case CabinWasNotFound(flightId: FlightId, cabinClass: CabinClass)
-      extends FlightBookingApplicationError(
-        s"Flight '${flightId.value}' does not have a cabin '${cabinClass.value}'"
-      )
-  case CabinWasNotBookable(flightId: FlightId, cabinClass: CabinClass)
-      extends FlightBookingApplicationError(
-        s"Flight '${flightId.value}' cabin '${cabinClass.value}' is not currently bookable"
-      )
+final case class FlightBookingApplicationError(code: String, message: String) extends DomainError
 
-trait FlightBookingApplicationService[F[_]]:
+def flightOrderWasNotOwnedByUser(orderId: OrderId, actingUserId: UserId): FlightBookingApplicationError =
+  FlightBookingApplicationError(
+    code = "flight_order_not_owned_by_user",
+    message = s"Order '${orderId.value}' does not belong to user '${actingUserId.value}'"
+  )
+
+def flightTravelerSelectionWasInvalid(reason: String): FlightBookingApplicationError =
+  FlightBookingApplicationError(
+    code = "flight_traveler_selection_invalid",
+    message = reason
+  )
+
+def flightCabinWasNotFound(flightId: FlightId, cabinClass: CabinClass): FlightBookingApplicationError =
+  FlightBookingApplicationError(
+    code = "flight_cabin_not_found",
+    message = s"Flight '${flightId.value}' does not have a cabin '${cabinClass.value}'"
+  )
+
+def flightCabinWasNotBookable(flightId: FlightId, cabinClass: CabinClass): FlightBookingApplicationError =
+  FlightBookingApplicationError(
+    code = "flight_cabin_not_bookable",
+    message = s"Flight '${flightId.value}' cabin '${cabinClass.value}' is not currently bookable"
+  )
+
+def flightRequiresManualPricingError(
+    flightId: FlightId,
+    surchargeAmount: BigDecimal,
+    currency: Currency
+): FlightBookingApplicationError =
+  FlightBookingApplicationError(
+    code = "flight_requires_manual_pricing",
+    message =
+      s"Flight '${flightId.value}' departs within 48 hours and requires a late-booking surcharge of $surchargeAmount ${currency.toString}"
+  )
+
+final class FlightBookingApplicationService(
+    flightService: FlightService[IO],
+    flightRepository: FlightRepository[IO],
+    flightInventoryLockingService: FlightInventoryLockingService[IO],
+    orderRepository: OrderRepository[IO],
+    travelerProfileRepository: TravelerProfileRepository[IO]
+):
+  private val lateBookingThresholdHours = 48L
+
+  private def currentInstantF: IO[java.time.Instant] =
+    Clock[IO].realTimeInstant
+
   def browseFlights(
       departureAirportQuery: Option[String],
       arrivalAirportQuery: Option[String],
       departureDate: Option[LocalDate]
-  ): F[List[(Airline, Flight)]]
-  def suggestFlights(keyword: String): F[List[SearchSuggestion]]
-  def getFlightDetails(flightId: FlightId): F[(Airline, Flight)]
+  ): IO[List[(Airline, Flight)]] =
+    currentInstantF.flatMap { currentTime =>
+      flightService
+        .browseFlights(None, None, departureDate)
+        .map(_.filter(flight => isFlightVisibleInSearch(flight, currentTime)))
+        .map(_.filter(flightMatchesSearch(_, departureAirportQuery, arrivalAirportQuery)))
+        .map(_.sortBy(flight => -flightSearchScore(flight, departureAirportQuery, arrivalAirportQuery)))
+        .flatMap(_.traverse(toAirlineFlightTuple))
+    }
+
+  def suggestFlights(keyword: String): IO[List[SearchSuggestion]] =
+    SearchRanking.usableKeyword(keyword) match
+      case None => IO.pure(List.empty)
+      case Some(normalizedKeyword) =>
+        currentInstantF.flatMap { currentTime =>
+          flightService
+            .browseFlights(None, None, None)
+            .map(_.filter(flight => isFlightVisibleInSearch(flight, currentTime)))
+            .flatMap(_.traverse(toAirlineFlightTuple))
+            .map(
+              _.flatMap { case (airline, flight) =>
+                val departureScore = SearchRanking.weightedScore(
+                  normalizedKeyword,
+                  flight.departureAirport.value -> 3,
+                  flight.arrivalAirport.value -> 1,
+                  airline.airlineName.value -> 1,
+                  flight.flightNumber.value -> 2
+                )
+                val arrivalScore = SearchRanking.weightedScore(
+                  normalizedKeyword,
+                  flight.arrivalAirport.value -> 3,
+                  flight.departureAirport.value -> 1,
+                  airline.airlineName.value -> 1,
+                  flight.flightNumber.value -> 2
+                )
+                val flightScore = SearchRanking.weightedScore(
+                  normalizedKeyword,
+                  flight.flightNumber.value -> 4,
+                  airline.airlineName.value -> 2,
+                  airline.airlineCode.value -> 2
+                )
+
+                List(
+                  Option.when(departureScore > 0)(
+                    SearchSuggestion(
+                      resourceType = SearchResourceType.Flight,
+                      value = flight.departureAirport.value,
+                      title = s"${flight.departureAirport.value} airport",
+                      subtitle = s"${airline.airlineName.value} ${flight.flightNumber.value}",
+                      score = departureScore
+                    )
+                  ),
+                  Option.when(arrivalScore > 0)(
+                    SearchSuggestion(
+                      resourceType = SearchResourceType.Flight,
+                      value = flight.arrivalAirport.value,
+                      title = s"${flight.arrivalAirport.value} airport",
+                      subtitle = s"${airline.airlineName.value} ${flight.flightNumber.value}",
+                      score = arrivalScore
+                    )
+                  ),
+                  Option.when(flightScore > 0)(
+                    SearchSuggestion(
+                      resourceType = SearchResourceType.Flight,
+                      value = flight.flightNumber.value,
+                      title = s"${airline.airlineName.value} ${flight.flightNumber.value}",
+                      subtitle = s"${flight.departureAirport.value} -> ${flight.arrivalAirport.value}",
+                      score = flightScore
+                    )
+                  )
+                ).flatten
+              }
+            )
+            .map(suggestions => SearchRanking.topDistinctByValue(suggestions, 8))
+        }
+
+  def getFlightDetails(flightId: FlightId): IO[(Airline, Flight)] =
+    flightService.getFlightDetails(flightId).flatMap(toAirlineFlightTuple)
+
   def createFlightOrder(
       actingUserId: UserId,
       flightId: FlightId,
       travelerIds: List[TravelerId],
       cabinClass: CabinClass
-  ): F[Order]
-
-final class LiveFlightBookingApplicationService[F[_]: MonadThrow: Clock](
-    flightService: FlightService[F],
-    flightRepository: FlightRepository[F],
-    flightInventoryLockingService: FlightInventoryLockingService[F],
-    orderRepository: OrderRepository[F],
-    travelerProfileRepository: TravelerProfileRepository[F]
-) extends FlightBookingApplicationService[F]:
-  private def currentInstantF: F[java.time.Instant] =
-    Clock[F].realTimeInstant
-
-  override def browseFlights(
-      departureAirportQuery: Option[String],
-      arrivalAirportQuery: Option[String],
-      departureDate: Option[LocalDate]
-  ): F[List[(Airline, Flight)]] =
-    flightService
-      .browseFlights(None, None, departureDate)
-      .map(_.filter(flightMatchesSearch(_, departureAirportQuery, arrivalAirportQuery)))
-      .map(_.sortBy(flight => -flightSearchScore(flight, departureAirportQuery, arrivalAirportQuery)))
-      .flatMap(_.traverse(toAirlineFlightTuple))
-
-  override def suggestFlights(keyword: String): F[List[SearchSuggestion]] =
-    SearchRanking.usableKeyword(keyword) match
-      case None => MonadThrow[F].pure(List.empty)
-      case Some(normalizedKeyword) =>
-        flightService
-          .browseFlights(None, None, None)
-          .flatMap(_.traverse(toAirlineFlightTuple))
-          .map(
-            _.flatMap { case (airline, flight) =>
-              val departureScore = SearchRanking.weightedScore(
-                normalizedKeyword,
-                flight.departureAirport.value -> 3,
-                flight.arrivalAirport.value -> 1,
-                airline.airlineName.value -> 1,
-                flight.flightNumber.value -> 2
-              )
-              val arrivalScore = SearchRanking.weightedScore(
-                normalizedKeyword,
-                flight.arrivalAirport.value -> 3,
-                flight.departureAirport.value -> 1,
-                airline.airlineName.value -> 1,
-                flight.flightNumber.value -> 2
-              )
-              val flightScore = SearchRanking.weightedScore(
-                normalizedKeyword,
-                flight.flightNumber.value -> 4,
-                airline.airlineName.value -> 2,
-                airline.airlineCode.value -> 2
-              )
-
-              List(
-                Option.when(departureScore > 0)(
-                  SearchSuggestion(
-                    resourceType = SearchResourceType.Flight,
-                    value = flight.departureAirport.value,
-                    title = s"${flight.departureAirport.value} airport",
-                    subtitle = s"${airline.airlineName.value} ${flight.flightNumber.value}",
-                    score = departureScore
-                  )
-                ),
-                Option.when(arrivalScore > 0)(
-                  SearchSuggestion(
-                    resourceType = SearchResourceType.Flight,
-                    value = flight.arrivalAirport.value,
-                    title = s"${flight.arrivalAirport.value} airport",
-                    subtitle = s"${airline.airlineName.value} ${flight.flightNumber.value}",
-                    score = arrivalScore
-                  )
-                ),
-                Option.when(flightScore > 0)(
-                  SearchSuggestion(
-                    resourceType = SearchResourceType.Flight,
-                    value = flight.flightNumber.value,
-                    title = s"${airline.airlineName.value} ${flight.flightNumber.value}",
-                    subtitle = s"${flight.departureAirport.value} -> ${flight.arrivalAirport.value}",
-                    score = flightScore
-                  )
-                )
-              ).flatten
-            }
-          )
-          .map(suggestions => SearchRanking.topDistinctByValue(suggestions, 8))
-
-  override def getFlightDetails(flightId: FlightId): F[(Airline, Flight)] =
-    flightService.getFlightDetails(flightId).flatMap(toAirlineFlightTuple)
-
-  override def createFlightOrder(
-      actingUserId: UserId,
-      flightId: FlightId,
-      travelerIds: List[TravelerId],
-      cabinClass: CabinClass
-  ): F[Order] =
+  ): IO[Order] =
     for
       validatedTravelerIds <- validateTravelerSelection(travelerIds)
       travelerProfiles <- validatedTravelerIds.traverse(loadOwnedTravelerProfile(actingUserId, _))
       ownerOrders <- orderRepository.findOrdersByOwnerUserId(actingUserId)
       flight <- flightService.getFlightDetails(flightId)
+      currentTime <- currentInstantF
+      _ <- ensureFlightCanBeBookedOnline(flight, currentTime)
       _ <- ensureTravelersDoNotAlreadyHoldFlightTickets(flight.flightId, travelerProfiles.map(_.travelerId), ownerOrders)
-      airline <- flightRepository.findAirlineById(flight.airlineId).flatMap(_.liftTo[F](FlightError.AirlineWasNotFound(flight.airlineId)))
-      cabinInventory <- flight.ensureBookableCabinInventory(cabinClass).leftMap(mapFlightError(_, cabinClass)).liftTo[F]
+      airline <- loadAirlineOrRaise(flight.airlineId)
+      cabinInventory <- loadBookableCabinOrRaise(flight, cabinClass)
       generatedOrderId <- orderRepository.nextOrderId
       generatedOrderItemId <- orderRepository.nextOrderItemId
       createdAt <- currentInstantF
@@ -179,27 +196,41 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow: Clock](
                 unitPriceSnapshot = cabinInventory.unitPrice
               )
             )
-            .liftTo[F]
+            .liftTo[IO]
           persistedOrder <- orderRepository.saveOrder(orderWithItem)
         yield persistedOrder
       ).handleErrorWith { throwable =>
-        orderRepository.deleteOrder(generatedOrderId) *> MonadThrow[F].raiseError(throwable)
+        orderRepository.deleteOrder(generatedOrderId) *> IO.raiseError(throwable)
       }
     yield savedOrder
 
-  private def toAirlineFlightTuple(flight: Flight): F[(Airline, Flight)] =
+  private def toAirlineFlightTuple(flight: Flight): IO[(Airline, Flight)] =
+    loadAirlineOrRaise(flight.airlineId).map(_ -> flight)
+
+  private def loadAirlineOrRaise(airlineId: AirlineId): IO[Airline] =
     flightRepository
-      .findAirlineById(flight.airlineId)
-      .flatMap(_.liftTo[F](FlightError.AirlineWasNotFound(flight.airlineId)))
-      .map(_ -> flight)
+      .findAirlineById(airlineId)
+      .flatMap(_.liftTo[IO](FlightError.airlineWasNotFound(airlineId)))
+
+  private def loadBookableCabinOrRaise(
+      flight: Flight,
+      requestedCabinClass: CabinClass
+  ): IO[CabinInventory] =
+    flight.ensureBookableCabinInventory(requestedCabinClass) match
+      case Right(cabinInventory) => IO.pure(cabinInventory)
+      case Left(flightError)     => IO.raiseError(mapFlightError(flight.flightId, flightError, requestedCabinClass))
 
   private def flightMatchesSearch(
       flight: Flight,
       departureAirportQuery: Option[String],
       arrivalAirportQuery: Option[String]
   ): Boolean =
-    departureAirportQuery.forall(queryText => TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesAirportQuery(flight.departureAirport, queryText)) &&
-    arrivalAirportQuery.forall(queryText => TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesAirportQuery(flight.arrivalAirport, queryText))
+    departureAirportQuery.forall(queryText =>
+      TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesAirportQuery(flight.departureAirport, queryText)
+    ) &&
+      arrivalAirportQuery.forall(queryText =>
+        TravelSearchAliases.hasUsableKeyword(queryText) && TravelSearchAliases.matchesAirportQuery(flight.arrivalAirport, queryText)
+      )
 
   private def flightSearchScore(
       flight: Flight,
@@ -209,23 +240,36 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow: Clock](
     departureAirportQuery.map(queryText => SearchRanking.weightedScore(queryText, flight.departureAirport.value -> 4)).getOrElse(0) +
       arrivalAirportQuery.map(queryText => SearchRanking.weightedScore(queryText, flight.arrivalAirport.value -> 4)).getOrElse(0)
 
-  private def validateTravelerSelection(travelerIds: List[TravelerId]): F[List[TravelerId]] =
+  private def isFlightVisibleInSearch(flight: Flight, currentTime: java.time.Instant): Boolean =
+    flight.flightSchedule.departureAt.toInstant.isAfter(currentTime)
+
+  private def requiresLateBookingSurcharge(flight: Flight, currentTime: java.time.Instant): Boolean =
+    val departureInstant = flight.flightSchedule.departureAt.toInstant
+    departureInstant.isAfter(currentTime) && departureInstant.isBefore(currentTime.plusSeconds(lateBookingThresholdHours * 3600))
+
+  private def ensureFlightCanBeBookedOnline(flight: Flight, currentTime: java.time.Instant): IO[Unit] =
+    if requiresLateBookingSurcharge(flight, currentTime) then
+      val surchargeAmount = (flight.basePrice.amount * BigDecimal("0.15")).setScale(2, BigDecimal.RoundingMode.HALF_UP)
+      IO.raiseError(flightRequiresManualPricingError(flight.flightId, surchargeAmount, flight.basePrice.currency))
+    else IO.unit
+
+  private def validateTravelerSelection(travelerIds: List[TravelerId]): IO[List[TravelerId]] =
     if travelerIds.isEmpty then
-      MonadThrow[F].raiseError(FlightBookingApplicationError.TravelerSelectionWasInvalid("At least one traveler must be selected"))
+      IO.raiseError(flightTravelerSelectionWasInvalid("At least one traveler must be selected"))
     else if travelerIds.distinct.size != travelerIds.size then
-      MonadThrow[F].raiseError(FlightBookingApplicationError.TravelerSelectionWasInvalid("Traveler selection contains duplicates"))
-    else MonadThrow[F].pure(travelerIds)
+      IO.raiseError(flightTravelerSelectionWasInvalid("Traveler selection contains duplicates"))
+    else IO.pure(travelerIds)
 
   private def loadOwnedTravelerProfile(
       actingUserId: UserId,
       travelerId: TravelerId
-  ): F[com.typesafe.travel.traveler.domain.TravelerProfile] =
+  ): IO[com.typesafe.travel.traveler.domain.TravelerProfile] =
     travelerProfileRepository.findTravelerProfileById(travelerId).flatMap {
       case Some(travelerProfile) if travelerProfile.ownerUserId == actingUserId =>
-        MonadThrow[F].pure(travelerProfile)
+        IO.pure(travelerProfile)
       case _ =>
-        MonadThrow[F].raiseError(
-          FlightBookingApplicationError.TravelerSelectionWasInvalid(
+        IO.raiseError(
+          flightTravelerSelectionWasInvalid(
             s"Traveler '${travelerId.value}' is not available for user '${actingUserId.value}'"
           )
         )
@@ -235,31 +279,32 @@ final class LiveFlightBookingApplicationService[F[_]: MonadThrow: Clock](
       flightId: FlightId,
       travelerIds: List[TravelerId],
       ownerOrders: List[Order]
-  ): F[Unit] =
+  ): IO[Unit] =
     ownerOrders
       .flatMap(_.orderLineItems)
       .collect { case flightOrderItem: FlightOrderItem => flightOrderItem }
       .find(flightOrderItem =>
         flightOrderItem.flightBookingSnapshot.flightId == flightId &&
-        flightOrderItem.orderItemStatus != OrderItemStatus.Cancelled &&
-        flightOrderItem.orderItemStatus != OrderItemStatus.Refunded &&
-        flightOrderItem.flightBookingSnapshot.travelerIds.exists(travelerIds.contains)
+          flightOrderItem.orderItemStatus != OrderItemStatus.Cancelled &&
+          flightOrderItem.orderItemStatus != OrderItemStatus.Refunded &&
+          flightOrderItem.flightBookingSnapshot.travelerIds.exists(travelerIds.contains)
       ) match
       case Some(conflictingOrderItem) =>
         val conflictingTravelerId =
           conflictingOrderItem.flightBookingSnapshot.travelerIds.find(travelerIds.contains).getOrElse(travelerIds.head)
-        MonadThrow[F].raiseError(FlightError.FlightTravelerWasAlreadyBooked(flightId, conflictingTravelerId))
+        IO.raiseError(FlightError.flightTravelerWasAlreadyBooked(flightId, conflictingTravelerId))
       case None =>
-        MonadThrow[F].unit
+        IO.unit
 
-  private def mapFlightError(flightError: FlightError, requestedCabinClass: CabinClass): DomainError =
-    flightError match
-      case FlightError.CabinInventoryWasNotFound(flightId, cabinClass) =>
-        FlightBookingApplicationError.CabinWasNotFound(flightId, cabinClass)
-      case FlightError.CabinInventoryWasNotBookable(flightId, cabinClass, _, _) =>
-        FlightBookingApplicationError.CabinWasNotBookable(flightId, cabinClass)
-      case FlightError.FlightWasNotOpenForBooking(flightId, _) =>
-        FlightBookingApplicationError.CabinWasNotBookable(flightId, requestedCabinClass)
-      case otherFlightError =>
-        otherFlightError
-
+  private def mapFlightError(
+      flightId: FlightId,
+      flightError: FlightError,
+      requestedCabinClass: CabinClass
+  ): DomainError =
+    flightError.code match
+      case "flight_cabin_not_found" =>
+        flightCabinWasNotFound(flightId, requestedCabinClass)
+      case "flight_cabin_not_bookable" | "flight_not_open_for_booking" =>
+        flightCabinWasNotBookable(flightId, requestedCabinClass)
+      case _ =>
+        flightError

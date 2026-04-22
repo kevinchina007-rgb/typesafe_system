@@ -3,7 +3,7 @@ package com.typesafe.travel.flight.domain
 import com.typesafe.travel.shared.kernel.*
 import java.time.Instant
 
-def createCabinInventory(
+def buildCabinInventory(
     cabinInventoryId: CabinInventoryId,
     flightId: FlightId,
     cabinClass: CabinClass,
@@ -11,10 +11,10 @@ def createCabinInventory(
     unitPrice: Money,
     inventoryStatus: InventoryStatus
 ): CabinInventory =
-  CabinInventory.create(cabinInventoryId, flightId, cabinClass, availableSeats, unitPrice, inventoryStatus)
+  cabinInventory(cabinInventoryId, flightId, cabinClass, availableSeats, unitPrice, inventoryStatus)
 
 
-def createFlight(
+def buildFlight(
     flightId: FlightId,
     airlineId: AirlineId,
     flightNumber: FlightNumber,
@@ -25,7 +25,7 @@ def createFlight(
     cabinInventories: Vector[CabinInventory],
     createdAt: Instant
 ): Either[FlightError, Flight] =
-  Flight.create(
+  flight(
     flightId,
     airlineId,
     flightNumber,
@@ -38,7 +38,7 @@ def createFlight(
   )
 
 
-def restorePersistedFlight(
+def restoreFlight(
     flightId: FlightId,
     airlineId: AirlineId,
     flightNumber: FlightNumber,
@@ -50,7 +50,7 @@ def restorePersistedFlight(
     cabinInventories: Vector[CabinInventory],
     createdAt: Instant
 ): Flight =
-  Flight.restore(
+  persistedFlight(
     flightId,
     airlineId,
     flightNumber,

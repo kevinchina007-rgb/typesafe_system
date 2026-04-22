@@ -37,7 +37,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       where group_id = ${groupId.value}
     """.query[(String, String, String, String, LocalDate, LocalDate, Int, String, Instant)].option.transact(transactor).map(
       _.map { case (organizerUserId, title, description, destination, startDate, endDate, capacity, status, createdAt) =>
-        TourGroup(groupId, UserId(organizerUserId), title, description, destination, startDate, endDate, capacity, TourGroupStatus.valueOf(status), createdAt)
+      TourGroup(groupId, UserId(organizerUserId), title, description, destination, startDate, endDate, capacity, TourGroupStatus.fromText(status), createdAt)
       }
     )
 
@@ -48,7 +48,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       order by created_at desc, group_id
     """.query[(String, String, String, String, String, LocalDate, LocalDate, Int, String, Instant)].to[List].transact(transactor).map(
       _.map { case (groupId, organizerUserId, title, description, destination, startDate, endDate, capacity, status, createdAt) =>
-        TourGroup(TourGroupId(groupId), UserId(organizerUserId), title, description, destination, startDate, endDate, capacity, TourGroupStatus.valueOf(status), createdAt)
+      TourGroup(TourGroupId(groupId), UserId(organizerUserId), title, description, destination, startDate, endDate, capacity, TourGroupStatus.fromText(status), createdAt)
       }
     )
 
@@ -62,7 +62,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       where membership_id = ${membershipId.value}
     """.query[(String, String, Instant, String)].option.transact(transactor).map(
       _.map { case (groupId, userId, joinedAt, status) =>
-        TourGroupMembership(membershipId, TourGroupId(groupId), UserId(userId), joinedAt, TourGroupMembershipStatus.valueOf(status))
+      TourGroupMembership(membershipId, TourGroupId(groupId), UserId(userId), joinedAt, TourGroupMembershipStatus.fromText(status))
       }
     )
 
@@ -74,7 +74,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       order by joined_at, membership_id
     """.query[(String, String, Instant, String)].to[List].transact(transactor).map(
       _.map { case (membershipId, userId, joinedAt, status) =>
-        TourGroupMembership(TourGroupMembershipId(membershipId), groupId, UserId(userId), joinedAt, TourGroupMembershipStatus.valueOf(status))
+      TourGroupMembership(TourGroupMembershipId(membershipId), groupId, UserId(userId), joinedAt, TourGroupMembershipStatus.fromText(status))
       }
     )
 
@@ -89,7 +89,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       fetch first 1 row only
     """.query[(String, Instant, String)].option.transact(transactor).map(
       _.map { case (membershipId, joinedAt, status) =>
-        TourGroupMembership(TourGroupMembershipId(membershipId), groupId, userId, joinedAt, TourGroupMembershipStatus.valueOf(status))
+      TourGroupMembership(TourGroupMembershipId(membershipId), groupId, userId, joinedAt, TourGroupMembershipStatus.fromText(status))
       }
     )
 
@@ -104,7 +104,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       order by joined_at, membership_traveler_id
     """.query[(String, String, Instant, String)].to[List].transact(transactor).map(
       _.map { case (membershipTravelerId, travelerId, joinedAt, status) =>
-        TourGroupMembershipTraveler(TourGroupMembershipTravelerId(membershipTravelerId), membershipId, TravelerId(travelerId), joinedAt, TourGroupMembershipTravelerStatus.valueOf(status))
+      TourGroupMembershipTraveler(TourGroupMembershipTravelerId(membershipTravelerId), membershipId, TravelerId(travelerId), joinedAt, TourGroupMembershipTravelerStatus.fromText(status))
       }
     )
 
@@ -117,7 +117,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       order by mt.joined_at, mt.membership_traveler_id
     """.query[(String, String, String, Instant, String)].to[List].transact(transactor).map(
       _.map { case (membershipTravelerId, membershipId, travelerId, joinedAt, status) =>
-        TourGroupMembershipTraveler(TourGroupMembershipTravelerId(membershipTravelerId), TourGroupMembershipId(membershipId), TravelerId(travelerId), joinedAt, TourGroupMembershipTravelerStatus.valueOf(status))
+      TourGroupMembershipTraveler(TourGroupMembershipTravelerId(membershipTravelerId), TourGroupMembershipId(membershipId), TravelerId(travelerId), joinedAt, TourGroupMembershipTravelerStatus.fromText(status))
       }
     )
 
@@ -131,7 +131,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       where plan_item_id = ${planItemId.value}
     """.query[(String, String, String, String, Instant, Option[Instant], Int, String)].option.transact(transactor).map(
       _.map { case (groupId, itemType, title, description, scheduledAt, endsAt, sequenceNo, status) =>
-        GroupPlanItem(planItemId, TourGroupId(groupId), GroupPlanItemType.valueOf(itemType), title, description, scheduledAt, endsAt, sequenceNo, GroupPlanItemStatus.valueOf(status))
+      GroupPlanItem(planItemId, TourGroupId(groupId), GroupPlanItemType.fromText(itemType), title, description, scheduledAt, endsAt, sequenceNo, GroupPlanItemStatus.fromText(status))
       }
     )
 
@@ -143,7 +143,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       order by sequence_no, plan_item_id
     """.query[(String, String, String, String, Instant, Option[Instant], Int, String)].to[List].transact(transactor).map(
       _.map { case (planItemId, itemType, title, description, scheduledAt, endsAt, sequenceNo, status) =>
-        GroupPlanItem(GroupPlanItemId(planItemId), groupId, GroupPlanItemType.valueOf(itemType), title, description, scheduledAt, endsAt, sequenceNo, GroupPlanItemStatus.valueOf(status))
+      GroupPlanItem(GroupPlanItemId(planItemId), groupId, GroupPlanItemType.fromText(itemType), title, description, scheduledAt, endsAt, sequenceNo, GroupPlanItemStatus.fromText(status))
       }
     )
 
@@ -157,7 +157,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       where option_id = ${optionId.value}
     """.query[(String, String, String, Option[String], Option[String], String, String, Int, String)].option.transact(transactor).map(
       _.map { case (planItemId, resourceType, resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, status) =>
-        GroupPlanOption(optionId, GroupPlanItemId(planItemId), GroupPlanOptionResourceType.valueOf(resourceType), resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, GroupPlanOptionStatus.valueOf(status))
+      GroupPlanOption(optionId, GroupPlanItemId(planItemId), GroupPlanOptionResourceType.fromText(resourceType), resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, GroupPlanOptionStatus.fromText(status))
       }
     )
 
@@ -169,7 +169,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       order by label, option_id
     """.query[(String, String, String, Option[String], Option[String], String, String, Int, String)].to[List].transact(transactor).map(
       _.map { case (optionId, resourceType, resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, status) =>
-        GroupPlanOption(GroupPlanOptionId(optionId), planItemId, GroupPlanOptionResourceType.valueOf(resourceType), resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, GroupPlanOptionStatus.valueOf(status))
+      GroupPlanOption(GroupPlanOptionId(optionId), planItemId, GroupPlanOptionResourceType.fromText(resourceType), resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, GroupPlanOptionStatus.fromText(status))
       }
     )
 
@@ -182,7 +182,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       order by i.sequence_no, o.label, o.option_id
     """.query[(String, String, String, String, Option[String], Option[String], String, String, Int, String)].to[List].transact(transactor).map(
       _.map { case (optionId, planItemId, resourceType, resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, status) =>
-        GroupPlanOption(GroupPlanOptionId(optionId), GroupPlanItemId(planItemId), GroupPlanOptionResourceType.valueOf(resourceType), resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, GroupPlanOptionStatus.valueOf(status))
+      GroupPlanOption(GroupPlanOptionId(optionId), GroupPlanItemId(planItemId), GroupPlanOptionResourceType.fromText(resourceType), resourceId, resourceVariantCode, resourceContext, label, description, defaultQuantity, GroupPlanOptionStatus.fromText(status))
       }
     )
 
@@ -196,7 +196,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       where selection_id = ${selectionId.value}
     """.query[(String, String, String, String, Int, String, Instant, Option[Instant], Option[String], Option[String])].option.transact(transactor).map(
       _.map { case (groupId, planItemId, optionId, membershipId, quantity, status, createdAt, confirmedAt, reviewedByOrganizerUserId, reviewNote) =>
-        GroupPlanSelection(selectionId, TourGroupId(groupId), GroupPlanItemId(planItemId), GroupPlanOptionId(optionId), TourGroupMembershipId(membershipId), quantity, GroupPlanSelectionStatus.valueOf(status), createdAt, confirmedAt, reviewedByOrganizerUserId.map(UserId.apply), reviewNote)
+      GroupPlanSelection(selectionId, TourGroupId(groupId), GroupPlanItemId(planItemId), GroupPlanOptionId(optionId), TourGroupMembershipId(membershipId), quantity, GroupPlanSelectionStatus.fromText(status), createdAt, confirmedAt, reviewedByOrganizerUserId.map(UserId.apply), reviewNote)
       }
     )
 
@@ -208,7 +208,7 @@ trait DoobieTourGroupRepositoryCoreSupport[F[_]: Async]:
       order by created_at, selection_id
     """.query[(String, String, String, String, Int, String, Instant, Option[Instant], Option[String], Option[String])].to[List].transact(transactor).map(
       _.map { case (selectionId, planItemId, optionId, membershipId, quantity, status, createdAt, confirmedAt, reviewedByOrganizerUserId, reviewNote) =>
-        GroupPlanSelection(GroupPlanSelectionId(selectionId), groupId, GroupPlanItemId(planItemId), GroupPlanOptionId(optionId), TourGroupMembershipId(membershipId), quantity, GroupPlanSelectionStatus.valueOf(status), createdAt, confirmedAt, reviewedByOrganizerUserId.map(UserId.apply), reviewNote)
+      GroupPlanSelection(GroupPlanSelectionId(selectionId), groupId, GroupPlanItemId(planItemId), GroupPlanOptionId(optionId), TourGroupMembershipId(membershipId), quantity, GroupPlanSelectionStatus.fromText(status), createdAt, confirmedAt, reviewedByOrganizerUserId.map(UserId.apply), reviewNote)
       }
     )
 

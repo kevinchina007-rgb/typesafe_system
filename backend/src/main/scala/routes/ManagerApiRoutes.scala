@@ -73,6 +73,34 @@ trait ManagerApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         response <- Created(ManagerSessionResponseDto.fromApplication(managerSession).asJson)
       yield response
 
+    case request @ POST -> Root / "api" / "manager" / "site-admin" / "register" =>
+      for
+        registerSiteAdminRequestDto <- request.as[RegisterSiteAdminRequestDto]
+        primaryEmailAddress <- fromEither(EmailAddress.create(registerSiteAdminRequestDto.email))
+        displayName <- fromEither(PersonName.create(registerSiteAdminRequestDto.displayName))
+        createdAt <- currentInstantF
+        siteAdminManagerId = ManagerId(s"site-admin-${java.util.UUID.randomUUID().toString.take(12)}")
+        _ <- authApplicationService.createManagerCredential(
+          managerType = com.typesafe.travel.auth.domain.AuthManagerType.SiteAdmin,
+          managerId = siteAdminManagerId,
+          loginEmail = primaryEmailAddress,
+          rawPassword = registerSiteAdminRequestDto.password,
+          now = createdAt
+        )
+        response <- Created(
+          CurrentManagerSessionResponseDto(
+            managerId = siteAdminManagerId.value,
+            managerType = com.typesafe.travel.auth.domain.AuthManagerType.SiteAdmin.toString,
+            email = primaryEmailAddress.value,
+            displayName = displayName.value,
+            status = "Active",
+            scopeId = "site-admin",
+            createdAt = createdAt.toString,
+            expiresAt = createdAt.toString
+          ).asJson
+        )
+      yield response
+
     case request @ GET -> Root / "api" / "manager" / "tasks" :? ManagerIdQueryParamMatcher(managerIdValue) +&
         ManagerTypeQueryParamMatcher(managerTypeValue) +&
         TaskStatusQueryParamMatcher(taskStatusValue) +&
@@ -145,7 +173,17 @@ trait ManagerApiRoutes[F[_]: Async] extends Http4sDsl[F]:
         managerIdText <- fromEither(managerIdValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
         _ <- ensureManagerScope(currentManager, managerIdText, "airline")
         flights <- managerWorkflowApplicationService.listFlightsForAirlineManager(ManagerId(managerIdText))
-        response <- Ok(FlightListResponseDto(flights.map { case (airline, flight) => FlightResponseDto.fromDomain(airline, flight) }).asJson)
+        currentTime <- currentInstantF
+        response <- Ok(FlightListResponseDto(flights.map { case (airline, flight) => flightResponseDto(airline, flight, currentTime) }).asJson)
+      yield response
+
+    case request @ GET -> Root / "api" / "manager" / "hotels" :? ManagerIdQueryParamMatcher(managerIdValue) =>
+      for
+        currentManager <- requireCurrentManager(request)
+        managerIdText <- fromEither(managerIdValue.filter(_.trim.nonEmpty).toRight(SharedValidationError.RequiredFieldWasEmpty("managerId")))
+        _ <- ensureManagerScope(currentManager, managerIdText, "hotel")
+        hotels <- managerWorkflowApplicationService.listHotelsForHotelManager(ManagerId(managerIdText))
+        response <- Ok(HotelListResponseDto(hotels.map(hotel => hotelResponseDto(hotel, None))).asJson)
       yield response
 
     case request @ GET -> Root / "api" / "manager" / "refund-tasks" :? ManagerIdQueryParamMatcher(managerIdValue) +&
@@ -188,7 +226,7 @@ trait ManagerApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           businessPrice = businessPrice,
           createdAt = createdAt
         )
-        response <- Created(FlightResponseDto.fromDomain(airlineAndFlight._1, airlineAndFlight._2).asJson)
+        response <- Created(flightResponseDto(airlineAndFlight._1, airlineAndFlight._2, createdAt).asJson)
       yield response
 
     case request @ POST -> Root / "api" / "manager" / "hotel-room-types" =>
@@ -216,7 +254,7 @@ trait ManagerApiRoutes[F[_]: Async] extends Http4sDsl[F]:
           inventoryStartDate = LocalDate.parse(createManagerRoomTypeRequestDto.inventoryStartDate),
           inventoryEndDate = LocalDate.parse(createManagerRoomTypeRequestDto.inventoryEndDate)
         )
-        response <- Created(HotelResponseDto.fromDomain(hotel, None).asJson)
+        response <- Created(hotelResponseDto(hotel, None).asJson)
       yield response
 
     case request @ POST -> Root / "api" / "manager" / "booking-items" / orderItemValue / "confirm" =>

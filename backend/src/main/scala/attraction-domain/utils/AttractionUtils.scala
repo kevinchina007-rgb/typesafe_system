@@ -2,10 +2,7 @@ package com.typesafe.travel.attraction.domain
 
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.*
-import io.circe.{Decoder, Encoder}
-import io.circe.generic.semiauto.*
-import io.circe.syntax.*
-import io.circe.parser.decode
+import AttractionRuleJson.encodeRuleConfig
 
 import java.time.{DayOfWeek, Instant, LocalDate, Period}
 
@@ -21,7 +18,7 @@ def createTicketEligibilityRule(
       ruleId = ruleId,
       ticketTypeId = ticketTypeId,
       ruleType = ruleType,
-      ruleConfigJson = encodeTicketEligibilityRuleConfig(ruleConfig),
+      ruleConfigJson = encodeRuleConfig(ruleConfig),
       createdAt = createdAt
     )
   )
@@ -180,15 +177,6 @@ def restorePersistedAttractionTicketSession(
   AttractionTicketSession(sessionId, ticketTypeId, sessionName, useDate, startsAt, endsAt, capacity, status, createdAt)
 
 
-private def encodeTicketEligibilityRuleConfig(ruleConfig: TicketEligibilityRuleConfig): String =
-  ruleConfig match
-    case value: TicketEligibilityRuleConfig.AgeLessThan          => value.asJson.noSpaces
-    case value: TicketEligibilityRuleConfig.AgeBetween           => value.asJson.noSpaces
-    case value: TicketEligibilityRuleConfig.AgeAtLeast           => value.asJson.noSpaces
-    case value: TicketEligibilityRuleConfig.DocumentTypeEquals   => value.asJson.noSpaces
-    case value: TicketEligibilityRuleConfig.DocumentNumberPrefix => value.asJson.noSpaces
-
-
 private def validateTicketEligibilityRuleConfig(
     ruleType: TicketEligibilityRuleType,
     ruleConfig: TicketEligibilityRuleConfig
@@ -211,3 +199,4 @@ private def validateTicketEligibilityRuleConfig(
 
   if configMatchesRuleType then Right(())
   else Left(AttractionError.AttractionTravelerSelectionWasInvalid(s"Eligibility rule config did not match $ruleType"))
+

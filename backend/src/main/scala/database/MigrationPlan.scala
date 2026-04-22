@@ -27,7 +27,9 @@ object MigrationPlan:
     loadMigrationStep(16, "authentication_authorization_phase2", "V16__authentication_authorization_phase2.sql"),
     loadMigrationStep(17, "search_enhancement_phase2", "V17__search_enhancement_phase2.sql"),
     loadMigrationStep(18, "train_attraction_enhancement_phase2", "V18__train_attraction_enhancement_phase2.sql"),
-    loadMigrationStep(19, "uploaded_binary_assets", "V19__uploaded_binary_assets.sql")
+    loadMigrationStep(19, "uploaded_binary_assets", "V19__uploaded_binary_assets.sql"),
+    loadMigrationStep(20, "feedback_chat_phase1", "V20__feedback_chat_phase1.sql"),
+    loadMigrationStep(21, "advertising_phase1", "V21__advertising_phase1.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

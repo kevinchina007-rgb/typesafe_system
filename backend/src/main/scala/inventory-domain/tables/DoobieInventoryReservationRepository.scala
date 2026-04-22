@@ -122,12 +122,12 @@ final class DoobieInventoryReservationRepository[F[_]: Async](
     Async[F].pure(
       restorePersistedReservation(
         reservationId = ReservationId(reservationRow.reservationId),
-        resourceType = ReservationResourceType.valueOf(reservationRow.resourceType),
+        resourceType = ReservationResourceType.fromText(reservationRow.resourceType),
         resourceId = reservationRow.resourceId,
         orderId = OrderId(reservationRow.orderId),
         orderItemId = OrderItemId(reservationRow.orderItemId),
         quantity = reservationRow.quantity,
-        reservationStatus = ReservationStatus.valueOf(reservationRow.status),
+        reservationStatus = ReservationStatus.fromText(reservationRow.status),
         reservedAt = reservationRow.reservedAt,
         expiresAt = reservationRow.expiresAt,
         confirmedAt = reservationRow.confirmedAt,
