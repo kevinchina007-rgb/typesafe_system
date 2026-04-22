@@ -92,6 +92,11 @@ export function TravelerPanel({
   onReloadTravelers,
 }: TravelerPanelProps) {
   const todayInputValue = new Date().toISOString().slice(0, 10)
+  const placeholderTexts = {
+    fullName: currentLanguage === 'zh' ? '林晨' : 'Lin Chen',
+    documentNumber: currentLanguage === 'zh' ? 'E12345678' : 'E12345678',
+    phone: currentLanguage === 'zh' ? '+8613812345678' : '+8613812345678',
+  }
   const [travelerFormDraft, setTravelerFormDraft] = useState<TravelerFormDraft>(emptyTravelerFormDraft)
 
   const derivedTravelerTypeLabel = useMemo(
@@ -174,7 +179,7 @@ export function TravelerPanel({
             <input
               value={travelerFormDraft.fullName}
               onChange={event => updateTravelerFormDraft('fullName', event.target.value)}
-              placeholder="Lin Chen"
+              placeholder={placeholderTexts.fullName}
               required
               disabled={isGuestMode || isBusy}
             />
@@ -197,7 +202,7 @@ export function TravelerPanel({
             <input
               value={travelerFormDraft.documentNumber}
               onChange={event => updateTravelerFormDraft('documentNumber', event.target.value)}
-              placeholder="E12345678"
+              placeholder={placeholderTexts.documentNumber}
               required
               disabled={isGuestMode || isBusy}
             />
@@ -210,7 +215,7 @@ export function TravelerPanel({
             <input
               value={travelerFormDraft.phone}
               onChange={event => updateTravelerFormDraft('phone', event.target.value)}
-              placeholder="+8613812345678"
+              placeholder={placeholderTexts.phone}
               required
               disabled={isGuestMode || isBusy}
             />

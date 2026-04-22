@@ -60,6 +60,15 @@ export function UserPanel({
   onLogout,
 }: UserPanelProps) {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const placeholderTexts = {
+    nickname: currentLanguage === 'zh' ? '林晨' : 'Lin Chen',
+    email: currentLanguage === 'zh' ? 'lin.chen@example.com' : 'lin.chen@example.com',
+    phone: currentLanguage === 'zh' ? '+8613812345678' : '+8613812345678',
+    password: currentLanguage === 'zh' ? '至少 8 位字符' : 'At least 8 characters',
+    confirmPassword: currentLanguage === 'zh' ? '再次输入密码' : 'Repeat password',
+    currentPassword: currentLanguage === 'zh' ? '当前密码' : 'Current password',
+    newPassword: currentLanguage === 'zh' ? '新密码' : 'New password',
+  }
   const defaultTraveler =
     account?.defaultTravelerProfileId
       ? travelers.find(traveler => traveler.travelerId === account.defaultTravelerProfileId) ?? null
@@ -116,23 +125,23 @@ export function UserPanel({
             >
               <label>
                 {translate('account.nickname')}
-                <input name="nickname" placeholder="Lin Chen" required />
+                <input name="nickname" placeholder={placeholderTexts.nickname} required />
               </label>
               <label>
                 {translate('account.email')}
-                <input name="email" type="email" placeholder="lin.chen@example.com" required />
+                <input name="email" type="email" placeholder={placeholderTexts.email} required />
               </label>
               <label>
                 {translate('account.phone')}
-                <input name="phone" placeholder="+8613812345678" required />
+                <input name="phone" placeholder={placeholderTexts.phone} required />
               </label>
               <label>
                 {translate('account.password')}
-                <input name="password" type="password" placeholder="At least 8 characters" required />
+                <input name="password" type="password" placeholder={placeholderTexts.password} required />
               </label>
               <label>
                 {translate('account.confirmPassword')}
-                <input name="confirmPassword" type="password" placeholder="Repeat password" required />
+                <input name="confirmPassword" type="password" placeholder={placeholderTexts.confirmPassword} required />
               </label>
               <PrimaryButton type="submit" disabled={isBusy}>
                 {translate('account.create')}
@@ -156,14 +165,14 @@ export function UserPanel({
                   name="loginEmail"
                   type="email"
                   value={loginEmailDraft}
-                  placeholder="lin.chen@example.com"
+                  placeholder={placeholderTexts.email}
                   onChange={event => onChangeLoginEmailDraft(event.target.value)}
                   required
                 />
               </label>
               <label>
                 {translate('account.password')}
-                <input name="password" type="password" placeholder="Password" required />
+                <input name="password" type="password" placeholder={placeholderTexts.currentPassword} required />
               </label>
               <PrimaryButton type="submit" disabled={isBusy}>
                 {translate('account.login')}
@@ -323,15 +332,15 @@ export function UserPanel({
           >
             <label>
               {translate('account.currentPassword')}
-              <input name="currentPassword" type="password" placeholder={translate('account.currentPassword')} required />
+              <input name="currentPassword" type="password" placeholder={placeholderTexts.currentPassword} required />
             </label>
             <label>
               {translate('account.newPassword')}
-              <input name="newPassword" type="password" placeholder={translate('account.newPassword')} required />
+              <input name="newPassword" type="password" placeholder={placeholderTexts.newPassword} required />
             </label>
             <label>
               {translate('account.confirmPassword')}
-              <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+              <input name="confirmPassword" type="password" placeholder={placeholderTexts.confirmPassword} required />
             </label>
             <PrimaryButton type="submit" disabled={isBusy}>
               {translate('account.changePassword')}

@@ -17,11 +17,11 @@ create table if not exists advertisements (
   review_status varchar(64) not null,
   delivery_status varchar(64) not null,
   priority integer not null,
-  start_at timestamptz not null,
-  end_at timestamptz not null,
+  start_at timestamp not null,
+  end_at timestamp not null,
   rejection_note text,
-  created_at timestamptz not null,
-  updated_at timestamptz not null
+  created_at timestamp not null,
+  updated_at timestamp not null
 );
 
 create index if not exists idx_advertisements_owner on advertisements(owner_manager_id, owner_type);
@@ -34,7 +34,7 @@ create table if not exists advertisement_reviews (
   reviewer_manager_id varchar(128) not null,
   decision varchar(64) not null,
   review_note text,
-  reviewed_at timestamptz not null
+  reviewed_at timestamp not null
 );
 
 create index if not exists idx_advertisement_reviews_advertisement_id on advertisement_reviews(advertisement_id, reviewed_at desc);

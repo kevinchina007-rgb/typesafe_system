@@ -32,38 +32,50 @@ final class DoobieUploadedBinaryAssetRepository[F[_]: Async](
 ) extends UploadedBinaryAssetRepository[F]:
 
   override def saveAsset(asset: UploadedBinaryAsset): F[UploadedBinaryAsset] =
-    sql"""
-      insert into uploaded_binary_assets (
-        asset_id,
-        owner_user_id,
-        asset_category,
-        original_file_name,
-        file_extension,
-        mime_type,
-        file_size,
-        binary_content,
-        created_at
-      ) values (
-        ${asset.assetId},
-        ${asset.ownerUserId.map(_.value)},
-        ${asset.assetCategory},
-        ${asset.originalFileName},
-        ${asset.fileExtension},
-        ${asset.mimeType},
-        ${asset.fileSize},
-        ${asset.binaryContent},
-        ${asset.createdAt}
-      )
-      on conflict (asset_id) do update set
-        owner_user_id = excluded.owner_user_id,
-        asset_category = excluded.asset_category,
-        original_file_name = excluded.original_file_name,
-        file_extension = excluded.file_extension,
-        mime_type = excluded.mime_type,
-        file_size = excluded.file_size,
-        binary_content = excluded.binary_content,
-        created_at = excluded.created_at
-    """.update.run.transact(transactor).as(asset)
+    val updateExisting =
+      sql"""
+        update uploaded_binary_assets
+        set
+          owner_user_id = ${asset.ownerUserId.map(_.value)},
+          asset_category = ${asset.assetCategory},
+          original_file_name = ${asset.originalFileName},
+          file_extension = ${asset.fileExtension},
+          mime_type = ${asset.mimeType},
+          file_size = ${asset.fileSize},
+          binary_content = ${asset.binaryContent},
+          created_at = ${asset.createdAt}
+        where asset_id = ${asset.assetId}
+      """.update.run
+
+    val insertNew =
+      sql"""
+        insert into uploaded_binary_assets (
+          asset_id,
+          owner_user_id,
+          asset_category,
+          original_file_name,
+          file_extension,
+          mime_type,
+          file_size,
+          binary_content,
+          created_at
+        ) values (
+          ${asset.assetId},
+          ${asset.ownerUserId.map(_.value)},
+          ${asset.assetCategory},
+          ${asset.originalFileName},
+          ${asset.fileExtension},
+          ${asset.mimeType},
+          ${asset.fileSize},
+          ${asset.binaryContent},
+          ${asset.createdAt}
+        )
+      """.update.run
+
+    updateExisting.transact(transactor).flatMap { updatedRowCount =>
+      if updatedRowCount > 0 then Async[F].pure(asset)
+      else insertNew.transact(transactor).as(asset)
+    }
 
   override def findAssetByAssetId(assetId: String): F[Option[UploadedBinaryAsset]] =
     sql"""

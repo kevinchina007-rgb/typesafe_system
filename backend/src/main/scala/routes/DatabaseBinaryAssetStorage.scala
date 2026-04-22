@@ -11,10 +11,10 @@ import java.util.UUID
 
 object UploadedBinaryAssetUrl:
   def build(assetId: String, originalFileName: String, fallbackExtension: String): String =
-    val sanitizedFileName = sanitizeFileName(originalFileName, fallbackExtension)
+    val sanitizedFileName = sanitizeFileName(assetId, originalFileName, fallbackExtension)
     s"/uploads/assets/$assetId/$sanitizedFileName"
 
-  private def sanitizeFileName(originalFileName: String, fallbackExtension: String): String =
+  private def sanitizeFileName(assetId: String, originalFileName: String, fallbackExtension: String): String =
     val normalizedBaseName =
       originalFileName
         .trim
@@ -24,8 +24,26 @@ object UploadedBinaryAssetUrl:
         .stripPrefix("-")
         .stripSuffix("-")
 
-    if normalizedBaseName.nonEmpty then normalizedBaseName
-    else s"asset.$fallbackExtension"
+    val normalizedFallbackExtension =
+      fallbackExtension
+        .trim
+        .toLowerCase
+        .replaceAll("[^a-z0-9]+", "")
+
+    val safeFallbackExtension =
+      if normalizedFallbackExtension.nonEmpty then normalizedFallbackExtension
+      else "bin"
+
+    val hasMeaningfulFileName =
+      normalizedBaseName.nonEmpty &&
+      normalizedBaseName.exists(_.isLetterOrDigit) &&
+      !normalizedBaseName.startsWith(".") &&
+      !normalizedBaseName.endsWith(".") &&
+      normalizedBaseName != "." &&
+      normalizedBaseName != ".."
+
+    if hasMeaningfulFileName then normalizedBaseName
+    else s"$assetId.$safeFallbackExtension"
 
 final class DatabaseAvatarStorage[F[_]: Sync: Clock] private (
     uploadedBinaryAssetRepository: UploadedBinaryAssetRepository[F]
