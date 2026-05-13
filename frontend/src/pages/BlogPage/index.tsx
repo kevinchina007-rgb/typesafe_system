@@ -1,7 +1,8 @@
-import { BlogPanel } from '../../components/BlogPanel'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, UserResponse } from '../../lib/mvp-types'
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+﻿import { BlogPanel } from '@/pages/BlogPage/components/BlogPanel'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, UserResponse } from '@/lib/mvp-types/index'
+import { usePageActions } from '@/pages/shared/usePageActions'
 
 type BlogPageProps = {
   currentLanguage: AppLanguage

@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+﻿import { useEffect, useState } from 'react'
 
-import { UserPanel } from '../../components/UserPanel'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, AppViewKey, CurrentManagerSessionResponse, TravelerResponse, UserResponse } from '../../lib/mvp-types'
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
+import { setCurrentUserTravelers, useUserStore } from '@/app/stores/user-store'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, AppViewKey, CurrentManagerSessionResponse, UserResponse } from '@/lib/mvp-types/index'
+import { usePageActions } from '@/pages/shared/usePageActions'
+import { UserPanel } from './UserPanel'
 
 type AccountEntryMode = 'register' | 'login'
 
@@ -32,7 +34,7 @@ export function AccountPage({
 }: AccountPageProps) {
   const [accountEntryMode, setAccountEntryMode] = useState<AccountEntryMode>(requestedEntryMode)
   const [loginEmailDraft, setLoginEmailDraft] = useState('')
-  const [userTravelers, setUserTravelers] = useState<TravelerResponse[]>([])
+  const userTravelers = useUserStore(state => state.userTravelers)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
 
   useEffect(() => {
@@ -41,10 +43,10 @@ export function AccountPage({
 
   useEffect(() => {
     if (!signedInUser) {
-      setUserTravelers([])
+      setCurrentUserTravelers([])
       return
     }
-    void travelMvpApiClient.listTravelers(signedInUser.userId).then(response => setUserTravelers(response.travelers)).catch(() => setUserTravelers([]))
+    void travelMvpApiClient.listTravelers(signedInUser.userId).then(response => setCurrentUserTravelers(response.travelers)).catch(() => setCurrentUserTravelers([]))
   }, [signedInUser?.userId])
 
   async function ensureManagerLoggedOut() {
@@ -108,7 +110,7 @@ export function AccountPage({
           const refreshedAccount = await travelMvpApiClient.getUser(signedInUser.userId)
           const refreshedTravelers = await travelMvpApiClient.listTravelers(signedInUser.userId)
           onSignedInUserChange(refreshedAccount)
-          setUserTravelers(refreshedTravelers.travelers)
+          setCurrentUserTravelers(refreshedTravelers.travelers)
         }, translate('account.refresh'), translate('notice.actionSuccess'))
       }}
       onChangePassword={async payload => {

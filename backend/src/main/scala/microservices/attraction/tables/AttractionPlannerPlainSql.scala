@@ -1,0 +1,170 @@
+package com.typesafe.travel.persistence.attraction
+
+import cats.effect.IO
+import com.typesafe.travel.attraction.domain.*
+import com.typesafe.travel.persistence.PlainSqlSupport
+import com.typesafe.travel.shared.kernel.*
+
+import java.sql.{Connection, Date, ResultSet, Timestamp}
+import java.time.{DayOfWeek, Instant}
+import java.util.UUID
+import scala.util.Try
+
+object AttractionPlannerPlainSql:
+  def suggestions(connection: Connection, input: AttractionSuggestionRequest): IO[AttractionSuggestionListPlannerResponse] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        "select attraction_id, name, city, location from attractions where status = ? and (name ilike ? or city ilike ? or location ilike ?) order by name limit 12"
+      ) { statement =>
+        val q = s"%${input.q.trim}%"
+        statement.setString(1, AttractionStatus.Published.toString)
+        statement.setString(2, q)
+        statement.setString(3, q)
+        statement.setString(4, q)
+        AttractionSuggestionListPlannerResponse(
+          PlainSqlSupport.queryList(statement) { resultSet =>
+            AttractionSuggestionPlannerResponse(
+              "attraction",
+              resultSet.getString("attraction_id"),
+              resultSet.getString("name"),
+              s"${resultSet.getString("city")} · ${resultSet.getString("location")}"
+            )
+          }
+        )
+      }
+    }
+
+  def list(connection: Connection, input: ListAttractionsPlannerRequest): IO[AttractionListPlannerResponse] =
+    IO.blocking {
+      val city = input.city.map(_.trim).filter(_.nonEmpty)
+      val sql =
+        "select attraction_id, manager_id, name, city, location, description, status, created_at from attractions where status = ?" +
+          city.map(_ => " and city ilike ?").getOrElse("") +
+          " order by created_at, attraction_id"
+      PlainSqlSupport.withStatement(connection, sql) { statement =>
+        statement.setString(1, AttractionStatus.Published.toString)
+        city.foreach(value => statement.setString(2, s"%$value%"))
+        AttractionListPlannerResponse(PlainSqlSupport.queryList(statement)(readAttraction(connection)))
+      }
+    }
+
+  def details(connection: Connection, input: GetAttractionDetailsPlannerRequest): IO[Attraction] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        "select attraction_id, manager_id, name, city, location, description, status, created_at from attractions where attraction_id = ?"
+      ) { statement =>
+        statement.setString(1, input.attractionId)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then readAttraction(connection)(resultSet)
+          else throw AttractionError.AttractionWasNotFound(AttractionId(input.attractionId))
+        finally resultSet.close()
+      }
+    }
+
+  def listManaged(connection: Connection, input: ListManagedAttractionsPlannerRequest): IO[AttractionListPlannerResponse] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        "select attraction_id, manager_id, name, city, location, description, status, created_at from attractions where manager_id = ? order by created_at, attraction_id"
+      ) { statement =>
+        statement.setString(1, input.managerId)
+        AttractionListPlannerResponse(PlainSqlSupport.queryList(statement)(readAttraction(connection)))
+      }
+    }
+
+  def create(connection: Connection, input: CreateAttractionPlannerRequest, now: Instant): IO[Attraction] =
+    IO.blocking {
+      val attraction = Attraction(
+        attractionId = AttractionId(s"attraction-${UUID.randomUUID().toString.take(12)}"),
+        managerId = ManagerId(input.managerId),
+        attractionName = input.attractionName.trim,
+        city = input.city.trim,
+        location = input.location.trim,
+        description = input.description.trim,
+        attractionStatus = AttractionStatus.Published,
+        ticketTypes = Vector.empty,
+        createdAt = now
+      )
+      PlainSqlSupport.withStatement(
+        connection,
+        "insert into attractions(attraction_id, manager_id, name, city, location, description, status, created_at) values (?, ?, ?, ?, ?, ?, ?, ?)"
+      ) { statement =>
+        statement.setString(1, attraction.attractionId.value)
+        statement.setString(2, attraction.managerId.value)
+        statement.setString(3, attraction.attractionName)
+        statement.setString(4, attraction.city)
+        statement.setString(5, attraction.location)
+        statement.setString(6, attraction.description)
+        statement.setString(7, attraction.attractionStatus.toString)
+        statement.setTimestamp(8, Timestamp.from(now))
+        statement.executeUpdate()
+      }
+      attraction
+    }
+
+  private def readAttraction(connection: Connection)(resultSet: ResultSet): Attraction =
+    val attractionId = AttractionId(resultSet.getString("attraction_id"))
+    Attraction(
+      attractionId = attractionId,
+      managerId = ManagerId(resultSet.getString("manager_id")),
+      attractionName = resultSet.getString("name"),
+      city = resultSet.getString("city"),
+      location = resultSet.getString("location"),
+      description = resultSet.getString("description"),
+      attractionStatus = AttractionStatus.fromText(resultSet.getString("status")),
+      ticketTypes = loadTicketTypes(connection, attractionId),
+      createdAt = resultSet.getTimestamp("created_at").toInstant
+    )
+
+  private def loadTicketTypes(connection: Connection, attractionId: AttractionId): Vector[TicketType] =
+    PlainSqlSupport.withStatement(
+      connection,
+      "select ticket_type_id, name, description, price_amount, price_currency, available_from_date, available_to_date, total_quantity, valid_weekdays, status, created_at from ticket_types where attraction_id = ? order by created_at, ticket_type_id"
+    ) { statement =>
+      statement.setString(1, attractionId.value)
+      PlainSqlSupport.queryList(statement) { resultSet =>
+        val ticketTypeId = TicketTypeId(resultSet.getString("ticket_type_id"))
+        TicketType(
+          ticketTypeId,
+          attractionId,
+          resultSet.getString("name"),
+          resultSet.getString("description"),
+          Money.create(resultSet.getBigDecimal("price_amount"), Currency.fromText(resultSet.getString("price_currency"))).fold(throw _, identity),
+          Option(resultSet.getDate("available_from_date")).map(_.toLocalDate).getOrElse(java.time.LocalDate.now()),
+          Option(resultSet.getDate("available_to_date")).map(_.toLocalDate).getOrElse(java.time.LocalDate.now()),
+          resultSet.getInt("total_quantity"),
+          decodeWeekdays(Option(resultSet.getString("valid_weekdays")).getOrElse("")),
+          TicketTypeStatus.fromText(resultSet.getString("status")),
+          loadSessions(connection, ticketTypeId),
+          Vector.empty,
+          resultSet.getTimestamp("created_at").toInstant
+        )
+      }.toVector
+    }
+
+  private def loadSessions(connection: Connection, ticketTypeId: TicketTypeId): Vector[AttractionTicketSession] =
+    PlainSqlSupport.withStatement(
+      connection,
+      "select session_id, session_name, use_date, starts_at, ends_at, capacity, status, created_at from attraction_ticket_sessions where ticket_type_id = ? order by use_date, starts_at"
+    ) { statement =>
+      statement.setString(1, ticketTypeId.value)
+      PlainSqlSupport.queryList(statement) { resultSet =>
+        AttractionTicketSession(
+          AttractionTicketSessionId(resultSet.getString("session_id")),
+          ticketTypeId,
+          resultSet.getString("session_name"),
+          resultSet.getDate("use_date").toLocalDate,
+          resultSet.getTimestamp("starts_at").toInstant,
+          resultSet.getTimestamp("ends_at").toInstant,
+          resultSet.getInt("capacity"),
+          AttractionTicketSessionStatus.fromText(resultSet.getString("status")),
+          resultSet.getTimestamp("created_at").toInstant
+        )
+      }.toVector
+    }
+
+  private def decodeWeekdays(rawValue: String): Set[DayOfWeek] =
+    rawValue.split(",").toList.map(_.trim).filter(_.nonEmpty).flatMap(value => Try(DayOfWeek.valueOf(value)).toOption).toSet

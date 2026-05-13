@@ -1,5 +1,7 @@
 package com.typesafe.travel.persistence
 
+import cats.effect.IO
+
 import scala.io.Source
 
 final case class MigrationStep(

@@ -1,23 +1,25 @@
 package com.typesafe.travel.persistence
 
+import cats.effect.IO
+
 import cats.effect.kernel.Async
 import cats.syntax.all.*
 import doobie.*
 import doobie.implicits.*
 
 object SchemaInitializer:
-  def initialize[F[_]: Async](transactor: Transactor[F]): F[Unit] =
+  def initialize(transactor: Transactor[IO]): IO[Unit] =
     initializeWithMigrationSteps(
       transactor = transactor,
       migrationSteps = MigrationPlan.defaultSteps,
       runReferenceSeedData = true
     )
 
-  private[persistence] def initializeWithMigrationSteps[F[_]: Async](
-      transactor: Transactor[F],
+  private[persistence] def initializeWithMigrationSteps(
+      transactor: Transactor[IO],
       migrationSteps: List[MigrationStep],
       runReferenceSeedData: Boolean
-  ): F[Unit] =
+  ): IO[Unit] =
     for
       _ <- createSchemaMigrationsTable.transact(transactor)
       appliedVersions <- loadAppliedMigrationVersions(transactor)
@@ -25,10 +27,10 @@ object SchemaInitializer:
         .filterNot(migrationStep => appliedVersions.contains(migrationStep.version))
         .sortBy(_.version)
         .traverse_(migrationStep => applyMigrationStep(transactor, migrationStep))
-      _ <- if runReferenceSeedData then ReferenceDataSeeder.seedIfNeeded(transactor) else Async[F].unit
+      _ <- if runReferenceSeedData then ReferenceDataSeeder.seedIfNeeded(transactor) else IO.unit
     yield ()
 
-  private def applyMigrationStep[F[_]: Async](transactor: Transactor[F], migrationStep: MigrationStep): F[Unit] =
+  private def applyMigrationStep(transactor: Transactor[IO], migrationStep: MigrationStep): IO[Unit] =
     val migrationConnection =
       migrationStep.statements.traverse_(migrationStatement => Update0(migrationStatement, None).run.void) *>
         sql"""
@@ -38,7 +40,7 @@ object SchemaInitializer:
 
     migrationConnection.transact(transactor)
 
-  private def loadAppliedMigrationVersions[F[_]: Async](transactor: Transactor[F]): F[Set[Int]] =
+  private def loadAppliedMigrationVersions(transactor: Transactor[IO]): IO[Set[Int]] =
     sql"select version from schema_migrations order by version"
       .query[Int]
       .to[List]

@@ -1,11 +1,9 @@
-export type {
-  AttractionAdminSessionResponse,
-  AuthSessionListResponse,
-  AuthSessionResponse,
-  CurrentManagerSessionResponse,
-  CurrentUserSessionResponse,
-  ManagerSessionResponse,
-  ManagerType,
-  TrainAdminSessionResponse,
-  UserResponse,
-} from '../api-dtos/auth'
+﻿export type { AttractionAdminSessionResponse } from '@/microservices/auth/objects/AttractionAdminSessionResponse'
+export type { AuthSessionListResponse } from '@/microservices/auth/objects/AuthSessionListResponse'
+export type { AuthSessionResponse } from '@/microservices/auth/objects/AuthSessionResponse'
+export type { CurrentManagerSessionResponse } from '@/microservices/auth/objects/CurrentManagerSessionResponse'
+export type { CurrentUserSessionResponse } from '@/microservices/auth/objects/CurrentUserSessionResponse'
+export type { ManagerSessionResponse } from '@/microservices/auth/objects/ManagerSessionResponse'
+export type { ManagerType } from '@/microservices/auth/objects/ManagerType'
+export type { TrainAdminSessionResponse } from '@/microservices/auth/objects/TrainAdminSessionResponse'
+export type { UserResponse } from '@/microservices/auth/objects/UserResponse'

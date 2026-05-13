@@ -1,5 +1,5 @@
-import type { AppViewKey } from '../../lib/mvp-types'
-import { SearchPanel, AppCard, PrimaryButton, SecondaryButton, SectionHeader, StatCard, ActionBar, EmptyState } from '../../components/ui/UIComponents'
+﻿import type { AppViewKey } from '@/lib/mvp-types/index'
+import { SearchPanel, AppCard, PrimaryButton, SecondaryButton, SectionHeader, StatCard, ActionBar, EmptyState } from '@/app/ui/UIComponents'
 
 type SmartTripPlannerPageProps = {
   translate: (translationKey: string) => string

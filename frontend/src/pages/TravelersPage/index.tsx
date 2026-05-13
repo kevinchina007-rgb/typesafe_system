@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+﻿import { useEffect, useState } from 'react'
 
-import { TravelerPanel } from '../../components/TravelerPanel'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, TravelerResponse, UserResponse } from '../../lib/mvp-types'
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
+import { TravelerPanel } from '@/pages/TravelersPage/components/TravelerPanel'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import { usePageActions } from '@/pages/shared/usePageActions'
 
 type TravelersPageProps = {
   currentLanguage: AppLanguage

@@ -1,32 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+import type { ManagerCenterSectionKey } from '@/pages/ManagerPage/sections/ManagerCenterSections'
+﻿import { useEffect, useMemo, useState } from 'react'
 
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
-import { AdvertisementSubmissionWorkspace } from '../../components/advertising/sections/AdvertisementSubmissionWorkspace'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type {
-  AppLanguage,
-  AppViewKey,
-  AttractionAdminSessionResponse,
-  CurrentManagerSessionResponse,
-  FlightResponse,
-  HotelResponse,
-  ManagerRefundTaskResponse,
-  ManagerSessionResponse,
-  ManagerTaskResponse,
-  TrainAdminSessionResponse,
-  UserResponse,
-} from '../../lib/mvp-types'
-import {
-  type ManagerCenterSectionKey,
-  SiteAdminPanel,
-  SupplierFeedbackSection,
-} from './sections/ManagerCenterSections'
-import {
-  AttractionManagerPanelSection,
-  SupplierManagerPanelSection,
-  TrainManagerPanelSection,
-} from './sections/ManagerPagePanels'
-import { toLegacyManagerSession, toManagerTypeKey } from './models/managerPageSession'
+import { usePageActions } from '@/pages/shared/usePageActions'
+import { AdvertisementSubmissionWorkspace } from '@/pages/ManagerPage/components/advertising/AdvertisementSubmissionWorkspace'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, AppViewKey, AttractionAdminSessionResponse, CurrentManagerSessionResponse, FlightResponse, HotelResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse, UserResponse } from '@/lib/mvp-types/index'
+import { SiteAdminPanel, SupplierFeedbackSection } from '@/pages/ManagerPage/sections/ManagerCenterSections'
+import { AttractionManagerPanelSection, SupplierManagerPanelSection, TrainManagerPanelSection } from '@/pages/ManagerPage/sections/ManagerPagePanels'
+import { toLegacyManagerSession, toManagerTypeKey } from '@/pages/ManagerPage/models/managerPageSession'
 
 type ManagerPageProps = {
   currentLanguage: AppLanguage
@@ -525,7 +507,7 @@ export function ManagerPage({
     if (managedHotelResponses.length > 0) {
       return managedHotelResponses.map(hotel => ({
         value: hotel.hotelId,
-        label: `${hotel.hotelName} · ${hotel.location}`,
+        label: `${hotel.hotelName} 路 ${hotel.location}`,
       }))
     }
 

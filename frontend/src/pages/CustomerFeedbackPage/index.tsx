@@ -1,18 +1,12 @@
-import { useEffect } from 'react'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+﻿import { useEffect } from 'react'
 
-import { FeedbackReviewComposerPanel } from '../../components/feedback/FeedbackReviewComposerPanel'
-import { FeedbackConversationWorkspace } from '../../components/feedback/FeedbackConversationWorkspace'
-import {
-  createReviewFeedbackThread,
-  setPendingFeedbackReviewDraft,
-  setActiveFeedbackMiniThread,
-  markFeedbackThreadRead,
-  sendFeedbackMessage,
-  useFeedbackChatStore,
-} from '../../app/stores/feedback-chat-store'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, UserResponse } from '../../lib/mvp-types'
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
+import { FeedbackReviewComposerPanel } from '@/pages/CustomerFeedbackPage/components/FeedbackReviewComposerPanel'
+import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
+import { createReviewFeedbackThread, setPendingFeedbackReviewDraft, setActiveFeedbackMiniThread, markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, UserResponse } from '@/lib/mvp-types/index'
+import { usePageActions } from '@/pages/shared/usePageActions'
 
 type CustomerFeedbackPageProps = {
   currentLanguage: AppLanguage

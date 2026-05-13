@@ -1,24 +1,26 @@
 package com.typesafe.travel.persistence
 
+import cats.effect.IO
+
 import cats.effect.kernel.Async
 import cats.syntax.all.*
 import doobie.*
 import doobie.implicits.*
 
 object ReferenceDataSeeder:
-  def seedIfNeeded[F[_]: Async](transactor: Transactor[F]): F[Unit] =
+  def seedIfNeeded(transactor: Transactor[IO]): IO[Unit] =
     for
       airlineCount <- sql"select count(*) from airlines".query[Long].unique.transact(transactor)
       hotelCount <- sql"select count(*) from hotels".query[Long].unique.transact(transactor)
       airlineManagerCount <- sql"select count(*) from airline_managers".query[Long].unique.transact(transactor)
       hotelManagerCount <- sql"select count(*) from hotel_managers".query[Long].unique.transact(transactor)
-      _ <- if airlineCount == 0 then seedFlights(transactor) else Async[F].unit
-      _ <- if hotelCount == 0 then seedHotels(transactor) else Async[F].unit
-      _ <- if airlineManagerCount == 0 then seedAirlineManagers(transactor) else Async[F].unit
-      _ <- if hotelManagerCount == 0 then seedHotelManagers(transactor) else Async[F].unit
+      _ <- if airlineCount == 0 then seedFlights(transactor) else IO.unit
+      _ <- if hotelCount == 0 then seedHotels(transactor) else IO.unit
+      _ <- if airlineManagerCount == 0 then seedAirlineManagers(transactor) else IO.unit
+      _ <- if hotelManagerCount == 0 then seedHotelManagers(transactor) else IO.unit
     yield ()
 
-  private def seedFlights[F[_]: Async](transactor: Transactor[F]): F[Unit] =
+  private def seedFlights(transactor: Transactor[IO]): IO[Unit] =
     val insertAirlines =
       List(
         sql"""
@@ -80,7 +82,7 @@ object ReferenceDataSeeder:
 
     (insertAirlines ++ insertFlights ++ insertInventories).sequence.transact(transactor).void
 
-  private def seedHotels[F[_]: Async](transactor: Transactor[F]): F[Unit] =
+  private def seedHotels(transactor: Transactor[IO]): IO[Unit] =
     val insertHotels =
       List(
         sql"""
@@ -118,7 +120,7 @@ object ReferenceDataSeeder:
 
     (insertHotels ++ insertRoomTypes ++ insertInventories).sequence.transact(transactor).void
 
-  private def seedAirlineManagers[F[_]: Async](transactor: Transactor[F]): F[Unit] =
+  private def seedAirlineManagers(transactor: Transactor[IO]): IO[Unit] =
     List(
       sql"""
         insert into airline_managers (manager_id, airline_id, email, display_name, status, created_at)
@@ -130,7 +132,7 @@ object ReferenceDataSeeder:
       """.update.run
     ).sequence.transact(transactor).void
 
-  private def seedHotelManagers[F[_]: Async](transactor: Transactor[F]): F[Unit] =
+  private def seedHotelManagers(transactor: Transactor[IO]): IO[Unit] =
     List(
       sql"""
         insert into hotel_managers (manager_id, hotel_id, email, display_name, status, created_at)

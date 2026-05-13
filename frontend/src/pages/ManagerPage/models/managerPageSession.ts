@@ -1,4 +1,4 @@
-import type { CurrentManagerSessionResponse, ManagerSessionResponse } from '../../../lib/mvp-types'
+﻿import type { CurrentManagerSessionResponse, ManagerSessionResponse } from '@/lib/mvp-types/index'
 
 export function toLegacyManagerSession(session: CurrentManagerSessionResponse): ManagerSessionResponse {
   return {

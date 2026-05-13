@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { TravelerResponse, UserResponse } from '../../lib/mvp-types'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 
 export function useSignedInTravelers(signedInUser: UserResponse | null) {
   const [travelers, setTravelers] = useState<TravelerResponse[]>([])

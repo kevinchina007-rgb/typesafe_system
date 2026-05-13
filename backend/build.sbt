@@ -6,6 +6,27 @@ lazy val backendSourceRoot = file("src/main/scala")
 lazy val backendTestRoot = file("src/test")
 lazy val backendApiTestRoot = file("src/api-test")
 
+lazy val microserviceSourceDirs: Map[String, String] = Map(
+  "advertising-domain" -> "microservices/advertising",
+  "attraction-domain" -> "microservices/attraction",
+  "auth-domain" -> "microservices/auth",
+  "content-domain" -> "microservices/content",
+  "flight-domain" -> "microservices/flight",
+  "hotel-domain" -> "microservices/hotel",
+  "identity-domain" -> "microservices/identity",
+  "inventory-domain" -> "microservices/inventory",
+  "operations-domain" -> "microservices/operations",
+  "order-domain" -> "microservices/order",
+  "planner-service" -> "microservices/planner",
+  "search-service" -> "microservices/search",
+  "tour-group-domain" -> "microservices/tour-group",
+  "train-domain" -> "microservices/train",
+  "traveler-domain" -> "microservices/traveler"
+)
+
+def moduleSourceDir(moduleName: String) =
+  backendSourceRoot / microserviceSourceDirs.getOrElse(moduleName, moduleName)
+
 lazy val commonSettings = Seq(
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
 )
@@ -52,10 +73,9 @@ lazy val postgresqlDependency =
 lazy val root = (project in file("."))
   .aggregate(
     sharedKernel,
+    searchService,
     advertisingDomain,
-    plannerDomain,
-    plannerApplication,
-    plannerInfrastructure,
+    plannerService,
     authDomain,
     identityDomain,
     travelerDomain,
@@ -82,65 +102,64 @@ lazy val root = (project in file("."))
   )
 
 lazy val sharedKernel = module("shared-kernel")
+  .settings(
+    libraryDependencies ++= Seq(munitDependency)
+  )
 
-lazy val advertisingDomain = module("advertising-domain")
+lazy val searchService = module("search-service")
   .dependsOn(sharedKernel)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, catsEffectDependency, munitDependency)
+    Compile / unmanagedSourceDirectories += moduleSourceDir("search-service") / "api",
+    libraryDependencies ++= Seq(munitDependency)
   )
 
-lazy val plannerDomain = module("planner-domain")
+  lazy val advertisingDomain = module("advertising-domain")
+    .dependsOn(sharedKernel)
+    .settings(
+      libraryDependencies ++= Seq(catsCoreDependency, catsEffectDependency, circeGenericDependency, circeParserDependency, munitDependency)
+    )
+
+lazy val plannerService = module("planner-service")
   .dependsOn(sharedKernel)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    Compile / unmanagedSourceDirectories += moduleSourceDir("planner-service") / "api",
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
-lazy val plannerApplication = module("planner-application")
-  .dependsOn(sharedKernel, plannerDomain)
-  .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
-  )
-
-lazy val plannerInfrastructure = module("planner-infrastructure")
-  .dependsOn(sharedKernel, plannerDomain, plannerApplication)
-  .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
-  )
-
-lazy val authDomain = module("auth-domain")
-  .dependsOn(sharedKernel, identityDomain, operationsDomain, trainDomain)
-  .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, catsEffectDependency, munitDependency)
-  )
+  lazy val authDomain = module("auth-domain")
+    .dependsOn(sharedKernel, identityDomain, operationsDomain, trainDomain)
+    .settings(
+      libraryDependencies ++= Seq(catsCoreDependency, catsEffectDependency, circeGenericDependency, circeParserDependency, munitDependency)
+    )
 
 lazy val identityDomain = module("identity-domain")
   .dependsOn(sharedKernel)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
 lazy val travelerDomain = module("traveler-domain")
   .dependsOn(sharedKernel, identityDomain)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
 lazy val flightDomain = module("flight-domain")
   .dependsOn(sharedKernel)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
 lazy val hotelDomain = module("hotel-domain")
   .dependsOn(sharedKernel)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
 lazy val trainDomain = module("train-domain")
   .dependsOn(sharedKernel)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
 lazy val attractionDomain = module("attraction-domain")
@@ -152,40 +171,54 @@ lazy val attractionDomain = module("attraction-domain")
 lazy val tourGroupDomain = module("tour-group-domain")
   .dependsOn(sharedKernel, travelerDomain)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
 lazy val inventoryDomain = module("inventory-domain")
   .dependsOn(sharedKernel)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
-lazy val orderDomain = module("order-domain")
-  .dependsOn(sharedKernel, travelerDomain, trainDomain, attractionDomain)
-  .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
-  )
+  lazy val orderDomain = module("order-domain")
+    .dependsOn(sharedKernel, travelerDomain, trainDomain, attractionDomain)
+    .settings(
+      libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
+    )
 
 lazy val persistenceJdbc = module("persistence-jdbc")
-  .dependsOn(sharedKernel, advertisingDomain, authDomain, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, contentDomain, tourGroupDomain, inventoryDomain, orderDomain, operationsDomain)
+  .dependsOn(sharedKernel, searchService, advertisingDomain, authDomain, identityDomain, travelerDomain, flightDomain, hotelDomain, trainDomain, attractionDomain, contentDomain, tourGroupDomain, inventoryDomain, orderDomain, operationsDomain)
   .settings(
     Compile / unmanagedSourceDirectories ++= Seq(
       backendSourceRoot / "database",
-      backendSourceRoot / "advertising-domain" / "tables",
-      backendSourceRoot / "auth-domain" / "tables",
-      backendSourceRoot / "identity-domain" / "tables",
-      backendSourceRoot / "traveler-domain" / "tables",
-      backendSourceRoot / "flight-domain" / "tables",
-      backendSourceRoot / "hotel-domain" / "tables",
-      backendSourceRoot / "train-domain" / "tables",
-      backendSourceRoot / "attraction-domain" / "tables",
-      backendSourceRoot / "content-domain" / "tables",
-      backendSourceRoot / "tour-group-domain" / "tables",
-      backendSourceRoot / "inventory-domain" / "tables",
-      backendSourceRoot / "order-domain" / "tables",
-      backendSourceRoot / "operations-domain" / "tables"
+      moduleSourceDir("advertising-domain") / "api",
+      moduleSourceDir("auth-domain") / "api",
+      moduleSourceDir("identity-domain") / "api",
+      moduleSourceDir("traveler-domain") / "api",
+      moduleSourceDir("flight-domain") / "api",
+      moduleSourceDir("hotel-domain") / "api",
+      moduleSourceDir("train-domain") / "api",
+      moduleSourceDir("attraction-domain") / "api",
+      moduleSourceDir("content-domain") / "api",
+      moduleSourceDir("tour-group-domain") / "api",
+      moduleSourceDir("inventory-domain") / "api",
+      moduleSourceDir("order-domain") / "api",
+      moduleSourceDir("operations-domain") / "api",
+      moduleSourceDir("advertising-domain") / "tables",
+      moduleSourceDir("auth-domain") / "tables",
+      moduleSourceDir("identity-domain") / "tables",
+      moduleSourceDir("traveler-domain") / "tables",
+      moduleSourceDir("flight-domain") / "tables",
+      moduleSourceDir("hotel-domain") / "tables",
+      moduleSourceDir("train-domain") / "tables",
+      moduleSourceDir("attraction-domain") / "tables",
+      moduleSourceDir("content-domain") / "tables",
+      moduleSourceDir("tour-group-domain") / "tables",
+      moduleSourceDir("inventory-domain") / "tables",
+      moduleSourceDir("order-domain") / "tables",
+      moduleSourceDir("operations-domain") / "tables"
     ),
+    Compile / unmanagedSources += backendSourceRoot / "routes" / "ApiPlan.scala",
     Compile / unmanagedResourceDirectories += backendSourceRoot / "database" / "migrations",
     libraryDependencies ++= Seq(
       catsEffectDependency,
@@ -202,18 +235,20 @@ lazy val persistenceJdbc = module("persistence-jdbc")
 lazy val contentDomain = module("content-domain")
   .dependsOn(sharedKernel, orderDomain)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
 lazy val operationsDomain = module("operations-domain")
   .dependsOn(sharedKernel)
   .settings(
-    libraryDependencies ++= Seq(catsCoreDependency, munitDependency)
+    libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
-lazy val apiGateway = module("api-gateway")
+lazy val apiGateway = Project(id = "api-gateway", base = file("projects/api-gateway"))
+  .settings(commonSettings)
   .dependsOn(
     sharedKernel,
+    searchService,
     advertisingDomain,
     authDomain,
     identityDomain,
@@ -231,21 +266,22 @@ lazy val apiGateway = module("api-gateway")
   )
   .settings(
     Compile / unmanagedSourceDirectories ++= Seq(
-        backendSourceRoot / "routes",
-      backendSourceRoot / "advertising-domain" / "api",
-      backendSourceRoot / "auth-domain" / "api",
-      backendSourceRoot / "identity-domain" / "api",
-      backendSourceRoot / "traveler-domain" / "api",
-      backendSourceRoot / "flight-domain" / "api",
-      backendSourceRoot / "hotel-domain" / "api",
-      backendSourceRoot / "train-domain" / "api",
-      backendSourceRoot / "attraction-domain" / "api",
-      backendSourceRoot / "content-domain" / "api",
-      backendSourceRoot / "tour-group-domain" / "api",
-      backendSourceRoot / "inventory-domain" / "api",
-      backendSourceRoot / "order-domain" / "api",
-      backendSourceRoot / "operations-domain" / "api",
-      backendSourceRoot / "shared-kernel" / "api"
+      backendSourceRoot / "app",
+      backendSourceRoot / "static",
+      backendSourceRoot / "routes",
+      moduleSourceDir("advertising-domain") / "api",
+      moduleSourceDir("auth-domain") / "api",
+      moduleSourceDir("identity-domain") / "api",
+      moduleSourceDir("traveler-domain") / "api",
+      moduleSourceDir("flight-domain") / "api",
+      moduleSourceDir("hotel-domain") / "api",
+      moduleSourceDir("train-domain") / "api",
+      moduleSourceDir("attraction-domain") / "api",
+      moduleSourceDir("content-domain") / "api",
+      moduleSourceDir("tour-group-domain") / "api",
+      moduleSourceDir("inventory-domain") / "api",
+      moduleSourceDir("order-domain") / "api",
+      moduleSourceDir("operations-domain") / "api"
     ),
     Test / unmanagedSourceDirectories ++= Seq(
       backendApiTestRoot / "identity-domain",
@@ -281,8 +317,8 @@ def module(moduleName: String) =
     .settings(
       name := moduleName,
       Compile / unmanagedSourceDirectories ++= Seq(
-        backendSourceRoot / moduleName / "objects",
-        backendSourceRoot / moduleName / "utils"
+        moduleSourceDir(moduleName) / "objects",
+        moduleSourceDir(moduleName) / "utils"
       ),
       Test / unmanagedSourceDirectories += backendTestRoot / moduleName
     )

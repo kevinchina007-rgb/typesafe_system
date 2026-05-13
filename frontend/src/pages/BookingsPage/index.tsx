@@ -1,16 +1,13 @@
-import { useEffect, useState } from 'react'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+﻿import { useEffect, useState } from 'react'
 
-import {
-  createReviewFeedbackThread,
-  setActiveFeedbackMiniThread,
-  setPendingFeedbackReviewDraft,
-} from '../../app/stores/feedback-chat-store'
-import { AuthRequiredDialog } from '../../components/AuthRequiredDialog'
-import { OrderPanel } from '../../components/OrderPanel'
-import { PaymentModal } from '../../components/PaymentModal'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, AppViewKey, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '../../lib/mvp-types'
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
+import { createReviewFeedbackThread, setActiveFeedbackMiniThread, setPendingFeedbackReviewDraft } from '@/app/stores/feedback-chat-store'
+import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
+import { OrderPanel } from '@/pages/BookingsPage/components/OrderPanel'
+import { PaymentModal } from '@/pages/BookingsPage/components/PaymentModal'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, AppViewKey, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import { usePageActions } from '@/pages/shared/usePageActions'
 
 type BookingsPageProps = {
   currentLanguage: AppLanguage

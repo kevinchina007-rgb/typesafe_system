@@ -1,8 +1,9 @@
-import { TourGroupsPanel } from '../../components/TourGroupsPanel'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppLanguage, AppViewKey, UserResponse } from '../../lib/mvp-types'
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
-import { useSignedInTravelers } from '../shared/useSignedInTravelers'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+﻿import { TourGroupsPanel } from '@/pages/TourGroupsPage/components/TourGroupsPanel'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, AppViewKey, UserResponse } from '@/lib/mvp-types/index'
+import { usePageActions } from '@/pages/shared/usePageActions'
+import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
 
 type TourGroupsPageProps = {
   currentLanguage: AppLanguage

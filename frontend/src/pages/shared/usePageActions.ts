@@ -1,7 +1,7 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 
-import type { AppLanguage, AppNotice } from '../../lib/mvp-types'
-import { mapTechnicalErrorToFriendlyMessage } from '../../lib/view-models'
+import type { AppLanguage, AppNotice } from '@/lib/mvp-types/index'
+import { mapTechnicalErrorToFriendlyMessage } from '@/lib/presenters/view-models'
 
 export type PageNoticeHandler = (
   kind: AppNotice['kind'],

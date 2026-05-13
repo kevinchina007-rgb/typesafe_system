@@ -1,5 +1,7 @@
 package com.typesafe.travel.persistence
 
+import cats.effect.IO
+
 import cats.effect.kernel.Async
 import cats.effect.kernel.Resource
 import com.zaxxer.hikari.HikariConfig
@@ -8,18 +10,18 @@ import doobie.hikari.HikariTransactor
 import java.util.Properties
 
 object DatabaseTransactor:
-  def create[F[_]: Async](databaseConfig: DatabaseConfig): Transactor[F] =
+  def create(databaseConfig: DatabaseConfig): Transactor[IO] =
     val connectionProperties = Properties()
     connectionProperties.setProperty("user", databaseConfig.jdbcUser)
     connectionProperties.setProperty("password", databaseConfig.jdbcPassword)
-    Transactor.fromDriverManager[F](
+    Transactor.fromDriverManager[IO](
       driver = databaseConfig.jdbcDriverClassName,
       url = databaseConfig.jdbcUrl,
       info = connectionProperties,
       logHandler = None
     )
 
-  def resource[F[_]: Async](databaseConfig: DatabaseConfig): Resource[F, Transactor[F]] =
+  def resource(databaseConfig: DatabaseConfig): Resource[IO, Transactor[IO]] =
     val hikariConfig = HikariConfig()
     hikariConfig.setJdbcUrl(databaseConfig.jdbcUrl)
     hikariConfig.setUsername(databaseConfig.jdbcUser)
@@ -29,4 +31,4 @@ object DatabaseTransactor:
     hikariConfig.setPoolName("travel-platform-backend")
     hikariConfig.setInitializationFailTimeout(-1)
 
-    HikariTransactor.fromHikariConfig[F](hikariConfig).map(xa => xa: Transactor[F])
+    HikariTransactor.fromHikariConfig[IO](hikariConfig).map(xa => xa: Transactor[IO])

@@ -1,4 +1,4 @@
-﻿import type { TranslationDictionary } from './types'
+﻿import type { TranslationDictionary } from '@/lib/i18n/types'
 
 export const englishTranslations: TranslationDictionary = {
   'app.eyebrow': 'Travel Workbench',
@@ -1067,6 +1067,29 @@ export const englishTranslations: TranslationDictionary = {
   'advertising.historyEyebrow': 'Review history',
   'advertising.historyTitle': 'Reviewed advertisements',
   'advertising.historyEmpty': 'No reviewed advertisements yet.',
+  'advertising.slotBoard.eyebrow': 'Placement board',
+  'advertising.slotBoard.hotelTitle': 'Hotel booking advertisement slots',
+  'advertising.slotBoard.hotelDescription': 'Approved hotel advertisements appear to users only after a site administrator places them into one of these four slots.',
+  'advertising.slotBoard.attractionTitle': 'Attraction booking advertisement slots',
+  'advertising.slotBoard.attractionDescription': 'Approved attraction advertisements appear to users only after a site administrator places them into one of these four slots.',
+  'advertising.slotBadge': 'Slot',
+  'advertising.slotFilled': 'Placed',
+  'advertising.slotEmpty': 'Empty advertisement slot',
+  'advertising.slotEmptyDescription': 'This slot is currently empty and will stay hidden from users until you place an approved advertisement here.',
+  'advertising.slotSelect': 'Select advertisement',
+  'advertising.slotSelectPlaceholder': 'Choose an advertisement',
+  'advertising.slotAssign': 'Place into slot',
+  'advertising.slotUnassigned': 'Not placed in a slot yet',
+  'advertising.slotDropHint': 'Drop the advertisement here to sync it to the user booking page.',
+  'advertising.slotDropIdleHint': 'Drag an approved advertisement here, or click one below to fill the first empty slot.',
+  'advertising.approvedPoolEyebrow': 'Approved inventory',
+  'advertising.approvedPoolTitle': 'Approved advertisement cards',
+  'advertising.approvedPoolEmpty': 'There are no approved advertisements ready for placement.',
+  'advertising.slotDragAssignHint': 'Drag into a slot to publish it, or click to place it into the first empty slot.',
+  'advertising.slotDragMoveHint': 'Drag into another slot to reorder it.',
+  'advertising.unassignedWarning': 'These approved advertisements are not visible to users yet because they have not been placed into a slot:',
+  'advertising.selectedEyebrow': 'Selected advertisement',
+  'advertising.targetResourceLabel': 'Linked resource',
 }
 
 

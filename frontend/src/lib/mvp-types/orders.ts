@@ -1,13 +1,11 @@
-export type {
-  AttractionItemDetailsResponse,
-  FlightItemDetailsResponse,
-  HotelItemDetailsResponse,
-  OrderLineItemResponse,
-  OrderListResponse,
-  OrderResponse,
-  PaymentLinkResponse,
-  PaymentResponse,
-  RefundResponse,
-  SupplierReviewDecisionResponse,
-  TrainItemDetailsResponse,
-} from '../api-dtos/orders'
+﻿export type { AttractionItemDetailsResponse } from '@/microservices/order/objects/AttractionItemDetailsResponse'
+export type { FlightItemDetailsResponse } from '@/microservices/order/objects/FlightItemDetailsResponse'
+export type { HotelItemDetailsResponse } from '@/microservices/order/objects/HotelItemDetailsResponse'
+export type { OrderLineItemResponse } from '@/microservices/order/objects/OrderLineItemResponse'
+export type { OrderListResponse } from '@/microservices/order/objects/OrderListResponse'
+export type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
+export type { PaymentLinkResponse } from '@/microservices/order/objects/PaymentLinkResponse'
+export type { PaymentResponse } from '@/microservices/order/objects/PaymentResponse'
+export type { RefundResponse } from '@/microservices/order/objects/RefundResponse'
+export type { SupplierReviewDecisionResponse } from '@/microservices/order/objects/SupplierReviewDecisionResponse'
+export type { TrainItemDetailsResponse } from '@/microservices/order/objects/TrainItemDetailsResponse'

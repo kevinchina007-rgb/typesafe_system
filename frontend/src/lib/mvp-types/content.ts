@@ -1,11 +1,9 @@
-export type {
-  BlogCommentResponse,
-  BlogPostListResponse,
-  BlogPostResponse,
-  BlogPostSummaryResponse,
-  ContentImageResponse,
-  ResourceReviewSummaryResponse,
-  ReviewEligibilityResponse,
-  ReviewListResponse,
-  ReviewResponse,
-} from '../api-dtos/content'
+﻿export type { ContentImageResponse } from '@/microservices/content/objects/ContentImageResponse'
+export type { BlogCommentResponse } from '@/microservices/content/objects/BlogCommentResponse'
+export type { BlogPostListResponse } from '@/microservices/content/objects/BlogPostListResponse'
+export type { BlogPostResponse } from '@/microservices/content/objects/BlogPostResponse'
+export type { BlogPostSummaryResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
+export type { ResourceReviewSummaryResponse } from '@/microservices/content/objects/ResourceReviewSummaryResponse'
+export type { ReviewEligibilityResponse } from '@/microservices/content/objects/ReviewEligibilityResponse'
+export type { ReviewListResponse } from '@/microservices/content/objects/ReviewListResponse'
+export type { ReviewResponse } from '@/microservices/content/objects/ReviewResponse'

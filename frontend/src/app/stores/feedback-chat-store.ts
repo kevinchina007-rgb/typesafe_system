@@ -1,14 +1,12 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 
-import { contentApiClient } from '../../lib/api-client/content'
-import type {
-  FeedbackAudience,
-  FeedbackManagerType,
-  FeedbackSenderRole,
-  FeedbackSiteAdminChannel,
-  ReviewEligibilityResponse,
-  FeedbackThreadResponse,
-} from '../../lib/api-dtos/content'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
+import type { FeedbackManagerType } from '@/microservices/content/objects/FeedbackManagerType'
+import type { FeedbackSenderRole } from '@/microservices/content/objects/FeedbackSenderRole'
+import type { FeedbackSiteAdminChannel } from '@/microservices/content/objects/FeedbackSiteAdminChannel'
+import type { ReviewEligibilityResponse } from '@/microservices/content/objects/ReviewEligibilityResponse'
+import type { FeedbackThreadResponse } from '@/microservices/content/objects/FeedbackThreadResponse'
 
 export type FeedbackThread = FeedbackThreadResponse
 export type FeedbackMessage = FeedbackThread['messages'][number]
@@ -95,7 +93,7 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
   loadUserThreads: async () => {
     set({ isLoading: true })
     try {
-      const response = await contentApiClient.listMyFeedbackThreads()
+      const response = await travelMvpApiClient.listMyFeedbackThreads()
       const threads = sortThreads(response.threads)
       set({ userThreads: threads, isLoading: false })
       return threads
@@ -107,7 +105,7 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
   loadManagerThreads: async () => {
     set({ isLoading: true })
     try {
-      const response = await contentApiClient.listManagerFeedbackThreads()
+      const response = await travelMvpApiClient.listManagerFeedbackThreads()
       const threads = sortThreads(response.threads)
       set({ managerThreads: threads, isLoading: false })
       return threads
@@ -119,7 +117,7 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
   loadSiteAdminThreads: async channel => {
     set({ isLoading: true })
     try {
-      const response = await contentApiClient.listSiteAdminFeedbackThreads(channel)
+      const response = await travelMvpApiClient.listSiteAdminFeedbackThreads(channel)
       const threads = sortThreads(response.threads)
       if (channel === 'user') {
         set({ siteAdminUserThreads: threads, isLoading: false })
@@ -133,7 +131,7 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
     }
   },
   createReviewFeedbackThread: async reviewId => {
-    const nextThread = await contentApiClient.createReviewFeedbackThread({ reviewId })
+    const nextThread = await travelMvpApiClient.createReviewFeedbackThread({ reviewId })
     set(state => syncThreadBuckets(state, nextThread))
     return nextThread
   },
@@ -142,7 +140,7 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
       return null
     }
 
-    const nextThread = await contentApiClient.sendFeedbackMessage(threadId, {
+    const nextThread = await travelMvpApiClient.sendFeedbackMessage(threadId, {
       senderRole,
       senderDisplayName,
       body,
@@ -173,12 +171,12 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
       return matchingThread
     }
 
-    const nextThread = await contentApiClient.markFeedbackThreadRead(threadId, { audience })
+    const nextThread = await travelMvpApiClient.markFeedbackThreadRead(threadId, { audience })
     set(state => syncThreadBuckets(state, nextThread))
     return nextThread
   },
   escalateThread: async ({ threadId, senderDisplayName, body }) => {
-    const nextThread = await contentApiClient.escalateFeedbackThread(threadId, {
+    const nextThread = await travelMvpApiClient.escalateFeedbackThread(threadId, {
       senderDisplayName,
       body,
     })

@@ -1,30 +1,15 @@
 package com.typesafe.travel.persistence
 
 final case class DatabaseConfig(
-    repositoryMode: RepositoryMode,
     jdbcUrl: String,
     jdbcUser: String,
     jdbcPassword: String,
     jdbcDriverClassName: String
 )
 
-enum RepositoryMode:
-  case InMemory, Database
-
 object DatabaseConfig:
   def loadFromEnvironment: DatabaseConfig =
-    val repositoryMode =
-      sys.env
-        .get("TRAVEL_REPOSITORY_MODE")
-        .map(_.trim.toLowerCase)
-        .collect {
-          case "in-memory" => RepositoryMode.InMemory
-          case "database"  => RepositoryMode.Database
-        }
-        .getOrElse(RepositoryMode.Database)
-
     DatabaseConfig(
-      repositoryMode = repositoryMode,
       jdbcUrl =
         sys.env.getOrElse(
           "TRAVEL_DB_URL",

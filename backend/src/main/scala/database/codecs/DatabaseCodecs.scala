@@ -1,5 +1,7 @@
 package com.typesafe.travel.persistence.codecs
 
+import cats.effect.IO
+
 import cats.syntax.all.*
 import com.typesafe.travel.attraction.domain.*
 import com.typesafe.travel.order.domain.*

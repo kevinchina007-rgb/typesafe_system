@@ -1,11 +1,9 @@
-export type {
-  ApiErrorResponse,
-  ExploreSearchResponse,
-  ExploreSearchResultResponse,
-  HealthResponse,
-  SearchSuggestionListResponse,
-  SearchSuggestionResponse,
-} from '../api-dtos/common'
+﻿export type { HealthResponse } from '@/microservices/common/objects/HealthResponse'
+export type { ApiErrorResponse } from '@/microservices/common/objects/ApiErrorResponse'
+export type { ExploreSearchResponse } from '@/microservices/common/objects/ExploreSearchResponse'
+export type { ExploreSearchResultResponse } from '@/microservices/common/objects/ExploreSearchResultResponse'
+export type { SearchSuggestionListResponse } from '@/microservices/common/objects/SearchSuggestionListResponse'
+export type { SearchSuggestionResponse } from '@/microservices/common/objects/SearchSuggestionResponse'
 
 export type AppLanguage = 'en' | 'zh'
 

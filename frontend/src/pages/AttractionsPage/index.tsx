@@ -1,17 +1,12 @@
-import { useState } from 'react'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+﻿import { useState } from 'react'
 
-import { AuthRequiredDialog } from '../../components/AuthRequiredDialog'
-import { AttractionsPanel } from '../../components/AttractionsPanel'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type {
-  AppLanguage,
-  AppViewKey,
-  ResourceReviewSummaryResponse,
-  ReviewResponse,
-  UserResponse,
-} from '../../lib/mvp-types'
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
-import { useSignedInTravelers } from '../shared/useSignedInTravelers'
+import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
+import { AttractionsPanel } from '@/pages/AttractionsPage/components/AttractionsPanel'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, AppViewKey, ResourceReviewSummaryResponse, ReviewResponse, UserResponse } from '@/lib/mvp-types/index'
+import { usePageActions } from '@/pages/shared/usePageActions'
+import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
 
 type AttractionsPageProps = {
   currentLanguage: AppLanguage

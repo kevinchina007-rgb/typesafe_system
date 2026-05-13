@@ -1,5 +1,5 @@
-import type { AppIcon } from '../components/icons/Icons'
-import type { AppViewKey, CurrentManagerSessionResponse, UserResponse } from '../lib/mvp-types'
+﻿import type { AppIcon } from '@/app/icons/Icons'
+import type { AppViewKey, CurrentManagerSessionResponse, UserResponse } from '@/lib/mvp-types/index'
 
 export type TopNavKey =
   | 'overview'

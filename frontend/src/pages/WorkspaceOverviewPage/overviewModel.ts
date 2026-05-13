@@ -1,20 +1,6 @@
-﻿import type {
-  AppViewKey,
-  BlogPostSummaryResponse,
-  OrderLineItemResponse,
-  OrderResponse,
-  ReviewResponse,
-  TravelerResponse,
-  UserResponse,
-} from '../../lib/mvp-types'
+﻿import type { AppViewKey, BlogPostSummaryResponse, OrderLineItemResponse, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 
-import type {
-  CommunityActivitySummary,
-  DashboardShortcut,
-  HeroStat,
-  RecommendedNextStep,
-  UpcomingTripSummary,
-} from '../../components/dashboard/types'
+import type { CommunityActivitySummary, DashboardShortcut, HeroStat, RecommendedNextStep, UpcomingTripSummary } from '@/pages/WorkspaceOverviewPage/components/types'
 
 export function formatOverviewDateLabel(value: string) {
   return new Date(value).toLocaleString()

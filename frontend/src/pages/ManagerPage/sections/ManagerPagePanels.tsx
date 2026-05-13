@@ -1,15 +1,7 @@
-import { AttractionAdminPanel } from '../../../components/AttractionAdminPanel'
-import { ManagerPanel } from '../../../components/ManagerPanel'
-import { TrainAdminPanel } from '../../../components/TrainAdminPanel'
-import type {
-  AppLanguage,
-  AttractionAdminSessionResponse,
-  FlightResponse,
-  ManagerRefundTaskResponse,
-  ManagerSessionResponse,
-  ManagerTaskResponse,
-  TrainAdminSessionResponse,
-} from '../../../lib/mvp-types'
+﻿import { AttractionAdminPanel } from '@/pages/ManagerPage/components/managers/AttractionAdminPanel'
+import { ManagerPanel } from '@/pages/ManagerPage/components/managers/ManagerPanel'
+import { TrainAdminPanel } from '@/pages/ManagerPage/components/managers/TrainAdminPanel'
+import type { AppLanguage, AttractionAdminSessionResponse, FlightResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
 
 type BasePanelProps = {
   currentLanguage: AppLanguage

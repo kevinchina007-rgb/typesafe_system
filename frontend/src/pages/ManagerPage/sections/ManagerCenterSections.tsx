@@ -1,20 +1,11 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
-import { markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '../../../app/stores/feedback-chat-store'
-import { travelMvpApiClient } from '../../../lib/api-client'
-import { FeedbackConversationWorkspace } from '../../../components/feedback/FeedbackConversationWorkspace'
-import { AdvertisementReviewWorkspace } from '../../../components/advertising/sections/AdvertisementReviewWorkspace'
-import type {
-  BlogPostSummaryResponse,
-} from '../../../lib/api-dtos/content'
-import type {
-  AttractionAdminSessionResponse,
-  CurrentManagerSessionResponse,
-  FlightResponse,
-  ManagerRefundTaskResponse,
-  ManagerTaskResponse,
-  TrainAdminSessionResponse,
-} from '../../../lib/mvp-types'
+import { markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
+import { AdvertisementReviewWorkspace } from '@/pages/ManagerPage/components/advertising/AdvertisementReviewWorkspace'
+import type { BlogPostSummaryResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
+import type { AttractionAdminSessionResponse, CurrentManagerSessionResponse, FlightResponse, ManagerRefundTaskResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
 
 export type ManagerCenterSectionKey =
   | 'workspace'

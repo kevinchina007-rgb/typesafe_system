@@ -1,5 +1,5 @@
-﻿import { englishTranslations } from './english'
-import type { TranslationDictionary } from './types'
+﻿import { englishTranslations } from '@/lib/i18n/english'
+import type { TranslationDictionary } from '@/lib/i18n/types'
 
 export const chineseTranslations: TranslationDictionary = {
   ...englishTranslations,
@@ -619,4 +619,27 @@ export const chineseTranslations: TranslationDictionary = {
   'advertising.historyEyebrow': '审核历史',
   'advertising.historyTitle': '已审核广告',
   'advertising.historyEmpty': '当前还没有审核记录。',
+  'advertising.slotBoard.eyebrow': '广告栏位',
+  'advertising.slotBoard.hotelTitle': '酒店预订广告栏位',
+  'advertising.slotBoard.hotelDescription': '网站管理者可以把已审核通过的酒店广告放入 1 到 4 号栏位，用户侧会同步展示。',
+  'advertising.slotBoard.attractionTitle': '景点预订广告栏位',
+  'advertising.slotBoard.attractionDescription': '网站管理者可以把已审核通过的景点广告放入 1 到 4 号栏位，用户侧会同步展示。',
+  'advertising.slotBadge': '广告位',
+  'advertising.slotFilled': '已放置',
+  'advertising.slotEmpty': '空广告位',
+  'advertising.slotEmptyDescription': '该栏位暂时没有广告，可以在审核页中放入已通过广告。',
+  'advertising.slotSelect': '选择要放置的广告',
+  'advertising.slotSelectPlaceholder': '请选择广告',
+  'advertising.slotAssign': '放入此栏位',
+  'advertising.slotUnassigned': '尚未放入栏位',
+  'advertising.slotDropHint': '将广告拖到这里即可同步到用户酒店/景点页面。',
+  'advertising.slotDropIdleHint': '把已审核广告拖到这里，或点击下方广告自动放入空位。',
+  'advertising.approvedPoolEyebrow': '已审核通过',
+  'advertising.approvedPoolTitle': '可放置广告卡片',
+  'advertising.approvedPoolEmpty': '当前还没有可放置的已通过广告。',
+  'advertising.slotDragAssignHint': '拖到上方广告位即可上线，也可点击自动放入第一个空位。',
+  'advertising.slotDragMoveHint': '拖到别的广告位即可重新排布。',
+  'advertising.unassignedWarning': '以下广告已审核通过，但还没有放入广告位，因此不会显示给用户：',
+  'advertising.selectedEyebrow': '当前广告',
+  'advertising.targetResourceLabel': '关联资源',
 }

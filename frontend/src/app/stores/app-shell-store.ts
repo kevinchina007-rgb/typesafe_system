@@ -1,7 +1,7 @@
-import { create } from 'zustand'
+﻿import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import type { AppLanguage, AppNotice, AppViewKey } from '../../lib/mvp-types'
+import type { AppLanguage, AppNotice, AppViewKey } from '@/lib/mvp-types/index'
 
 export type ThemeMode = 'dark' | 'light'
 

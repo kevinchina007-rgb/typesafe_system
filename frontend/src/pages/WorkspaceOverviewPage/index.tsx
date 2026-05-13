@@ -1,28 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 
-import {
-  AccountSummaryCard,
-  BookingShortcutsCard,
-  CommunityActivityCard,
-  RecentOrdersCard,
-  RecommendedNextStepCard,
-  TravelerSummaryCard,
-  UpcomingTripsCard,
-} from '../../components/dashboard'
-import { HeroBackground } from '../../components/HeroBackground'
-import { ActionBar, PrimaryButton, SecondaryButton, StatCard } from '../../components/ui/UIComponents'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppViewKey, BlogPostSummaryResponse, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '../../lib/mvp-types'
-import {
-  buildCommunityActivity,
-  buildDashboardShortcuts,
-  buildHeroStats,
-  buildRecentOrders,
-  buildUpcomingTripEntries,
-  getDefaultTraveler,
-  getRecommendedNextStep,
-  shouldHideOverviewPrimaryAction,
-} from './overviewModel'
+import { AccountSummaryCard, BookingShortcutsCard, CommunityActivityCard, RecentOrdersCard, RecommendedNextStepCard, TravelerSummaryCard, UpcomingTripsCard } from '@/pages/WorkspaceOverviewPage/components'
+import { HeroBackground } from '@/pages/shared/base/HeroBackground'
+import { ActionBar, PrimaryButton, SecondaryButton, StatCard } from '@/app/ui/UIComponents'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppViewKey, BlogPostSummaryResponse, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import { buildCommunityActivity, buildDashboardShortcuts, buildHeroStats, buildRecentOrders, buildUpcomingTripEntries, getDefaultTraveler, getRecommendedNextStep, shouldHideOverviewPrimaryAction } from '@/pages/WorkspaceOverviewPage/overviewModel'
 
 type WorkspaceOverviewPageProps = {
   isSessionReady: boolean

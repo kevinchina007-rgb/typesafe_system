@@ -1,23 +1,21 @@
-export type {
-  GroupPlanItemResponse,
-  GroupPlanOptionResponse,
-  GroupPlanSelectionResponse,
-  GroupSelectionOrderLinkResponse,
-  GroupSelectionOrderProjectionResponse,
-  TourGroupChatSettingsResponse,
-  TourGroupConversationListResponse,
-  TourGroupConversationSummaryResponse,
-  TourGroupDetailsResponse,
-  TourGroupListResponse,
-  TourGroupMembershipResponse,
-  TourGroupMembershipTravelerResponse,
-  TourGroupMessageAttachmentResponse,
-  TourGroupMessageListResponse,
-  TourGroupMessageReactionResponse,
-  TourGroupMessageResponse,
-  TourGroupMessageSearchResponse,
-  TourGroupMessageSearchResultResponse,
-  TourGroupPaySelectionResponse,
-  TourGroupSummaryResponse,
-  TourGroupUploadedAttachmentResponse,
-} from '../api-dtos/tour-group'
+﻿export type { GroupPlanItemResponse } from '@/microservices/tour-group/objects/GroupPlanItemResponse'
+export type { GroupPlanOptionResponse } from '@/microservices/tour-group/objects/GroupPlanOptionResponse'
+export type { GroupPlanSelectionResponse } from '@/microservices/tour-group/objects/GroupPlanSelectionResponse'
+export type { GroupSelectionOrderLinkResponse } from '@/microservices/tour-group/objects/GroupSelectionOrderLinkResponse'
+export type { GroupSelectionOrderProjectionResponse } from '@/microservices/tour-group/objects/GroupSelectionOrderProjectionResponse'
+export type { TourGroupChatSettingsResponse } from '@/microservices/tour-group/objects/TourGroupChatSettingsResponse'
+export type { TourGroupConversationListResponse } from '@/microservices/tour-group/objects/TourGroupConversationListResponse'
+export type { TourGroupConversationSummaryResponse } from '@/microservices/tour-group/objects/TourGroupConversationSummaryResponse'
+export type { TourGroupDetailsResponse } from '@/microservices/tour-group/objects/TourGroupDetailsResponse'
+export type { TourGroupListResponse } from '@/microservices/tour-group/objects/TourGroupListResponse'
+export type { TourGroupMembershipResponse } from '@/microservices/tour-group/objects/TourGroupMembershipResponse'
+export type { TourGroupMembershipTravelerResponse } from '@/microservices/tour-group/objects/TourGroupMembershipTravelerResponse'
+export type { TourGroupMessageAttachmentResponse } from '@/microservices/tour-group/objects/TourGroupMessageAttachmentResponse'
+export type { TourGroupMessageListResponse } from '@/microservices/tour-group/objects/TourGroupMessageListResponse'
+export type { TourGroupMessageReactionResponse } from '@/microservices/tour-group/objects/TourGroupMessageReactionResponse'
+export type { TourGroupMessageResponse } from '@/microservices/tour-group/objects/TourGroupMessageResponse'
+export type { TourGroupMessageSearchResponse } from '@/microservices/tour-group/objects/TourGroupMessageSearchResponse'
+export type { TourGroupMessageSearchResultResponse } from '@/microservices/tour-group/objects/TourGroupMessageSearchResultResponse'
+export type { TourGroupPaySelectionResponse } from '@/microservices/tour-group/objects/TourGroupPaySelectionResponse'
+export type { TourGroupSummaryResponse } from '@/microservices/tour-group/objects/TourGroupSummaryResponse'
+export type { TourGroupUploadedAttachmentResponse } from '@/microservices/tour-group/objects/TourGroupUploadedAttachmentResponse'

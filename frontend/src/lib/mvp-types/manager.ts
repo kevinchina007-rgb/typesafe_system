@@ -1,7 +1,5 @@
-export type {
-  ManagerBatchDecisionResponse,
-  ManagerRefundTaskListResponse,
-  ManagerRefundTaskResponse,
-  ManagerTaskListResponse,
-  ManagerTaskResponse,
-} from '../api-dtos/manager'
+﻿export type { ManagerBatchDecisionResponse } from '@/microservices/operations/objects/ManagerBatchDecisionResponse'
+export type { ManagerRefundTaskListResponse } from '@/microservices/operations/objects/ManagerRefundTaskListResponse'
+export type { ManagerRefundTaskResponse } from '@/microservices/operations/objects/ManagerRefundTaskResponse'
+export type { ManagerTaskListResponse } from '@/microservices/operations/objects/ManagerTaskListResponse'
+export type { ManagerTaskResponse } from '@/microservices/operations/objects/ManagerTaskResponse'

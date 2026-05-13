@@ -1,17 +1,12 @@
-import { useState } from 'react'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+﻿import { useState } from 'react'
 
-import { AuthRequiredDialog } from '../../components/AuthRequiredDialog'
-import { TrainsPanel } from '../../components/TrainsPanel'
-import { travelMvpApiClient } from '../../lib/api-client'
-import type {
-  AppLanguage,
-  AppViewKey,
-  ResourceReviewSummaryResponse,
-  ReviewResponse,
-  UserResponse,
-} from '../../lib/mvp-types'
-import { usePageActions, type PageNoticeHandler } from '../shared/usePageActions'
-import { useSignedInTravelers } from '../shared/useSignedInTravelers'
+import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
+import { TrainsPanel } from '@/pages/TrainsPage/components/TrainsPanel'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppLanguage, AppViewKey, ResourceReviewSummaryResponse, ReviewResponse, UserResponse } from '@/lib/mvp-types/index'
+import { usePageActions } from '@/pages/shared/usePageActions'
+import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
 
 type TrainsPageProps = {
   currentLanguage: AppLanguage

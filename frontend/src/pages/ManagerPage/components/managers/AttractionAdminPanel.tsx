@@ -1,0 +1,465 @@
+﻿import { useState } from 'react'
+
+import type { AppLanguage, AttractionAdminSessionResponse } from '@/lib/mvp-types/index'
+
+type AttractionAdminPanelProps = {
+  currentLanguage: AppLanguage
+  isBusy: boolean
+  attractionAdminSession: AttractionAdminSessionResponse | null
+  translate: (translationKey: string) => string
+  onRegisterAttractionManager: (payload: {
+    email: string
+    displayName: string
+    password: string
+  }) => Promise<void>
+  onLoginAttractionManager: (payload: { email: string; password: string }) => Promise<void>
+  onValidationError: (message: string) => void
+  onReloadManagedAttractions: () => Promise<void>
+  onCreateAttraction: (payload: {
+    attractionName: string
+    city: string
+    location: string
+    description: string
+  }) => Promise<void>
+  onCreateTicketType: (payload: {
+    attractionId: string
+    ticketTypeName: string
+    description: string
+    unitPrice: string
+    currency: string
+    availableFromDate: string
+    availableToDate: string
+    totalQuantity: number
+    validWeekdays: string[]
+  }) => Promise<void>
+  onCreateSession: (payload: {
+    attractionId: string
+    ticketTypeId: string
+    sessionName: string
+    useDate: string
+    startsAt: string
+    endsAt: string
+    capacity: number
+  }) => Promise<void>
+  onCreateRule: (payload: {
+    attractionId: string
+    ticketTypeId: string
+    ruleType: string
+    ageValue?: number | null
+    minAge?: number | null
+    maxAge?: number | null
+    documentType?: string | null
+    documentNumberPrefix?: string | null
+  }) => Promise<void>
+  onLogoutAttractionManager: () => void
+}
+
+export function AttractionAdminPanel({
+  isBusy,
+  attractionAdminSession,
+  translate,
+  onRegisterAttractionManager,
+  onLoginAttractionManager,
+  onValidationError,
+  onReloadManagedAttractions,
+  onCreateAttraction,
+  onCreateTicketType,
+  onCreateSession,
+  onCreateRule,
+  onLogoutAttractionManager,
+}: AttractionAdminPanelProps) {
+  const allWeekdayValues = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
+  const [selectedWeekdays, setSelectedWeekdays] = useState<string[]>(allWeekdayValues)
+
+  function toggleWeekdaySelection(weekday: string) {
+    setSelectedWeekdays(currentWeekdays =>
+      currentWeekdays.includes(weekday) ? currentWeekdays.filter(currentWeekday => currentWeekday !== weekday) : [...currentWeekdays, weekday],
+    )
+  }
+
+  function setAllWeekdays(enabled: boolean) {
+    setSelectedWeekdays(enabled ? allWeekdayValues : [])
+  }
+
+  return (
+    <section className="page-card">
+      <div className="panel-heading">
+        <div>
+          <p className="eyebrow-label">{translate('nav.attractionAdmin')}</p>
+          <h2>{translate('attractionAdmin.title')}</h2>
+        </div>
+        {attractionAdminSession ? (
+          <button type="button" className="secondary-button" disabled={isBusy} onClick={onLogoutAttractionManager}>
+            {translate('manager.logout')}
+          </button>
+        ) : null}
+      </div>
+
+      <p className="hero-copy">{translate('attractionAdmin.description')}</p>
+
+      {!attractionAdminSession ? (
+        <div className="two-column-grid">
+          <form
+            className="stack-form panel-card"
+            onSubmit={async event => {
+              event.preventDefault()
+              const formData = new FormData(event.currentTarget)
+              const password = String(formData.get('password') ?? '')
+              const confirmPassword = String(formData.get('confirmPassword') ?? '')
+              if (password !== confirmPassword) {
+                onValidationError(translate('error.passwordMismatch'))
+                return
+              }
+              await onRegisterAttractionManager({
+                email: String(formData.get('email') ?? '').trim(),
+                displayName: String(formData.get('displayName') ?? '').trim(),
+                password,
+              })
+            }}
+          >
+            <h3>{translate('attractionAdmin.registerTitle')}</h3>
+            <label>
+              {translate('attractionAdmin.email')}
+              <input name="email" type="email" placeholder={translate('attractionAdmin.email')} required />
+            </label>
+            <label>
+              {translate('attractionAdmin.displayName')}
+              <input name="displayName" placeholder={translate('attractionAdmin.displayNamePlaceholder')} required />
+            </label>
+            <label>
+              {translate('account.password')}
+              <input name="password" type="password" placeholder={translate('account.password')} required />
+            </label>
+            <label>
+              {translate('account.confirmPassword')}
+              <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+            </label>
+            <button type="submit" disabled={isBusy}>
+              {translate('attractionAdmin.createAccount')}
+            </button>
+          </form>
+
+          <form
+            className="stack-form panel-card"
+            onSubmit={async event => {
+              event.preventDefault()
+              const formData = new FormData(event.currentTarget)
+              await onLoginAttractionManager({
+                email: String(formData.get('email') ?? '').trim(),
+                password: String(formData.get('password') ?? ''),
+              })
+            }}
+          >
+            <h3>{translate('attractionAdmin.loginTitle')}</h3>
+            <label>
+              {translate('attractionAdmin.email')}
+              <input name="email" type="email" placeholder={translate('attractionAdmin.email')} required />
+            </label>
+            <label>
+              {translate('account.password')}
+              <input name="password" type="password" placeholder={translate('account.password')} required />
+            </label>
+            <button type="submit" disabled={isBusy}>
+              {translate('attractionAdmin.login')}
+            </button>
+          </form>
+        </div>
+      ) : (
+        <div className="stack-form">
+          <div className="panel-card">
+            <div className="panel-heading">
+              <div>
+                <strong>{attractionAdminSession.displayName}</strong>
+                <p>{attractionAdminSession.email}</p>
+              </div>
+              <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onReloadManagedAttractions()}>
+                {translate('attractionAdmin.refresh')}
+              </button>
+            </div>
+          </div>
+
+          <div className="two-column-grid">
+            <form
+              className="stack-form panel-card"
+              onSubmit={async event => {
+                event.preventDefault()
+                const formData = new FormData(event.currentTarget)
+                await onCreateAttraction({
+                  attractionName: String(formData.get('attractionName') ?? '').trim(),
+                  city: String(formData.get('city') ?? '').trim(),
+                  location: String(formData.get('location') ?? '').trim(),
+                  description: String(formData.get('description') ?? '').trim(),
+                })
+                event.currentTarget.reset()
+              }}
+            >
+              <h3>{translate('attractionAdmin.createAttraction')}</h3>
+              <label>
+                {translate('attractionAdmin.attractionName')}
+                <input name="attractionName" placeholder={translate('attractionAdmin.attractionNamePlaceholder')} required />
+              </label>
+              <label>
+                {translate('attractionAdmin.city')}
+                <input name="city" placeholder={translate('attractionAdmin.cityPlaceholder')} required />
+              </label>
+              <label>
+                {translate('attractionAdmin.location')}
+                <input name="location" placeholder={translate('attractionAdmin.locationPlaceholder')} required />
+              </label>
+              <label>
+                {translate('attractionAdmin.descriptionField')}
+                <input name="description" placeholder={translate('attractionAdmin.descriptionPlaceholder')} required />
+              </label>
+              <button type="submit" disabled={isBusy}>
+                {translate('attractionAdmin.createAttraction')}
+              </button>
+            </form>
+
+            <form
+              className="stack-form panel-card"
+              onSubmit={async event => {
+                event.preventDefault()
+                const formData = new FormData(event.currentTarget)
+                await onCreateTicketType({
+                  attractionId: String(formData.get('attractionId') ?? '').trim(),
+                  ticketTypeName: String(formData.get('ticketTypeName') ?? '').trim(),
+                  description: String(formData.get('description') ?? '').trim(),
+                  unitPrice: String(formData.get('unitPrice') ?? '').trim(),
+                  currency: String(formData.get('currency') ?? '').trim(),
+                  availableFromDate: String(formData.get('availableFromDate') ?? '').trim(),
+                  availableToDate: String(formData.get('availableToDate') ?? '').trim(),
+                  totalQuantity: Number(formData.get('totalQuantity') ?? 0),
+                  validWeekdays: selectedWeekdays,
+                })
+                event.currentTarget.reset()
+                setSelectedWeekdays(allWeekdayValues)
+              }}
+            >
+              <h3>{translate('attractionAdmin.createTicketType')}</h3>
+              <label>
+                {translate('attractionAdmin.attraction')}
+                <select name="attractionId" required defaultValue="">
+                  <option value="" disabled>
+                    {translate('attractionAdmin.attractionSelect')}
+                  </option>
+                  {attractionAdminSession.managedAttractions.map(attraction => (
+                    <option key={attraction.attractionId} value={attraction.attractionId}>
+                      {attraction.attractionName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {translate('attractionAdmin.ticketTypeName')}
+                <input name="ticketTypeName" placeholder={translate('attractionAdmin.ticketTypeNamePlaceholder')} required />
+              </label>
+              <label>
+                {translate('attractionAdmin.descriptionField')}
+                <input name="description" placeholder={translate('attractionAdmin.ticketTypeDescriptionPlaceholder')} required />
+              </label>
+              <label>
+                {translate('attractionAdmin.unitPrice')}
+                <input name="unitPrice" type="number" min="0" step="0.01" placeholder="99" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.currency')}
+                <input name="currency" placeholder="CNY" defaultValue="CNY" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.availableFromDate')}
+                <input name="availableFromDate" type="date" defaultValue="2026-04-05" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.availableToDate')}
+                <input name="availableToDate" type="date" defaultValue="2026-04-30" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.totalQuantity')}
+                <input name="totalQuantity" type="number" min="1" step="1" defaultValue="100" required />
+              </label>
+              <div className="checkbox-list">
+                <p className="detail-label">{translate('attractionAdmin.validWeekdays')}</p>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={selectedWeekdays.length === allWeekdayValues.length}
+                    onChange={event => setAllWeekdays(event.target.checked)}
+                  />
+                  {translate('attractionAdmin.allWeekdays')}
+                </label>
+                <div className="three-column-grid">
+                  {allWeekdayValues.map(weekday => (
+                    <label key={weekday} className="checkbox-row">
+                      <input
+                        type="checkbox"
+                        checked={selectedWeekdays.includes(weekday)}
+                        onChange={() => toggleWeekdaySelection(weekday)}
+                      />
+                      {translate(`weekdays.${weekday.toLowerCase()}`)}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <button type="submit" disabled={isBusy}>
+                {translate('attractionAdmin.createTicketType')}
+              </button>
+            </form>
+          </div>
+
+          <form
+            className="stack-form panel-card"
+            onSubmit={async event => {
+              event.preventDefault()
+              const formData = new FormData(event.currentTarget)
+              await onCreateSession({
+                attractionId: String(formData.get('attractionId') ?? '').trim(),
+                ticketTypeId: String(formData.get('ticketTypeId') ?? '').trim(),
+                sessionName: String(formData.get('sessionName') ?? '').trim(),
+                useDate: String(formData.get('useDate') ?? '').trim(),
+                startsAt: new Date(String(formData.get('startsAt') ?? '').trim()).toISOString(),
+                endsAt: new Date(String(formData.get('endsAt') ?? '').trim()).toISOString(),
+                capacity: Number(formData.get('capacity') ?? 0),
+              })
+              event.currentTarget.reset()
+            }}
+          >
+            <h3>{translate('attractionAdmin.createSession')}</h3>
+            <div className="three-column-grid">
+              <label>
+                {translate('attractionAdmin.attraction')}
+                <select name="attractionId" required defaultValue="">
+                  <option value="" disabled>{translate('attractionAdmin.attractionSelect')}</option>
+                  {attractionAdminSession.managedAttractions.map(attraction => (
+                    <option key={attraction.attractionId} value={attraction.attractionId}>{attraction.attractionName}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {translate('attractionAdmin.ticketTypeId')}
+                <input name="ticketTypeId" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.sessionName')}
+                <input name="sessionName" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.useDate')}
+                <input name="useDate" type="date" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.startsAt')}
+                <input name="startsAt" type="datetime-local" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.endsAt')}
+                <input name="endsAt" type="datetime-local" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.capacity')}
+                <input name="capacity" type="number" min="1" step="1" defaultValue="50" required />
+              </label>
+            </div>
+            <button type="submit" disabled={isBusy}>{translate('attractionAdmin.createSession')}</button>
+          </form>
+
+          <form
+            className="stack-form panel-card"
+            onSubmit={async event => {
+              event.preventDefault()
+              const formData = new FormData(event.currentTarget)
+              const ruleType = String(formData.get('ruleType') ?? '').trim()
+              await onCreateRule({
+                attractionId: String(formData.get('attractionId') ?? '').trim(),
+                ticketTypeId: String(formData.get('ticketTypeId') ?? '').trim(),
+                ruleType,
+                ageValue: formData.get('ageValue') ? Number(formData.get('ageValue')) : null,
+                minAge: formData.get('minAge') ? Number(formData.get('minAge')) : null,
+                maxAge: formData.get('maxAge') ? Number(formData.get('maxAge')) : null,
+                documentType: formData.get('documentType') ? String(formData.get('documentType')) : null,
+                documentNumberPrefix: formData.get('documentNumberPrefix') ? String(formData.get('documentNumberPrefix')) : null,
+              })
+              event.currentTarget.reset()
+            }}
+          >
+            <h3>{translate('attractionAdmin.createRule')}</h3>
+            <div className="three-column-grid">
+              <label>
+                {translate('attractionAdmin.attraction')}
+                <select name="attractionId" required defaultValue="">
+                  <option value="" disabled>
+                    {translate('attractionAdmin.attractionSelect')}
+                  </option>
+                  {attractionAdminSession.managedAttractions.map(attraction => (
+                    <option key={attraction.attractionId} value={attraction.attractionId}>
+                      {attraction.attractionName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                {translate('attractionAdmin.ticketTypeId')}
+                <input name="ticketTypeId" placeholder={translate('attractionAdmin.ticketTypeIdPlaceholder')} required />
+              </label>
+              <label>
+                {translate('attractionAdmin.ruleType')}
+                <select name="ruleType" required defaultValue="AgeLessThan">
+                  <option value="AgeLessThan">AgeLessThan</option>
+                  <option value="AgeBetween">AgeBetween</option>
+                  <option value="AgeAtLeast">AgeAtLeast</option>
+                  <option value="DocumentTypeEquals">DocumentTypeEquals</option>
+                  <option value="DocumentNumberPrefix">DocumentNumberPrefix</option>
+                </select>
+              </label>
+              <label>
+                {translate('attractionAdmin.ageValue')}
+                <input name="ageValue" type="number" min="0" placeholder="18" />
+              </label>
+              <label>
+                {translate('attractionAdmin.minAge')}
+                <input name="minAge" type="number" min="0" placeholder="60" />
+              </label>
+              <label>
+                {translate('attractionAdmin.maxAge')}
+                <input name="maxAge" type="number" min="0" placeholder="70" />
+              </label>
+              <label>
+                {translate('attractionAdmin.documentType')}
+                <input name="documentType" placeholder="NationalIdentityCard" />
+              </label>
+              <label>
+                {translate('attractionAdmin.documentNumberPrefix')}
+                <input name="documentNumberPrefix" placeholder="310" />
+              </label>
+            </div>
+            <button type="submit" disabled={isBusy}>
+              {translate('attractionAdmin.createRule')}
+            </button>
+          </form>
+
+          <div className="entity-list">
+            {attractionAdminSession.managedAttractions.map(attraction => (
+              <article key={attraction.attractionId} className="panel-card">
+                <strong>{attraction.attractionName}</strong>
+                <p>{`${attraction.city} | ${attraction.location}`}</p>
+                <ul className="entity-list">
+                  {attraction.ticketTypes.map(ticketType => (
+                    <li key={ticketType.ticketTypeId}>
+                      <div>
+                        <strong>{`${ticketType.ticketTypeName} (${ticketType.ticketTypeId})`}</strong>
+                        <p>{`${ticketType.priceAmount} ${ticketType.priceCurrency}`}</p>
+                        <p>{`${translate('attractionAdmin.availableDateRange')}: ${ticketType.availableFromDate} - ${ticketType.availableToDate}`}</p>
+                        <p>{`${translate('attractionAdmin.totalQuantity')}: ${ticketType.totalQuantity}`}</p>
+                        <p>{`${translate('attractionAdmin.validWeekdays')}: ${ticketType.validWeekdays.map(weekday => translate(`weekdays.${weekday.toLowerCase()}`)).join(' / ')}`}</p>
+                        <p>{ticketType.rules.length > 0 ? ticketType.rules.map(rule => rule.summary).join(' | ') : translate('attractionAdmin.noRules')}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}

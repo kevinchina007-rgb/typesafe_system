@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 
-import { travelMvpApiClient } from '../../lib/api-client'
-import type { AppViewKey, ExploreSearchResultResponse, SearchSuggestionResponse } from '../../lib/mvp-types'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AppViewKey, ExploreSearchResultResponse, SearchSuggestionResponse } from '@/lib/mvp-types/index'
 
 type ExploreSearchType = 'all' | 'flight' | 'hotel' | 'train' | 'attraction' | 'blog'
 

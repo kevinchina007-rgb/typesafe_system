@@ -1,8 +1,6 @@
-export type {
-  BookFlightRequestDto,
-  CabinInventoryResponse,
-  FlightBookingWindowStatus,
-  FlightListResponse,
-  FlightResponse,
-  FlightSearchQueryDto,
-} from '../api-dtos/flights'
+﻿export type { FlightBookingWindowStatus } from '@/microservices/flight/objects/FlightBookingWindowStatus'
+export type { BookFlightRequest } from '@/microservices/flight/objects/BookFlightRequest'
+export type { CabinInventoryResponse } from '@/microservices/flight/objects/CabinInventoryResponse'
+export type { FlightListResponse } from '@/microservices/flight/objects/FlightListResponse'
+export type { FlightResponse } from '@/microservices/flight/objects/FlightResponse'
+export type { FlightSearchQuery } from '@/microservices/flight/objects/FlightSearchQuery'
