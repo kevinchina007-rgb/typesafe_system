@@ -286,26 +286,24 @@ function Get-BackendDatabaseSettings {
     }
   }
 
-  $defaultDatabasePath = (Join-Path $backendRoot 'data\travel-platform').Replace('\', '/')
-
   return @{
     Url =
       if ($env:TRAVEL_DB_URL -and $env:TRAVEL_DB_URL.Trim().Length -gt 0) {
         $env:TRAVEL_DB_URL.Trim()
       } else {
-        "jdbc:h2:file:$defaultDatabasePath;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
+        'jdbc:postgresql://127.0.0.1:5432/travel_platform'
       }
     Driver =
       if ($env:TRAVEL_DB_DRIVER -and $env:TRAVEL_DB_DRIVER.Trim().Length -gt 0) {
         $env:TRAVEL_DB_DRIVER.Trim()
       } else {
-        'org.h2.Driver'
+        'org.postgresql.Driver'
       }
     User =
       if ($env:TRAVEL_DB_USER -and $env:TRAVEL_DB_USER.Trim().Length -gt 0) {
         $env:TRAVEL_DB_USER.Trim()
       } else {
-        'sa'
+        'postgres'
       }
     Password =
       if ($null -ne $env:TRAVEL_DB_PASSWORD) {
@@ -406,7 +404,7 @@ $allowedOrigins =
   if ($env:TRAVEL_ALLOWED_ORIGINS -and $env:TRAVEL_ALLOWED_ORIGINS.Trim().Length -gt 0) {
     $env:TRAVEL_ALLOWED_ORIGINS.Trim()
   } else {
-    "$frontendOrigin,$localFrontendOrigin,http://localhost:$FrontendPort"
+    "$frontendOrigin,$localFrontendOrigin,http://localhost:$FrontendPort,http://127.0.0.1:$FrontendPort"
   }
 Write-LauncherLog "allowed origins resolved"
 

@@ -1,4 +1,4 @@
-export type AttractionItemDetailsResponse = {
+﻿export type AttractionItemDetailsResponse = {
   attractionId: string
   attractionName: string
   ticketTypeId: string
@@ -15,3 +15,8 @@ export type AttractionItemDetailsResponse = {
   eligibilityRuleSummaries: string[]
   eligibilityValidatedAt: string
 }
+export const attractionItemDetailsResponseFromJson = (json: string): AttractionItemDetailsResponse =>
+  JSON.parse(json) as AttractionItemDetailsResponse
+
+export const attractionItemDetailsResponseToJson = (value: AttractionItemDetailsResponse): string =>
+  JSON.stringify(value)

@@ -41,7 +41,6 @@ export const defaultHotelSearchState = {
   selectedQuickDatePreset: null as HotelQuickDatePreset | null,
 }
 
-export const hotelLocationPlaceholder = '杭州 / 西湖 / 上海 / 外滩'
 export const hotelHotDestinations = ['杭州 西湖', '上海 外滩', '北京 三里屯', '东京 银座']
 export const hotelRecentSearches = ['杭州 西湖', '上海 陆家嘴', '北京 国贸', '东京 银座']
 export const hotelNearbyOptions = ['ScenicSpot', 'Metro', 'Station', 'BusinessDistrict'] as const

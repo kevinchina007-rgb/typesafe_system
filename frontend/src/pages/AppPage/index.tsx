@@ -1,7 +1,7 @@
-﻿import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { getActiveTopNav, getSidebarItemsForTopNav, getVisibleTopNavItems, shouldShowSidebar } from '@/app/navigation'
-import { clearAppNotice, setAppLanguage, setAppNotice, setAppTheme, setAppView, useAppShellStore } from '@/app/stores/app-shell-store'
+import { getActiveTopNav, getSidebarItemsForTopNav, getVisibleTopNavItems } from '@/app/navigation'
+import { clearAppNotice, setAppNotice, setAppView, useAppShellStore } from '@/app/stores/app-shell-store'
 import { setCurrentManagerSession, setManagerStateResolved, useManagerStore } from '@/app/stores/manager-store'
 import { setCurrentUserSession, setUserStateResolved, useUserStore } from '@/app/stores/user-store'
 import { clearAllThreads, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
@@ -19,17 +19,17 @@ import { BookingsPage } from '@/pages/BookingsPage'
 import { CustomerFeedbackPage } from '@/pages/CustomerFeedbackPage'
 import { FlightsPage } from '@/pages/FlightsPage'
 import { HotelsPage } from '@/pages/HotelsPage'
+import { HomePage } from '@/pages/HomePage'
 import { ManagerPage } from '@/pages/ManagerPage'
 import { ReviewsPage } from '@/pages/ReviewsPage'
 import { SmartTripPlannerPage } from '@/pages/SmartTripPlannerPage'
 import { TourGroupsPage } from '@/pages/TourGroupsPage'
 import { TrainsPage } from '@/pages/TrainsPage'
 import { TravelersPage } from '@/pages/TravelersPage'
-import { WorkspaceOverviewPage } from '@/pages/WorkspaceOverviewPage'
 
 function normalizeViewKey(viewKey: AppViewKey): AppViewKey {
-  if (viewKey === 'bookings') {
-    return 'orders'
+  if (viewKey === 'bookings' || viewKey === 'orders') {
+    return 'flightOrders'
   }
 
   if (viewKey === 'explore') {
@@ -46,7 +46,6 @@ function normalizeViewKey(viewKey: AppViewKey): AppViewKey {
 export function MvpApp() {
   const currentLanguage = useAppShellStore(state => state.currentLanguage)
   const currentViewKey = useAppShellStore(state => state.currentViewKey)
-  const themeMode = useAppShellStore(state => state.themeMode)
   const currentNotice = useAppShellStore(state => state.currentNotice)
 
   const hasResolvedUserState = useUserStore(state => state.hasResolvedUserState)
@@ -60,7 +59,7 @@ export function MvpApp() {
 
   const backendFailureCountRef = useRef(0)
 
-  const translate = createTranslator(currentLanguage)
+  const translate = createTranslator()
   const isGuestMode = signedInUserResponse === null && signedInManagerSessionResponse === null
   const isManagerOnlyMode = signedInUserResponse === null && signedInManagerSessionResponse !== null
   const isUserOnlyMode = signedInUserResponse !== null && signedInManagerSessionResponse === null
@@ -77,14 +76,17 @@ export function MvpApp() {
     signedInManager: signedInManagerSessionResponse,
     signedInUser: signedInUserResponse,
   })
-  const sidebarItems = getSidebarItemsForTopNav({
-    badgeCounts: routeBadgeCounts,
-    topNav: currentTopNav,
-    signedInManager: signedInManagerSessionResponse,
-    signedInUser: signedInUserResponse,
-  })
-  const showSidebar = shouldShowSidebar(sidebarItems)
-
+  const submenuItemsByTopNav = Object.fromEntries(
+    topNavItems.map(item => [
+      item.key,
+      getSidebarItemsForTopNav({
+        badgeCounts: routeBadgeCounts,
+        topNav: item.key,
+        signedInManager: signedInManagerSessionResponse,
+        signedInUser: signedInUserResponse,
+      }),
+    ]),
+  )
   const [, setBackendHealthResponse] = useState<HealthResponse | null>(() => getInitialBackendHealth())
 
   const withTimeout = useCallback(
@@ -186,10 +188,6 @@ export function MvpApp() {
   }, [reloadBackendHealth, reloadPrincipalState])
 
   useEffect(() => {
-    document.documentElement.dataset.theme = themeMode
-  }, [themeMode])
-
-  useEffect(() => {
     if (normalizedViewKey !== currentViewKey) {
       setAppView(normalizedViewKey)
     }
@@ -202,8 +200,7 @@ export function MvpApp() {
 
     if (
       isGuestMode &&
-      (normalizedViewKey === 'orders' ||
-        normalizedViewKey === 'travelers' ||
+      (normalizedViewKey === 'travelers' ||
         normalizedViewKey === 'tourGroups' ||
         normalizedViewKey === 'customerFeedback')
     ) {
@@ -214,7 +211,10 @@ export function MvpApp() {
     if (
       isGuestMode &&
       (normalizedViewKey === 'managerWorkspace' ||
+        normalizedViewKey === 'managerCreateFlight' ||
+        normalizedViewKey === 'managerFlightManagement' ||
         normalizedViewKey === 'managerFeedback' ||
+        normalizedViewKey === 'managerProfile' ||
         normalizedViewKey === 'managerAdvertising' ||
         normalizedViewKey === 'siteAdminBlogAudit' ||
         normalizedViewKey === 'siteAdminAdvertisingReview')
@@ -246,6 +246,15 @@ export function MvpApp() {
         ) {
           setAppView('siteAdminBlogAudit')
         }
+      } else if (signedInManagerSessionResponse?.managerType === 'Airline') {
+        if (
+          normalizedViewKey !== 'managerCreateFlight' &&
+          normalizedViewKey !== 'managerFlightManagement' &&
+          normalizedViewKey !== 'managerFeedback' &&
+          normalizedViewKey !== 'managerProfile'
+        ) {
+          setAppView('managerFlightManagement')
+        }
       } else if (
         normalizedViewKey !== 'managerWorkspace' &&
         normalizedViewKey !== 'managerFeedback' &&
@@ -266,7 +275,10 @@ export function MvpApp() {
       isUserOnlyMode &&
       (normalizedViewKey === 'manager' ||
         normalizedViewKey === 'managerWorkspace' ||
+        normalizedViewKey === 'managerCreateFlight' ||
+        normalizedViewKey === 'managerFlightManagement' ||
         normalizedViewKey === 'managerFeedback' ||
+        normalizedViewKey === 'managerProfile' ||
         normalizedViewKey === 'managerAdvertising' ||
         normalizedViewKey === 'siteAdminBlogAudit' ||
         normalizedViewKey === 'siteAdminAdvertisingReview')
@@ -316,14 +328,7 @@ export function MvpApp() {
     }
 
     if (normalizedViewKey === 'overview') {
-      return (
-        <WorkspaceOverviewPage
-          isSessionReady={hasResolvedPrincipalState}
-          signedInUser={signedInUserResponse}
-          translate={translate}
-          onSelectView={setAppView}
-        />
-      )
+      return <HomePage />
     }
 
     if (normalizedViewKey === 'blog') {
@@ -447,10 +452,16 @@ export function MvpApp() {
       )
     }
 
-    if (normalizedViewKey === 'orders') {
+    if (
+      normalizedViewKey === 'flightOrders' ||
+      normalizedViewKey === 'hotelOrders' ||
+      normalizedViewKey === 'trainOrders' ||
+      normalizedViewKey === 'attractionOrders'
+    ) {
       return (
         <BookingsPage
           currentLanguage={currentLanguage}
+          orderCategory={normalizedViewKey}
           isSessionReady={hasResolvedPrincipalState}
           signedInUser={signedInUserResponse}
           translate={translate}
@@ -478,7 +489,10 @@ export function MvpApp() {
 
     if (
       normalizedViewKey === 'managerWorkspace' ||
+      normalizedViewKey === 'managerCreateFlight' ||
+      normalizedViewKey === 'managerFlightManagement' ||
       normalizedViewKey === 'managerFeedback' ||
+      normalizedViewKey === 'managerProfile' ||
       normalizedViewKey === 'managerAdvertising' ||
       normalizedViewKey === 'siteAdminBlogAudit' ||
       normalizedViewKey === 'siteAdminAdvertisingReview'
@@ -503,10 +517,10 @@ export function MvpApp() {
 
   if (!hasResolvedPrincipalState) {
     return (
-      <main className="layout-shell">
-        <section className="content-shell">
-          <section className="app-card empty-state-panel">
-            <strong>{currentLanguage === 'zh' ? '正在恢复工作台状态' : 'Restoring workspace state'}</strong>
+      <main className="grid min-h-screen bg-slate-50 text-slate-950">
+        <section className="grid w-full gap-6">
+          <section className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid place-items-center gap-3 border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
+            <strong>正在恢复工作台状态</strong>
           </section>
         </section>
       </main>
@@ -516,29 +530,18 @@ export function MvpApp() {
   return (
     <>
       <AppShell
+        isHomePage={normalizedViewKey === 'overview'}
         topNav={{
-          currentLanguage,
           currentTopNav,
-          themeMode,
           items: topNavItems,
           signedInManager: signedInManagerSessionResponse,
           signedInUser: signedInUserResponse,
-          onChangeLanguage: setAppLanguage,
-          onChangeTheme: setAppTheme,
           onSelectTopNav: (_topNav, defaultViewKey) => setAppView(defaultViewKey),
+          submenuItemsByTopNav,
+          currentViewKey: normalizedViewKey,
+          onSelectView: setAppView,
           translate,
         }}
-        sidebar={
-          showSidebar
-            ? {
-                currentTopNav,
-                currentViewKey: normalizedViewKey,
-                items: sidebarItems,
-                onSelectView: setAppView,
-                translate,
-              }
-            : undefined
-        }
       >
         {renderCurrentPage()}
       </AppShell>

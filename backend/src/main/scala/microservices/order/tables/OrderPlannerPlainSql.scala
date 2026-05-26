@@ -3,6 +3,8 @@ package com.typesafe.travel.persistence.order
 import cats.effect.IO
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.PlainSqlSupport
+import io.circe.Json
+import io.circe.parser.parse
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
@@ -43,6 +45,7 @@ object OrderPlannerPlainSql:
   def pay(connection: Connection, input: PayOrderPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
     IO.blocking {
       if input.paymentSucceeded then
+        input.travelerIds.foreach(updateFlightTravelerSelection(connection, input.orderId, _))
         val order = findRequired(connection, input.orderId)
         val paymentId = s"payment-${UUID.randomUUID().toString.take(12)}"
         PlainSqlSupport.withStatement(connection, "insert into order_payments(payment_id, order_id, payment_amount, payment_currency, payment_method, payment_status, authorized_at, created_at, captured_at, metadata_json) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
@@ -66,6 +69,32 @@ object OrderPlannerPlainSql:
           statement.executeUpdate()
         }
       findRequired(connection, input.orderId)
+    }
+
+  private def updateFlightTravelerSelection(connection: Connection, orderId: String, travelerIds: List[String]): Unit =
+    val cleanedTravelerIds = travelerIds.map(_.trim).filter(_.nonEmpty).distinct
+    if cleanedTravelerIds.isEmpty then
+      throw new IllegalArgumentException("At least one traveler is required to pay a flight order")
+
+    PlainSqlSupport.withStatement(connection, "select order_item_id, snapshot_json from order_line_items where order_id = ? and item_kind = ? order by sort_index limit 1") { statement =>
+      statement.setString(1, orderId)
+      statement.setString(2, "Flight")
+      val resultSet = statement.executeQuery()
+      try
+        if resultSet.next() then
+          val orderItemId = resultSet.getString("order_item_id")
+          val snapshotJson = Option(resultSet.getString("snapshot_json")).getOrElse("{}")
+          val nextSnapshotJson = parse(snapshotJson).getOrElse(Json.obj()).mapObject { jsonObject =>
+            jsonObject.add("travelerIds", Json.fromValues(cleanedTravelerIds.map(Json.fromString)))
+          }.noSpaces
+          PlainSqlSupport.withStatement(connection, "update order_line_items set snapshot_json = ?, traveler_ids_json = ? where order_item_id = ?") { updateStatement =>
+            updateStatement.setString(1, nextSnapshotJson)
+            updateStatement.setString(2, Json.fromValues(cleanedTravelerIds.map(Json.fromString)).noSpaces)
+            updateStatement.setString(3, orderItemId)
+            updateStatement.executeUpdate()
+          }
+        else throw new IllegalArgumentException(s"Flight order item for order '$orderId' was not found")
+      finally resultSet.close()
     }
 
   def cancel(connection: Connection, input: OrderIdPlannerRequest, now: Instant): IO[OrderPlannerResponse] =

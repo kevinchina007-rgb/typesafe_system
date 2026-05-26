@@ -12,7 +12,9 @@ object TravelerPlannerPlainSql:
     """
       select traveler_id, owner_user_id, full_name, birth_date, document_type, document_number, phone,
              traveler_type, status, is_default, preferences_json, emergency_contact_json,
-             identity_documents_json, loyalty_memberships_json
+             identity_documents_json, loyalty_memberships_json,
+             gender, nationality, document_expiry_date, email, quiet_seat_preferred,
+             assistance_type, special_requirement_note, has_large_luggage, luggage_note
       from traveler_profiles
     """
 
@@ -41,12 +43,14 @@ object TravelerPlannerPlainSql:
           update traveler_profiles
           set owner_user_id = ?, full_name = ?, birth_date = ?, document_type = ?, document_number = ?, phone = ?,
               traveler_type = ?, status = ?, is_default = ?, preferences_json = ?, emergency_contact_json = ?,
-              identity_documents_json = ?, loyalty_memberships_json = ?
+              identity_documents_json = ?, loyalty_memberships_json = ?, gender = ?, nationality = ?,
+              document_expiry_date = ?, email = ?, quiet_seat_preferred = ?, assistance_type = ?,
+              special_requirement_note = ?, has_large_luggage = ?, luggage_note = ?
           where traveler_id = ?
         """
       ) { statement =>
         setProfileFields(statement, travelerProfile, preferencesJson, emergencyContactJson, identityDocumentsJson, loyaltyMembershipsJson, startsAt = 1)
-        statement.setString(14, travelerProfile.travelerId.value)
+        statement.setString(23, travelerProfile.travelerId.value)
         statement.executeUpdate()
       }
       if updatedRows == 0 then
@@ -56,8 +60,9 @@ object TravelerPlannerPlainSql:
             insert into traveler_profiles (
               traveler_id, owner_user_id, full_name, birth_date, document_type, document_number, phone,
               traveler_type, status, is_default, preferences_json, emergency_contact_json,
-              identity_documents_json, loyalty_memberships_json
-            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              identity_documents_json, loyalty_memberships_json, gender, nationality, document_expiry_date,
+              email, quiet_seat_preferred, assistance_type, special_requirement_note, has_large_luggage, luggage_note
+            ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           """
         ) { statement =>
           statement.setString(1, travelerProfile.travelerId.value)
@@ -116,6 +121,17 @@ object TravelerPlannerPlainSql:
     statement.setString(startsAt + 10, emergencyContactJson.orNull)
     statement.setString(startsAt + 11, identityDocumentsJson)
     statement.setString(startsAt + 12, loyaltyMembershipsJson)
+    statement.setString(startsAt + 13, travelerProfile.travelerGender)
+    statement.setString(startsAt + 14, travelerProfile.travelerNationality)
+    travelerProfile.travelerDocumentExpiryDate match
+      case Some(value) => statement.setDate(startsAt + 15, Date.valueOf(value))
+      case None => statement.setDate(startsAt + 15, null)
+    statement.setString(startsAt + 16, travelerProfile.travelerEmail.orNull)
+    statement.setBoolean(startsAt + 17, travelerProfile.quietSeatPreferred)
+    statement.setString(startsAt + 18, travelerProfile.assistanceType)
+    statement.setString(startsAt + 19, travelerProfile.specialRequirementNote.orNull)
+    statement.setBoolean(startsAt + 20, travelerProfile.hasLargeLuggage)
+    statement.setString(startsAt + 21, travelerProfile.luggageNote.orNull)
 
   private def readTravelerProfile(resultSet: ResultSet): TravelerProfile =
     restoreTravelerProfile(
@@ -132,5 +148,17 @@ object TravelerPlannerPlainSql:
       travelerLoyaltyMemberships = DatabaseCodecs.decodeTravelerLoyaltyMemberships(resultSet.getString("loyalty_memberships_json")).fold(throw _, identity),
       travelerPreferences = DatabaseCodecs.decodeTravelerPreferences(resultSet.getString("preferences_json")).fold(throw _, identity),
       travelerProfileStatus = TravelerProfileStatus.fromText(resultSet.getString("status")),
-      isDefaultTravelerProfile = resultSet.getBoolean("is_default")
+      isDefaultTravelerProfile = resultSet.getBoolean("is_default"),
+      travelerGender = readOptionalString(resultSet, "gender").getOrElse("unspecified"),
+      travelerNationality = readOptionalString(resultSet, "nationality").getOrElse("China"),
+      travelerDocumentExpiryDate = Option(resultSet.getDate("document_expiry_date")).map(_.toLocalDate),
+      travelerEmail = readOptionalString(resultSet, "email"),
+      quietSeatPreferred = resultSet.getBoolean("quiet_seat_preferred"),
+      assistanceType = readOptionalString(resultSet, "assistance_type").getOrElse("none"),
+      specialRequirementNote = readOptionalString(resultSet, "special_requirement_note"),
+      hasLargeLuggage = resultSet.getBoolean("has_large_luggage"),
+      luggageNote = readOptionalString(resultSet, "luggage_note")
     )
+
+  private def readOptionalString(resultSet: ResultSet, columnName: String): Option[String] =
+    Option(resultSet.getString(columnName)).map(_.trim).filter(_.nonEmpty)

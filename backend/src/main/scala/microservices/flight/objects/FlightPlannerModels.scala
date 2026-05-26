@@ -3,6 +3,9 @@ package com.typesafe.travel.flight.domain
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
+import java.math.BigDecimal
+import java.time.{Instant, LocalDate, OffsetDateTime}
+
 final case class FlightSuggestionRequest(q: String)
 object FlightSuggestionRequest:
   given sourceEncoder: Encoder[FlightSuggestionRequest] = deriveEncoder
@@ -22,7 +25,28 @@ object FlightDetailsRequest:
   given sourceEncoder: Encoder[FlightDetailsRequest] = deriveEncoder
   given sourceDecoder: Decoder[FlightDetailsRequest] = deriveDecoder
 
-final case class BookFlightPlannerRequest(userId: String, flightId: String, travelerIds: List[String], cabinClass: String)
+final case class FlightDailyLowestPricesPlannerRequest(
+    departureAirport: String,
+    arrivalAirport: String,
+    startDate: String,
+    days: Int,
+    cabinClass: Option[String]
+)
+object FlightDailyLowestPricesPlannerRequest:
+  given sourceEncoder: Encoder[FlightDailyLowestPricesPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[FlightDailyLowestPricesPlannerRequest] = deriveDecoder
+
+final case class FlightDailyLowestPricePlannerResponse(date: String, lowestPrice: Option[String], currency: Option[String])
+object FlightDailyLowestPricePlannerResponse:
+  given sourceEncoder: Encoder[FlightDailyLowestPricePlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[FlightDailyLowestPricePlannerResponse] = deriveDecoder
+
+final case class FlightDailyLowestPricesPlannerResponse(prices: List[FlightDailyLowestPricePlannerResponse])
+object FlightDailyLowestPricesPlannerResponse:
+  given sourceEncoder: Encoder[FlightDailyLowestPricesPlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[FlightDailyLowestPricesPlannerResponse] = deriveDecoder
+
+final case class BookFlightPlannerRequest(userId: String, flightId: String, travelerIds: List[String] = Nil, cabinClass: String)
 object BookFlightPlannerRequest:
   given sourceEncoder: Encoder[BookFlightPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[BookFlightPlannerRequest] = deriveDecoder
@@ -50,7 +74,9 @@ final case class FlightPlannerResponse(
     airlineId: String,
     airlineName: String,
     airlineCode: String,
+    airlineLogoPath: Option[String],
     flightNumber: String,
+    aircraftModel: String,
     departureAirport: String,
     arrivalAirport: String,
     departureTime: String,
@@ -89,3 +115,78 @@ final case class SearchSuggestionListPlannerResponse(suggestions: List[SearchSug
 object SearchSuggestionListPlannerResponse:
   given sourceEncoder: Encoder[SearchSuggestionListPlannerResponse] = deriveEncoder
   given sourceDecoder: Decoder[SearchSuggestionListPlannerResponse] = deriveDecoder
+
+final case class FlightPlannerRow(
+    flightId: String,
+    airlineId: String,
+    airlineName: String,
+    airlineCode: String,
+    airlineLogoPath: Option[String],
+    flightNumber: String,
+    aircraftModel: String,
+    departureAirport: String,
+    arrivalAirport: String,
+    departureTime: OffsetDateTime,
+    arrivalTime: OffsetDateTime,
+    status: String,
+    basePriceAmount: BigDecimal,
+    basePriceCurrency: String,
+    createdAt: Instant
+)
+
+final case class CabinInventoryPlannerRow(
+    inventoryId: String,
+    cabinClass: String,
+    availableSeats: Int,
+    unitPriceAmount: BigDecimal,
+    unitPriceCurrency: String,
+    status: String
+)
+
+final case class FlightBookingCabinPlannerRow(
+    unitPriceAmount: BigDecimal,
+    unitPriceCurrency: String,
+    cabinClass: String
+)
+
+final case class FlightBookingSnapshotPlannerRow(
+    airlineName: String,
+    airlineCode: String,
+    flightNumber: String,
+    aircraftModel: String,
+    departureAirport: String,
+    arrivalAirport: String,
+    departureTime: String,
+    arrivalTime: String
+)
+
+final case class FlightDailyLowestPricePlannerRow(
+    date: LocalDate,
+    lowestPriceAmount: BigDecimal,
+    currency: String
+)
+
+final case class FlightOrderInsert(
+    orderId: String,
+    buyerUserId: String,
+    orderType: String,
+    status: String,
+    currency: String,
+    totalPriceAmount: BigDecimal,
+    remainingRefundableAmount: BigDecimal,
+    createdAt: Instant
+)
+
+final case class FlightOrderItemInsert(
+    orderItemId: String,
+    orderId: String,
+    itemKind: String,
+    itemStatus: String,
+    bookedAmount: BigDecimal,
+    bookedCurrency: String,
+    flightId: String,
+    cabinClass: String,
+    travelerIdsJson: String,
+    snapshotJson: String,
+    sortIndex: Int
+)

@@ -1,4 +1,4 @@
-export type BlogCommentResponse = {
+﻿export type BlogCommentResponse = {
   commentId: string
   postId: string
   authorUserId: string
@@ -9,3 +9,8 @@ export type BlogCommentResponse = {
   isMyComment: boolean
   canDelete: boolean
 }
+export const blogCommentResponseFromJson = (json: string): BlogCommentResponse =>
+  JSON.parse(json) as BlogCommentResponse
+
+export const blogCommentResponseToJson = (value: BlogCommentResponse): string =>
+  JSON.stringify(value)

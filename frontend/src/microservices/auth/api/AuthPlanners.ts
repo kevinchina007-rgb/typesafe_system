@@ -2,8 +2,53 @@ import type { AuthSessionListResponse } from '@/microservices/auth/objects/AuthS
 
 import type { CurrentUserSessionResponse } from '@/microservices/auth/objects/CurrentUserSessionResponse'
 
-import type { HealthResponse } from '@/microservices/common/objects/HealthResponse'
+import type { HealthResponse } from '@/microservices/common/objects/HealthResponse'
 import { executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+
+type CurrentUserPlannerResponse = {
+  sessionId: string
+  userId: string
+  email: string
+  nickname: string
+  phone: string
+  avatarUrl: string | null
+  membershipLevel: string
+  points: number
+  expiresAt: string
+}
+
+const userSessionStorageKey = 'flypig.userSessionId'
+
+function readUserSessionId(): string | null {
+  return window.localStorage.getItem(userSessionStorageKey)
+}
+
+function rememberUserSession(sessionId: string) {
+  window.localStorage.setItem(userSessionStorageKey, sessionId)
+}
+
+function forgetUserSession() {
+  window.localStorage.removeItem(userSessionStorageKey)
+}
+
+function toCurrentUserSessionResponse(plannerResponse: CurrentUserPlannerResponse): CurrentUserSessionResponse {
+  rememberUserSession(plannerResponse.sessionId)
+  return {
+    user: {
+      userId: plannerResponse.userId,
+      email: plannerResponse.email,
+      nickname: plannerResponse.nickname,
+      phone: plannerResponse.phone,
+      avatarUrl: plannerResponse.avatarUrl,
+      status: 'Active',
+      membershipLevel: plannerResponse.membershipLevel,
+      points: plannerResponse.points,
+      defaultTravelerProfileId: null,
+      createdAt: new Date().toISOString(),
+    },
+    expiresAt: plannerResponse.expiresAt,
+  }
+}
 
 export const getHealth = (): Promise<HealthResponse> => executeApiRequest('/health')
 
@@ -13,28 +58,32 @@ export const signupUser = (payload: {
     phone: string
     password: string
   }): Promise<CurrentUserSessionResponse> =>
-    executeJsonApiRequest('/auth/signup', 'POST', payload)
+    executeJsonApiRequest<CurrentUserPlannerResponse>('/SignupPlanner', 'POST', payload).then(toCurrentUserSessionResponse)
 
 export const loginUserWithPassword = (payload: {
     email: string
     password: string
   }): Promise<CurrentUserSessionResponse> =>
-    executeJsonApiRequest('/auth/login', 'POST', payload)
+    executeJsonApiRequest<CurrentUserPlannerResponse>('/LoginPlanner', 'POST', payload).then(toCurrentUserSessionResponse)
 
 export const logoutUser = (): Promise<{ status: string }> =>
-    executeJsonApiRequest('/auth/logout', 'POST')
+    readUserSessionId()
+      ? executeJsonApiRequest<{ status: string }>('/LogoutPlanner', 'POST', { sessionId: readUserSessionId() }).finally(forgetUserSession)
+      : Promise.resolve({ status: 'LoggedOut' })
 
 export const getCurrentUserSession = (): Promise<CurrentUserSessionResponse> =>
-    executeApiRequest('/auth/me')
+    readUserSessionId()
+      ? executeJsonApiRequest<CurrentUserPlannerResponse>('/CurrentUserPlanner', 'POST', { sessionId: readUserSessionId() }).then(toCurrentUserSessionResponse)
+      : Promise.reject(new Error('user_not_found|No active user session'))
 
 export const changeUserPassword = (payload: { currentPassword: string; newPassword: string }): Promise<{ status: string }> =>
-    executeJsonApiRequest('/auth/change-password', 'POST', payload)
+    executeJsonApiRequest('/ChangePasswordPlanner', 'POST', { ...payload, sessionId: readUserSessionId() })
 
 export const listUserSessions = (): Promise<AuthSessionListResponse> =>
-    executeApiRequest('/auth/sessions')
+    executeJsonApiRequest('/ListAuthSessionsPlanner', 'POST', { sessionId: readUserSessionId() })
 
 export const logoutCurrentUserSession = (): Promise<{ status: string }> =>
-    executeJsonApiRequest('/auth/logout-current', 'POST')
+    logoutUser()
 
 export const logoutOtherUserSessions = (): Promise<{ revokedCount: number }> =>
-    executeJsonApiRequest('/auth/logout-others', 'POST')
+    executeJsonApiRequest('/LogoutOtherSessionsPlanner', 'POST', { sessionId: readUserSessionId() })

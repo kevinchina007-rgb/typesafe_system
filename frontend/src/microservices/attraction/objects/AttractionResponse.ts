@@ -1,4 +1,4 @@
-import type { AttractionTicketTypeResponse } from './AttractionTicketTypeResponse'
+﻿import type { AttractionTicketTypeResponse } from './AttractionTicketTypeResponse'
 
 export type AttractionResponse = {
   attractionId: string
@@ -9,3 +9,8 @@ export type AttractionResponse = {
   status: string
   ticketTypes: AttractionTicketTypeResponse[]
 }
+export const attractionResponseFromJson = (json: string): AttractionResponse =>
+  JSON.parse(json) as AttractionResponse
+
+export const attractionResponseToJson = (value: AttractionResponse): string =>
+  JSON.stringify(value)

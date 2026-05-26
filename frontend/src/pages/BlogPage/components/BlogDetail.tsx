@@ -35,99 +35,109 @@ export function BlogDetail({
 }: BlogDetailProps) {
   const [commentDraft, setCommentDraft] = useState('')
   const liked = post.post.likedByCurrentUser
+  const postTitle = post.post.title?.trim() || '未命名文章'
+  const postSummary = post.post.summary?.trim() || '这篇文章暂时还没有摘要。'
+  const postContent = post.content ?? ''
+  const postImages = post.post.images ?? []
+  const postComments = post.comments ?? []
+  const postAuthorName = post.post.authorDisplayName?.trim() || '匿名用户'
+  const postAuthorInitial = postAuthorName.slice(0, 1).toUpperCase()
 
   return (
-    <article className="page-stack">
-      <section className="page-card community-detail-hero">
-        <div className="section-header">
+    <article className="grid gap-5">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('blog.detailEyebrow')}</p>
-            <h2 className="community-detail-title">{post.post.title}</h2>
-            <div className="community-detail-meta">
-              <span className="community-inline-identity">
+            <p className="text-sm font-bold text-slate-500">{translate('blog.detailEyebrow')}</p>
+            <h2 className="m-0 text-3xl font-bold text-slate-950">{postTitle}</h2>
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              <span className="inline-flex items-center gap-2">
                 <BackendAssetImage
-                  className="community-inline-avatar"
+                  className="h-8 w-8 object-cover"
                   assetUrl={post.post.authorAvatarUrl}
-                  alt={post.post.authorDisplayName}
-                  fallbackContent={post.post.authorDisplayName.slice(0, 1).toUpperCase()}
+                  alt={postAuthorName}
+                  fallbackContent={postAuthorInitial}
                 />
-                <strong>{post.post.authorDisplayName}</strong>
+                <strong>{postAuthorName}</strong>
               </span>
               <span>{formatBlogMeta(post.post, translate('booking.notYet'))}</span>
             </div>
           </div>
-          <div className="action-row community-detail-actions">
+          <div className="flex flex-wrap items-center gap-3 flex flex-wrap items-center gap-3">
             {post.post.canEdit ? (
-              <button type="button" disabled={isBusy} onClick={onStartEdit}>
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={onStartEdit}>
                 {translate('blog.edit')}
               </button>
             ) : null}
-            <span className="tag-chip">{localizeBlogStatus(post.post.status, currentLanguage)}</span>
+            <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{localizeBlogStatus(post.post.status, currentLanguage)}</span>
             {post.post.canArchive ? (
-              <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onArchive()}>
+              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void onArchive()}>
                 {translate('blog.archive')}
               </button>
             ) : null}
           </div>
         </div>
 
-        <p className="community-detail-summary">{post.post.summary}</p>
+        <p className="text-base leading-7 text-slate-600">{postSummary}</p>
 
-        <div className="community-detail-stats">
-          <span className="tag-chip">{`${translate('blog.likes')}: ${post.post.likeCount}`}</span>
-          <span className="tag-chip">{`${translate('blog.comments')}: ${post.post.commentCount}`}</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{`${translate('blog.likes')}: ${post.post.likeCount ?? 0}`}</span>
+          <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{`${translate('blog.comments')}: ${post.post.commentCount ?? 0}`}</span>
           {isGuestMode ? (
-            <span className="detail-label">{translate('blog.guestHint')}</span>
+            <span className="text-sm font-medium text-slate-500">{translate('blog.guestHint')}</span>
           ) : (
-            <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void (liked ? onUnlike() : onLike())}>
+            <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void (liked ? onUnlike() : onLike())}>
               {liked ? translate('blog.unlike') : translate('blog.like')}
             </button>
           )}
         </div>
       </section>
 
-      <section className="page-card community-detail-body">
-        <ContentImageGallery images={post.post.images} />
-        <div className="panel-card blog-content-body">
-          {post.content.split('\n').map((line, index) => (
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+        <ContentImageGallery images={postImages} />
+        <div className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 prose max-w-none text-slate-700">
+          {postContent.split('\n').map((line, index) => (
             <p key={`${index}-${line}`}>{line}</p>
           ))}
         </div>
       </section>
 
-      <section className="page-card community-comment-section">
-        <div className="section-header">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('blog.commentsEyebrow')}</p>
+            <p className="text-sm font-bold text-slate-500">{translate('blog.commentsEyebrow')}</p>
             <h3>{translate('blog.comments')}</h3>
           </div>
         </div>
 
-        {post.comments.length === 0 ? <p className="empty-state">{translate('blog.commentsEmpty')}</p> : null}
+        {postComments.length === 0 ? <p className="text-sm leading-6 text-slate-500">{translate('blog.commentsEmpty')}</p> : null}
 
-        {post.comments.length > 0 ? (
-          <div className="community-comment-list">
-            {post.comments.map(comment => (
-              <article key={comment.commentId} className="list-card community-comment-card">
-                <div className="community-comment-head">
-                  <span className="community-inline-identity">
+        {postComments.length > 0 ? (
+          <div className="grid gap-3">
+            {postComments.map(comment => {
+              const commentAuthorName = comment.authorDisplayName?.trim() || '匿名用户'
+              const commentAuthorInitial = commentAuthorName.slice(0, 1).toUpperCase()
+              return (
+              <article key={comment.commentId} className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span className="inline-flex items-center gap-2">
                     <BackendAssetImage
-                      className="community-inline-avatar"
+                      className="h-8 w-8 object-cover"
                       assetUrl={comment.authorAvatarUrl}
-                      alt={comment.authorDisplayName}
-                      fallbackContent={comment.authorDisplayName.slice(0, 1).toUpperCase()}
+                      alt={commentAuthorName}
+                      fallbackContent={commentAuthorInitial}
                     />
-                    <strong>{comment.authorDisplayName}</strong>
+                    <strong>{commentAuthorName}</strong>
                   </span>
                   <span>{formatIsoDateTime(comment.createdAt, translate('booking.notYet'))}</span>
                 </div>
                 <p>{comment.content}</p>
-                <div className="action-row">
-                  {comment.isMyComment ? <span className="tag-chip">{translate('blog.myComment')}</span> : null}
+                <div className="flex flex-wrap items-center gap-3">
+                  {comment.isMyComment ? <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{translate('blog.myComment')}</span> : null}
                   {comment.canDelete ? (
                     <button
                       type="button"
-                      className="secondary-button"
+                      className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                       disabled={isBusy}
                       onClick={() => void onDeleteComment(comment.commentId)}
                     >
@@ -136,13 +146,14 @@ export function BlogDetail({
                   ) : null}
                 </div>
               </article>
-            ))}
+              )
+            })}
           </div>
         ) : null}
 
         {!isGuestMode ? (
           <form
-            className="stack-form community-comment-form"
+            className="grid gap-4 grid gap-4"
             onSubmit={async event => {
               event.preventDefault()
               await onComment(commentDraft)
@@ -153,7 +164,7 @@ export function BlogDetail({
               {translate('blog.addComment')}
               <textarea value={commentDraft} onChange={event => setCommentDraft(event.target.value)} disabled={isBusy} rows={3} />
             </label>
-            <button type="submit" disabled={isBusy}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
               {translate('blog.submitComment')}
             </button>
           </form>

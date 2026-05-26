@@ -9,7 +9,7 @@ type AttractionTypeSelectorProps = {
 
 export function AttractionTypeSelector({ value, translate, onChange }: AttractionTypeSelectorProps) {
   return (
-    <label className="resource-search-label resource-inline-field">
+    <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
       <span>{translate('attractions.attractionType')}</span>
       <select value={value} onChange={event => onChange(event.target.value as AttractionTypePreference)}>
         {attractionTypeOptions.map(option => (

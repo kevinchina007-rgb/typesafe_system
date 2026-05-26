@@ -1,4 +1,4 @@
-import type { FlightItemDetailsResponse } from './FlightItemDetailsResponse'
+﻿import type { FlightItemDetailsResponse } from './FlightItemDetailsResponse'
 import type { HotelItemDetailsResponse } from './HotelItemDetailsResponse'
 import type { TrainItemDetailsResponse } from './TrainItemDetailsResponse'
 import type { AttractionItemDetailsResponse } from './AttractionItemDetailsResponse'
@@ -18,3 +18,8 @@ export type OrderLineItemResponse = {
   trainDetails: TrainItemDetailsResponse | null
   attractionDetails: AttractionItemDetailsResponse | null
 }
+export const orderLineItemResponseFromJson = (json: string): OrderLineItemResponse =>
+  JSON.parse(json) as OrderLineItemResponse
+
+export const orderLineItemResponseToJson = (value: OrderLineItemResponse): string =>
+  JSON.stringify(value)

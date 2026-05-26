@@ -1,4 +1,4 @@
-export type UserResponse = {
+﻿export type UserResponse = {
   userId: string
   email: string
   nickname: string
@@ -10,3 +10,8 @@ export type UserResponse = {
   defaultTravelerProfileId: string | null
   createdAt: string
 }
+export const userResponseFromJson = (json: string): UserResponse =>
+  JSON.parse(json) as UserResponse
+
+export const userResponseToJson = (value: UserResponse): string =>
+  JSON.stringify(value)

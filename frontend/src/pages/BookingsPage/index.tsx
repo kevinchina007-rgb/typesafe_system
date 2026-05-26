@@ -1,16 +1,16 @@
-import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { createReviewFeedbackThread, setActiveFeedbackMiniThread, setPendingFeedbackReviewDraft } from '@/app/stores/feedback-chat-store'
-import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
+import { ensureOrderCancellationThread, setActiveFeedbackMiniThread } from '@/app/stores/feedback-chat-store'
+import type { AppLanguage, AppViewKey, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { OrderPanel } from '@/pages/BookingsPage/components/OrderPanel'
 import { PaymentModal } from '@/pages/BookingsPage/components/PaymentModal'
-import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { AppLanguage, AppViewKey, OrderResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
-import { usePageActions } from '@/pages/shared/usePageActions'
+import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
+import { usePageActions, type PageNoticeHandler } from '@/pages/shared/usePageActions'
 
 type BookingsPageProps = {
   currentLanguage: AppLanguage
+  orderCategory: Extract<AppViewKey, 'flightOrders' | 'hotelOrders' | 'trainOrders' | 'attractionOrders'>
   isSessionReady: boolean
   signedInUser: UserResponse | null
   translate: (translationKey: string) => string
@@ -20,6 +20,7 @@ type BookingsPageProps = {
 
 export function BookingsPage({
   currentLanguage,
+  orderCategory,
   isSessionReady,
   signedInUser,
   translate,
@@ -77,6 +78,7 @@ export function BookingsPage({
     <>
       <OrderPanel
         currentLanguage={currentLanguage}
+        orderCategory={orderCategory}
         isBusy={isBusy}
         isGuestMode={isSessionReady && signedInUser === null}
         orders={orders}
@@ -115,59 +117,29 @@ export function BookingsPage({
             await reloadReviews()
           }, translate('reviews.delete'), translate('notice.actionSuccess'))
         }}
-        onOpenFeedbackForReview={async reviewId => {
-          const thread = await createReviewFeedbackThread(reviewId)
-          setActiveFeedbackMiniThread(thread)
-          onNavigate('customerFeedback')
-        }}
-        onStartReviewInFeedback={async payload => {
+        onOpenOrderCancellationFeedback={async orderId => {
           const nextSignedInUser = requireSignedInUser()
-          const eligibility = await travelMvpApiClient.getReviewEligibility({
-            userId: nextSignedInUser.userId,
-            orderItemId: payload.orderItemId,
-          })
-
-          if (!eligibility.canReview) {
-            if (eligibility.alreadyReviewed) {
-              const reviewListResponse = await travelMvpApiClient.listMyReviews(nextSignedInUser.userId)
-              const existingReview = reviewListResponse.reviews.find(review => review.orderItemId === payload.orderItemId)
-              if (existingReview) {
-                const thread = await createReviewFeedbackThread(existingReview.reviewId)
-                setActiveFeedbackMiniThread(thread)
-                setPendingFeedbackReviewDraft(null)
-                await reloadReviews()
-                onNavigate('customerFeedback')
-                return
-              }
-            }
-
-            throw new Error(eligibility.reason ?? translate('reviews.notEligible'))
-          }
-
-          setPendingFeedbackReviewDraft({
-            orderId: payload.orderId,
-            orderItemId: payload.orderItemId,
-            title: payload.title,
-            eligibility,
-          })
+          const thread = await ensureOrderCancellationThread({ userId: nextSignedInUser.userId, orderId })
           onNavigate('customerFeedback')
+          setActiveFeedbackMiniThread(thread)
         }}
       />
 
       <PaymentModal
         isOpen={pendingPaymentOrder !== null}
         order={pendingPaymentOrder}
+        travelers={travelers}
         isBusy={isBusy}
-        translate={translate}
         onClose={() => setPendingPaymentOrder(null)}
         onCreatePaymentLink={payload =>
-          travelMvpApiClient.createPaymentLink(payload.orderId, payload.paymentMethod, currentLanguage)
+          travelMvpApiClient.createPaymentLink(payload.orderId, requireSignedInUser().userId, payload.paymentMethod, currentLanguage)
         }
         onConfirmPayment={async payload => {
           await runPageAction(async () => {
             await travelMvpApiClient.payOrder(payload.orderId, {
               paymentMethod: payload.paymentMethod,
               paymentSucceeded: true,
+              travelerIds: payload.travelerIds,
             })
             await reloadOrders()
             setPendingPaymentOrder(null)

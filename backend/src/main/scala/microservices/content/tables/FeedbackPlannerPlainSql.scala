@@ -4,10 +4,21 @@ import cats.effect.IO
 import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.persistence.PlainSqlSupport
 import com.typesafe.travel.shared.kernel.*
+import io.circe.parser.decode
+import io.circe.syntax.*
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
-import java.util.UUID
+
+final case class FeedbackOrderCancellationSummary(
+    orderId: String,
+    buyerUserId: String,
+    orderItemId: Option[String],
+    airlineName: Option[String],
+    airlineCode: Option[String],
+    orderTitle: Option[String],
+    requestedRefundAmount: Option[BigDecimal]
+)
 
 object FeedbackPlannerPlainSql:
   private val selectThreadSql =
@@ -19,104 +30,177 @@ object FeedbackPlannerPlainSql:
       from feedback_threads
     """
 
-  def list(connection: Connection, input: ListFeedbackThreadsPlannerRequest): IO[FeedbackThreadListPlannerResponse] =
+  def listAll(connection: Connection): IO[List[FeedbackThread]] =
     IO.blocking {
-      val (where, values) =
-        input.userId.map(userId => " where owner_user_id = ?" -> List(userId))
-          .orElse(input.managerType.map(managerType => " where kind = ? and manager_type = ?" -> List(FeedbackThreadKind.ServiceReview.toString, managerType)))
-          .orElse(input.channel.map(channel => " where kind = ?" -> List(if channel.trim.equalsIgnoreCase("manager") then FeedbackThreadKind.ManagerEscalation.toString else FeedbackThreadKind.ServiceReview.toString)))
-          .getOrElse("" -> Nil)
-      val threads = queryThreads(connection, selectThreadSql + where + " order by updated_at desc", values)
-      FeedbackThreadListPlannerResponse(threads.map(thread => FeedbackThreadDetailsPlannerResponse(thread, listMessagesUnsafe(connection, thread.threadId))))
+      queryThreads(connection, selectThreadSql + " order by updated_at desc", Nil)
     }
 
-  def ensureReviewThread(connection: Connection, input: EnsureReviewFeedbackThreadPlannerRequest, now: Instant): IO[FeedbackThreadDetailsPlannerResponse] =
+  def listByOwnerUserId(connection: Connection, userId: String): IO[List[FeedbackThread]] =
     IO.blocking {
-      val existing = queryThreads(connection, selectThreadSql + " where review_id = ? order by updated_at desc", List(input.reviewId)).headOption
-      val thread = existing.getOrElse {
-        val created = FeedbackThread(
-          threadId = SupportTicketId(s"support-thread-${UUID.randomUUID().toString.take(12)}"),
-          kind = FeedbackThreadKind.ServiceReview,
-          managerType = FeedbackManagerType.SiteAdmin,
-          ownerUserId = Some(UserId(input.userId)),
-          ownerUserDisplayName = input.userId,
-          title = s"Review feedback ${input.reviewId}",
-          subtitle = "Review feedback",
-          resourceType = "review",
-          resourceSummaryTitle = input.reviewId,
-          orderId = None,
-          orderItemId = None,
-          reviewId = Some(ReviewId(input.reviewId)),
-          relatedThreadId = None,
-          unreadByUser = 0,
-          unreadByManager = 0,
-          unreadBySiteAdmin = 1,
-          createdAt = now,
-          updatedAt = now
-        )
-        saveThreadUnsafe(connection, created)
-        created
+      queryThreads(connection, selectThreadSql + " where owner_user_id = ? order by updated_at desc", List(userId))
+    }
+
+  def listServiceReviewsByManagerType(connection: Connection, managerType: String): IO[List[FeedbackThread]] =
+    IO.blocking {
+      queryThreads(connection, selectThreadSql + " where kind = ? and manager_type = ? order by updated_at desc", List(FeedbackThreadKind.ServiceReview.toString, managerType))
+    }
+
+  def listByKind(connection: Connection, kind: FeedbackThreadKind): IO[List[FeedbackThread]] =
+    IO.blocking {
+      queryThreads(connection, selectThreadSql + " where kind = ? order by updated_at desc", List(kind.toString))
+    }
+
+  def findByReviewId(connection: Connection, reviewId: ReviewId): IO[Option[FeedbackThread]] =
+    IO.blocking {
+      queryThreads(connection, selectThreadSql + " where review_id = ? order by updated_at desc", List(reviewId.value)).headOption
+    }
+
+  def findByThreadId(connection: Connection, threadId: SupportTicketId): IO[Option[FeedbackThread]] =
+    IO.blocking {
+      queryThreads(connection, selectThreadSql + " where thread_id = ?", List(threadId.value)).headOption
+    }
+
+  def findByOwnerAndResource(connection: Connection, userId: String, resourceType: String, resourceSummaryTitle: String): IO[Option[FeedbackThread]] =
+    IO.blocking {
+      queryThreads(
+        connection,
+        selectThreadSql + " where owner_user_id = ? and resource_type = ? and resource_summary_title = ? order by updated_at desc",
+        List(userId, resourceType, resourceSummaryTitle)
+      ).headOption
+    }
+
+  def listMessages(connection: Connection, threadId: SupportTicketId): IO[List[FeedbackMessage]] =
+    IO.blocking {
+      listMessagesUnsafe(connection, threadId)
+    }
+
+  def findMessage(connection: Connection, threadId: SupportTicketId, messageId: SupportMessageId): IO[Option[FeedbackMessage]] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          select message_id, thread_id, sender_role, sender_display_name, body, sent_at,
+                 coalesce(message_type, 'text') as message_type,
+                 payload_json,
+                 coalesce(is_read, false) as is_read
+          from feedback_messages
+          where thread_id = ? and message_id = ?
+        """
+      ) { statement =>
+        statement.setString(1, threadId.value)
+        statement.setString(2, messageId.value)
+        PlainSqlSupport.queryOptional(statement)(readMessage)
       }
-      FeedbackThreadDetailsPlannerResponse(thread, listMessagesUnsafe(connection, thread.threadId))
     }
 
-  def sendMessage(connection: Connection, input: SendFeedbackMessagePlannerRequest, now: Instant): IO[FeedbackThreadDetailsPlannerResponse] =
+  def insertMessage(connection: Connection, message: FeedbackMessage): IO[Unit] =
     IO.blocking {
-      val thread = findThreadUnsafe(connection, SupportTicketId(input.threadId))
-      val message = FeedbackMessage(
-        SupportMessageId(s"support-message-${UUID.randomUUID().toString.take(12)}"),
-        thread.threadId,
-        FeedbackSenderRole.fromText(input.senderRole),
-        input.senderDisplayName.trim,
-        input.body.trim,
-        now
-      )
-      PlainSqlSupport.withStatement(connection, "insert into feedback_messages(message_id, thread_id, sender_role, sender_display_name, body, sent_at) values (?, ?, ?, ?, ?, ?)") { statement =>
+      PlainSqlSupport.withStatement(
+        connection,
+        "insert into feedback_messages(message_id, thread_id, sender_role, sender_display_name, body, sent_at, message_type, payload_json, is_read) values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      ) { statement =>
         statement.setString(1, message.messageId.value)
         statement.setString(2, message.threadId.value)
         statement.setString(3, message.senderRole.toString)
         statement.setString(4, message.senderDisplayName)
-        statement.setString(5, message.body)
-        statement.setTimestamp(6, Timestamp.from(now))
+        statement.setString(5, message.content)
+        statement.setTimestamp(6, Timestamp.from(message.createdAt))
+        statement.setString(7, message.messageType.toString)
+        statement.setString(8, message.payload.map(_.asJson.noSpaces).orNull)
+        statement.setBoolean(9, message.isRead)
         statement.executeUpdate()
       }
-      val updated = message.senderRole match
-        case FeedbackSenderRole.User => thread.copy(unreadByManager = thread.unreadByManager + 1, unreadBySiteAdmin = thread.unreadBySiteAdmin + 1, updatedAt = now)
-        case FeedbackSenderRole.Manager => thread.copy(unreadByUser = thread.unreadByUser + 1, unreadBySiteAdmin = thread.unreadBySiteAdmin + 1, updatedAt = now)
-        case _ => thread.copy(unreadByUser = thread.unreadByUser + 1, unreadByManager = thread.unreadByManager + 1, updatedAt = now)
-      saveThreadUnsafe(connection, updated)
-      FeedbackThreadDetailsPlannerResponse(updated, listMessagesUnsafe(connection, updated.threadId))
+      ()
     }
 
-  def markRead(connection: Connection, input: MarkFeedbackThreadReadPlannerRequest): IO[FeedbackThreadDetailsPlannerResponse] =
+  def updateMessagePayload(connection: Connection, message: FeedbackMessage): IO[Unit] =
     IO.blocking {
-      val thread = findThreadUnsafe(connection, SupportTicketId(input.threadId))
-      val updated = FeedbackSenderRole.fromText(input.audience) match
-        case FeedbackSenderRole.Manager => thread.copy(unreadByManager = 0)
-        case FeedbackSenderRole.SiteAdmin => thread.copy(unreadBySiteAdmin = 0)
-        case _ => thread.copy(unreadByUser = 0)
-      saveThreadUnsafe(connection, updated)
-      FeedbackThreadDetailsPlannerResponse(updated, listMessagesUnsafe(connection, updated.threadId))
+      PlainSqlSupport.withStatement(connection, "update feedback_messages set payload_json = ?, body = ?, message_type = ?, is_read = ? where thread_id = ? and message_id = ?") { statement =>
+        statement.setString(1, message.payload.map(_.asJson.noSpaces).orNull)
+        statement.setString(2, message.content)
+        statement.setString(3, message.messageType.toString)
+        statement.setBoolean(4, message.isRead)
+        statement.setString(5, message.threadId.value)
+        statement.setString(6, message.messageId.value)
+        statement.executeUpdate()
+      }
+      ()
     }
 
-  def escalate(connection: Connection, input: EscalateFeedbackThreadPlannerRequest, now: Instant): IO[FeedbackThreadDetailsPlannerResponse] =
+  def markOrderRefunded(connection: Connection, orderId: String, now: Instant): IO[Unit] =
     IO.blocking {
-      val source = findThreadUnsafe(connection, SupportTicketId(input.threadId))
-      val escalated = source.copy(
-        threadId = SupportTicketId(s"support-thread-${UUID.randomUUID().toString.take(12)}"),
-        kind = FeedbackThreadKind.ManagerEscalation,
-        relatedThreadId = Some(source.threadId),
-        title = s"Escalated: ${source.title}",
-        unreadBySiteAdmin = 1,
-        createdAt = now,
-        updatedAt = now
-      )
-      saveThreadUnsafe(connection, escalated)
-      FeedbackThreadDetailsPlannerResponse(escalated, List.empty)
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          update orders
+          set status = ?, remaining_refundable_amount = 0, completed_at = coalesce(completed_at, ?)
+          where order_id = ?
+        """
+      ) { statement =>
+        statement.setString(1, "Refunded")
+        statement.setTimestamp(2, Timestamp.from(now))
+        statement.setString(3, orderId)
+        statement.executeUpdate()
+      }
+      PlainSqlSupport.withStatement(connection, "update order_line_items set item_status = ? where order_id = ?") { statement =>
+        statement.setString(1, "Refunded")
+        statement.setString(2, orderId)
+        statement.executeUpdate()
+      }
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          update order_refunds
+          set refund_status = ?, approved_at = coalesce(approved_at, ?), settled_at = coalesce(settled_at, ?)
+          where order_id = ? and refund_status in (?, ?)
+        """
+      ) { statement =>
+        statement.setString(1, "Settled")
+        statement.setTimestamp(2, Timestamp.from(now))
+        statement.setTimestamp(3, Timestamp.from(now))
+        statement.setString(4, orderId)
+        statement.setString(5, "Requested")
+        statement.setString(6, "Approved")
+        statement.executeUpdate()
+      }
+      ()
     }
 
-  private def findThreadUnsafe(connection: Connection, threadId: SupportTicketId): FeedbackThread =
-    queryThreads(connection, selectThreadSql + " where thread_id = ?", List(threadId.value)).headOption.getOrElse(throw FeedbackError.ThreadWasNotFound(threadId))
+  def saveThread(connection: Connection, thread: FeedbackThread): IO[Unit] =
+    IO.blocking {
+      saveThreadUnsafe(connection, thread)
+    }
+
+  def findOrderCancellationSummary(connection: Connection, orderId: String): IO[Option[FeedbackOrderCancellationSummary]] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          select o.order_id, o.buyer_user_id, o.remaining_refundable_amount,
+                 li.order_item_id, li.snapshot_json, li.item_kind
+          from orders o
+          left join order_line_items li on li.order_id = o.order_id
+          where o.order_id = ?
+          order by li.sort_index
+          limit 1
+        """
+      ) { statement =>
+        statement.setString(1, orderId)
+        PlainSqlSupport.queryOptional(statement) { resultSet =>
+          val snapshotJson = Option(resultSet.getString("snapshot_json"))
+          val snapshotTitle = snapshotJson.flatMap(extractOrderTitle)
+          FeedbackOrderCancellationSummary(
+            orderId = resultSet.getString("order_id"),
+            buyerUserId = resultSet.getString("buyer_user_id"),
+            orderItemId = Option(resultSet.getString("order_item_id")),
+            airlineName = snapshotJson.flatMap(extractStringField(_, "airlineName")),
+            airlineCode = snapshotJson.flatMap(extractStringField(_, "airlineCode")),
+            orderTitle = snapshotTitle.orElse(Option(resultSet.getString("item_kind"))),
+            requestedRefundAmount = Option(resultSet.getBigDecimal("remaining_refundable_amount")).map(BigDecimal.apply)
+          )
+        }
+      }
+    }
 
   private def queryThreads(connection: Connection, sql: String, values: List[String]): List[FeedbackThread] =
     PlainSqlSupport.withStatement(connection, sql) { statement =>
@@ -125,18 +209,20 @@ object FeedbackPlannerPlainSql:
     }
 
   private def listMessagesUnsafe(connection: Connection, threadId: SupportTicketId): List[FeedbackMessage] =
-    PlainSqlSupport.withStatement(connection, "select message_id, thread_id, sender_role, sender_display_name, body, sent_at from feedback_messages where thread_id = ? order by sent_at asc") { statement =>
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select message_id, thread_id, sender_role, sender_display_name, body, sent_at,
+               coalesce(message_type, 'text') as message_type,
+               payload_json,
+               coalesce(is_read, false) as is_read
+        from feedback_messages
+        where thread_id = ?
+        order by sent_at asc
+      """
+    ) { statement =>
       statement.setString(1, threadId.value)
-      PlainSqlSupport.queryList(statement) { resultSet =>
-        FeedbackMessage(
-          SupportMessageId(resultSet.getString("message_id")),
-          SupportTicketId(resultSet.getString("thread_id")),
-          FeedbackSenderRole.fromText(resultSet.getString("sender_role")),
-          resultSet.getString("sender_display_name"),
-          resultSet.getString("body"),
-          resultSet.getTimestamp("sent_at").toInstant
-        )
-      }
+      PlainSqlSupport.queryList(statement)(readMessage)
     }
 
   private def saveThreadUnsafe(connection: Connection, thread: FeedbackThread): Unit =
@@ -212,3 +298,35 @@ object FeedbackPlannerPlainSql:
       resultSet.getTimestamp("created_at").toInstant,
       resultSet.getTimestamp("updated_at").toInstant
     )
+
+  private def readMessage(resultSet: ResultSet): FeedbackMessage =
+    val messageId = SupportMessageId(resultSet.getString("message_id"))
+    val threadId = SupportTicketId(resultSet.getString("thread_id"))
+    val senderDisplayName = resultSet.getString("sender_display_name")
+    FeedbackMessage(
+      messageId = messageId,
+      threadId = threadId,
+      senderId = senderDisplayName,
+      senderRole = FeedbackSenderRole.fromText(resultSet.getString("sender_role")),
+      senderDisplayName = senderDisplayName,
+      messageType = FeedbackMessageType.fromText(resultSet.getString("message_type")),
+      content = resultSet.getString("body"),
+      payload = Option(resultSet.getString("payload_json")).flatMap { json =>
+        decode[OrderCancellationRequestPayload](json).toOption
+      },
+      isRead = resultSet.getBoolean("is_read"),
+      createdAt = resultSet.getTimestamp("sent_at").toInstant
+    )
+
+  private def extractOrderTitle(snapshotJson: String): Option[String] =
+    decode[io.circe.Json](snapshotJson).toOption.flatMap { json =>
+      val cursor = json.hcursor
+      cursor.get[String]("airlineName").toOption
+        .orElse(cursor.get[String]("flightNumber").toOption)
+        .orElse(cursor.get[String]("hotelName").toOption)
+        .orElse(cursor.get[String]("trainNumber").toOption)
+        .orElse(cursor.get[String]("attractionName").toOption)
+    }
+
+  private def extractStringField(snapshotJson: String, fieldName: String): Option[String] =
+    decode[io.circe.Json](snapshotJson).toOption.flatMap(_.hcursor.get[String](fieldName).toOption).filter(_.trim.nonEmpty)

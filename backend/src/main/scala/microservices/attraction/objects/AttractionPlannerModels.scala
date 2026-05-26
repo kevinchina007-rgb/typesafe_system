@@ -28,6 +28,51 @@ object CreateAttractionPlannerRequest:
   given sourceEncoder: Encoder[CreateAttractionPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[CreateAttractionPlannerRequest] = deriveDecoder
 
+final case class CreateAttractionTicketTypePlannerRequest(
+    managerId: String,
+    attractionId: String,
+    ticketTypeName: String,
+    description: String,
+    unitPrice: String,
+    currency: String,
+    availableFromDate: String,
+    availableToDate: String,
+    totalQuantity: Int,
+    validWeekdays: List[String]
+)
+object CreateAttractionTicketTypePlannerRequest:
+  given sourceEncoder: Encoder[CreateAttractionTicketTypePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateAttractionTicketTypePlannerRequest] = deriveDecoder
+
+final case class CreateAttractionTicketSessionPlannerRequest(
+    managerId: String,
+    attractionId: String,
+    ticketTypeId: String,
+    sessionName: String,
+    useDate: String,
+    startsAt: String,
+    endsAt: String,
+    capacity: Int
+)
+object CreateAttractionTicketSessionPlannerRequest:
+  given sourceEncoder: Encoder[CreateAttractionTicketSessionPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateAttractionTicketSessionPlannerRequest] = deriveDecoder
+
+final case class CreateAttractionTicketRulePlannerRequest(
+    managerId: String,
+    attractionId: String,
+    ticketTypeId: String,
+    ruleType: String,
+    ageValue: Option[Int],
+    minAge: Option[Int],
+    maxAge: Option[Int],
+    documentType: Option[String],
+    documentNumberPrefix: Option[String]
+)
+object CreateAttractionTicketRulePlannerRequest:
+  given sourceEncoder: Encoder[CreateAttractionTicketRulePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateAttractionTicketRulePlannerRequest] = deriveDecoder
+
 final case class AttractionListPlannerResponse(attractions: List[Attraction])
 object AttractionListPlannerResponse:
   import AttractionSourceJsonCodecs.given

@@ -1,4 +1,4 @@
-export type GroupPlanOptionResponse = {
+﻿export type GroupPlanOptionResponse = {
   optionId: string
   planItemId: string
   resourceType: string
@@ -10,3 +10,8 @@ export type GroupPlanOptionResponse = {
   defaultQuantity: number
   status: string
 }
+export const groupPlanOptionResponseFromJson = (json: string): GroupPlanOptionResponse =>
+  JSON.parse(json) as GroupPlanOptionResponse
+
+export const groupPlanOptionResponseToJson = (value: GroupPlanOptionResponse): string =>
+  JSON.stringify(value)

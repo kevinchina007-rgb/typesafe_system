@@ -6,4 +6,4 @@ import type { AdvertisementReviewDecisionRequest } from '@/microservices/adverti
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const rejectAdvertisement = (advertisementId: string, payload: AdvertisementReviewDecisionRequest): Promise<AdvertisementResponse> =>
-    executeJsonApiRequest(`/advertisements/${advertisementId}/reject`, 'POST', payload)
+  executeJsonApiRequest('/RejectAdvertisementPlanner', 'POST', { ...payload, advertisementId })

@@ -5,12 +5,16 @@ export type { ExploreSearchResultResponse } from '@/microservices/common/objects
 export type { SearchSuggestionListResponse } from '@/microservices/common/objects/SearchSuggestionListResponse'
 export type { SearchSuggestionResponse } from '@/microservices/common/objects/SearchSuggestionResponse'
 
-export type AppLanguage = 'en' | 'zh'
+export type AppLanguage = 'zh'
 
 export type AppViewKey =
   | 'overview'
   | 'smartPlanner'
   | 'orders'
+  | 'flightOrders'
+  | 'hotelOrders'
+  | 'trainOrders'
+  | 'attractionOrders'
   | 'blog'
   | 'reviews'
   | 'customerFeedback'
@@ -25,7 +29,10 @@ export type AppViewKey =
   | 'bookings'
   | 'manager'
   | 'managerWorkspace'
+  | 'managerCreateFlight'
+  | 'managerFlightManagement'
   | 'managerFeedback'
+  | 'managerProfile'
   | 'managerAdvertising'
   | 'siteAdminBlogAudit'
   | 'siteAdminAdvertisingReview'

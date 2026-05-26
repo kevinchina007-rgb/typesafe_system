@@ -8,7 +8,7 @@ type SmartTripPlannerPageProps = {
 
 export function SmartTripPlannerPage({ translate, onSelectView }: SmartTripPlannerPageProps) {
   return (
-    <div className="page-stack">
+    <div className="grid gap-5">
       <AppCard>
         <SectionHeader
           eyebrow={translate('nav.section.workspace')}
@@ -26,7 +26,7 @@ export function SmartTripPlannerPage({ translate, onSelectView }: SmartTripPlann
           }
         />
 
-        <div className="three-column-grid">
+        <div className="grid gap-4 md:grid-cols-3">
           <StatCard label={translate('smartPlanner.todo.signal')} value="01" detail={translate('smartPlanner.todo.signalDescription')} />
           <StatCard label={translate('smartPlanner.todo.bundle')} value="02" detail={translate('smartPlanner.todo.bundleDescription')} />
           <StatCard label={translate('smartPlanner.todo.timeline')} value="03" detail={translate('smartPlanner.todo.timelineDescription')} />
@@ -35,7 +35,6 @@ export function SmartTripPlannerPage({ translate, onSelectView }: SmartTripPlann
 
       <SearchPanel
         label={translate('search.global.label')}
-        placeholder={translate('search.global.placeholder')}
         actions={
           <>
             <SecondaryButton type="button" onClick={() => onSelectView('hotels')}>

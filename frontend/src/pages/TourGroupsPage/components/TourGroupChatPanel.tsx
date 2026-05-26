@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { AppLanguage, TourGroupChatSettingsResponse, TourGroupConversationListResponse, TourGroupConversationSummaryResponse, TourGroupMembershipResponse, TourGroupMessageResponse, TourGroupMessageSearchResultResponse, TourGroupUploadedAttachmentResponse, UserResponse } from '@/lib/mvp-types/index'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
@@ -43,7 +43,6 @@ const quickReactions = ['👍', '❤️', '👀', '✅']
 
 export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
   const {
-    currentLanguage,
     groupId,
     organizerUserId,
     memberships,
@@ -158,9 +157,9 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
     }
 
     element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    element.classList.add('chat-message-card-highlight')
+    element.classList.add('border-sky-400 bg-sky-50')
     const timeoutId = window.setTimeout(() => {
-      element.classList.remove('chat-message-card-highlight')
+      element.classList.remove('border-sky-400 bg-sky-50')
       setTargetMessageId(current => (current == targetMessageId ? null : current))
     }, 2200)
 
@@ -221,10 +220,10 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
   }
 
   return (
-    <section className="list-surface">
-      <div className="panel-heading">
+    <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('tourGroups.chatEyebrow')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('tourGroups.chatEyebrow')}</p>
           <h3>{translate('tourGroups.chatTitle')}</h3>
         </div>
         {isOrganizer && chatSettings ? (
@@ -246,13 +245,13 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
         ) : null}
       </div>
 
-      <div className="tour-group-chat-shell">
-        <aside className="tour-group-direct-sidebar">
-          <div className="stack-form">
+      <div className="grid gap-4 xl:grid-cols-[18rem_1fr]">
+        <aside className="grid gap-4 border border-slate-200 bg-white p-4">
+          <div className="grid gap-4">
             <label>{translate('tourGroups.searchConversations')}</label>
-            <div className="inline-form">
+            <div className="grid gap-4 md:grid-cols-2">
               <input value={conversationQuery} onChange={event => setConversationQuery(event.target.value)} />
-              <button
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                 type="button"
                 disabled={isBusy || !conversationQuery.trim()}
                 onClick={async () => setConversationSearchResults(await onSearchConversations(groupId, conversationQuery))}
@@ -261,9 +260,9 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
               </button>
             </div>
             <label>{translate('tourGroups.searchMessages')}</label>
-            <div className="inline-form">
+            <div className="grid gap-4 md:grid-cols-2">
               <input value={messageQuery} onChange={event => setMessageQuery(event.target.value)} />
-              <button
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                 type="button"
                 disabled={isBusy || !messageQuery.trim()}
                 onClick={async () => setMessageSearchResults(await onSearchMessages(groupId, messageQuery))}
@@ -273,7 +272,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
             </div>
           </div>
 
-          <div className="stack-form">
+          <div className="grid gap-4">
             <label>{translate('tourGroups.startChatWith')}</label>
             <select value={directTargetUserId} onChange={event => setDirectTargetUserId(event.target.value)}>
               <option value="">{translate('tourGroups.selectMemberToChat')}</option>
@@ -283,7 +282,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                 </option>
               ))}
             </select>
-            <button
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
               type="button"
               disabled={isBusy || !directTargetUserId}
               onClick={async () => {
@@ -305,9 +304,9 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
           </div>
 
           {conversationSearchResults.length > 0 ? (
-            <div className="tour-group-direct-list">
+            <div className="grid gap-2">
               {conversationSearchResults.map(conversation => (
-                <button key={conversation.conversationId} type="button" onClick={() => setActiveConversationId(conversation.conversationId)}>
+                <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" key={conversation.conversationId} type="button" onClick={() => setActiveConversationId(conversation.conversationId)}>
                   <strong>{localizeConversationTitle(conversation.conversationTitle, conversation.conversationType)}</strong>
                   <span>{conversation.lastMessagePreview ?? translate('tourGroups.noMessagesYet')}</span>
                 </button>
@@ -315,12 +314,12 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
             </div>
           ) : null}
 
-          <div className="tour-group-direct-list">
+          <div className="grid gap-2">
             {conversationList?.conversations.map(conversation => (
               <button
                 key={conversation.conversationId}
                 type="button"
-                className={conversation.conversationId === activeConversationId ? 'secondary-button' : undefined}
+                className={conversation.conversationId === activeConversationId ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
                 onClick={() => setActiveConversationId(conversation.conversationId)}
               >
                 <strong>{localizeConversationTitle(conversation.conversationTitle, conversation.conversationType)}</strong>
@@ -331,17 +330,17 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
           </div>
         </aside>
 
-        <div className="tour-group-chat-thread">
+        <div className="grid gap-4">
           {activeConversation ? (
             <>
-              <div className="panel-heading">
+              <div className="text-lg font-bold text-slate-950">
                 <div>
                   <h4>{localizeConversationTitle(activeConversation.conversationTitle, activeConversation.conversationType)}</h4>
                   <p>{activeConversationParticipantsSummary}</p>
                 </div>
                 {activeConversation.conversationType === 'Direct' ? (
-                  <div className="manager-task-actions">
-                    <button type="button" className="secondary-button" onClick={async () => {
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={async () => {
                       const nextSummary = await onUpdateMuteState(activeConversation.conversationId, !activeConversation.isMuted)
                       setConversationList(current => current ? ({
                         ...current,
@@ -350,7 +349,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                     }}>
                       {activeConversation.isMuted ? translate('tourGroups.unmuteConversation') : translate('tourGroups.muteConversation')}
                     </button>
-                    <button type="button" className="secondary-button" onClick={async () => {
+                    <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={async () => {
                       const nextSummary = await onUpdateArchiveState(activeConversation.conversationId, !activeConversation.isArchived)
                       setConversationList(current => current ? ({
                         ...current,
@@ -364,12 +363,12 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
               </div>
 
               {messageSearchResults.length > 0 ? (
-                <div className="list-surface">
+                <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
               {messageSearchResults.map(result => (
                     <button
                       key={result.message.messageId}
                       type="button"
-                      className={result.message.messageId === targetMessageId ? 'secondary-button chat-search-result-active' : 'secondary-button'}
+                      className={result.message.messageId === targetMessageId ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55 border-black bg-black text-white' : 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55'}
                       onClick={() => {
                         setTargetMessageId(result.message.messageId)
                         if (activeConversationId !== result.conversationId) {
@@ -383,52 +382,52 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                 </div>
               ) : null}
 
-              <div className="tour-group-chat-messages">
+              <div className="grid max-h-[32rem] gap-3 overflow-auto border border-slate-200 bg-white p-4">
                 {messages.map(message => (
                   <article
                     key={message.messageId}
                     id={`tour-group-message-${message.messageId}`}
-                    className={message.isMine ? 'chat-message-card mine' : 'chat-message-card'}
+                    className={message.isMine ? 'grid gap-2 border border-slate-200 bg-white p-3 justify-self-end bg-sky-50' : 'grid gap-2 border border-slate-200 bg-white p-3'}
                   >
-                    <div className="chat-message-meta">
+                    <div className="text-xs text-slate-500">
                       <strong>{message.senderDisplayName}</strong>
-                      <span>{new Date(message.createdAt).toLocaleString(currentLanguage === 'zh' ? 'zh-CN' : 'en-US')}</span>
+                      <span>{new Date(message.createdAt).toLocaleString('zh-CN')}</span>
                     </div>
-                    {message.replyToPreview ? <p className="detail-label">{translate('tourGroups.replyingTo')}: {message.replyToPreview}</p> : null}
-                    {message.content ? <p className="chat-message-content">{message.content}</p> : null}
+                    {message.replyToPreview ? <p className="text-sm font-medium text-slate-500">{translate('tourGroups.replyingTo')}: {message.replyToPreview}</p> : null}
+                    {message.content ? <p className="text-sm leading-6 text-slate-700">{message.content}</p> : null}
                     {message.attachments.length > 0 ? (
-                      <div className="content-image-gallery">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         {message.attachments.map(attachment => (
                           attachment.attachmentType === 'Image' ? (
-                            <figure key={attachment.attachmentId} className="content-image-card">
-                              <BackendAssetImage assetUrl={attachment.publicUrl} alt={attachment.originalFileName} className="content-image" />
+                            <figure key={attachment.attachmentId} className="grid gap-2 border border-slate-200 bg-white p-2">
+                              <BackendAssetImage assetUrl={attachment.publicUrl} alt={attachment.originalFileName} className="aspect-video w-full object-cover" />
                             </figure>
                           ) : (
-                            <a key={attachment.attachmentId} href={toBackendAssetUrl(attachment.publicUrl)} target="_blank" rel="noreferrer" className="secondary-button">
+                            <a key={attachment.attachmentId} href={toBackendAssetUrl(attachment.publicUrl)} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55">
                               {attachment.originalFileName}
                             </a>
                           )
                         ))}
                       </div>
                     ) : null}
-                    <div className="chat-message-actions">
-                      <button type="button" className="secondary-button" onClick={() => setReplyTarget(message)}>{translate('tourGroups.replyMessage')}</button>
-                      {message.canEdit ? <button type="button" className="secondary-button" onClick={() => {
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={() => setReplyTarget(message)}>{translate('tourGroups.replyMessage')}</button>
+                      {message.canEdit ? <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={() => {
                         setEditingMessageId(message.messageId)
                         setEditingDraft(message.content)
                       }}>{translate('tourGroups.editMessage')}</button> : null}
-                      {message.canDelete ? <button type="button" className="secondary-button" onClick={async () => setMessages(await onDeleteMessage(message.messageId))}>{translate('tourGroups.deleteMessage')}</button> : null}
-                      {message.canRecall ? <button type="button" className="secondary-button" onClick={async () => setMessages(await onRecallMessage(message.messageId))}>{translate('tourGroups.recallMessage')}</button> : null}
+                      {message.canDelete ? <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={async () => setMessages(await onDeleteMessage(message.messageId))}>{translate('tourGroups.deleteMessage')}</button> : null}
+                      {message.canRecall ? <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={async () => setMessages(await onRecallMessage(message.messageId))}>{translate('tourGroups.recallMessage')}</button> : null}
                     </div>
                     {message.canReact ? (
-                      <div className="chat-message-reactions">
+                      <div className="flex flex-wrap gap-2">
                         {quickReactions.map(reactionType => {
                           const existingReaction = message.reactions.find(reaction => reaction.reactionType === reactionType)
                           return (
                             <button
                               key={reactionType}
                               type="button"
-                              className="secondary-button"
+                              className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                               onClick={async () =>
                                 setMessages(
                                   existingReaction?.reactedByCurrentUser
@@ -448,36 +447,36 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
               </div>
 
               {editingMessageId ? (
-                <div className="stack-form">
+                <div className="grid gap-4">
                   <textarea value={editingDraft} onChange={event => setEditingDraft(event.target.value)} />
-                  <div className="manager-task-actions">
-                    <button type="button" onClick={async () => {
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" onClick={async () => {
                       setMessages(await onEditMessage(editingMessageId, { content: editingDraft }))
                       setEditingMessageId(null)
                       setEditingDraft('')
                     }}>{translate('tourGroups.saveEditedMessage')}</button>
-                    <button type="button" className="secondary-button" onClick={() => {
+                    <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={() => {
                       setEditingMessageId(null)
                       setEditingDraft('')
                     }}>{translate('tourGroups.cancelEditMessage')}</button>
                   </div>
                 </div>
               ) : (
-                <div className="stack-form">
+                <div className="grid gap-4">
                   {replyTarget ? (
-                    <div className="list-surface">
-                      <p className="detail-label">{translate('tourGroups.replyingTo')}: {replyTarget.content}</p>
-                      <button type="button" className="secondary-button" onClick={() => setReplyTarget(null)}>
+                    <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+                      <p className="text-sm font-medium text-slate-500">{translate('tourGroups.replyingTo')}: {replyTarget.content}</p>
+                      <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={() => setReplyTarget(null)}>
                         {translate('tourGroups.cancelReply')}
                       </button>
                     </div>
                   ) : null}
                   {attachments.length > 0 ? (
-                    <div className="content-image-gallery">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       {attachments.map(attachment => (
-                        <figure key={attachment.attachmentId} className="content-image-card">
+                        <figure key={attachment.attachmentId} className="grid gap-2 border border-slate-200 bg-white p-2">
                           {attachment.attachmentType === 'Image' ? (
-                            <BackendAssetImage assetUrl={attachment.publicUrl} alt={attachment.originalFileName} className="content-image" />
+                            <BackendAssetImage assetUrl={attachment.publicUrl} alt={attachment.originalFileName} className="aspect-video w-full object-cover" />
                           ) : (
                             <figcaption>{attachment.originalFileName}</figcaption>
                           )}
@@ -485,9 +484,9 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                       ))}
                     </div>
                   ) : null}
-                  <textarea value={draft} onChange={event => setDraft(event.target.value)} placeholder={translate('tourGroups.chatInputPlaceholder')} />
-                  <div className="manager-task-actions">
-                    <label className="secondary-button file-upload-button">
+                  <textarea value={draft} onChange={event => setDraft(event.target.value)} />
+                  <div className="flex flex-wrap items-center gap-3">
+                    <label className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55 inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55">
                       <input
                         type="file"
                         multiple
@@ -499,7 +498,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
                       />
                       {translate('tourGroups.attachFile')}
                     </label>
-                    <button type="button" disabled={isBusy || (!draft.trim() && attachments.length === 0) || !activeConversation?.canSendMessage} onClick={handleSendMessage}>
+                    <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy || (!draft.trim() && attachments.length === 0) || !activeConversation?.canSendMessage} onClick={handleSendMessage}>
                       {translate('tourGroups.sendMessage')}
                     </button>
                   </div>
@@ -507,7 +506,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
               )}
             </>
           ) : (
-            <p className="empty-state">{translate('tourGroups.chooseConversationHint')}</p>
+            <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.chooseConversationHint')}</p>
           )}
         </div>
       </div>

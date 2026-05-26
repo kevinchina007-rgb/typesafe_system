@@ -24,28 +24,28 @@ export function TourGroupList({
   onSelectGroup,
 }: TourGroupListProps) {
   return (
-    <section className="list-surface">
-      <div className="panel-heading">
+    <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{getTourGroupConceptLabel('group', currentLanguage)}</p>
+          <p className="text-sm font-bold text-slate-500">{getTourGroupConceptLabel('group', currentLanguage)}</p>
           <h3>{translate('tourGroups.groupList')}</h3>
         </div>
         {signedInUser ? (
-          <button type="button" disabled={isBusy} onClick={onOpenCreateDialog}>
+          <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={onOpenCreateDialog}>
             {translate('tourGroups.createGroup')}
           </button>
         ) : null}
       </div>
 
       {groups.length === 0 ? (
-        <p className="empty-state">{translate('tourGroups.empty')}</p>
+        <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.empty')}</p>
       ) : (
-        <ul className="entity-list">
+        <ul className="grid gap-3">
           {groups.map(group => (
             <li key={group.groupId}>
               <button
                 type="button"
-                className={`tour-group-list-button ${selectedGroupId === group.groupId ? 'is-active' : ''}`}
+                className={`grid w-full gap-2 border border-slate-200 bg-white p-4 text-left text-slate-950 transition hover:border-black hover:bg-black hover:text-white ${selectedGroupId === group.groupId ? 'border-black bg-black text-white' : ''}`}
                 onClick={() => onSelectGroup(group.groupId)}
               >
                 <div>
@@ -53,7 +53,7 @@ export function TourGroupList({
                   <p>{formatGroupCardSubtitle(group)}</p>
                   <p>{`${group.startDate} - ${group.endDate}`}</p>
                 </div>
-                <span className="tag-chip">{localizeTourGroupStatus(group.status, currentLanguage)}</span>
+                <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{localizeTourGroupStatus(group.status, currentLanguage)}</span>
               </button>
             </li>
           ))}

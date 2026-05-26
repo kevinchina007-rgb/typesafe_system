@@ -29,18 +29,26 @@ type BlogPanelProps = {
 }
 
 function scoreRecommended(post: BlogPostSummaryResponse) {
-  return post.likeCount * 2 + post.commentCount + (post.images.length > 0 ? 3 : 0)
+  return (post.likeCount ?? 0) * 2 + (post.commentCount ?? 0) + ((post.images ?? []).length > 0 ? 3 : 0)
 }
 
 function sortPosts(posts: BlogPostSummaryResponse[], tab: CommunityFeedTab) {
   const nextPosts = [...posts]
   if (tab === 'hot') {
-    return nextPosts.sort((left, right) => right.commentCount + right.likeCount - (left.commentCount + left.likeCount))
+    return nextPosts.sort((left, right) => (right.commentCount ?? 0) + (right.likeCount ?? 0) - ((left.commentCount ?? 0) + (left.likeCount ?? 0)))
   }
   if (tab === 'recommended') {
     return nextPosts.sort((left, right) => scoreRecommended(right) - scoreRecommended(left))
   }
-  return nextPosts.sort((left, right) => (right.publishedAt ?? right.createdAt).localeCompare(left.publishedAt ?? left.createdAt))
+  return nextPosts.sort((left, right) => (right.publishedAt ?? right.createdAt ?? '').localeCompare(left.publishedAt ?? left.createdAt ?? ''))
+}
+
+function hasPostId(post: BlogPostSummaryResponse | null | undefined): post is BlogPostSummaryResponse {
+  return typeof post?.postId === 'string' && post.postId.length > 0
+}
+
+function getDetailedPostId(post: BlogPostResponse | null | undefined) {
+  return post?.post?.postId
 }
 
 export function BlogPanel({
@@ -96,7 +104,7 @@ export function BlogPanel({
       try {
         const response = await travelMvpApiClient.listBlogSuggestions(normalizedDraft)
         if (!cancelled) {
-          setSearchSuggestions(response.suggestions)
+          setSearchSuggestions(response.suggestions ?? [])
         }
       } catch {
         if (!cancelled) {
@@ -112,18 +120,31 @@ export function BlogPanel({
   }, [searchDraft])
 
   async function reloadPosts(nextSelectedPostId?: string) {
-    const nextPosts = await onListPosts(effectiveScope, searchText)
+    const nextPosts = (await onListPosts(effectiveScope, searchText)).filter(hasPostId)
     setRawPosts(nextPosts)
     const sortedPosts = sortPosts(nextPosts, activeTab)
-    const selectedPostId = nextSelectedPostId ?? selectedPost?.post.postId ?? sortedPosts[0]?.postId
+    const selectedPostId = nextSelectedPostId ?? getDetailedPostId(selectedPost) ?? sortedPosts[0]?.postId
     if (!selectedPostId) {
       setSelectedPost(null)
       setEditingPost(null)
       return
     }
-    const detailedPost = await onLoadPost(selectedPostId)
+    let detailedPost: BlogPostResponse
+    try {
+      detailedPost = await onLoadPost(selectedPostId)
+    } catch {
+      setSelectedPost(null)
+      setEditingPost(null)
+      return
+    }
+    const detailedPostId = getDetailedPostId(detailedPost)
+    if (!detailedPostId) {
+      setSelectedPost(null)
+      setEditingPost(null)
+      return
+    }
     setSelectedPost(detailedPost)
-    setEditingPost(currentEditingPost => (currentEditingPost?.post.postId === detailedPost.post.postId ? detailedPost : currentEditingPost))
+    setEditingPost(currentEditingPost => (getDetailedPostId(currentEditingPost) === detailedPostId ? detailedPost : currentEditingPost))
   }
 
   const tabs = [
@@ -134,12 +155,11 @@ export function BlogPanel({
   ]
 
   return (
-    <section className="page-stack community-page-stack">
+    <section className="grid gap-5 grid gap-5">
       <CommunityHero
         eyebrow={translate('community.blogEyebrow')}
         title={translate('blog.title')}
         searchValue={searchDraft}
-        searchPlaceholder={translate('blog.searchHint')}
         searchButtonLabel={translate('search.confirm')}
         tabs={tabs}
         activeTab={activeTab}
@@ -154,13 +174,13 @@ export function BlogPanel({
       />
 
       {searchSuggestions.length > 0 ? (
-        <section className="page-card community-suggestion-panel">
-          <div className="community-suggestion-list">
+        <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 ">
+          <div className="grid gap-3">
             {searchSuggestions.map(suggestion => (
               <button
                 key={`${suggestion.value}-${suggestion.title}`}
                 type="button"
-                className="community-suggestion-item"
+                className="grid gap-2 border border-slate-200 bg-white p-4 text-left"
                 onClick={() => {
                   setSearchDraft(suggestion.value)
                   setSearchText(suggestion.value)
@@ -174,22 +194,22 @@ export function BlogPanel({
         </section>
       ) : null}
 
-      {!signedInUser ? <p className="empty-state">{translate('blog.guestHint')}</p> : null}
+      {!signedInUser ? <p className="text-sm leading-6 text-slate-500">{translate('blog.guestHint')}</p> : null}
 
-      <section className="page-card community-list-section">
-        <div className="section-header">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('community.listEyebrow')}</p>
-            <h2 className="section-title">{translate('community.blogListTitle')}</h2>
+            <p className="text-sm font-bold text-slate-500">{translate('community.listEyebrow')}</p>
+            <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('community.blogListTitle')}</h2>
           </div>
         </div>
 
         {visiblePosts.length === 0 ? (
-          <div className="empty-state-panel">
-            <p className="empty-state">{translate(activeTab === 'mine' ? 'blog.mineEmpty' : 'blog.empty')}</p>
+          <div className="grid place-items-center gap-3 border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
+            <p className="text-sm leading-6 text-slate-500">{translate(activeTab === 'mine' ? 'blog.mineEmpty' : 'blog.empty')}</p>
           </div>
         ) : (
-          <div className="community-list-grid">
+          <div className="grid gap-4 lg:grid-cols-2">
             {visiblePosts.map(post => (
               <CommunityArticleCard
                 key={post.postId}
@@ -213,11 +233,11 @@ export function BlogPanel({
       </section>
 
       {signedInUser && isComposerOpen ? (
-        <section className="page-card community-detail-section">
-          <div className="section-header">
+        <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="eyebrow-label">{translate('community.detailEyebrow')}</p>
-              <h2 className="section-title">{translate('blog.editorTitle')}</h2>
+              <p className="text-sm font-bold text-slate-500">{translate('community.detailEyebrow')}</p>
+              <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('blog.editorTitle')}</h2>
             </div>
           </div>
           <BlogEditor
@@ -234,11 +254,11 @@ export function BlogPanel({
           />
         </section>
       ) : editingPost ? (
-        <section className="page-card community-detail-section">
-          <div className="section-header">
+        <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="eyebrow-label">{translate('community.detailEyebrow')}</p>
-              <h2 className="section-title">{translate('blog.editorEditTitle')}</h2>
+              <p className="text-sm font-bold text-slate-500">{translate('community.detailEyebrow')}</p>
+              <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('blog.editorEditTitle')}</h2>
             </div>
           </div>
           <BlogEditor
@@ -262,11 +282,11 @@ export function BlogPanel({
           />
         </section>
       ) : selectedPost ? (
-        <section className="page-card community-detail-section">
-          <div className="section-header">
+        <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="eyebrow-label">{translate('community.detailEyebrow')}</p>
-              <h2 className="section-title">{translate('community.blogDetailTitle')}</h2>
+              <p className="text-sm font-bold text-slate-500">{translate('community.detailEyebrow')}</p>
+              <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('community.blogDetailTitle')}</h2>
             </div>
           </div>
           <BlogDetail

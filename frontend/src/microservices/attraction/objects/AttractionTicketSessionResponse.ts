@@ -1,4 +1,4 @@
-export type AttractionTicketSessionResponse = {
+﻿export type AttractionTicketSessionResponse = {
   sessionId: string
   sessionName: string
   useDate: string
@@ -8,3 +8,8 @@ export type AttractionTicketSessionResponse = {
   availableQuantity: number | null
   status: string
 }
+export const attractionTicketSessionResponseFromJson = (json: string): AttractionTicketSessionResponse =>
+  JSON.parse(json) as AttractionTicketSessionResponse
+
+export const attractionTicketSessionResponseToJson = (value: AttractionTicketSessionResponse): string =>
+  JSON.stringify(value)

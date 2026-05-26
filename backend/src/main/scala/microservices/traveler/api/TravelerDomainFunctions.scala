@@ -28,7 +28,16 @@ def updateTravelerProfileDetails(
     updatedTravelerBirthDate: BirthDate,
     updatedTravelerType: TravelerType,
     updatedTravelerPreferences: TravelerPreferences,
-    updatedTravelerEmergencyContact: Option[TravelerEmergencyContact]
+    updatedTravelerEmergencyContact: Option[TravelerEmergencyContact],
+    updatedTravelerGender: String = "未填写",
+    updatedTravelerNationality: String = "中国",
+    updatedTravelerDocumentExpiryDate: Option[LocalDate] = None,
+    updatedTravelerEmail: Option[String] = None,
+    updatedQuietSeatPreferred: Boolean = false,
+    updatedAssistanceType: String = "无",
+    updatedSpecialRequirementNote: Option[String] = None,
+    updatedHasLargeLuggage: Boolean = false,
+    updatedLuggageNote: Option[String] = None
 ): Either[TravelerError, TravelerProfile] =
   travelerProfile.travelerProfileStatus match
     case currentStatus if currentStatus == TravelerProfileStatus.Archived =>
@@ -43,7 +52,16 @@ def updateTravelerProfileDetails(
           travelerBirthDate = updatedTravelerBirthDate,
           travelerType = updatedTravelerType,
           travelerPreferences = updatedTravelerPreferences,
-          travelerEmergencyContact = updatedTravelerEmergencyContact
+          travelerEmergencyContact = updatedTravelerEmergencyContact,
+          travelerGender = updatedTravelerGender,
+          travelerNationality = updatedTravelerNationality,
+          travelerDocumentExpiryDate = updatedTravelerDocumentExpiryDate,
+          travelerEmail = updatedTravelerEmail,
+          quietSeatPreferred = updatedQuietSeatPreferred,
+          assistanceType = updatedAssistanceType,
+          specialRequirementNote = updatedSpecialRequirementNote,
+          hasLargeLuggage = updatedHasLargeLuggage,
+          luggageNote = updatedLuggageNote
         )
       )
 
@@ -149,7 +167,16 @@ def newTravelerProfile(
     travelerType: TravelerType,
     travelerPreferences: TravelerPreferences,
     travelerEmergencyContact: Option[TravelerEmergencyContact],
-    isDefaultTravelerProfile: Boolean
+    isDefaultTravelerProfile: Boolean,
+    travelerGender: String = "未填写",
+    travelerNationality: String = "中国",
+    travelerDocumentExpiryDate: Option[LocalDate] = None,
+    travelerEmail: Option[String] = None,
+    quietSeatPreferred: Boolean = false,
+    assistanceType: String = "无",
+    specialRequirementNote: Option[String] = None,
+    hasLargeLuggage: Boolean = false,
+    luggageNote: Option[String] = None
 ): TravelerProfile =
   TravelerProfile(
     travelerId = travelerId,
@@ -165,7 +192,16 @@ def newTravelerProfile(
     travelerLoyaltyMemberships = Nil,
     travelerPreferences = travelerPreferences,
     travelerProfileStatus = TravelerProfileStatus.Draft,
-    isDefaultTravelerProfile = isDefaultTravelerProfile
+    isDefaultTravelerProfile = isDefaultTravelerProfile,
+    travelerGender = travelerGender,
+    travelerNationality = travelerNationality,
+    travelerDocumentExpiryDate = travelerDocumentExpiryDate,
+    travelerEmail = travelerEmail,
+    quietSeatPreferred = quietSeatPreferred,
+    assistanceType = assistanceType,
+    specialRequirementNote = specialRequirementNote,
+    hasLargeLuggage = hasLargeLuggage,
+    luggageNote = luggageNote
   )
 
 def restoreTravelerProfile(
@@ -182,7 +218,16 @@ def restoreTravelerProfile(
     travelerLoyaltyMemberships: List[TravelerLoyaltyMembership],
     travelerPreferences: TravelerPreferences,
     travelerProfileStatus: TravelerProfileStatus,
-    isDefaultTravelerProfile: Boolean
+    isDefaultTravelerProfile: Boolean,
+    travelerGender: String = "未填写",
+    travelerNationality: String = "中国",
+    travelerDocumentExpiryDate: Option[LocalDate] = None,
+    travelerEmail: Option[String] = None,
+    quietSeatPreferred: Boolean = false,
+    assistanceType: String = "无",
+    specialRequirementNote: Option[String] = None,
+    hasLargeLuggage: Boolean = false,
+    luggageNote: Option[String] = None
 ): TravelerProfile =
   TravelerProfile(
     travelerId = travelerId,
@@ -198,10 +243,61 @@ def restoreTravelerProfile(
     travelerLoyaltyMemberships = travelerLoyaltyMemberships,
     travelerPreferences = travelerPreferences,
     travelerProfileStatus = travelerProfileStatus,
-    isDefaultTravelerProfile = isDefaultTravelerProfile
+    isDefaultTravelerProfile = isDefaultTravelerProfile,
+    travelerGender = travelerGender,
+    travelerNationality = travelerNationality,
+    travelerDocumentExpiryDate = travelerDocumentExpiryDate,
+    travelerEmail = travelerEmail,
+    quietSeatPreferred = quietSeatPreferred,
+    assistanceType = assistanceType,
+    specialRequirementNote = specialRequirementNote,
+    hasLargeLuggage = hasLargeLuggage,
+    luggageNote = luggageNote
   )
 
 def travelerPlannerResponseFromDomain(travelerProfile: TravelerProfile): TravelerPlannerResponse =
+  val basicInfo = TravelerBasicInfo(
+    fullName = travelerProfile.travelerFullName.value,
+    gender = travelerProfile.travelerGender,
+    birthDate = travelerProfile.travelerBirthDate.value.toString,
+    nationality = travelerProfile.travelerNationality
+  )
+  val documentInfo = TravelerDocumentInfo(
+    documentType = travelerProfile.travelerDocumentType.toString,
+    documentNumber = travelerProfile.travelerDocumentNumber.value,
+    documentExpiryDate = travelerProfile.travelerDocumentExpiryDate.map(_.toString)
+  )
+  val contactInfo = TravelerContactInfo(
+    phone = travelerProfile.travelerPhoneNumber.value,
+    email = travelerProfile.travelerEmail
+  )
+  val preferenceInfo = TravelerPreferenceInfo(
+    seatPreference = travelerProfile.travelerPreferences.travelerSeatPreference.toString,
+    mealPreference = travelerProfile.travelerPreferences.travelerMealPreference.toString,
+    quietSeatPreferred = travelerProfile.quietSeatPreferred
+  )
+  val specialRequirementInfo = TravelerSpecialRequirementInfo(
+    assistanceType = travelerProfile.assistanceType,
+    requirementNote = travelerProfile.specialRequirementNote.orElse(travelerProfile.travelerPreferences.accessibilityRequestNotes),
+    hasLargeLuggage = travelerProfile.hasLargeLuggage,
+    luggageNote = travelerProfile.luggageNote
+  )
+  val age = Some(java.time.Period.between(travelerProfile.travelerBirthDate.value, LocalDate.now()).getYears)
+  val requirementLabel =
+    List(
+      Option.when(specialRequirementInfo.assistanceType != "无")(specialRequirementInfo.assistanceType),
+      specialRequirementInfo.requirementNote,
+      Option.when(specialRequirementInfo.hasLargeLuggage)("大件行李"),
+      specialRequirementInfo.luggageNote
+    ).flatten.mkString("；")
+  val serviceSummary = TravelerServiceSummary(
+    age = age,
+    documentLabel = s"${documentInfo.documentType} ${documentInfo.documentNumber}",
+    contactLabel = List(Some(contactInfo.phone), contactInfo.email).flatten.mkString(" / "),
+    preferenceLabel = List(preferenceInfo.seatPreference, preferenceInfo.mealPreference, Option.when(preferenceInfo.quietSeatPreferred)("安静座位").getOrElse("")).filter(_.nonEmpty).mkString(" / "),
+    requirementLabel = if requirementLabel.nonEmpty then requirementLabel else "无特殊要求",
+    warningLevel = if specialRequirementInfo.assistanceType != "无" || specialRequirementInfo.requirementNote.exists(_.trim.nonEmpty) then "attention" else "normal"
+  )
   TravelerPlannerResponse(
     travelerId = travelerProfile.travelerId.value,
     ownerUserId = travelerProfile.ownerUserId.value,
@@ -212,5 +308,11 @@ def travelerPlannerResponseFromDomain(travelerProfile: TravelerProfile): Travele
     birthDate = travelerProfile.travelerBirthDate.value.toString,
     travelerType = travelerProfile.travelerType.toString,
     status = travelerProfile.travelerProfileStatus.toString,
-    isDefault = travelerProfile.isDefaultTravelerProfile
+    isDefault = travelerProfile.isDefaultTravelerProfile,
+    basicInfo = basicInfo,
+    documentInfo = documentInfo,
+    contactInfo = contactInfo,
+    preferenceInfo = preferenceInfo,
+    specialRequirementInfo = specialRequirementInfo,
+    serviceSummary = serviceSummary
   )

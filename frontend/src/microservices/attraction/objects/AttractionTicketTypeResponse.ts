@@ -1,4 +1,4 @@
-import type { AttractionTicketTypeRuleResponse } from './AttractionTicketTypeRuleResponse'
+﻿import type { AttractionTicketTypeRuleResponse } from './AttractionTicketTypeRuleResponse'
 import type { AttractionTicketSessionResponse } from './AttractionTicketSessionResponse'
 
 export type AttractionTicketTypeResponse = {
@@ -17,3 +17,8 @@ export type AttractionTicketTypeResponse = {
   rules: AttractionTicketTypeRuleResponse[]
   sessions: AttractionTicketSessionResponse[]
 }
+export const attractionTicketTypeResponseFromJson = (json: string): AttractionTicketTypeResponse =>
+  JSON.parse(json) as AttractionTicketTypeResponse
+
+export const attractionTicketTypeResponseToJson = (value: AttractionTicketTypeResponse): string =>
+  JSON.stringify(value)

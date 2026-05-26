@@ -26,22 +26,22 @@ export function ReviewListDialog({
   }
 
   return (
-    <div className="dialog-backdrop" onClick={onClose}>
-      <section className="dialog-card" onClick={event => event.stopPropagation()}>
-        <div className="panel-heading">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-6" onClick={onClose}>
+      <section className="grid max-h-[90vh] w-full max-w-3xl gap-4 overflow-auto border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl shadow-slate-950/20" onClick={event => event.stopPropagation()}>
+        <div className="text-lg font-bold text-slate-950">
           <div>
-            <p className="eyebrow-label">{translate('reviews.dialogEyebrow')}</p>
+            <p className="text-sm font-bold text-slate-500">{translate('reviews.dialogEyebrow')}</p>
             <h3>{title}</h3>
           </div>
-          <button type="button" className="secondary-button modal-close-button" disabled={isBusy} onClick={onClose}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55 inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={onClose}>
             脳
           </button>
         </div>
 
-        {reviews.length === 0 ? <p className="empty-state">{translate('reviews.empty')}</p> : null}
+        {reviews.length === 0 ? <p className="text-sm leading-6 text-slate-500">{translate('reviews.empty')}</p> : null}
 
         {reviews.length > 0 ? (
-          <ul className="entity-list">
+          <ul className="grid gap-3">
             {reviews.map(review => (
               <li key={review.reviewId}>
                 <div>
@@ -52,7 +52,7 @@ export function ReviewListDialog({
                   <p>{`${localizeReviewResourceType(review.resourceType, currentLanguage)} 路 ${review.resourceSummarySubtitle}`}</p>
                   <p>{formatReviewMeta(review, translate('booking.notYet'))}</p>
                 </div>
-                <span className="tag-chip">{localizeReviewStatus(review.status, currentLanguage)}</span>
+                <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{localizeReviewStatus(review.status, currentLanguage)}</span>
               </li>
             ))}
           </ul>

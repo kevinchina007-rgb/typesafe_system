@@ -6,4 +6,4 @@ import type { CreateAdvertisementRequest } from '@/microservices/advertising/obj
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const createAdvertisement = (payload: CreateAdvertisementRequest): Promise<AdvertisementResponse> =>
-    executeJsonApiRequest('/advertisements', 'POST', payload)
+  executeJsonApiRequest('/CreateAdvertisementPlanner', 'POST', payload)

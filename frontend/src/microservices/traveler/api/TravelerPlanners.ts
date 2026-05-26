@@ -2,16 +2,32 @@ import type { CreateTravelerRequest } from '@/microservices/traveler/objects/Cre
 import type { UpdateTravelerRequest } from '@/microservices/traveler/objects/UpdateTravelerRequest'
 import type { TravelerResponse } from '@/microservices/traveler/objects/TravelerResponse'
 import type { TravelerListResponse } from '@/microservices/traveler/objects/TravelerListResponse'
-import { executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const createTraveler = (userId: string, payload: CreateTravelerRequest): Promise<TravelerResponse> =>
-    executeJsonApiRequest(`/users/${userId}/travelers`, 'POST', payload)
+  executeJsonApiRequest('/CreateTravelerPlanner', 'POST', {
+    actingUserId: userId,
+    ownerUserId: userId,
+    traveler: payload,
+  })
 
 export const updateTraveler = (userId: string, travelerId: string, payload: UpdateTravelerRequest): Promise<TravelerResponse> =>
-    executeJsonApiRequest(`/users/${userId}/travelers/${travelerId}`, 'PUT', payload)
+  executeJsonApiRequest('/UpdateTravelerPlanner', 'POST', {
+    actingUserId: userId,
+    ownerUserId: userId,
+    travelerId,
+    traveler: payload,
+  })
 
 export const listTravelers = (userId: string): Promise<TravelerListResponse> =>
-    executeApiRequest(`/users/${userId}/travelers`)
+  executeJsonApiRequest('/ListTravelersPlanner', 'POST', {
+    actingUserId: userId,
+    ownerUserId: userId,
+  })
 
-export const deleteTraveler = (userId: string, travelerId: string): Promise<void> =>
-    executeApiRequest(`/users/${userId}/travelers/${travelerId}`, { method: 'DELETE' })
+export const deleteTraveler = (userId: string, travelerId: string): Promise<{ deleted: boolean }> =>
+  executeJsonApiRequest('/DeleteTravelerPlanner', 'POST', {
+    actingUserId: userId,
+    ownerUserId: userId,
+    travelerId,
+  })

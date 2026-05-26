@@ -25,33 +25,33 @@ export function TourGroupPlanSection({
   onOpenChoose,
 }: TourGroupPlanSectionProps) {
   return (
-    <section className="list-surface">
-      <div className="panel-heading">
+    <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('tourGroups.planSectionEyebrow')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('tourGroups.planSectionEyebrow')}</p>
           <h3>{translate('tourGroups.planItems')}</h3>
         </div>
       </div>
 
-      {isOrganizer ? <p className="hero-copy">{translate('tourGroups.planManageHint')}</p> : null}
+      {isOrganizer ? <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('tourGroups.planManageHint')}</p> : null}
 
       {planItems.length === 0 ? (
-        <p className="empty-state">{translate('tourGroups.noPlanItems')}</p>
+        <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.noPlanItems')}</p>
       ) : (
-        <ul className="entity-list">
+        <ul className="grid gap-3">
           {planItems
             .slice()
             .sort((left, right) => left.sequenceNo - right.sequenceNo)
             .map(planItem => {
               const itemOptions = planOptions.filter(option => option.planItemId === planItem.planItemId)
               return (
-                <li key={planItem.planItemId} className="tour-group-plan-item">
-                  <div className="tour-group-plan-main">
+                <li key={planItem.planItemId} className="grid gap-2 border border-slate-200 bg-white p-4">
+                  <div className="grid gap-2">
                     <strong>{`${planItem.sequenceNo}. ${planItem.title}`}</strong>
                     <p>{formatPlanItemSummary(planItem, currentLanguage, translate)}</p>
                     <p>{planItem.description}</p>
                     {itemOptions.length > 0 ? (
-                      <ul className="entity-list">
+                      <ul className="grid gap-3">
                         {itemOptions.map(option => (
                           <li key={option.optionId}>
                             <div>
@@ -63,15 +63,15 @@ export function TourGroupPlanSection({
                         ))}
                       </ul>
                     ) : (
-                      <p className="empty-state">{translate('tourGroups.noOptions')}</p>
+                      <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.noOptions')}</p>
                     )}
                   </div>
 
-                  <div className="compact-action-block">
+                  <div className="flex flex-wrap items-center gap-3">
                     {isOrganizer && onSelectPlanItem ? (
                       <button
                         type="button"
-                        className={activePlanItemId === planItem.planItemId ? 'secondary-button' : undefined}
+                        className={activePlanItemId === planItem.planItemId ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
                         disabled={isBusy}
                         onClick={() => onSelectPlanItem(planItem)}
                       >
@@ -81,7 +81,7 @@ export function TourGroupPlanSection({
                       </button>
                     ) : null}
                     {!isOrganizer && onOpenChoose ? (
-                      <button type="button" disabled={isBusy || itemOptions.length === 0} onClick={() => onOpenChoose(planItem)}>
+                      <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy || itemOptions.length === 0} onClick={() => onOpenChoose(planItem)}>
                         {translate('tourGroups.chooseAction')}
                       </button>
                     ) : null}

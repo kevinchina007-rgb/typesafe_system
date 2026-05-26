@@ -51,19 +51,19 @@ export function ContentImageUploader({
   }
 
   return (
-    <div className="content-image-uploader">
-      <div className="panel-heading">
+    <div className="grid gap-3">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('content.images')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('content.images')}</p>
           <h4>{translate('content.imagesTitle')}</h4>
         </div>
-        <span className="detail-label">{`${images.length}/${maximumImageCount}`}</span>
+        <span className="text-sm font-medium text-slate-500">{`${images.length}/${maximumImageCount}`}</span>
       </div>
 
-      <p className="hero-copy">{translate('content.imagesHint')}</p>
+      <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('content.imagesHint')}</p>
 
-      <div className="manager-task-actions">
-        <label className="secondary-button file-upload-button">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55 inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55">
           <input
             type="file"
             accept="image/png,image/jpeg,image/jpg,image/webp"
@@ -79,14 +79,14 @@ export function ContentImageUploader({
       </div>
 
       {images.length > 0 ? (
-        <div className="content-image-gallery">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {images.map(image => (
-            <figure key={image.imageId} className="content-image-card">
-              <BackendAssetImage assetUrl={image.publicUrl} alt={image.originalFileName} className="content-image" />
+            <figure key={image.imageId} className="grid gap-2 border border-slate-200 bg-white p-2">
+              <BackendAssetImage assetUrl={image.publicUrl} alt={image.originalFileName} className="aspect-video w-full object-cover" />
               <figcaption>{image.originalFileName}</figcaption>
               <button
                 type="button"
-                className="secondary-button"
+                className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                 disabled={isBusy}
                 onClick={() => onChangeImages(images.filter(currentImage => currentImage.imageId !== image.imageId).map((currentImage, index) => ({
                   ...currentImage,

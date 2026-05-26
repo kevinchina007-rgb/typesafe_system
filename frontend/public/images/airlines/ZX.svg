@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Tui Tui Tui Airlines logo">
+  <rect width="100" height="100" fill="#fbfbfb"/>
+  <path d="M78 24L49 50l29 26V58H22V42h56V24Z" fill="#f05252"/>
+  <path d="M62 18L34 43l28 25V52H13V38h49V18Z" fill="#f59e0b" opacity=".9"/>
+  <path d="M47 13L20 37l27 24V47H6V34h41V13Z" fill="#1f5fbf" opacity=".95"/>
+</svg>

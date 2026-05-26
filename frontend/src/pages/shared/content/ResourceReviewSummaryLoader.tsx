@@ -45,11 +45,11 @@ export function ResourceReviewSummaryLoader({
 
   return (
     <>
-      <div className="compact-action-block">
+      <div className="flex flex-wrap items-center gap-3">
         <ResourceReviewSummary currentLanguage={currentLanguage} summary={summary} translate={translate} />
         <button
           type="button"
-          className="secondary-button"
+          className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
           disabled={isBusy}
           onClick={() => {
             void onLoadReviews({ resourceType, resourceId }).then(nextReviews => {

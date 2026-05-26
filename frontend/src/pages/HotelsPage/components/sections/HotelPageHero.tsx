@@ -6,14 +6,14 @@
 export function HotelPageHero({ title, description }: HotelPageHeroProps) {
   return (
     <>
-      <div className="panel-heading">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{title}</p>
+          <p className="text-sm font-bold text-slate-500">{title}</p>
           <h2>{title}</h2>
         </div>
       </div>
 
-      <p className="hero-copy">{description}</p>
+      <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{description}</p>
     </>
   )
 }

@@ -72,34 +72,34 @@ export function AdvertisementReviewWorkspace({ translate }: AdvertisementReviewW
   }
 
   return (
-    <section className="page-stack">
-      <section className="page-card">
-        <div className="section-header">
+    <section className="grid gap-5">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('advertising.reviewEyebrow')}</p>
-            <h2 className="section-title">{translate('advertising.reviewTitle')}</h2>
+            <p className="text-sm font-bold text-slate-500">{translate('advertising.reviewEyebrow')}</p>
+            <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.reviewTitle')}</h2>
           </div>
         </div>
 
         {pendingReviewAdvertisements.length === 0 ? (
-          <p className="empty-state">{translate('advertising.reviewEmpty')}</p>
+          <p className="text-sm leading-6 text-slate-500">{translate('advertising.reviewEmpty')}</p>
         ) : (
-          <div className="advertising-admin-list">
+          <div className="grid gap-3">
             {pendingReviewAdvertisements.map(advertisement => (
-              <article key={advertisement.advertisementId} className="panel-card advertising-admin-card">
+              <article key={advertisement.advertisementId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3 border border-slate-200 bg-white p-4">
                 <BackendAssetImage
                   assetUrl={advertisement.imageUrl}
                   alt={advertisement.title}
-                  className="advertising-admin-image"
+                  className="aspect-video w-full object-cover"
                   fallbackContent={advertisement.title}
                 />
-                <div className="advertising-admin-copy">
+                <div className="grid gap-1">
                   <strong>{advertisement.title}</strong>
                   <span>{advertisement.subtitle}</span>
                   <span>{`${advertisement.ownerDisplayName} 路 ${advertisement.resourceSummaryTitle}`}</span>
                   <span>{`${advertisement.placement} 路 P${advertisement.priority}`}</span>
                 </div>
-                <label className="advertising-review-note">
+                <label className="grid gap-2 text-sm font-medium text-slate-600">
                   {translate('advertising.reviewNote')}
                   <textarea
                     rows={3}
@@ -109,8 +109,8 @@ export function AdvertisementReviewWorkspace({ translate }: AdvertisementReviewW
                     }
                   />
                 </label>
-                <div className="advertising-admin-actions">
-                  <button
+                <div className="flex flex-wrap items-center gap-3">
+                  <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                     type="button"
                     onClick={() =>
                       void approveAdvertisement(advertisement.advertisementId, {
@@ -122,7 +122,7 @@ export function AdvertisementReviewWorkspace({ translate }: AdvertisementReviewW
                   </button>
                   <button
                     type="button"
-                    className="secondary-button"
+                    className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                     onClick={() =>
                       void rejectAdvertisement(advertisement.advertisementId, {
                         reviewNote: reviewNotes[advertisement.advertisementId]?.trim() || null,
@@ -178,27 +178,27 @@ export function AdvertisementReviewWorkspace({ translate }: AdvertisementReviewW
         }}
       />
 
-      <section className="page-card">
-        <div className="section-header">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('advertising.historyEyebrow')}</p>
-            <h3 className="section-title">{translate('advertising.historyTitle')}</h3>
+            <p className="text-sm font-bold text-slate-500">{translate('advertising.historyEyebrow')}</p>
+            <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.historyTitle')}</h3>
           </div>
         </div>
 
         {normalizedReviewedAdvertisements.length === 0 ? (
-          <p className="empty-state">{translate('advertising.historyEmpty')}</p>
+          <p className="text-sm leading-6 text-slate-500">{translate('advertising.historyEmpty')}</p>
         ) : (
-          <div className="advertising-admin-list">
+          <div className="grid gap-3">
             {normalizedReviewedAdvertisements.map(advertisement => (
-              <article key={advertisement.advertisementId} className="panel-card advertising-admin-card">
+              <article key={advertisement.advertisementId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3 border border-slate-200 bg-white p-4">
                 <BackendAssetImage
                   assetUrl={advertisement.imageUrl}
                   alt={advertisement.title}
-                  className="advertising-admin-image"
+                  className="aspect-video w-full object-cover"
                   fallbackContent={advertisement.title}
                 />
-                <div className="advertising-admin-copy">
+                <div className="grid gap-1">
                   <strong>{advertisement.title}</strong>
                   <span>{advertisement.resourceSummaryTitle}</span>
                   <span>{`${advertisement.reviewStatus} / ${advertisement.deliveryStatus}`}</span>
@@ -208,7 +208,7 @@ export function AdvertisementReviewWorkspace({ translate }: AdvertisementReviewW
                       : translate('advertising.slotUnassigned')}
                   </span>
                   {advertisement.reviews[0]?.reviewNote ? (
-                    <span className="detail-label">{advertisement.reviews[0].reviewNote}</span>
+                    <span className="text-sm font-medium text-slate-500">{advertisement.reviews[0].reviewNote}</span>
                   ) : null}
                 </div>
               </article>
@@ -257,16 +257,16 @@ function AdvertisementPlacementBoard({
   const unassignedAdvertisements = approvedAdvertisements.filter(advertisement => advertisement.slotIndex === null)
 
   return (
-    <section className="page-card advertising-placement-board">
-      <div className="section-header">
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="eyebrow-label">{translate('advertising.slotBoard.eyebrow')}</p>
-          <h3 className="section-title">{title}</h3>
+          <p className="text-sm font-bold text-slate-500">{translate('advertising.slotBoard.eyebrow')}</p>
+          <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{title}</h3>
         </div>
       </div>
-      <p className="hero-copy">{description}</p>
+      <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{description}</p>
 
-      <div className="advertising-card-grid">
+      <div className="grid gap-4 lg:grid-cols-2">
         {slotNumbers.map(slotIndex => {
           const slotKey = `${placement}-${slotIndex}`
           const assignedAdvertisement = assignedBySlot.get(slotIndex) ?? null
@@ -275,7 +275,7 @@ function AdvertisementPlacementBoard({
           return (
             <article
               key={slotKey}
-              className={`advertising-display-card advertising-display-card--slot${assignedAdvertisement ? '' : ' advertising-display-card--empty'}${isDropTarget ? ' is-drop-target' : ''}`}
+              className={`grid gap-3 border border-slate-200 bg-white p-4 border-dashed${assignedAdvertisement ? '' : ' border-dashed bg-slate-50'}${isDropTarget ? ' border-sky-400 bg-sky-50' : ''}`}
               onDragOver={event => {
                 if (!draggingAdvertisementId) {
                   return
@@ -298,27 +298,27 @@ function AdvertisementPlacementBoard({
                 void onAssignSlot(draggingAdvertisementId, slotIndex)
               }}
             >
-              <span className="advertising-display-badge">{`${translate('advertising.slotBadge')} ${slotIndex}`}</span>
+              <span className="inline-flex w-fit bg-slate-950 px-2 py-1 text-xs font-bold text-white">{`${translate('advertising.slotBadge')} ${slotIndex}`}</span>
               {assignedAdvertisement ? (
                 <>
                   <BackendAssetImage
                     assetUrl={assignedAdvertisement.imageUrl}
                     alt={assignedAdvertisement.title}
-                    className="advertising-display-image"
+                    className="aspect-video w-full object-cover"
                     fallbackContent={assignedAdvertisement.title}
                   />
-                  <strong className="advertising-display-title">{assignedAdvertisement.title}</strong>
-                  <span className="advertising-display-subtitle">{assignedAdvertisement.subtitle}</span>
-                  <span className="advertising-display-resource">{assignedAdvertisement.resourceSummaryTitle}</span>
-                  <span className="advertising-display-cta">{assignedAdvertisement.ctaLabel}</span>
+                  <strong className="m-0 text-xl font-bold text-slate-950">{assignedAdvertisement.title}</strong>
+                  <span className="text-sm text-slate-500">{assignedAdvertisement.subtitle}</span>
+                  <span className="text-sm text-slate-600">{assignedAdvertisement.resourceSummaryTitle}</span>
+                  <span className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55">{assignedAdvertisement.ctaLabel}</span>
                 </>
               ) : (
                 <>
-                  <strong className="advertising-display-title">{translate('advertising.slotEmpty')}</strong>
-                  <span className="advertising-display-subtitle">{translate('advertising.slotEmptyDescription')}</span>
+                  <strong className="m-0 text-xl font-bold text-slate-950">{translate('advertising.slotEmpty')}</strong>
+                  <span className="text-sm text-slate-500">{translate('advertising.slotEmptyDescription')}</span>
                 </>
               )}
-              <span className="advertising-slot-hint">
+              <span className="text-sm text-slate-500">
                 {draggingAdvertisementId
                   ? translate('advertising.slotDropHint')
                   : translate('advertising.slotDropIdleHint')}
@@ -328,23 +328,23 @@ function AdvertisementPlacementBoard({
         })}
       </div>
 
-      <div className="section-header">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="eyebrow-label">{translate('advertising.approvedPoolEyebrow')}</p>
-          <h4 className="section-title advertising-subsection-title">{translate('advertising.approvedPoolTitle')}</h4>
+          <p className="text-sm font-bold text-slate-500">{translate('advertising.approvedPoolEyebrow')}</p>
+          <h4 className="m-0 text-2xl font-bold leading-tight text-slate-950 text-lg font-bold text-slate-950">{translate('advertising.approvedPoolTitle')}</h4>
         </div>
       </div>
 
       {approvedAdvertisements.length === 0 ? (
-        <p className="empty-state">{translate('advertising.approvedPoolEmpty')}</p>
+        <p className="text-sm leading-6 text-slate-500">{translate('advertising.approvedPoolEmpty')}</p>
       ) : (
-        <div className="advertising-card-grid">
+        <div className="grid gap-4 lg:grid-cols-2">
           {approvedAdvertisements.map(advertisement => (
             <button
               key={advertisement.advertisementId}
               type="button"
               draggable
-              className={`advertising-display-card advertising-display-card--draggable${draggingAdvertisementId === advertisement.advertisementId ? ' is-dragging' : ''}`}
+              className={`grid gap-3 border border-slate-200 bg-white p-4 cursor-grab${draggingAdvertisementId === advertisement.advertisementId ? ' is-dragging' : ''}`}
               onDragStart={event => {
                 event.dataTransfer.effectAllowed = 'move'
                 event.dataTransfer.setData('text/plain', advertisement.advertisementId)
@@ -361,18 +361,18 @@ function AdvertisementPlacementBoard({
               <BackendAssetImage
                 assetUrl={advertisement.imageUrl}
                 alt={advertisement.title}
-                className="advertising-display-image"
+                className="aspect-video w-full object-cover"
                 fallbackContent={advertisement.title}
               />
-              <span className="advertising-display-badge">
+              <span className="inline-flex w-fit bg-slate-950 px-2 py-1 text-xs font-bold text-white">
                 {advertisement.slotIndex
                   ? `${translate('advertising.slotBadge')} ${advertisement.slotIndex}`
                   : translate('advertising.slotUnassigned')}
               </span>
-              <strong className="advertising-display-title">{advertisement.title}</strong>
-              <span className="advertising-display-subtitle">{advertisement.subtitle}</span>
-              <span className="advertising-display-resource">{advertisement.resourceSummaryTitle}</span>
-              <span className="advertising-slot-hint">
+              <strong className="m-0 text-xl font-bold text-slate-950">{advertisement.title}</strong>
+              <span className="text-sm text-slate-500">{advertisement.subtitle}</span>
+              <span className="text-sm text-slate-600">{advertisement.resourceSummaryTitle}</span>
+              <span className="text-sm text-slate-500">
                 {advertisement.slotIndex
                   ? translate('advertising.slotDragMoveHint')
                   : translate('advertising.slotDragAssignHint')}
@@ -383,7 +383,7 @@ function AdvertisementPlacementBoard({
       )}
 
       {unassignedAdvertisements.length > 0 ? (
-        <p className="detail-label">
+        <p className="text-sm font-medium text-slate-500">
           {translate('advertising.unassignedWarning')} {unassignedAdvertisements.map(advertisement => advertisement.title).join(' 路 ')}
         </p>
       ) : null}

@@ -1,4 +1,4 @@
-export type RoomTypeSummaryResponse = {
+﻿export type RoomTypeSummaryResponse = {
   roomTypeId: string
   roomTypeName: string
   capacity: number
@@ -10,3 +10,8 @@ export type RoomTypeSummaryResponse = {
   availableRoomsForRequestedStay: number | null
   isBookableForRequestedStay: boolean
 }
+export const roomTypeSummaryResponseFromJson = (json: string): RoomTypeSummaryResponse =>
+  JSON.parse(json) as RoomTypeSummaryResponse
+
+export const roomTypeSummaryResponseToJson = (value: RoomTypeSummaryResponse): string =>
+  JSON.stringify(value)

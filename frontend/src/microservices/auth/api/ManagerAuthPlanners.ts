@@ -2,30 +2,51 @@ import type { AuthSessionListResponse } from '@/microservices/auth/objects/AuthS
 import type { CurrentManagerSessionResponse } from '@/microservices/auth/objects/CurrentManagerSessionResponse'
 
 import type { ManagerType } from '@/microservices/auth/objects/ManagerType'
-
-import { executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+
+import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+
+const managerSessionStorageKey = 'flypig.managerSessionId'
+
+function readManagerSessionId(): string | null {
+  return window.localStorage.getItem(managerSessionStorageKey)
+}
+
+function rememberManagerSession(sessionResponse: CurrentManagerSessionResponse & { sessionId?: string }): CurrentManagerSessionResponse {
+  if (sessionResponse.sessionId) {
+    window.localStorage.setItem(managerSessionStorageKey, sessionResponse.sessionId)
+  }
+  return sessionResponse
+}
+
+function forgetManagerSession() {
+  window.localStorage.removeItem(managerSessionStorageKey)
+}
 
 export const loginManagerAuth = (payload: {
     managerType: ManagerType
     email: string
     password: string
   }): Promise<CurrentManagerSessionResponse> =>
-    executeJsonApiRequest('/manager-auth/login', 'POST', payload)
+    executeJsonApiRequest<CurrentManagerSessionResponse & { sessionId?: string }>('/ManagerLoginPlanner', 'POST', payload).then(rememberManagerSession)
 
 export const logoutManagerAuth = (): Promise<{ status: string }> =>
-    executeJsonApiRequest('/manager-auth/logout', 'POST')
+    readManagerSessionId()
+      ? executeJsonApiRequest<{ status: string }>('/ManagerLogoutPlanner', 'POST', { sessionId: readManagerSessionId() }).finally(forgetManagerSession)
+      : Promise.resolve({ status: 'LoggedOut' })
 
 export const getCurrentManagerSession = (): Promise<CurrentManagerSessionResponse> =>
-    executeApiRequest('/manager-auth/me')
+    readManagerSessionId()
+      ? executeJsonApiRequest<CurrentManagerSessionResponse & { sessionId?: string }>('/CurrentManagerPlanner', 'POST', { sessionId: readManagerSessionId() }).then(rememberManagerSession)
+      : Promise.reject(new Error('manager_not_found|No active manager session'))
 
 export const changeManagerPassword = (payload: { currentPassword: string; newPassword: string }): Promise<{ status: string }> =>
-    executeJsonApiRequest('/manager-auth/change-password', 'POST', payload)
+    executeJsonApiRequest('/ChangeManagerPasswordPlanner', 'POST', { ...payload, sessionId: readManagerSessionId() })
 
 export const listManagerSessions = (): Promise<AuthSessionListResponse> =>
-    executeApiRequest('/manager-auth/sessions')
+    executeJsonApiRequest('/ListManagerSessionsPlanner', 'POST', { sessionId: readManagerSessionId() })
 
 export const logoutCurrentManagerSession = (): Promise<{ status: string }> =>
-    executeJsonApiRequest('/manager-auth/logout-current', 'POST')
+    logoutManagerAuth()
 
 export const logoutOtherManagerSessions = (): Promise<{ revokedCount: number }> =>
-    executeJsonApiRequest('/manager-auth/logout-others', 'POST')
+    executeJsonApiRequest('/ManagerLogoutOtherSessionsPlanner', 'POST', { sessionId: readManagerSessionId() })

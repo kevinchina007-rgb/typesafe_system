@@ -1,0 +1,36 @@
+import type { FlightSearchSegment } from '@/app/stores/models/flights/flightTypes'
+
+type SegmentField = 'departureAirport' | 'arrivalAirport' | 'departureDate' | 'arrivalDate'
+
+export function useMultiCitySearchRows({
+  segments,
+  onSegmentChange,
+}: {
+  segments: FlightSearchSegment[]
+  onSegmentChange: (segmentId: string, key: SegmentField, value: string) => void
+}) {
+  function updateSegment(segmentId: string, key: SegmentField, value: string) {
+    const segmentIndex = segments.findIndex(segment => segment.id === segmentId)
+    onSegmentChange(segmentId, key, value)
+
+    if (segmentIndex < 0) {
+      return
+    }
+
+    if (key === 'arrivalAirport') {
+      const nextSegment = segments[segmentIndex + 1]
+      if (nextSegment) {
+        onSegmentChange(nextSegment.id, 'departureAirport', value)
+      }
+    }
+
+    if (key === 'departureAirport') {
+      const previousSegment = segments[segmentIndex - 1]
+      if (previousSegment) {
+        onSegmentChange(previousSegment.id, 'arrivalAirport', value)
+      }
+    }
+  }
+
+  return { updateSegment }
+}

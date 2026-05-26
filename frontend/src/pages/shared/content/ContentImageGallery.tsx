@@ -11,10 +11,10 @@ export function ContentImageGallery({ images }: ContentImageGalleryProps) {
   }
 
   return (
-    <div className="content-image-gallery">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {images.map(image => (
-        <figure key={image.imageId} className="content-image-card">
-          <BackendAssetImage assetUrl={image.publicUrl} alt={image.originalFileName} className="content-image" />
+        <figure key={image.imageId} className="grid gap-2 border border-slate-200 bg-white p-2">
+          <BackendAssetImage assetUrl={image.publicUrl} alt={image.originalFileName} className="aspect-video w-full object-cover" />
         </figure>
       ))}
     </div>

@@ -1,4 +1,4 @@
-export type GroupPlanSelectionResponse = {
+﻿export type GroupPlanSelectionResponse = {
   selectionId: string
   groupId: string
   planItemId: string
@@ -12,3 +12,8 @@ export type GroupPlanSelectionResponse = {
   reviewedByOrganizerUserId: string | null
   reviewNote: string | null
 }
+export const groupPlanSelectionResponseFromJson = (json: string): GroupPlanSelectionResponse =>
+  JSON.parse(json) as GroupPlanSelectionResponse
+
+export const groupPlanSelectionResponseToJson = (value: GroupPlanSelectionResponse): string =>
+  JSON.stringify(value)

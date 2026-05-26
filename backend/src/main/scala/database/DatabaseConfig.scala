@@ -13,9 +13,9 @@ object DatabaseConfig:
       jdbcUrl =
         sys.env.getOrElse(
           "TRAVEL_DB_URL",
-          "jdbc:h2:file:./data/travel-platform;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
+          "jdbc:postgresql://127.0.0.1:5432/travel_platform"
         ),
-      jdbcUser = sys.env.getOrElse("TRAVEL_DB_USER", "sa"),
-      jdbcPassword = sys.env.getOrElse("TRAVEL_DB_PASSWORD", ""),
-      jdbcDriverClassName = sys.env.getOrElse("TRAVEL_DB_DRIVER", "org.h2.Driver")
+      jdbcUser = sys.env.getOrElse("TRAVEL_DB_USER", "postgres"),
+      jdbcPassword = sys.env.getOrElse("TRAVEL_DB_PASSWORD", "root"),
+      jdbcDriverClassName = sys.env.getOrElse("TRAVEL_DB_DRIVER", "org.postgresql.Driver")
     )

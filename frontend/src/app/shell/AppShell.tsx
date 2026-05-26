@@ -1,23 +1,64 @@
 ﻿import type { ComponentProps, ReactNode } from 'react'
 
-import { Sidebar } from '@/app/shell/Sidebar'
 import { TopNavBar } from '@/app/shell/TopNavBar'
 
 type AppShellProps = {
   topNav: ComponentProps<typeof TopNavBar>
-  sidebar?: ComponentProps<typeof Sidebar>
+  isHomePage?: boolean
   children: ReactNode
 }
 
-export function AppShell({ topNav, sidebar, children }: AppShellProps) {
+const formSurfaceClassName = [
+  "[&_label]:!text-lg",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!min-h-14",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!w-full",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!border-2",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!border-slate-400",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!bg-white",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!px-5",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!py-3",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!text-lg",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!font-medium",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!text-slate-950",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:!outline-none",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:placeholder:!text-transparent",
+  "[&_input:not([type='checkbox']):not([type='radio']):not([type='file'])]:focus:!border-black",
+  "[&_input[type='checkbox']]:!h-5",
+  "[&_input[type='checkbox']]:!w-5",
+  "[&_select]:!min-h-14",
+  "[&_select]:!w-full",
+  "[&_select]:!border-2",
+  "[&_select]:!border-slate-400",
+  "[&_select]:!bg-white",
+  "[&_select]:!px-5",
+  "[&_select]:!py-3",
+  "[&_select]:!text-lg",
+  "[&_select]:!font-medium",
+  "[&_select]:!text-slate-950",
+  "[&_select]:!outline-none",
+  "[&_select]:focus:!border-black",
+  "[&_textarea]:!min-h-32",
+  "[&_textarea]:!w-full",
+  "[&_textarea]:!border-2",
+  "[&_textarea]:!border-slate-400",
+  "[&_textarea]:!bg-white",
+  "[&_textarea]:!px-5",
+  "[&_textarea]:!py-3",
+  "[&_textarea]:!text-lg",
+  "[&_textarea]:!font-medium",
+  "[&_textarea]:!text-slate-950",
+  "[&_textarea]:!outline-none",
+  "[&_textarea]:placeholder:!text-transparent",
+  "[&_textarea]:focus:!border-black",
+].join(' ')
+
+export function AppShell({ topNav, isHomePage = false, children }: AppShellProps) {
   return (
-    <main className="layout-shell">
-      <TopNavBar {...topNav} />
+    <main className={isHomePage ? 'relative min-h-screen' : 'min-h-screen bg-slate-50'}>
+      <TopNavBar {...topNav} isOverlay={isHomePage} />
 
-      <section className={`app-body-shell ${sidebar ? 'has-sidebar' : 'no-sidebar'}`}>
-        {sidebar ? <Sidebar {...sidebar} /> : null}
-
-        <section className="content-shell">
+      <section className={isHomePage ? 'min-h-screen' : 'grid gap-6  px-6 py-6 md:px-14'}>
+        <section className={`grid w-full gap-6 text-lg ${formSurfaceClassName}`}>
           {children}
         </section>
       </section>

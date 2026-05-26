@@ -1,4 +1,4 @@
-export type GroupSelectionOrderProjectionResponse = {
+﻿export type GroupSelectionOrderProjectionResponse = {
   selectionId: string
   orderId: string
   orderStatus: string
@@ -7,3 +7,8 @@ export type GroupSelectionOrderProjectionResponse = {
   refundStatus: string | null
   bookingSummaryLabel: string
 }
+export const groupSelectionOrderProjectionResponseFromJson = (json: string): GroupSelectionOrderProjectionResponse =>
+  JSON.parse(json) as GroupSelectionOrderProjectionResponse
+
+export const groupSelectionOrderProjectionResponseToJson = (value: GroupSelectionOrderProjectionResponse): string =>
+  JSON.stringify(value)

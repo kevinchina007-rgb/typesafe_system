@@ -44,14 +44,7 @@ export function getTourGroupConceptLabel(
   concept: 'group' | 'member' | 'traveler' | 'planItem' | 'option' | 'selection',
   language: AppLanguage,
 ): string {
-  const englishLabels = {
-    group: 'Trip group',
-    member: 'Member',
-    traveler: 'Traveler in this trip',
-    planItem: 'Itinerary item',
-    option: 'Option',
-    selection: 'Choice',
-  }
+  void language
 
   const chineseLabels = {
     group: '???',
@@ -62,5 +55,5 @@ export function getTourGroupConceptLabel(
     selection: '鎴戠殑閫夋嫨',
   }
 
-  return (language === 'zh' ? chineseLabels : englishLabels)[concept]
+  return chineseLabels[concept]
 }

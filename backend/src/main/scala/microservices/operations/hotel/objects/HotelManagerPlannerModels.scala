@@ -1,0 +1,34 @@
+package com.typesafe.travel.operations.domain
+
+import io.circe.{Decoder, Encoder}
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+
+final case class RegisterHotelManagerPlannerRequest(email: String, displayName: String, hotelName: String, location: String, password: String)
+object RegisterHotelManagerPlannerRequest:
+  given sourceEncoder: Encoder[RegisterHotelManagerPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[RegisterHotelManagerPlannerRequest] = deriveDecoder
+
+final case class CreateManagerRoomTypePlannerRequest(
+    managerId: String,
+    roomTypeName: String,
+    capacity: Int,
+    bedType: String,
+    nightlyPrice: String,
+    currency: String,
+    availableRooms: Int,
+    inventoryStartDate: String,
+    inventoryEndDate: String
+)
+object CreateManagerRoomTypePlannerRequest:
+  given sourceEncoder: Encoder[CreateManagerRoomTypePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateManagerRoomTypePlannerRequest] = deriveDecoder
+
+final case class ManagerHotelPlannerResponse(hotelId: String, hotelName: String, location: String, status: String, createdAt: String)
+object ManagerHotelPlannerResponse:
+  given sourceEncoder: Encoder[ManagerHotelPlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[ManagerHotelPlannerResponse] = deriveDecoder
+
+final case class ManagerHotelListPlannerResponse(hotels: List[ManagerHotelPlannerResponse])
+object ManagerHotelListPlannerResponse:
+  given sourceEncoder: Encoder[ManagerHotelListPlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[ManagerHotelListPlannerResponse] = deriveDecoder

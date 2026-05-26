@@ -1,4 +1,4 @@
-import type { TrainStopResponse } from './TrainStopResponse'
+﻿import type { TrainStopResponse } from './TrainStopResponse'
 import type { TrainSeatInventoryResponse } from './TrainSeatInventoryResponse'
 import type { TrainSeatResponse } from './TrainSeatResponse'
 import type { TrainSegmentPriceResponse } from './TrainSegmentPriceResponse'
@@ -15,3 +15,8 @@ export type TrainResponse = {
   segmentPrices: TrainSegmentPriceResponse[]
   refundPolicies: TrainRefundPolicyResponse[]
 }
+export const trainResponseFromJson = (json: string): TrainResponse =>
+  JSON.parse(json) as TrainResponse
+
+export const trainResponseToJson = (value: TrainResponse): string =>
+  JSON.stringify(value)

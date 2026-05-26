@@ -39,11 +39,11 @@ export function HotelResultsSection({
   onLoadReviews,
 }: HotelResultsSectionProps) {
   return (
-    <div className="entity-list flights-list">
+    <div className="grid gap-3 grid gap-3">
       {hotelResponses.length > 0 ? (
         hotelResponses.map(hotelResponse => (
-          <article key={hotelResponse.hotelId} className="panel-card hotel-card">
-            <div className="panel-heading">
+          <article key={hotelResponse.hotelId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3">
+            <div className="text-lg font-bold text-slate-950">
               <div>
                 <strong>{hotelResponse.hotelName}</strong>
                 <p>{hotelResponse.location}</p>
@@ -59,21 +59,21 @@ export function HotelResultsSection({
                   onLoadReviews={onLoadReviews}
                 />
               </div>
-              <span className="tag-chip">{mapBackendStatusToProductLabel(hotelResponse.status, currentLanguage)}</span>
+              <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{mapBackendStatusToProductLabel(hotelResponse.status, currentLanguage)}</span>
             </div>
 
-            <div className="detail-grid">
+            <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <span className="detail-label">{translate('hotels.createdAt')}</span>
+                <span className="text-sm font-medium text-slate-500">{translate('hotels.createdAt')}</span>
                 <strong>{formatIsoDateTime(hotelResponse.createdAt, '-')}</strong>
               </div>
               <div>
-                <span className="detail-label">{translate('hotels.status')}</span>
+                <span className="text-sm font-medium text-slate-500">{translate('hotels.status')}</span>
                 <strong>{mapBackendStatusToProductLabel(hotelResponse.status, currentLanguage)}</strong>
               </div>
             </div>
 
-            <ul className="entity-list">
+            <ul className="grid gap-3">
               {hotelResponse.roomTypes.map(roomTypeResponse => (
                 <li key={roomTypeResponse.roomTypeId}>
                   <div>
@@ -87,7 +87,7 @@ export function HotelResultsSection({
                     ) : null}
                   </div>
                   <form
-                    className="compact-action-block"
+                    className="flex flex-wrap items-center gap-3"
                     onSubmit={async event => {
                       event.preventDefault()
                       if (isGuestMode) {
@@ -124,10 +124,10 @@ export function HotelResultsSection({
                         disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}
                       />
                     </label>
-                    <div className="checkbox-list">
-                      <p className="detail-label">{translate('hotels.selectGuests')}</p>
+                    <div className="grid gap-2">
+                      <p className="text-sm font-medium text-slate-500">{translate('hotels.selectGuests')}</p>
                       {travelers.map(traveler => (
-                        <label key={traveler.travelerId} className="checkbox-row">
+                        <label key={traveler.travelerId} className="flex items-center gap-2">
                           <input
                             type="checkbox"
                             name="guestTravelerIds"
@@ -138,7 +138,7 @@ export function HotelResultsSection({
                         </label>
                       ))}
                     </div>
-                    <button type="submit" disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}>
+                    <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}>
                       {translate('hotels.bookNow')}
                     </button>
                   </form>
@@ -148,7 +148,7 @@ export function HotelResultsSection({
           </article>
         ))
       ) : (
-        <p className="empty-state">{translate('hotels.empty')}</p>
+        <p className="text-sm leading-6 text-slate-500">{translate('hotels.empty')}</p>
       )}
     </div>
   )

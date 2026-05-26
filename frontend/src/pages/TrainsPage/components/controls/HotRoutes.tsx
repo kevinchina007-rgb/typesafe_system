@@ -10,12 +10,12 @@ type HotRoutesProps = {
 }
 export function HotRoutes({ routes, translate, onSelectRoute }: HotRoutesProps) {
   return (
-    <div className="resource-hot-routes">
-      <span className="resource-hot-routes-label">{translate('trains.hotRoutes')}</span>
-      <div className="resource-hot-routes-list">
+    <div className="grid gap-2">
+      <span className="text-sm font-medium text-slate-500">{translate('trains.hotRoutes')}</span>
+      <div className="flex flex-wrap items-center gap-3">
         {routes.map(route => (
-          <button key={route.id} type="button" className="resource-tag-button" onClick={() => onSelectRoute(route)}>
-            {route.departureLabel} <span aria-hidden="true">?</span> {route.arrivalLabel}
+          <button key={route.id} type="button" className="inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={() => onSelectRoute(route)}>
+            {route.departureLabel} <span aria-hidden="true">→</span> {route.arrivalLabel}
           </button>
         ))}
       </div>

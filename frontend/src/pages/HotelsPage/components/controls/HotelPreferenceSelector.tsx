@@ -17,8 +17,8 @@ export function HotelPreferenceSelector({
   onNearbyPreferenceChange,
 }: HotelPreferenceSelectorProps) {
   return (
-    <div className="resource-inline-field-grid hotel-preference-grid">
-      <label className="resource-search-label resource-inline-field">
+    <div className="grid gap-3 md:grid-cols-2 md:grid-cols-2">
+      <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
         <span>{translate('hotels.hotelPreference')}</span>
         <select value={hotelPreference} onChange={event => onHotelPreferenceChange(event.target.value as HotelPreference)}>
           {hotelPreferenceOptions.map(option => (
@@ -28,7 +28,7 @@ export function HotelPreferenceSelector({
           ))}
         </select>
       </label>
-      <label className="resource-search-label resource-inline-field">
+      <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
         <span>{translate('hotels.nearbyPreference')}</span>
         <select value={nearbyPreference} onChange={event => onNearbyPreferenceChange(event.target.value)}>
           {hotelNearbyOptions.map(option => (

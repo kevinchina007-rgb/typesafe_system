@@ -14,19 +14,19 @@ import type { ReviewResponse } from '@/microservices/content/objects/ReviewRespo
 
 
 
-import { createQueryString, createSingleFileFormData, executeApiRequest, executeJsonApiRequest, executeMultipartApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const listMyReviews = (userId: string): Promise<ReviewListResponse> =>
-    executeApiRequest(`/reviews/mine${createQueryString({ userId })}`)
+    executeJsonApiRequest('/ListMyReviewsPlanner', 'POST', { userId })
 
 export const listReviewsByResource = (payload: { userId: string; resourceType: string; resourceId: string }): Promise<ReviewListResponse> =>
-    executeApiRequest(`/reviews${createQueryString(payload)}`)
+    executeJsonApiRequest('/ListReviewsByResourcePlanner', 'POST', payload)
 
 export const getReviewResourceSummary = (payload: { userId: string; resourceType: string; resourceId: string }): Promise<ResourceReviewSummaryResponse> =>
-    executeApiRequest(`/reviews/summary${createQueryString(payload)}`)
+    executeJsonApiRequest('/GetReviewSummaryPlanner', 'POST', payload)
 
 export const getReviewEligibility = (payload: { userId: string; orderItemId: string }): Promise<ReviewEligibilityResponse> =>
-    executeApiRequest(`/reviews/eligibility${createQueryString(payload)}`)
+    executeJsonApiRequest('/CheckReviewEligibilityPlanner', 'POST', payload)
 
 export const createReview = (payload: {
     userId: string
@@ -37,7 +37,7 @@ export const createReview = (payload: {
     content: string
     images: ContentImageResponse[]
   }): Promise<ReviewResponse> =>
-    executeJsonApiRequest('/reviews', 'POST', payload)
+    executeJsonApiRequest('/CreateReviewPlanner', 'POST', payload)
 
 export const updateReview = (
     reviewId: string,
@@ -49,14 +49,24 @@ export const updateReview = (
       images: ContentImageResponse[]
     },
   ): Promise<ReviewResponse> =>
-    executeJsonApiRequest(`/reviews/${reviewId}`, 'PATCH', payload)
+    executeJsonApiRequest('/UpdateReviewPlanner', 'POST', { reviewId, ...payload })
 
-export const uploadReviewImage = (userId: string, imageFile: File): Promise<ContentImageResponse> =>
-    executeMultipartApiRequest(
-      `/reviews/images${createQueryString({ userId })}`,
-      'POST',
-      createSingleFileFormData('image', imageFile),
-    )
+async function toBase64(imageFile: File): Promise<string> {
+    const bytes = new Uint8Array(await imageFile.arrayBuffer())
+    let binary = ''
+    bytes.forEach(byte => {
+      binary += String.fromCharCode(byte)
+    })
+    return window.btoa(binary)
+}
+
+export const uploadReviewImage = async (userId: string, imageFile: File): Promise<ContentImageResponse> =>
+    executeJsonApiRequest('/UploadReviewImagePlanner', 'POST', {
+      userId,
+      originalFileName: imageFile.name,
+      contentType: imageFile.type || 'application/octet-stream',
+      base64Content: await toBase64(imageFile),
+    })
 
 export const deleteReview = (reviewId: string, payload: { userId: string }): Promise<void> =>
-    executeJsonApiRequest(`/reviews/${reviewId}`, 'DELETE', payload)
+    executeJsonApiRequest('/DeleteReviewPlanner', 'POST', { reviewId, userId: payload.userId })

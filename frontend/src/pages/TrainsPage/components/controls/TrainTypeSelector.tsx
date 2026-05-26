@@ -15,7 +15,7 @@ export function TrainTypeSelector({ value, translate, onChange }: TrainTypeSelec
   }
 
   return (
-    <label className="resource-search-label resource-inline-field">
+    <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
       <span>{translate('trains.trainTypePreference')}</span>
       <select value={value} onChange={event => onChange(event.target.value as TrainTypePreference)}>
         {trainTypePreferences.map(option => (

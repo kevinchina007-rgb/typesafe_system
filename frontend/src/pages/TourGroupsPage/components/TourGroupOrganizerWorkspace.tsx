@@ -77,8 +77,8 @@ export function TourGroupOrganizerWorkspace({
   }, [activePlanItem, onSelectPlanItem, planItems])
 
   return (
-    <div className="tour-group-workspace-grid">
-      <div className="tour-group-workspace-main">
+    <div className="grid gap-5 xl:grid-cols-[1fr_20rem]">
+      <div className="grid gap-4">
         <TourGroupPlanSection
           currentLanguage={currentLanguage}
           isBusy={isBusy}
@@ -107,7 +107,7 @@ export function TourGroupOrganizerWorkspace({
         />
       </div>
 
-      <aside className="tour-group-workspace-side">
+      <aside className="grid gap-4">
         <TourGroupPlanComposer
           currentLanguage={currentLanguage}
           isBusy={isBusy}

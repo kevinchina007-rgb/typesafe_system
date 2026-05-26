@@ -1,8 +1,10 @@
-import type { CreateReviewFeedbackThreadRequest } from '@/microservices/content/objects/CreateReviewFeedbackThreadRequest'
+import type { CreateOrderCancellationMessageRequest } from '@/microservices/content/objects/CreateOrderCancellationMessageRequest'
+import type { EnsureOrderCancellationThreadRequest } from '@/microservices/content/objects/EnsureOrderCancellationThreadRequest'
 import type { EscalateFeedbackThreadRequest } from '@/microservices/content/objects/EscalateFeedbackThreadRequest'
 import type { FeedbackThreadListResponse } from '@/microservices/content/objects/FeedbackThreadListResponse'
 import type { FeedbackThreadResponse } from '@/microservices/content/objects/FeedbackThreadResponse'
 import type { FeedbackSiteAdminChannel } from '@/microservices/content/objects/FeedbackSiteAdminChannel'
+import type { HandleOrderCancellationRequest } from '@/microservices/content/objects/HandleOrderCancellationRequest'
 import type { MarkFeedbackThreadReadRequest } from '@/microservices/content/objects/MarkFeedbackThreadReadRequest'
 
 
@@ -11,25 +13,47 @@ import type { MarkFeedbackThreadReadRequest } from '@/microservices/content/obje
 import type { SendFeedbackMessageRequest } from '@/microservices/content/objects/SendFeedbackMessageRequest'
 
 
-import { createQueryString, executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
-export const createReviewFeedbackThread = (payload: CreateReviewFeedbackThreadRequest): Promise<FeedbackThreadResponse> =>
-    executeJsonApiRequest('/feedback/review-threads', 'POST', payload)
+type FeedbackThreadDetailsPlannerResponse = {
+    thread: Omit<FeedbackThreadResponse, 'messages'>
+    messages: FeedbackThreadResponse['messages']
+}
 
-export const listMyFeedbackThreads = (): Promise<FeedbackThreadListResponse> =>
-    executeApiRequest('/feedback/threads/mine')
+type FeedbackThreadListPlannerResponse = {
+    threads: FeedbackThreadDetailsPlannerResponse[]
+}
 
-export const listManagerFeedbackThreads = (): Promise<FeedbackThreadListResponse> =>
-    executeApiRequest('/feedback/threads/manager')
+function flattenThread(response: FeedbackThreadDetailsPlannerResponse): FeedbackThreadResponse {
+    return { ...response.thread, messages: response.messages }
+}
+
+export const ensureOrderCancellationThread = async (payload: EnsureOrderCancellationThreadRequest): Promise<FeedbackThreadResponse> =>
+    flattenThread(await executeJsonApiRequest('/EnsureOrderCancellationThreadPlanner', 'POST', payload))
+
+export const listMyFeedbackThreads = (userId?: string): Promise<FeedbackThreadListResponse> =>
+    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId, managerType: null, channel: null })
+      .then(response => ({ threads: response.threads.map(flattenThread) }))
+
+export const listManagerFeedbackThreads = (managerType?: string): Promise<FeedbackThreadListResponse> =>
+    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId: null, managerType, channel: null })
+      .then(response => ({ threads: response.threads.map(flattenThread) }))
 
 export const listSiteAdminFeedbackThreads = (channel: FeedbackSiteAdminChannel): Promise<FeedbackThreadListResponse> =>
-    executeApiRequest(`/feedback/threads/site-admin${createQueryString({ channel })}`)
+    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId: null, managerType: null, channel })
+      .then(response => ({ threads: response.threads.map(flattenThread) }))
 
 export const sendFeedbackMessage = (threadId: string, payload: SendFeedbackMessageRequest): Promise<FeedbackThreadResponse> =>
-    executeJsonApiRequest(`/feedback/threads/${threadId}/messages`, 'POST', payload)
+    executeJsonApiRequest<FeedbackThreadDetailsPlannerResponse>('/SendFeedbackMessagePlanner', 'POST', { threadId, ...payload }).then(flattenThread)
+
+export const createOrderCancellationMessage = (payload: CreateOrderCancellationMessageRequest): Promise<FeedbackThreadResponse> =>
+    executeJsonApiRequest<FeedbackThreadDetailsPlannerResponse>('/CreateOrderCancellationMessagePlanner', 'POST', payload).then(flattenThread)
+
+export const handleOrderCancellationRequest = (payload: HandleOrderCancellationRequest): Promise<FeedbackThreadResponse> =>
+    executeJsonApiRequest<FeedbackThreadDetailsPlannerResponse>('/HandleOrderCancellationRequestPlanner', 'POST', payload).then(flattenThread)
 
 export const markFeedbackThreadRead = (threadId: string, payload: MarkFeedbackThreadReadRequest): Promise<FeedbackThreadResponse> =>
-    executeJsonApiRequest(`/feedback/threads/${threadId}/read`, 'POST', payload)
+    executeJsonApiRequest<FeedbackThreadDetailsPlannerResponse>('/MarkFeedbackThreadReadPlanner', 'POST', { threadId, ...payload }).then(flattenThread)
 
 export const escalateFeedbackThread = (threadId: string, payload: EscalateFeedbackThreadRequest): Promise<FeedbackThreadResponse> =>
-    executeJsonApiRequest(`/feedback/threads/${threadId}/escalate`, 'POST', payload)
+    executeJsonApiRequest<FeedbackThreadDetailsPlannerResponse>('/EscalateFeedbackThreadPlanner', 'POST', { threadId, ...payload }).then(flattenThread)

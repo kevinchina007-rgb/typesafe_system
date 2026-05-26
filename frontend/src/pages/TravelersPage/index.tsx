@@ -1,9 +1,10 @@
-import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { TravelerPanel } from '@/pages/TravelersPage/components/TravelerPanel'
-import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { AppLanguage, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { TravelerProfileInput } from '@/microservices/traveler/objects/TravelerProfileInput'
+import { TravelerPanel } from '@/pages/TravelersPage/components/TravelerPanel'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import { usePageActions } from '@/pages/shared/usePageActions'
 
 type TravelersPageProps = {
@@ -12,6 +13,71 @@ type TravelersPageProps = {
   translate: (translationKey: string) => string
   onSignedInUserChange: (user: UserResponse | null) => void
   onShowNotice: PageNoticeHandler
+}
+
+type TravelerDraftForUpdate = {
+  fullName: string
+  gender: string
+  nationality: string
+  documentType: string
+  documentNumber: string
+  documentExpiryDate: string
+  phone: string
+  email: string
+  birthDate: string
+  seatPreference: string
+  mealPreference: string
+  quietSeatPreferred: boolean
+  assistanceType: string
+  requirementNote: string
+  hasLargeLuggage: boolean
+  luggageNote: string
+  emergencyContactName: string
+  emergencyContactPhoneNumber: string
+  isDefaultTraveler: boolean
+}
+
+function buildTravelerProfileInput(payload: TravelerDraftForUpdate): TravelerProfileInput {
+  const requirementNote = payload.requirementNote.trim() || null
+  return {
+    fullName: payload.fullName.trim(),
+    documentType: payload.documentType,
+    documentNumber: payload.documentNumber.trim(),
+    phone: payload.phone.trim(),
+    birthDate: payload.birthDate,
+    seatPreference: payload.seatPreference,
+    mealPreference: payload.mealPreference,
+    accessibilityRequestNotes: requirementNote,
+    emergencyContactName: payload.emergencyContactName.trim() || null,
+    emergencyContactPhoneNumber: payload.emergencyContactPhoneNumber.trim() || null,
+    isDefaultTraveler: payload.isDefaultTraveler,
+    basicInfo: {
+      fullName: payload.fullName.trim(),
+      gender: payload.gender,
+      birthDate: payload.birthDate,
+      nationality: payload.nationality.trim() || '中国',
+    },
+    documentInfo: {
+      documentType: payload.documentType,
+      documentNumber: payload.documentNumber.trim(),
+      documentExpiryDate: payload.documentExpiryDate || null,
+    },
+    contactInfo: {
+      phone: payload.phone.trim(),
+      email: payload.email.trim() || null,
+    },
+    preferenceInfo: {
+      seatPreference: payload.seatPreference,
+      mealPreference: payload.mealPreference,
+      quietSeatPreferred: payload.quietSeatPreferred,
+    },
+    specialRequirementInfo: {
+      assistanceType: payload.assistanceType,
+      requirementNote,
+      hasLargeLuggage: payload.hasLargeLuggage,
+      luggageNote: payload.luggageNote.trim() || null,
+    },
+  }
 }
 
 export function TravelersPage({
@@ -71,19 +137,7 @@ export function TravelersPage({
         }
         const travelerId = payload.travelerId
         await runPageAction(async () => {
-          await travelMvpApiClient.updateTraveler(signedInUser.userId, travelerId, {
-            fullName: payload.fullName,
-            documentType: payload.documentType,
-            documentNumber: payload.documentNumber,
-            phone: payload.phone,
-            birthDate: payload.birthDate,
-            seatPreference: payload.seatPreference,
-            mealPreference: payload.mealPreference,
-            accessibilityRequestNotes: payload.accessibilityRequestNotes.trim() || null,
-            emergencyContactName: payload.emergencyContactName.trim() || null,
-            emergencyContactPhoneNumber: payload.emergencyContactPhoneNumber.trim() || null,
-            isDefaultTraveler: payload.isDefaultTraveler,
-          })
+          await travelMvpApiClient.updateTraveler(signedInUser.userId, travelerId, buildTravelerProfileInput(payload))
           await Promise.all([reloadCurrentUser(), reloadTravelers()])
         }, translate('travelers.saveEdit'), translate('notice.travelerSaved'))
       }}

@@ -1,4 +1,7 @@
 ﻿import type { AppLanguage, FlightResponse, HotelResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, ManagerType } from '@/lib/mvp-types/index'
+import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
+
+import type { ManagerFlightOrderResponse } from '@/lib/mvp-types/index'
 
 export function normalizeDateTimeInput(rawValue: string): string {
   const trimmedValue = rawValue.trim()
@@ -14,6 +17,8 @@ export function normalizeDateTimeInput(rawValue: string): string {
   return parsedDate.toISOString()
 }
 
+export type AirlineWorkspaceSection = 'createFlight' | 'flightManagement' | 'userFeedback' | 'managerProfile'
+
 export type ManagerPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
@@ -22,6 +27,7 @@ export type ManagerPanelProps = {
   managedHotels: HotelResponse[]
   managerTasks: ManagerTaskResponse[]
   managerRefundTasks: ManagerRefundTaskResponse[]
+  initialAirlineSection?: AirlineWorkspaceSection
   translate: (translationKey: string) => string
   onRegisterAirlineManager: (payload: {
     email: string
@@ -61,11 +67,26 @@ export type ManagerPanelProps = {
     arrivalAirport: string
     departureTime: string
     arrivalTime: string
-    economySeatCount: number
-    economyPrice: string
-    businessSeatCount: number
-    businessPrice: string
+    economyCabin: ManagerCabinPricingInput
+    premiumEconomyCabin: ManagerCabinPricingInput
+    businessCabin: ManagerCabinPricingInput
+    firstCabin: ManagerCabinPricingInput
     currency: string
+  }) => Promise<void>
+  onToggleManagerFlightStatus: (flightId: string) => Promise<void>
+  onSearchManagerFlights: (payload: {
+    departureAirports?: string[]
+    arrivalAirports?: string[]
+    departureDate?: string
+    timeRange?: string
+    sortDirection?: 'asc' | 'desc'
+  }) => Promise<void>
+  onLoadManagerFlightOrders: (flightId: string) => Promise<ManagerFlightOrderResponse[]>
+  onUpdateAirlineManagerProfile: (payload: {
+    displayName: string
+    airlineName: string
+    airlineCode: string
+    logoAssetPath?: string | null
   }) => Promise<void>
   onConfirmTask: (payload: { orderItemId: string; note: string }) => Promise<void>
   onRejectTask: (payload: { orderItemId: string; reason: string }) => Promise<void>

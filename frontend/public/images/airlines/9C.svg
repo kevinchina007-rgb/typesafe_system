@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Pixel Cloud Airlines logo">
+  <rect width="100" height="100" fill="#eef8ff"/>
+  <path d="M23 62h13V49h14V36h18v13h11v13h-9v11H33V62H23Z" fill="#38bdf8"/>
+  <path d="M18 67h14M38 76h34M65 31h17" stroke="#f97316" stroke-width="6" stroke-linecap="round"/>
+  <path d="M30 54c17-11 34-12 50-2-16 1-28 7-36 18" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round"/>
+</svg>

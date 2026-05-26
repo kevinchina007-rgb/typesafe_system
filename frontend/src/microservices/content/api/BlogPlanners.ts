@@ -14,13 +14,13 @@ import type { BlogPostResponse } from '@/microservices/content/objects/BlogPostR
 
 
 import type { SearchSuggestionListResponse } from '@/microservices/common/objects/SearchSuggestionListResponse'
-import { createQueryString, createSingleFileFormData, executeApiRequest, executeJsonApiRequest, executeMultipartApiRequest } from '@/microservices/common/api/ApiTransport'
+import { createQueryString, createSingleFileFormData, executeJsonApiRequest, executeMultipartApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const listBlogPosts = (scope: 'latest' | 'mine' = 'latest', userId?: string, q?: string): Promise<BlogPostListResponse> =>
-    executeApiRequest(`/blog/posts${createQueryString({ scope, userId, q: q?.trim() })}`)
+    executeJsonApiRequest('/ListBlogPostsPlanner', 'POST', { scope, userId, q: q?.trim() })
 
 export const listBlogSuggestions = (q: string): Promise<SearchSuggestionListResponse> =>
-    executeApiRequest(`/blog/suggestions${createQueryString({ q })}`)
+    executeJsonApiRequest('/BlogSuggestionsPlanner', 'POST', { q })
 
 export const uploadBlogImage = (userId: string, imageFile: File): Promise<ContentImageResponse> =>
     executeMultipartApiRequest(
@@ -30,16 +30,16 @@ export const uploadBlogImage = (userId: string, imageFile: File): Promise<Conten
     )
 
 export const getBlogPost = (postId: string, userId?: string): Promise<BlogPostResponse> =>
-    executeApiRequest(`/blog/posts/${postId}${createQueryString({ userId })}`)
+    executeJsonApiRequest('/GetBlogPostPlanner', 'POST', { postId, userId })
 
 export const listBlogModerationPosts = (scope: 'pending' | 'reviewed' = 'pending'): Promise<BlogPostListResponse> =>
-    executeApiRequest(`/blog/moderation/posts${createQueryString({ scope })}`)
+    executeJsonApiRequest('/ListBlogPostsPlanner', 'POST', { scope })
 
 export const approveBlogPost = (postId: string): Promise<BlogPostResponse> =>
-    executeJsonApiRequest(`/blog/moderation/posts/${postId}/approve`, 'POST', {})
+    executeJsonApiRequest('/ApproveBlogPostPlanner', 'POST', { postId })
 
 export const rejectBlogPost = (postId: string): Promise<BlogPostResponse> =>
-    executeJsonApiRequest(`/blog/moderation/posts/${postId}/reject`, 'POST', {})
+    executeJsonApiRequest('/RejectBlogPostPlanner', 'POST', { postId })
 
 export const createBlogPost = (payload: {
     userId: string
@@ -48,7 +48,7 @@ export const createBlogPost = (payload: {
     content: string
     images: ContentImageResponse[]
   }): Promise<BlogPostResponse> =>
-    executeJsonApiRequest('/blog/posts', 'POST', payload)
+    executeJsonApiRequest('/CreateBlogPostPlanner', 'POST', payload)
 
 export const updateBlogPost = (
     postId: string,
@@ -60,19 +60,19 @@ export const updateBlogPost = (
       images: ContentImageResponse[]
     },
   ): Promise<BlogPostResponse> =>
-    executeJsonApiRequest(`/blog/posts/${postId}`, 'PATCH', payload)
+    executeJsonApiRequest('/UpdateBlogPostPlanner', 'POST', { postId, ...payload })
 
 export const archiveBlogPost = (postId: string, payload: { userId: string }): Promise<BlogPostResponse> =>
-    executeJsonApiRequest(`/blog/posts/${postId}/archive`, 'POST', payload)
+    executeJsonApiRequest('/ArchiveBlogPostPlanner', 'POST', { postId, userId: payload.userId })
 
 export const addBlogComment = (postId: string, payload: { userId: string; content: string }): Promise<BlogPostResponse> =>
-    executeJsonApiRequest(`/blog/posts/${postId}/comments`, 'POST', payload)
+    executeJsonApiRequest('/AddBlogCommentPlanner', 'POST', { postId, ...payload })
 
 export const deleteBlogComment = (commentId: string, payload: { userId: string }): Promise<BlogPostResponse> =>
-    executeJsonApiRequest(`/blog/comments/${commentId}`, 'DELETE', payload)
+    executeJsonApiRequest('/DeleteBlogCommentPlanner', 'POST', { commentId, userId: payload.userId })
 
 export const likeBlogPost = (postId: string, payload: { userId: string }): Promise<BlogPostResponse> =>
-    executeJsonApiRequest(`/blog/posts/${postId}/likes`, 'POST', payload)
+    executeJsonApiRequest('/LikeBlogPostPlanner', 'POST', { postId, userId: payload.userId })
 
 export const unlikeBlogPost = (postId: string, payload: { userId: string }): Promise<BlogPostResponse> =>
-    executeJsonApiRequest(`/blog/posts/${postId}/unlike`, 'POST', payload)
+    executeJsonApiRequest('/UnlikeBlogPostPlanner', 'POST', { postId, userId: payload.userId })

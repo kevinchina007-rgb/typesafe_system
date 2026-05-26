@@ -31,3 +31,18 @@ object CreateAttractionPlanner extends ConnectionApiPlan[CreateAttractionPlanner
   override val name: String = "CreateAttractionPlanner"
   override def plan(input: CreateAttractionPlannerRequest, connection: Connection): IO[Attraction] =
     AttractionPlannerPlainSql.create(connection, input, Instant.now())
+
+object CreateAttractionTicketTypePlanner extends ConnectionApiPlan[CreateAttractionTicketTypePlannerRequest, Attraction]:
+  override val name: String = "CreateAttractionTicketTypePlanner"
+  override def plan(input: CreateAttractionTicketTypePlannerRequest, connection: Connection): IO[Attraction] =
+    AttractionPlannerPlainSql.createTicketType(connection, input, Instant.now())
+
+object CreateAttractionTicketSessionPlanner extends ConnectionApiPlan[CreateAttractionTicketSessionPlannerRequest, Attraction]:
+  override val name: String = "CreateAttractionTicketSessionPlanner"
+  override def plan(input: CreateAttractionTicketSessionPlannerRequest, connection: Connection): IO[Attraction] =
+    AttractionPlannerPlainSql.createTicketSession(connection, input, Instant.now())
+
+object CreateAttractionTicketRulePlanner extends ConnectionApiPlan[CreateAttractionTicketRulePlannerRequest, Attraction]:
+  override val name: String = "CreateAttractionTicketRulePlanner"
+  override def plan(input: CreateAttractionTicketRulePlannerRequest, connection: Connection): IO[Attraction] =
+    AttractionPlannerPlainSql.createTicketRule(connection, input, Instant.now())

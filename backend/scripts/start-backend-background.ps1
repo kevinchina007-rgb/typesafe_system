@@ -3,7 +3,7 @@ param(
   [string]$RepositoryMode = 'database'
 )
 
-$backendRootPath = 'E:\typesafe\template\backend'
+$backendRootPath = Split-Path -Parent $PSScriptRoot
 $startScriptPath = Join-Path $backendRootPath 'scripts\start-backend.ps1'
 
 Start-Process powershell.exe `

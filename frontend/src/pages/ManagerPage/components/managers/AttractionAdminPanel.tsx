@@ -2,6 +2,8 @@
 
 import type { AppLanguage, AttractionAdminSessionResponse } from '@/lib/mvp-types/index'
 
+import { getPasswordValidationMessage } from '@/pages/shared/auth/passwordValidation'
+
 type AttractionAdminPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
@@ -82,25 +84,26 @@ export function AttractionAdminPanel({
   }
 
   return (
-    <section className="page-card">
-      <div className="panel-heading">
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('nav.attractionAdmin')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('nav.attractionAdmin')}</p>
           <h2>{translate('attractionAdmin.title')}</h2>
         </div>
         {attractionAdminSession ? (
-          <button type="button" className="secondary-button" disabled={isBusy} onClick={onLogoutAttractionManager}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={onLogoutAttractionManager}>
             {translate('manager.logout')}
           </button>
         ) : null}
       </div>
 
-      <p className="hero-copy">{translate('attractionAdmin.description')}</p>
+      <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('attractionAdmin.description')}</p>
 
       {!attractionAdminSession ? (
-        <div className="two-column-grid">
+        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-2">
           <form
-            className="stack-form panel-card"
+            className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
@@ -110,8 +113,14 @@ export function AttractionAdminPanel({
                 onValidationError(translate('error.passwordMismatch'))
                 return
               }
+              const email = String(formData.get('email') ?? '').trim()
+              const passwordValidationMessage = getPasswordValidationMessage(password, email)
+              if (passwordValidationMessage) {
+                onValidationError(passwordValidationMessage)
+                return
+              }
               await onRegisterAttractionManager({
-                email: String(formData.get('email') ?? '').trim(),
+                email,
                 displayName: String(formData.get('displayName') ?? '').trim(),
                 password,
               })
@@ -120,27 +129,28 @@ export function AttractionAdminPanel({
             <h3>{translate('attractionAdmin.registerTitle')}</h3>
             <label>
               {translate('attractionAdmin.email')}
-              <input name="email" type="email" placeholder={translate('attractionAdmin.email')} required />
+              <input name="email" type="email" autoComplete="off" required />
             </label>
             <label>
               {translate('attractionAdmin.displayName')}
-              <input name="displayName" placeholder={translate('attractionAdmin.displayNamePlaceholder')} required />
+              <input name="displayName" autoComplete="off" required />
             </label>
             <label>
               {translate('account.password')}
-              <input name="password" type="password" placeholder={translate('account.password')} required />
+              <input name="password" type="password" autoComplete="off" required />
             </label>
             <label>
               {translate('account.confirmPassword')}
-              <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+              <input name="confirmPassword" type="password" autoComplete="new-password" required />
             </label>
-            <button type="submit" disabled={isBusy}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-none transition hover:border-pink-600 hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
               {translate('attractionAdmin.createAccount')}
             </button>
           </form>
 
           <form
-            className="stack-form panel-card"
+            className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
@@ -153,34 +163,35 @@ export function AttractionAdminPanel({
             <h3>{translate('attractionAdmin.loginTitle')}</h3>
             <label>
               {translate('attractionAdmin.email')}
-              <input name="email" type="email" placeholder={translate('attractionAdmin.email')} required />
+              <input name="email" type="email" autoComplete="off" required />
             </label>
             <label>
               {translate('account.password')}
-              <input name="password" type="password" placeholder={translate('account.password')} required />
+              <input name="password" type="password" autoComplete="off" required />
             </label>
-            <button type="submit" disabled={isBusy}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-none transition hover:border-pink-600 hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
               {translate('attractionAdmin.login')}
             </button>
           </form>
         </div>
       ) : (
-        <div className="stack-form">
-          <div className="panel-card">
-            <div className="panel-heading">
+        <div className="grid gap-4">
+          <div className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
+            <div className="text-lg font-bold text-slate-950">
               <div>
                 <strong>{attractionAdminSession.displayName}</strong>
                 <p>{attractionAdminSession.email}</p>
               </div>
-              <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onReloadManagedAttractions()}>
+              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void onReloadManagedAttractions()}>
                 {translate('attractionAdmin.refresh')}
               </button>
             </div>
           </div>
 
-          <div className="two-column-grid">
+          <div className="grid gap-4 md:grid-cols-2">
             <form
-              className="stack-form panel-card"
+            className="grid gap-4 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
               onSubmit={async event => {
                 event.preventDefault()
                 const formData = new FormData(event.currentTarget)
@@ -196,27 +207,28 @@ export function AttractionAdminPanel({
               <h3>{translate('attractionAdmin.createAttraction')}</h3>
               <label>
                 {translate('attractionAdmin.attractionName')}
-                <input name="attractionName" placeholder={translate('attractionAdmin.attractionNamePlaceholder')} required />
+                <input name="attractionName" required />
               </label>
               <label>
                 {translate('attractionAdmin.city')}
-                <input name="city" placeholder={translate('attractionAdmin.cityPlaceholder')} required />
+                <input name="city" required />
               </label>
               <label>
                 {translate('attractionAdmin.location')}
-                <input name="location" placeholder={translate('attractionAdmin.locationPlaceholder')} required />
+                <input name="location" autoComplete="off" required />
               </label>
               <label>
                 {translate('attractionAdmin.descriptionField')}
-                <input name="description" placeholder={translate('attractionAdmin.descriptionPlaceholder')} required />
+                <input name="description" required />
               </label>
-              <button type="submit" disabled={isBusy}>
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
                 {translate('attractionAdmin.createAttraction')}
               </button>
             </form>
 
             <form
-              className="stack-form panel-card"
+            className="grid gap-4 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
               onSubmit={async event => {
                 event.preventDefault()
                 const formData = new FormData(event.currentTarget)
@@ -251,19 +263,19 @@ export function AttractionAdminPanel({
               </label>
               <label>
                 {translate('attractionAdmin.ticketTypeName')}
-                <input name="ticketTypeName" placeholder={translate('attractionAdmin.ticketTypeNamePlaceholder')} required />
+                <input name="ticketTypeName" required />
               </label>
               <label>
                 {translate('attractionAdmin.descriptionField')}
-                <input name="description" placeholder={translate('attractionAdmin.ticketTypeDescriptionPlaceholder')} required />
+                <input name="description" required />
               </label>
               <label>
                 {translate('attractionAdmin.unitPrice')}
-                <input name="unitPrice" type="number" min="0" step="0.01" placeholder="99" required />
+                <input name="unitPrice" type="number" min="0" step="0.01" required />
               </label>
               <label>
                 {translate('attractionAdmin.currency')}
-                <input name="currency" placeholder="CNY" defaultValue="CNY" required />
+                <input name="currency" defaultValue="CNY" required />
               </label>
               <label>
                 {translate('attractionAdmin.availableFromDate')}
@@ -277,9 +289,9 @@ export function AttractionAdminPanel({
                 {translate('attractionAdmin.totalQuantity')}
                 <input name="totalQuantity" type="number" min="1" step="1" defaultValue="100" required />
               </label>
-              <div className="checkbox-list">
-                <p className="detail-label">{translate('attractionAdmin.validWeekdays')}</p>
-                <label className="checkbox-row">
+              <div className="grid gap-2">
+                <p className="text-sm font-medium text-slate-500">{translate('attractionAdmin.validWeekdays')}</p>
+                <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
                     checked={selectedWeekdays.length === allWeekdayValues.length}
@@ -287,9 +299,9 @@ export function AttractionAdminPanel({
                   />
                   {translate('attractionAdmin.allWeekdays')}
                 </label>
-                <div className="three-column-grid">
+                <div className="grid gap-4 md:grid-cols-3">
                   {allWeekdayValues.map(weekday => (
-                    <label key={weekday} className="checkbox-row">
+                    <label key={weekday} className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={selectedWeekdays.includes(weekday)}
@@ -300,14 +312,15 @@ export function AttractionAdminPanel({
                   ))}
                 </div>
               </div>
-              <button type="submit" disabled={isBusy}>
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
                 {translate('attractionAdmin.createTicketType')}
               </button>
             </form>
           </div>
 
           <form
-            className="stack-form panel-card"
+            className="grid gap-4 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
@@ -324,7 +337,7 @@ export function AttractionAdminPanel({
             }}
           >
             <h3>{translate('attractionAdmin.createSession')}</h3>
-            <div className="three-column-grid">
+            <div className="grid gap-4 md:grid-cols-3">
               <label>
                 {translate('attractionAdmin.attraction')}
                 <select name="attractionId" required defaultValue="">
@@ -359,11 +372,12 @@ export function AttractionAdminPanel({
                 <input name="capacity" type="number" min="1" step="1" defaultValue="50" required />
               </label>
             </div>
-            <button type="submit" disabled={isBusy}>{translate('attractionAdmin.createSession')}</button>
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>{translate('attractionAdmin.createSession')}</button>
           </form>
 
           <form
-            className="stack-form panel-card"
+            className="grid gap-4 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
@@ -382,7 +396,7 @@ export function AttractionAdminPanel({
             }}
           >
             <h3>{translate('attractionAdmin.createRule')}</h3>
-            <div className="three-column-grid">
+            <div className="grid gap-4 md:grid-cols-3">
               <label>
                 {translate('attractionAdmin.attraction')}
                 <select name="attractionId" required defaultValue="">
@@ -398,7 +412,7 @@ export function AttractionAdminPanel({
               </label>
               <label>
                 {translate('attractionAdmin.ticketTypeId')}
-                <input name="ticketTypeId" placeholder={translate('attractionAdmin.ticketTypeIdPlaceholder')} required />
+                <input name="ticketTypeId" required />
               </label>
               <label>
                 {translate('attractionAdmin.ruleType')}
@@ -412,36 +426,36 @@ export function AttractionAdminPanel({
               </label>
               <label>
                 {translate('attractionAdmin.ageValue')}
-                <input name="ageValue" type="number" min="0" placeholder="18" />
+                <input name="ageValue" type="number" min="0" />
               </label>
               <label>
                 {translate('attractionAdmin.minAge')}
-                <input name="minAge" type="number" min="0" placeholder="60" />
+                <input name="minAge" type="number" min="0" />
               </label>
               <label>
                 {translate('attractionAdmin.maxAge')}
-                <input name="maxAge" type="number" min="0" placeholder="70" />
+                <input name="maxAge" type="number" min="0" />
               </label>
               <label>
                 {translate('attractionAdmin.documentType')}
-                <input name="documentType" placeholder="NationalIdentityCard" />
+                <input name="documentType" />
               </label>
               <label>
                 {translate('attractionAdmin.documentNumberPrefix')}
-                <input name="documentNumberPrefix" placeholder="310" />
+                <input name="documentNumberPrefix" />
               </label>
             </div>
-            <button type="submit" disabled={isBusy}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
               {translate('attractionAdmin.createRule')}
             </button>
           </form>
 
-          <div className="entity-list">
+          <div className="grid gap-3">
             {attractionAdminSession.managedAttractions.map(attraction => (
-              <article key={attraction.attractionId} className="panel-card">
+              <article key={attraction.attractionId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
                 <strong>{attraction.attractionName}</strong>
                 <p>{`${attraction.city} | ${attraction.location}`}</p>
-                <ul className="entity-list">
+                <ul className="grid gap-3">
                   {attraction.ticketTypes.map(ticketType => (
                     <li key={ticketType.ticketTypeId}>
                       <div>
@@ -463,3 +477,5 @@ export function AttractionAdminPanel({
     </section>
   )
 }
+
+

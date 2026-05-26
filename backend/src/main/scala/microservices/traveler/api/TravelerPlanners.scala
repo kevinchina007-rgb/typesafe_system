@@ -33,7 +33,16 @@ object CreateTravelerPlanner extends ConnectionApiPlan[CreateTravelerPlannerRequ
         travelerType = deriveTravelerTypeFromBirthDate(parsed.birthDate, today),
         travelerPreferences = parsed.preferences,
         travelerEmergencyContact = parsed.emergencyContact,
-        isDefaultTravelerProfile = shouldBecomeDefault
+        isDefaultTravelerProfile = shouldBecomeDefault,
+        travelerGender = parsed.gender,
+        travelerNationality = parsed.nationality,
+        travelerDocumentExpiryDate = parsed.documentExpiryDate,
+        travelerEmail = parsed.email,
+        quietSeatPreferred = parsed.quietSeatPreferred,
+        assistanceType = parsed.assistanceType,
+        specialRequirementNote = parsed.specialRequirementNote,
+        hasLargeLuggage = parsed.hasLargeLuggage,
+        luggageNote = parsed.luggageNote
       )
       _ <- if shouldBecomeDefault then
         existingProfiles.traverse(profile => TravelerPlannerPlainSql.save(connection, clearTravelerProfileDefault(profile))).void
@@ -63,7 +72,16 @@ object UpdateTravelerPlanner extends ConnectionApiPlan[UpdateTravelerPlannerRequ
         updatedTravelerBirthDate = parsed.birthDate,
         updatedTravelerType = deriveTravelerTypeFromBirthDate(parsed.birthDate, today),
         updatedTravelerPreferences = parsed.preferences,
-        updatedTravelerEmergencyContact = parsed.emergencyContact
+        updatedTravelerEmergencyContact = parsed.emergencyContact,
+        updatedTravelerGender = parsed.gender,
+        updatedTravelerNationality = parsed.nationality,
+        updatedTravelerDocumentExpiryDate = parsed.documentExpiryDate,
+        updatedTravelerEmail = parsed.email,
+        updatedQuietSeatPreferred = parsed.quietSeatPreferred,
+        updatedAssistanceType = parsed.assistanceType,
+        updatedSpecialRequirementNote = parsed.specialRequirementNote,
+        updatedHasLargeLuggage = parsed.hasLargeLuggage,
+        updatedLuggageNote = parsed.luggageNote
       ).liftTo[IO]
       saved <- TravelerPlannerPlainSql.save(connection, updated)
     yield travelerPlannerResponseFromDomain(saved)
@@ -110,7 +128,16 @@ private final case class ParsedTravelerInput(
     phone: ContactNumber,
     birthDate: BirthDate,
     preferences: TravelerPreferences,
-    emergencyContact: Option[TravelerEmergencyContact]
+    emergencyContact: Option[TravelerEmergencyContact],
+    gender: String,
+    nationality: String,
+    documentExpiryDate: Option[LocalDate],
+    email: Option[String],
+    quietSeatPreferred: Boolean,
+    assistanceType: String,
+    specialRequirementNote: Option[String],
+    hasLargeLuggage: Boolean,
+    luggageNote: Option[String]
 )
 
 private def requireActor(actingUserIdValue: String, ownerUserIdValue: String): IO[UserId] =
@@ -125,10 +152,20 @@ private def parseTravelerInput(input: TravelerProfileInput): IO[ParsedTravelerIn
     documentNumber <- DocumentNumber.create(input.documentNumber).liftTo[IO]
     phone <- ContactNumber.create(input.phone).liftTo[IO]
     birthDate <- IO.delay(LocalDate.parse(input.birthDate)).flatMap(date => BirthDate.create(date, LocalDate.now()).liftTo[IO])
+    basicInfo = input.basicInfo.getOrElse(TravelerBasicInfo(input.fullName, "unspecified", input.birthDate, "China"))
+    documentInfo = input.documentInfo.getOrElse(TravelerDocumentInfo(input.documentType, input.documentNumber, None))
+    contactInfo = input.contactInfo.getOrElse(TravelerContactInfo(input.phone, None))
+    preferenceInfo = input.preferenceInfo.getOrElse(TravelerPreferenceInfo(input.seatPreference, input.mealPreference, quietSeatPreferred = false))
+    specialRequirementInfo = input.specialRequirementInfo.getOrElse(
+      TravelerSpecialRequirementInfo("none", input.accessibilityRequestNotes, hasLargeLuggage = false, None)
+    )
+    documentExpiryDate <- documentInfo.documentExpiryDate match
+      case Some(value) if value.trim.nonEmpty => IO.delay(Some(LocalDate.parse(value)))
+      case _ => IO.pure(None)
     preferences <- travelerPreferences(
-      travelerSeatPreference = SeatPreference.fromText(input.seatPreference),
-      travelerMealPreference = MealPreference.fromText(input.mealPreference),
-      accessibilityRequestNotes = input.accessibilityRequestNotes
+      travelerSeatPreference = SeatPreference.fromText(preferenceInfo.seatPreference),
+      travelerMealPreference = MealPreference.fromText(preferenceInfo.mealPreference),
+      accessibilityRequestNotes = specialRequirementInfo.requirementNote.orElse(input.accessibilityRequestNotes)
     ).liftTo[IO]
     emergencyContact <- (input.emergencyContactName, input.emergencyContactPhoneNumber) match
       case (Some(name), Some(phoneNumber)) =>
@@ -144,8 +181,21 @@ private def parseTravelerInput(input: TravelerProfileInput): IO[ParsedTravelerIn
     phone = phone,
     birthDate = birthDate,
     preferences = preferences,
-    emergencyContact = emergencyContact
+    emergencyContact = emergencyContact,
+    gender = normalizeOptionalText(basicInfo.gender, "unspecified"),
+    nationality = normalizeOptionalText(basicInfo.nationality, "China"),
+    documentExpiryDate = documentExpiryDate,
+    email = contactInfo.email.map(_.trim).filter(_.nonEmpty),
+    quietSeatPreferred = preferenceInfo.quietSeatPreferred,
+    assistanceType = normalizeOptionalText(specialRequirementInfo.assistanceType, "none"),
+    specialRequirementNote = specialRequirementInfo.requirementNote.map(_.trim).filter(_.nonEmpty),
+    hasLargeLuggage = specialRequirementInfo.hasLargeLuggage,
+    luggageNote = specialRequirementInfo.luggageNote.map(_.trim).filter(_.nonEmpty)
   )
+
+private def normalizeOptionalText(value: String, fallback: String): String =
+  val normalized = value.trim
+  if normalized.nonEmpty then normalized else fallback
 
 private def ensureDocumentAvailable(
     connection: Connection,

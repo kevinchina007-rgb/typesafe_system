@@ -117,23 +117,23 @@ export function ExplorePage({ translate, onOpenView }: ExplorePageProps) {
   }, [results])
 
   return (
-    <section className="page-card">
-      <div className="panel-card">
-        <div className="panel-heading">
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+      <div className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
+        <div className="text-lg font-bold text-slate-950">
           <div>
-            <p className="eyebrow-label">{translate('nav.explore')}</p>
+            <p className="text-sm font-bold text-slate-500">{translate('nav.explore')}</p>
             <h2>{translate('explore.title')}</h2>
           </div>
         </div>
 
-        <p className="hero-copy">{translate('explore.description')}</p>
+        <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('explore.description')}</p>
 
-        <div className="manager-task-actions">
+        <div className="flex flex-wrap items-center gap-3">
           {searchableTabs.map(tabValue => (
             <button
               key={tabValue}
               type="button"
-              className={searchType === tabValue ? '' : 'secondary-button'}
+              className={searchType === tabValue ? '' : 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55'}
               onClick={() => setSearchType(tabValue)}
             >
               {translate(`search.type.${tabValue}`)}
@@ -141,30 +141,29 @@ export function ExplorePage({ translate, onOpenView }: ExplorePageProps) {
           ))}
         </div>
 
-        <div className="stack-form">
+        <div className="grid gap-4">
           <label>
             {translate('search.global.label')}
             <input
               value={searchDraft}
               onChange={event => setSearchDraft(event.target.value)}
-              placeholder={translate('search.global.placeholder')}
             />
           </label>
-          <button type="button" disabled={isSearching} onClick={() => setSearchText(searchDraft.trim())}>
+          <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isSearching} onClick={() => setSearchText(searchDraft.trim())}>
             {translate('search.confirm')}
           </button>
         </div>
 
         {suggestions.length > 0 || isLoadingSuggestions ? (
-          <div className="list-surface">
-            <p className="eyebrow-label">{translate('search.suggestions')}</p>
-            {isLoadingSuggestions && suggestions.length === 0 ? <p className="empty-state">{translate('search.loading')}</p> : null}
-            <ul className="entity-list">
+          <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+            <p className="text-sm font-bold text-slate-500">{translate('search.suggestions')}</p>
+            {isLoadingSuggestions && suggestions.length === 0 ? <p className="text-sm leading-6 text-slate-500">{translate('search.loading')}</p> : null}
+            <ul className="grid gap-3">
               {suggestions.map(suggestion => (
                 <li key={`${suggestion.resourceType}:${suggestion.value}`}>
                   <button
                     type="button"
-                    className="tour-group-link-button"
+                    className="inline-flex items-center justify-center text-sm font-bold text-sky-600 underline-offset-4 hover:underline"
                     onClick={() => {
                       setSearchDraft(suggestion.value)
                       setSearchText(suggestion.value)
@@ -181,27 +180,27 @@ export function ExplorePage({ translate, onOpenView }: ExplorePageProps) {
         ) : null}
 
         {searchText.trim().length === 0 ? (
-          <div className="list-surface">
-            <p className="empty-state">{translate('search.emptyHint')}</p>
+          <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+            <p className="text-sm leading-6 text-slate-500">{translate('search.emptyHint')}</p>
           </div>
         ) : null}
 
         {searchText.trim().length > 0 && results.length === 0 && !isSearching ? (
-          <div className="list-surface">
-            <p className="empty-state">{translate('search.emptyResults')}</p>
+          <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+            <p className="text-sm leading-6 text-slate-500">{translate('search.emptyResults')}</p>
           </div>
         ) : null}
 
         {Object.entries(groupedResults).map(([resourceType, groupedItems]) => (
-          <div key={resourceType} className="list-surface">
-            <div className="panel-heading">
+          <div key={resourceType} className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+            <div className="text-lg font-bold text-slate-950">
               <div>
-                <p className="eyebrow-label">{translate(`search.type.${resourceType}`)}</p>
+                <p className="text-sm font-bold text-slate-500">{translate(`search.type.${resourceType}`)}</p>
                 <h3>{translate('search.resultGroupTitle')}</h3>
               </div>
             </div>
 
-            <ul className="entity-list">
+            <ul className="grid gap-3">
               {groupedItems.map(result => (
                 <li key={`${result.resourceType}:${result.resourceId}`}>
                   <div className="search-result-card">
@@ -210,8 +209,8 @@ export function ExplorePage({ translate, onOpenView }: ExplorePageProps) {
                       <p>{result.summary}</p>
                       <p>{result.metaLabel}</p>
                     </div>
-                    <div className="action-row">
-                      <button type="button" onClick={() => onOpenView(targetViewFromResult(result.resourceType))}>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" onClick={() => onOpenView(targetViewFromResult(result.resourceType))}>
                         {translate('search.openResult')}
                       </button>
                     </div>

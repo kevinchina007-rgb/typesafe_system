@@ -1,3 +1,12 @@
+import type {
+  TravelerBasicInfo,
+  TravelerContactInfo,
+  TravelerDocumentInfo,
+  TravelerPreferenceInfo,
+  TravelerServiceSummary,
+  TravelerSpecialRequirementInfo,
+} from './TravelerProfileDetails'
+
 export type TravelerResponse = {
   travelerId: string
   ownerUserId: string
@@ -9,4 +18,16 @@ export type TravelerResponse = {
   travelerType: string
   status: string
   isDefault: boolean
+  basicInfo: TravelerBasicInfo
+  documentInfo: TravelerDocumentInfo
+  contactInfo: TravelerContactInfo
+  preferenceInfo: TravelerPreferenceInfo
+  specialRequirementInfo: TravelerSpecialRequirementInfo
+  serviceSummary: TravelerServiceSummary
 }
+
+export const travelerResponseFromJson = (json: string): TravelerResponse =>
+  JSON.parse(json) as TravelerResponse
+
+export const travelerResponseToJson = (value: TravelerResponse): string =>
+  JSON.stringify(value)

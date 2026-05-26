@@ -1,4 +1,4 @@
-import type { SupplierReviewDecisionResponse } from '@/microservices/order/objects/SupplierReviewDecisionResponse'
+﻿import type { SupplierReviewDecisionResponse } from '@/microservices/order/objects/SupplierReviewDecisionResponse'
 
 export type ManagerTaskResponse = {
   taskId?: string
@@ -18,3 +18,8 @@ export type ManagerTaskResponse = {
   reviewedBy: string | null
   reviewNote: string | null
 }
+export const managerTaskResponseFromJson = (json: string): ManagerTaskResponse =>
+  JSON.parse(json) as ManagerTaskResponse
+
+export const managerTaskResponseToJson = (value: ManagerTaskResponse): string =>
+  JSON.stringify(value)

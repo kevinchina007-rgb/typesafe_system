@@ -2,10 +2,10 @@ package com.typesafe.travel.api.routes
 
 import com.typesafe.travel.advertising.domain.*
 import com.typesafe.travel.api.{ExploreSearchPlanner, ExploreSuggestionsPlanner}
-import com.typesafe.travel.attraction.domain.{AttractionSuggestionsPlanner, CreateAttractionPlanner, GetAttractionDetailsPlanner, ListAttractionsPlanner, ListManagedAttractionsPlanner}
+import com.typesafe.travel.attraction.domain.{AttractionSuggestionsPlanner, CreateAttractionPlanner, CreateAttractionTicketRulePlanner, CreateAttractionTicketSessionPlanner, CreateAttractionTicketTypePlanner, GetAttractionDetailsPlanner, ListAttractionsPlanner, ListManagedAttractionsPlanner}
 import com.typesafe.travel.auth.domain.*
 import com.typesafe.travel.content.domain.*
-import com.typesafe.travel.flight.domain.{BookFlightPlanner, FlightSuggestionsPlanner, GetFlightDetailsPlanner, SearchFlightsPlanner}
+import com.typesafe.travel.flight.domain.{BookFlightPlanner, FlightDailyLowestPricesPlanner, FlightSuggestionsPlanner, GetFlightDetailsPlanner, SearchFlightsPlanner}
 import com.typesafe.travel.hotel.domain.{BookHotelPlanner, GetHotelDetailsPlanner, HotelSuggestionsPlanner, SearchHotelsPlanner}
 import com.typesafe.travel.identity.domain.{CreateUserPlanner, GetUserPlanner, LoginUserPlanner, UploadUserAvatarPlanner}
 import com.typesafe.travel.operations.domain.*
@@ -31,6 +31,7 @@ object PlannerDefinitions:
         WithConnection(UploadAdvertisementImagePlanner),
         WithConnection(FlightSuggestionsPlanner),
         WithConnection(SearchFlightsPlanner),
+        WithConnection(FlightDailyLowestPricesPlanner),
         WithConnection(GetFlightDetailsPlanner),
         WithConnection(BookFlightPlanner),
         WithConnection(HotelSuggestionsPlanner),
@@ -42,6 +43,9 @@ object PlannerDefinitions:
         WithConnection(GetAttractionDetailsPlanner),
         WithConnection(ListManagedAttractionsPlanner),
         WithConnection(CreateAttractionPlanner),
+        WithConnection(CreateAttractionTicketTypePlanner),
+        WithConnection(CreateAttractionTicketSessionPlanner),
+        WithConnection(CreateAttractionTicketRulePlanner),
         WithConnection(SignupPlanner),
         WithConnection(LoginPlanner),
         WithConnection(CurrentUserPlanner),
@@ -71,7 +75,10 @@ object PlannerDefinitions:
         WithConnection(UploadReviewImagePlanner),
         WithConnection(ListFeedbackThreadsPlanner),
         WithConnection(EnsureReviewFeedbackThreadPlanner),
+        WithConnection(EnsureOrderCancellationThreadPlanner),
         WithConnection(SendFeedbackMessagePlanner),
+        WithConnection(CreateOrderCancellationMessagePlanner),
+        WithConnection(HandleOrderCancellationRequestPlanner),
         WithConnection(MarkFeedbackThreadReadPlanner),
         WithConnection(EscalateFeedbackThreadPlanner),
         WithConnection(ExploreSuggestionsPlanner),
@@ -88,14 +95,18 @@ object PlannerDefinitions:
         WithConnection(ChangeManagerPasswordPlanner),
         WithConnection(RegisterAirlineManagerPlanner),
         WithConnection(RegisterHotelManagerPlanner),
+        WithConnection(RegisterAttractionManagerPlanner),
         WithConnection(RegisterSiteAdminPlanner),
         WithConnection(ListManagerTasksPlanner),
         WithConnection(BatchConfirmManagerTasksPlanner),
         WithConnection(BatchRejectManagerTasksPlanner),
         WithConnection(ListManagerFlightsPlanner),
+        WithConnection(ListManagerFlightOrdersPlanner),
         WithConnection(ListManagerHotelsPlanner),
         WithConnection(ListManagerRefundTasksPlanner),
+        WithConnection(UpdateAirlineManagerProfilePlanner),
         WithConnection(CreateManagerFlightPlanner),
+        WithConnection(ToggleManagerFlightStatusPlanner),
         WithConnection(CreateManagerRoomTypePlanner),
         WithConnection(ConfirmManagerBookingItemPlanner),
         WithConnection(RejectManagerBookingItemPlanner),

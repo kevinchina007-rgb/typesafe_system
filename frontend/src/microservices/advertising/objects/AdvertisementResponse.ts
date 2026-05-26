@@ -27,3 +27,9 @@ export type AdvertisementResponse = {
   updatedAt: string
   reviews: AdvertisementReviewResponse[]
 }
+
+export const advertisementResponseFromJson = (json: string): AdvertisementResponse =>
+  JSON.parse(json) as AdvertisementResponse
+
+export const advertisementResponseToJson = (value: AdvertisementResponse): string =>
+  JSON.stringify(value)

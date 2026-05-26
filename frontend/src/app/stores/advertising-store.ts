@@ -1,5 +1,6 @@
 ﻿import { create } from 'zustand'
 
+import { getManagerSnap } from '@/app/stores/manager-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { AdvertisementImageUploadResponse } from '@/microservices/advertising/objects/AdvertisementImageUploadResponse'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
@@ -24,9 +25,14 @@ type AdvertisingActions = {
   loadPendingReviewAdvertisements: () => Promise<AdvertisementResponse[]>
   loadReviewedAdvertisements: () => Promise<AdvertisementResponse[]>
   loadDeliverableAdvertisements: (placement: AdvertisingPlacementKey) => Promise<AdvertisementResponse[]>
-  createAdvertisement: (payload: CreateAdvertisementRequest) => Promise<AdvertisementResponse>
+  createAdvertisement: (
+    payload: Omit<CreateAdvertisementRequest, 'ownerManagerId' | 'ownerType' | 'ownerDisplayName'>
+  ) => Promise<AdvertisementResponse>
   uploadAdvertisementImage: (imageFile: File) => Promise<AdvertisementImageUploadResponse>
-  updateAdvertisement: (advertisementId: string, payload: UpdateAdvertisementRequest) => Promise<AdvertisementResponse>
+  updateAdvertisement: (
+    advertisementId: string,
+    payload: Omit<UpdateAdvertisementRequest, 'ownerManagerId' | 'ownerType'>
+  ) => Promise<AdvertisementResponse>
   submitAdvertisementForReview: (advertisementId: string) => Promise<AdvertisementResponse>
   pauseAdvertisement: (advertisementId: string) => Promise<AdvertisementResponse>
   approveAdvertisement: (advertisementId: string, payload: AdvertisementReviewDecisionRequest) => Promise<AdvertisementResponse>
@@ -91,6 +97,14 @@ function toPlacementValue(placement: AdvertisingPlacementKey) {
   return placement === 'hotelBooking' ? 'HotelBookingPage' : 'AttractionBookingPage'
 }
 
+function requireSignedInManager() {
+  const manager = getManagerSnap().signedInManagerSession
+  if (!manager) {
+    throw new Error('manager_not_signed_in')
+  }
+  return manager
+}
+
 export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   ownerAdvertisements: [],
   pendingReviewAdvertisements: [],
@@ -101,7 +115,8 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   loadOwnerAdvertisements: async () => {
     set({ isLoading: true })
     try {
-      const response = await travelMvpApiClient.listMyAdvertisements()
+      const manager = requireSignedInManager()
+      const response = await travelMvpApiClient.listMyAdvertisements(manager.managerId, manager.managerType)
       const advertisements = sortAdvertisements(response.advertisements)
       set({ ownerAdvertisements: advertisements, isLoading: false })
       return advertisements
@@ -145,7 +160,13 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisements
   },
   createAdvertisement: async payload => {
-    const advertisement = await travelMvpApiClient.createAdvertisement(payload)
+    const manager = requireSignedInManager()
+    const advertisement = await travelMvpApiClient.createAdvertisement({
+      ...payload,
+      ownerManagerId: manager.managerId,
+      ownerType: manager.managerType,
+      ownerDisplayName: manager.displayName,
+    })
     set(state => ({
       ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
     }))
@@ -153,7 +174,12 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   },
   uploadAdvertisementImage: async imageFile => travelMvpApiClient.uploadAdvertisementImage(imageFile),
   updateAdvertisement: async (advertisementId, payload) => {
-    const advertisement = await travelMvpApiClient.updateAdvertisement(advertisementId, payload)
+    const manager = requireSignedInManager()
+    const advertisement = await travelMvpApiClient.updateAdvertisement(advertisementId, {
+      ...payload,
+      ownerManagerId: manager.managerId,
+      ownerType: manager.managerType,
+    })
     set(state => ({
       ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
       pendingReviewAdvertisements: upsertAdvertisement(state.pendingReviewAdvertisements, advertisement),
@@ -162,7 +188,12 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   submitAdvertisementForReview: async advertisementId => {
-    const advertisement = await travelMvpApiClient.submitAdvertisementForReview(advertisementId)
+    const manager = requireSignedInManager()
+    const advertisement = await travelMvpApiClient.submitAdvertisementForReview({
+      advertisementId,
+      ownerManagerId: manager.managerId,
+      ownerType: manager.managerType,
+    })
     set(state => ({
       ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
       pendingReviewAdvertisements: upsertAdvertisement(state.pendingReviewAdvertisements, advertisement),
@@ -171,7 +202,12 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   pauseAdvertisement: async advertisementId => {
-    const advertisement = await travelMvpApiClient.pauseAdvertisement(advertisementId)
+    const manager = requireSignedInManager()
+    const advertisement = await travelMvpApiClient.pauseAdvertisement({
+      advertisementId,
+      ownerManagerId: manager.managerId,
+      ownerType: manager.managerType,
+    })
     set(state => ({
       ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
       reviewedAdvertisements: upsertAdvertisement(state.reviewedAdvertisements, advertisement),

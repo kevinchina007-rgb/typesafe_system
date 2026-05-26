@@ -72,7 +72,7 @@ export function HotelsPanel({
   }, [loadDeliverableAdvertisements])
 
   return (
-    <section className="page-card">
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
       <HotelPageHero title={translate('hotels.title')} description={translate('hotels.description')} />
 
       <HotelSearchCard
@@ -134,24 +134,24 @@ export function HotelsPanel({
       />
 
       {selectedAdvertisement ? (
-        <section className="page-card advertising-selected-card">
-          <div className="section-header">
+        <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="eyebrow-label">{translate('advertising.selectedEyebrow')}</p>
-              <h3 className="section-title">{selectedAdvertisement.title}</h3>
+              <p className="text-sm font-bold text-slate-500">{translate('advertising.selectedEyebrow')}</p>
+              <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{selectedAdvertisement.title}</h3>
             </div>
           </div>
-          <div className="advertising-selected-copy">
+          <div className="grid gap-2 text-sm text-slate-600">
             <p>{selectedAdvertisement.subtitle}</p>
             <p>{selectedAdvertisement.description}</p>
-            <span className="detail-label">{`${translate('advertising.targetResourceLabel')}: ${selectedAdvertisement.resourceSummaryTitle}`}</span>
+            <span className="text-sm font-medium text-slate-500">{`${translate('advertising.targetResourceLabel')}: ${selectedAdvertisement.resourceSummaryTitle}`}</span>
           </div>
         </section>
       ) : null}
 
       <HotelFilterBar translate={translate} />
 
-      {isGuestMode ? <p className="empty-state">{translate('hotels.guest')}</p> : null}
+      {isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('hotels.guest')}</p> : null}
 
       {hasSearchedHotels ? (
         <HotelResultsSection

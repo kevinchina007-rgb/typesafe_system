@@ -1,4 +1,4 @@
-import type { OrderLineItemResponse } from './OrderLineItemResponse'
+﻿import type { OrderLineItemResponse } from './OrderLineItemResponse'
 import type { PaymentResponse } from './PaymentResponse'
 import type { RefundResponse } from './RefundResponse'
 
@@ -21,3 +21,8 @@ export type OrderResponse = {
   orderPayments: PaymentResponse[]
   orderRefunds: RefundResponse[]
 }
+export const orderResponseFromJson = (json: string): OrderResponse =>
+  JSON.parse(json) as OrderResponse
+
+export const orderResponseToJson = (value: OrderResponse): string =>
+  JSON.stringify(value)

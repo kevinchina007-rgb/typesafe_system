@@ -1,8 +1,13 @@
 import type { PaymentLinkResponse } from '@/microservices/order/objects/PaymentLinkResponse'
 
+import { getTravelBackendOrigin } from '@/lib/config/runtime-config'
+import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
-
-import { createQueryString, executeApiRequest } from '@/microservices/common/api/ApiTransport'
-
-export const createPaymentLink = (orderId: string, paymentMethod: string, language: 'en' | 'zh'): Promise<PaymentLinkResponse> =>
-    executeApiRequest(`/orders/${orderId}/payment-link${createQueryString({ paymentMethod, lang: language })}`)
+export const createPaymentLink = (orderId: string, userId: string, paymentMethod: string, language: 'zh'): Promise<PaymentLinkResponse> =>
+    executeJsonApiRequest('/CreatePaymentLinkPlanner', 'POST', {
+        orderId,
+        userId,
+        paymentMethod,
+        language,
+        publicBackendOrigin: getTravelBackendOrigin(),
+    })

@@ -1,4 +1,4 @@
-export type CurrentManagerSessionResponse = {
+﻿export type CurrentManagerSessionResponse = {
   managerId: string
   managerType: string
   email: string
@@ -8,3 +8,8 @@ export type CurrentManagerSessionResponse = {
   createdAt: string
   expiresAt: string
 }
+export const currentManagerSessionResponseFromJson = (json: string): CurrentManagerSessionResponse =>
+  JSON.parse(json) as CurrentManagerSessionResponse
+
+export const currentManagerSessionResponseToJson = (value: CurrentManagerSessionResponse): string =>
+  JSON.stringify(value)

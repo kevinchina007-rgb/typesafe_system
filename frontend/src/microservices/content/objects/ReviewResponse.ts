@@ -1,4 +1,4 @@
-import type { ContentImageResponse } from './ContentImageResponse'
+﻿import type { ContentImageResponse } from './ContentImageResponse'
 
 export type ReviewResponse = {
   reviewId: string
@@ -22,3 +22,8 @@ export type ReviewResponse = {
   canDelete: boolean
   images: ContentImageResponse[]
 }
+export const reviewResponseFromJson = (json: string): ReviewResponse =>
+  JSON.parse(json) as ReviewResponse
+
+export const reviewResponseToJson = (value: ReviewResponse): string =>
+  JSON.stringify(value)

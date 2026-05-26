@@ -14,8 +14,8 @@ export function GuestRoomSelector({
   onGuestCountChange,
 }: GuestRoomSelectorProps) {
   return (
-    <div className="resource-inline-field-grid hotel-guest-room-grid">
-      <label className="resource-search-label resource-inline-field">
+    <div className="grid gap-3 md:grid-cols-2 md:grid-cols-2">
+      <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
         <span>{translate('hotels.roomCount')}</span>
         <select value={roomCount} onChange={event => onRoomCountChange(Number(event.target.value))}>
           {[1, 2, 3, 4].map(value => (
@@ -25,7 +25,7 @@ export function GuestRoomSelector({
           ))}
         </select>
       </label>
-      <label className="resource-search-label resource-inline-field">
+      <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
         <span>{translate('hotels.guestCount')}</span>
         <select value={guestCount} onChange={event => onGuestCountChange(Number(event.target.value))}>
           {[1, 2, 3, 4, 5, 6].map(value => (

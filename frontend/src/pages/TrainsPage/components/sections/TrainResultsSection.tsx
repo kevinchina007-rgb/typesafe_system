@@ -41,11 +41,11 @@ export function TrainResultsSection({
   onLoadReviews,
 }: TrainResultsSectionProps) {
   return (
-    <div className="entity-list flights-list">
+    <div className="grid gap-3 grid gap-3">
       {trainResponses.length > 0 ? (
         trainResponses.map(trainResponse => (
-          <article key={trainResponse.trainId} className="panel-card hotel-card">
-            <div className="panel-heading">
+          <article key={trainResponse.trainId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3">
+            <div className="text-lg font-bold text-slate-950">
               <div>
                 <strong>{trainResponse.trainNumber}</strong>
                 <p>{renderTrainStopSummary(trainResponse)}</p>
@@ -61,21 +61,21 @@ export function TrainResultsSection({
                   onLoadReviews={onLoadReviews}
                 />
               </div>
-              <span className="tag-chip">{mapBackendStatusToProductLabel(trainResponse.status, currentLanguage)}</span>
+              <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{mapBackendStatusToProductLabel(trainResponse.status, currentLanguage)}</span>
             </div>
 
-            <div className="detail-grid">
+            <div className="grid gap-3 md:grid-cols-2">
               <div>
-                <span className="detail-label">{translate('trains.saleStartsAt')}</span>
+                <span className="text-sm font-medium text-slate-500">{translate('trains.saleStartsAt')}</span>
                 <strong>{formatIsoDateTime(trainResponse.saleStartsAt, '-')}</strong>
               </div>
               <div>
-                <span className="detail-label">{translate('trains.stopCount')}</span>
+                <span className="text-sm font-medium text-slate-500">{translate('trains.stopCount')}</span>
                 <strong>{trainResponse.stops.length}</strong>
               </div>
             </div>
 
-            <ul className="entity-list">
+            <ul className="grid gap-3">
               {trainResponse.seatInventories.map(seatInventory => {
                 const quote = quoteTrainSegmentAmount(trainResponse, searchFromStation, searchToStation, seatInventory.seatClass)
 
@@ -88,7 +88,7 @@ export function TrainResultsSection({
                     </div>
 
                     <form
-                      className="compact-action-block"
+                      className="flex flex-wrap items-center gap-3"
                       onSubmit={async event => {
                         event.preventDefault()
                         if (isGuestMode) {
@@ -122,16 +122,16 @@ export function TrainResultsSection({
                           <option value="middle">{translate('trains.middle')}</option>
                         </select>
                       </label>
-                      <div className="checkbox-list">
-                        <p className="detail-label">{translate('trains.selectTravelers')}</p>
+                      <div className="grid gap-2">
+                        <p className="text-sm font-medium text-slate-500">{translate('trains.selectTravelers')}</p>
                         {travelers.map(traveler => (
-                          <label key={traveler.travelerId} className="checkbox-row">
+                          <label key={traveler.travelerId} className="flex items-center gap-2">
                             <input type="checkbox" name="travelerIds" value={traveler.travelerId} disabled={isBusy || !quote} />
                             {renderTrainTravelerOptionLabel(traveler)}
                           </label>
                         ))}
                       </div>
-                      <button type="submit" disabled={isBusy || !quote}>
+                      <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy || !quote}>
                         {translate('trains.bookNow')}
                       </button>
                     </form>
@@ -142,7 +142,7 @@ export function TrainResultsSection({
           </article>
         ))
       ) : (
-        <p className="empty-state">{translate('trains.empty')}</p>
+        <p className="text-sm leading-6 text-slate-500">{translate('trains.empty')}</p>
       )}
     </div>
   )

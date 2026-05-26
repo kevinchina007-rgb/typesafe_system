@@ -1,4 +1,4 @@
-export type TrainSeatResponse = {
+﻿export type TrainSeatResponse = {
   seatId: string
   carriageNo: number
   seatNo: string
@@ -7,3 +7,8 @@ export type TrainSeatResponse = {
   seatPositionType: string
   status: string
 }
+export const trainSeatResponseFromJson = (json: string): TrainSeatResponse =>
+  JSON.parse(json) as TrainSeatResponse
+
+export const trainSeatResponseToJson = (value: TrainSeatResponse): string =>
+  JSON.stringify(value)

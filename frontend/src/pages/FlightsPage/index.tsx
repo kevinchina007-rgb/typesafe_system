@@ -1,10 +1,10 @@
-import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
-﻿import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
 import { FlightsPanel } from '@/pages/FlightsPage/components/FlightsPanel'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { AppLanguage, AppViewKey, ResourceReviewSummaryResponse, ReviewResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AppViewKey, UserResponse } from '@/lib/mvp-types/index'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
 
@@ -26,40 +26,15 @@ export function FlightsPage({
   const { travelers } = useSignedInTravelers(signedInUser)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
-
-  async function loadReviewSummary(payload: {
-    resourceType: string
-    resourceId: string
-  }): Promise<ResourceReviewSummaryResponse> {
-    if (!signedInUser) {
-      throw new Error(translate('error.loginRequired'))
-    }
-    return travelMvpApiClient.getReviewResourceSummary({
-      userId: signedInUser.userId,
-      resourceType: payload.resourceType,
-      resourceId: payload.resourceId,
-    })
-  }
-
-  async function loadReviewsByResource(payload: {
-    resourceType: string
-    resourceId: string
-  }): Promise<ReviewResponse[]> {
-    if (!signedInUser) {
-      throw new Error(translate('error.loginRequired'))
-    }
-    const response = await travelMvpApiClient.listReviewsByResource({
-      userId: signedInUser.userId,
-      resourceType: payload.resourceType,
-      resourceId: payload.resourceId,
-    })
-    return response.reviews
-  }
+  const loadDailyLowestPrices = useCallback(
+    (payload: Parameters<typeof travelMvpApiClient.listFlightDailyLowestPrices>[0]) =>
+      travelMvpApiClient.listFlightDailyLowestPrices(payload),
+    [],
+  )
 
   return (
     <>
       <FlightsPanel
-        currentLanguage={currentLanguage}
         isBusy={isBusy}
         isGuestMode={signedInUser === null}
         travelers={travelers}
@@ -69,6 +44,8 @@ export function FlightsPage({
           const flightListResponse = await travelMvpApiClient.listFlights(payload)
           return flightListResponse.flights
         }}
+        onLoadDailyLowestPrices={loadDailyLowestPrices}
+        onValidationError={message => onShowNotice('error', translate('error.friendly.default'), message)}
         onBookFlight={async payload => {
           if (!signedInUser) {
             setIsAuthDialogOpen(true)
@@ -76,6 +53,7 @@ export function FlightsPage({
           }
           await runPageAction(async () => {
             await travelMvpApiClient.createFlightOrder({
+              userId: signedInUser.userId,
               flightId: payload.flightId,
               travelerIds: payload.travelerIds,
               cabinClass: payload.cabinClass,
@@ -83,8 +61,6 @@ export function FlightsPage({
             onNavigate('bookings')
           }, translate('flights.bookNow'), translate('notice.bookingCreated'))
         }}
-        onLoadReviewSummary={loadReviewSummary}
-        onLoadReviews={loadReviewsByResource}
       />
 
       <AuthRequiredDialog

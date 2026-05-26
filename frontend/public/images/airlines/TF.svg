@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Twin Towers Airlines logo">
+  <rect width="100" height="100" fill="#f5fbff"/>
+  <path d="M24 82V21l15-8 15 8v61H24Z" fill="#0f3b70"/>
+  <path d="M46 82V21l15-8 15 8v61H46Z" fill="#138f8a"/>
+  <path d="M50 25c-5 20-4 36 0 52 4-16 5-32 0-52Z" fill="#f5fbff"/>
+  <path d="M50 36l11 21H39l11-21Z" fill="#f5fbff"/>
+  <path d="M29 31h7M29 44h7M64 31h7M64 44h7" stroke="#8ed8d4" stroke-width="4" stroke-linecap="round"/>
+</svg>

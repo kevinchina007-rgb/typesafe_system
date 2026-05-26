@@ -1,4 +1,4 @@
-export type TourGroupSummaryResponse = {
+﻿export type TourGroupSummaryResponse = {
   groupId: string
   organizerUserId: string
   title: string
@@ -15,3 +15,8 @@ export type TourGroupSummaryResponse = {
   status: string
   createdAt: string
 }
+export const tourGroupSummaryResponseFromJson = (json: string): TourGroupSummaryResponse =>
+  JSON.parse(json) as TourGroupSummaryResponse
+
+export const tourGroupSummaryResponseToJson = (value: TourGroupSummaryResponse): string =>
+  JSON.stringify(value)

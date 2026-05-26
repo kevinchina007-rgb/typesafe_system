@@ -4,37 +4,41 @@ import type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
 import type { BookAttractionItemRequest } from '@/microservices/attraction/objects/BookAttractionItemRequest'
 import type { BookHotelRequest } from '@/microservices/hotel/objects/BookHotelRequest'
 import type { BookTrainItemRequest } from '@/microservices/train/objects/BookTrainItemRequest'
-import { createQueryString, executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const createOrder = (payload: { ownerUserId: string; orderCurrency: string }): Promise<OrderResponse> =>
-    executeJsonApiRequest('/orders', 'POST', payload)
+    executeJsonApiRequest('/CreateOrderPlanner', 'POST', payload)
 
-export const addTrainItemToOrder = (orderId: string, payload: BookTrainItemRequest): Promise<OrderResponse> =>
-    executeJsonApiRequest(`/orders/${orderId}/train-items`, 'POST', payload)
+export const addTrainItemToOrder = async (orderId: string, payload: BookTrainItemRequest): Promise<OrderResponse> => {
+    await executeJsonApiRequest('/BookTrainItemPlanner', 'POST', { ...payload, orderId })
+    return getOrder(orderId)
+}
 
 export const addAttractionItemToOrder = (orderId: string, payload: BookAttractionItemRequest): Promise<OrderResponse> =>
     executeJsonApiRequest(`/orders/${orderId}/attraction-items`, 'POST', payload)
 
-export const createHotelOrder = (payload: BookHotelRequest): Promise<OrderResponse> =>
-    executeJsonApiRequest('/hotels/book', 'POST', payload)
+export const createHotelOrder = async (payload: BookHotelRequest): Promise<OrderResponse> => {
+    const response = await executeJsonApiRequest<{ orderId: string }>('/BookHotelPlanner', 'POST', payload)
+    return getOrder(response.orderId)
+}
 
 export const getOrder = (orderId: string): Promise<OrderResponse> =>
-    executeApiRequest(`/orders/${orderId}`)
+    executeJsonApiRequest('/GetOrderPlanner', 'POST', { orderId })
 
 export const listOrders = (userId: string): Promise<OrderListResponse> =>
-    executeApiRequest(`/users/${userId}/orders`)
+    executeJsonApiRequest('/ListOrdersPlanner', 'POST', { userId })
 
-export const payOrder = (orderId: string, payload: { paymentMethod: string; paymentSucceeded: boolean }): Promise<OrderResponse> =>
-    executeJsonApiRequest(`/orders/${orderId}/pay`, 'POST', payload)
+export const payOrder = (orderId: string, payload: { paymentMethod: string; paymentSucceeded: boolean; travelerIds?: string[] }): Promise<OrderResponse> =>
+    executeJsonApiRequest('/PayOrderPlanner', 'POST', { orderId, ...payload })
 
 export const cancelOrder = (orderId: string): Promise<OrderResponse> =>
-    executeApiRequest(`/orders/${orderId}/cancel`, { method: 'POST' })
+    executeJsonApiRequest('/CancelOrderPlanner', 'POST', { orderId })
 
 export const requestRefund = (orderId: string, payload: { refundReason: string }): Promise<OrderResponse> =>
-    executeJsonApiRequest(`/orders/${orderId}/refunds`, 'POST', payload)
+    executeJsonApiRequest('/RequestRefundPlanner', 'POST', { orderId, ...payload })
 
-export const approveRefund = (orderId: string, managerId: string, managerType: string): Promise<OrderResponse> =>
-    executeApiRequest(`/manager/orders/${orderId}/refund/approve${createQueryString({ managerId, managerType })}`, { method: 'POST' })
+export const approveRefund = (_orderId: string, managerId: string, managerType: string): Promise<unknown> =>
+    executeJsonApiRequest('/ApproveManagerRefundPlanner', 'POST', { managerId, managerType })
 
-export const rejectRefund = (orderId: string, managerId: string, managerType: string): Promise<OrderResponse> =>
-    executeApiRequest(`/manager/orders/${orderId}/refund/reject${createQueryString({ managerId, managerType })}`, { method: 'POST' })
+export const rejectRefund = (_orderId: string, managerId: string, managerType: string): Promise<unknown> =>
+    executeJsonApiRequest('/RejectManagerRefundPlanner', 'POST', { managerId, managerType })

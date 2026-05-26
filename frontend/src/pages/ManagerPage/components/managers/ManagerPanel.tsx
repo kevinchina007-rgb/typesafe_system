@@ -6,25 +6,10 @@ export function ManagerPanel({
   managerSession,
   isBusy,
   translate,
-  onLogoutManager,
   ...rest
 }: ManagerPanelProps) {
   return (
-    <section className="page-card">
-      <div className="panel-heading">
-        <div>
-          <p className="eyebrow-label">{translate('nav.manager')}</p>
-          <h2>{translate('manager.title')}</h2>
-        </div>
-        {managerSession ? (
-          <button type="button" className="secondary-button" disabled={isBusy} onClick={onLogoutManager}>
-            {translate('manager.logout')}
-          </button>
-        ) : null}
-      </div>
-
-      <p className="hero-copy">{translate('manager.description')}</p>
-
+    <section className="bg-white text-slate-950">
       {managerSession ? (
         <ManagerPanelWorkspace
           {...rest}

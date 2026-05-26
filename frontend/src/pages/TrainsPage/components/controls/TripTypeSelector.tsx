@@ -15,7 +15,7 @@ export function TripTypeSelector({ value, translate, onChange }: TripTypeSelecto
         <button
           key={option}
           type="button"
-          className={`resource-chip-button ${value === option ? 'is-active' : ''}`}
+          className={`inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55 ${value === option ? 'border-black bg-black text-white' : ''}`}
           onClick={() => onChange(option)}
         >
           {translate(`trains.tripType.${option}`)}

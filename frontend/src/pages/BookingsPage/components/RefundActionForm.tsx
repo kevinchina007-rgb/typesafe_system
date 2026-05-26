@@ -7,7 +7,7 @@
 export function RefundActionForm({ disabled, translate, onSubmit }: RefundActionFormProps) {
   return (
     <form
-      className="inline-form"
+      className="grid gap-4 md:grid-cols-2"
       onSubmit={async event => {
         event.preventDefault()
         const formData = new FormData(event.currentTarget)
@@ -17,9 +17,9 @@ export function RefundActionForm({ disabled, translate, onSubmit }: RefundAction
     >
       <label>
         {translate('bookings.refund.reason')}
-        <input name="refundReason" placeholder={translate('bookings.refund.reasonPlaceholder')} disabled={disabled} />
+        <input name="refundReason" disabled={disabled} />
       </label>
-      <button type="submit" disabled={disabled}>
+      <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={disabled}>
         {translate('bookings.requestRefund')}
       </button>
     </form>

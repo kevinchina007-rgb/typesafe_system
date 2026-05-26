@@ -15,7 +15,9 @@ $env:JAVA_HOME = 'E:\typesafe\template\backend\.jdks\temurin-21-unpacked\jdk-21.
 $env:TRAVEL_REPOSITORY_MODE = $RepositoryMode
 $env:TRAVEL_BACKEND_PORT = "$BackendPort"
 $launcherDatabasePath = (Join-Path $templateRoot 'backend\data\travel-platform-runtime').Replace('\', '/')
-$env:TRAVEL_DB_URL = "jdbc:h2:file:$launcherDatabasePath;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE"
+$env:TRAVEL_DB_URL = "jdbc:postgresql://127.0.0.1:5432/travel_platform"
+$env:TRAVEL_DB_DRIVER = "org.postgresql.Driver"
+$env:TRAVEL_DB_USER = "postgres"
 $env:SBT_OPTS = '-Dsbt.boot.directory=E:/typesafe/template/backend/.sbt-home/boot -Dsbt.global.base=E:/typesafe/template/backend/.sbt-home -Dsbt.ivy.home=E:/typesafe/template/backend/.ivy2 -Divy.home=E:/typesafe/template/backend/.ivy2 -Dcoursier.cache=E:/typesafe/template/backend/.coursier -Dsbt.coursier.home=E:/typesafe/template/backend/.coursier -Dsbt.repository.config=E:/typesafe/template/backend/project/repositories -Dsbt.override.build.repos=true -Dsbt.supershell=false -Dsbt.ci=true -Dsbt.server.autostart=false'
 $env:COURSIER_CACHE = 'E:/typesafe/template/backend/.coursier'
 $env:COURSIER_ARCHIVE_CACHE = 'E:/typesafe/template/backend/.coursier/archive'

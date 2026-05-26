@@ -136,56 +136,56 @@ export function TourGroupDetail({
   }, [isOrganizer])
 
   return (
-    <section className="tour-group-detail-shell">
-      <div className="panel-heading">
+    <section className="grid gap-4">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('tourGroups.detailEyebrow')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('tourGroups.detailEyebrow')}</p>
           <h2>{details.group.title}</h2>
           <p>{details.group.description}</p>
         </div>
-        <span className="tag-chip">{localizeTourGroupStatus(details.group.status, currentLanguage)}</span>
+        <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{localizeTourGroupStatus(details.group.status, currentLanguage)}</span>
       </div>
 
-      <div className="detail-grid">
+      <div className="grid gap-3 md:grid-cols-2">
         <div>
-          <span className="detail-label">{translate('tourGroups.destination')}</span>
+          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.destination')}</span>
           <strong>{details.group.destination}</strong>
         </div>
         <div>
-          <span className="detail-label">{translate('tourGroups.dateRange')}</span>
+          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.dateRange')}</span>
           <strong>{`${details.group.startDate} - ${details.group.endDate}`}</strong>
         </div>
         <div>
-          <span className="detail-label">{translate('tourGroups.capacity')}</span>
+          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.capacity')}</span>
           <strong>{`${details.group.usedCapacity} / ${details.group.capacity}`}</strong>
         </div>
         <div>
-          <span className="detail-label">{translate('tourGroups.organizer')}</span>
+          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.organizer')}</span>
           <strong>{details.group.organizerUserId}</strong>
         </div>
         <div>
-          <span className="detail-label">{translate('tourGroups.memberCount')}</span>
+          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.memberCount')}</span>
           <strong>{details.group.memberCount}</strong>
         </div>
         <div>
-          <span className="detail-label">{translate('tourGroups.pendingApprovals')}</span>
+          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.pendingApprovals')}</span>
           <strong>{details.group.pendingSelectionCount}</strong>
         </div>
         <div>
-          <span className="detail-label">{translate('tourGroups.confirmedSelectionCount')}</span>
+          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.confirmedSelectionCount')}</span>
           <strong>{details.group.confirmedSelectionCount}</strong>
         </div>
         <div>
-          <span className="detail-label">{translate('tourGroups.convertedOrderCount')}</span>
+          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.convertedOrderCount')}</span>
           <strong>{details.group.convertedOrderCount}</strong>
         </div>
       </div>
 
       {isOrganizer ? (
-        <div className="tour-group-mode-switch">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
-            className={workspaceMode === 'manage' ? 'secondary-button' : undefined}
+            className={workspaceMode === 'manage' ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
             disabled={isBusy}
             onClick={() => setWorkspaceMode('manage')}
           >
@@ -193,7 +193,7 @@ export function TourGroupDetail({
           </button>
           <button
             type="button"
-            className={workspaceMode === 'member' ? 'secondary-button' : undefined}
+            className={workspaceMode === 'member' ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
             disabled={isBusy}
             onClick={() => setWorkspaceMode('member')}
           >

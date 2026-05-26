@@ -1,58 +1,220 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
 import type { FeedbackManagerType } from '@/microservices/content/objects/FeedbackManagerType'
+import type { FeedbackMessageResponse } from '@/microservices/content/objects/FeedbackMessageResponse'
 import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
+import type { OrderCancellationRequestStatus } from '@/microservices/content/objects/OrderCancellationRequestPayload'
+import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
+
+type CancellationOrderOption = {
+  orderId: string
+  title: string
+}
+
+type SupportIdentityOverride = {
+  name: string
+  logoPath: string | null
+}
 
 type FeedbackConversationWorkspaceProps = {
   audience: FeedbackAudience
   audienceDisplayName: string
+  audienceAvatarUrl?: string | null
   emptyTitle: string
   emptyDescription: string
   threads: FeedbackThread[]
   fullScreen?: boolean
   preferredThreadId?: string | null
+  cancellationOrders?: CancellationOrderOption[]
+  supportIdentityOverrides?: Record<string, SupportIdentityOverride>
   translate: (translationKey: string) => string
   unreadCountSelector: (thread: FeedbackThread) => number
   onThreadChange?: (thread: FeedbackThread | null) => void
   onMarkRead: (threadId: string, audience: FeedbackAudience) => Promise<unknown> | void
   onSendMessage: (threadId: string, body: string) => Promise<unknown> | void
+  onCreateCancellationRequest?: (threadId: string, orderId: string, reason: string) => Promise<unknown> | void
+  onHandleCancellationRequest?: (
+    threadId: string,
+    messageId: string,
+    status: Exclude<OrderCancellationRequestStatus, 'pending'>,
+    managerNote: string,
+  ) => Promise<unknown> | void
   onEscalate?: (thread: FeedbackThread) => Promise<unknown> | void
 }
 
+type ChatIdentity = {
+  name: string
+  logoPath: string | null
+  fallback: string
+}
+
+const airlineIdentityCatalog: Array<{ name: string; logoPath: string }> = [
+  { name: '奶龙航空', logoPath: '/images/airlines/NL.svg' },
+  { name: '科比航空', logoPath: '/images/airlines/LD.svg' },
+  { name: '双子塔航空', logoPath: '/images/airlines/TF.svg' },
+  { name: '雪豹航空', logoPath: '/images/airlines/YS.svg' },
+  { name: '星际穿越航空', logoPath: '/images/airlines/WX.svg' },
+  { name: '祖国人航空', logoPath: '/images/airlines/ZX.svg' },
+  { name: 'SpaceX航空', logoPath: '/images/airlines/JN.svg' },
+  { name: '无人驾驶航空', logoPath: '/images/airlines/PM.svg' },
+  { name: '卡皮巴拉航空', logoPath: '/images/airlines/NM.svg' },
+  { name: '万户航空', logoPath: '/images/airlines/MH.svg' },
+]
+
 function localizeManagerType(managerType: FeedbackManagerType, translate: (translationKey: string) => string) {
-  if (managerType === 'Airline') {
-    return translate('manager.type.airline')
-  }
-  if (managerType === 'Hotel') {
-    return translate('manager.type.hotel')
-  }
-  if (managerType === 'Train') {
-    return translate('manager.type.train')
-  }
-  if (managerType === 'Attraction') {
-    return translate('manager.type.attraction')
-  }
+  if (managerType === 'Airline') return translate('manager.type.airline')
+  if (managerType === 'Hotel') return translate('manager.type.hotel')
+  if (managerType === 'Train') return translate('manager.type.train')
+  if (managerType === 'Attraction') return translate('manager.type.attraction')
   return translate('manager.type.siteAdmin')
+}
+
+function localizeCancellationStatus(status: OrderCancellationRequestStatus) {
+  if (status === 'approved') return '已同意取消'
+  if (status === 'rejected') return '已拒绝取消'
+  if (status === 'needMoreInfo') return '需要补充信息'
+  return '等待客服处理'
+}
+
+function isOwnMessage(senderRole: string, audience: FeedbackAudience) {
+  if (audience === 'User') return senderRole === 'User'
+  if (audience === 'Manager') return senderRole === 'Manager'
+  return senderRole === 'SiteAdmin'
+}
+
+function getLastMessage(thread: FeedbackThread) {
+  return thread.messages[thread.messages.length - 1] ?? null
+}
+
+function getThreadPreview(thread: FeedbackThread) {
+  const lastMessage = getLastMessage(thread)
+  if (!lastMessage) return thread.subtitle || thread.resourceSummaryTitle || '暂无消息'
+  if (lastMessage.messageType === 'orderCancellationRequest') {
+    return `取消订单请求：${lastMessage.payload?.reason ?? '等待查看'}`
+  }
+  return lastMessage.content
+}
+
+function formatListTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const now = new Date()
+  if (date.toDateString() === now.toDateString()) {
+    return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
+  }
+  return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+}
+
+function formatCenterTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+}
+
+function shouldShowTimeMarker(messages: FeedbackMessageResponse[], index: number) {
+  if (index === 0) return true
+  const previous = new Date(messages[index - 1]?.createdAt ?? '').getTime()
+  const current = new Date(messages[index]?.createdAt ?? '').getTime()
+  if (Number.isNaN(previous) || Number.isNaN(current)) return true
+  return current - previous > 10 * 60 * 1000
+}
+
+function findAirlineIdentity(text: string): ChatIdentity | null {
+  const matchedAirline = airlineIdentityCatalog.find(airline => text.includes(airline.name))
+  if (!matchedAirline) return null
+  return {
+    name: `${matchedAirline.name}客服`,
+    logoPath: matchedAirline.logoPath,
+    fallback: matchedAirline.name.slice(0, 1),
+  }
+}
+
+function getThreadIdentity(
+  thread: FeedbackThread,
+  translate: (translationKey: string) => string,
+  supportIdentityOverrides: Record<string, SupportIdentityOverride>,
+): ChatIdentity {
+  const override = supportIdentityOverrides[thread.threadId]
+  if (override) {
+    return {
+      name: override.name,
+      logoPath: override.logoPath,
+      fallback: override.name.slice(0, 1) || '客',
+    }
+  }
+
+  const searchableText = [
+    thread.title,
+    thread.subtitle,
+    thread.resourceSummaryTitle,
+    ...thread.messages.map(message => `${message.content} ${message.payload?.orderTitle ?? ''}`),
+  ].join(' ')
+  const airlineIdentity = findAirlineIdentity(searchableText)
+  if (airlineIdentity) return airlineIdentity
+
+  const managerName = localizeManagerType(thread.managerType, translate)
+  return {
+    name: thread.managerType === 'Airline' ? '航空公司客服' : `${managerName}客服`,
+    logoPath: thread.managerType === 'Airline' ? '/images/airlines/MU.svg' : null,
+    fallback: managerName.slice(0, 1) || '客',
+  }
+}
+
+function Avatar({
+  imageUrl,
+  fallback,
+  alt,
+  useBackendAsset = false,
+}: {
+  imageUrl: string | null | undefined
+  fallback: string
+  alt: string
+  useBackendAsset?: boolean
+}) {
+  const className = 'flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden border border-slate-200 bg-white object-contain text-sm font-bold text-slate-700'
+  if (useBackendAsset) {
+    return <BackendAssetImage assetUrl={imageUrl} alt={alt} className={className} fallbackContent={fallback} />
+  }
+  if (imageUrl) {
+    return <img src={imageUrl} alt={alt} className={className} />
+  }
+  return <span className={className}>{fallback}</span>
 }
 
 export function FeedbackConversationWorkspace({
   audience,
   audienceDisplayName,
+  audienceAvatarUrl,
   emptyTitle,
   emptyDescription,
   threads,
   fullScreen = false,
   preferredThreadId,
+  cancellationOrders = [],
+  supportIdentityOverrides = {},
   translate,
   unreadCountSelector,
   onThreadChange,
   onMarkRead,
   onSendMessage,
+  onCreateCancellationRequest,
+  onHandleCancellationRequest,
   onEscalate,
 }: FeedbackConversationWorkspaceProps) {
   const [activeThreadId, setActiveThreadId] = useState<string | null>(threads[0]?.threadId ?? null)
   const [draftMessage, setDraftMessage] = useState('')
+  const [showCancellationForm, setShowCancellationForm] = useState(false)
+  const [cancellationOrderId, setCancellationOrderId] = useState('')
+  const [cancellationReason, setCancellationReason] = useState('')
+  const [managerNotes, setManagerNotes] = useState<Record<string, string>>({})
+  void fullScreen
 
   useEffect(() => {
     if (!threads.some(thread => thread.threadId === activeThreadId)) {
@@ -68,131 +230,252 @@ export function FeedbackConversationWorkspace({
 
   const activeThread = useMemo(
     () => threads.find(thread => thread.threadId === activeThreadId) ?? null,
-    [activeThreadId, threads]
+    [activeThreadId, threads],
   )
+  const activeIdentity = activeThread ? getThreadIdentity(activeThread, translate, supportIdentityOverrides) : null
+  const visibleCancellationOrders = useMemo(() => {
+    if (!activeThread || activeThread.resourceType !== 'flightOrderCancellation') return cancellationOrders
+    return cancellationOrders.filter(order => order.title.includes(activeThread.resourceSummaryTitle))
+  }, [activeThread, cancellationOrders])
 
   useEffect(() => {
     onThreadChange?.(activeThread)
   }, [activeThread, onThreadChange])
 
   useEffect(() => {
-    if (!activeThread) {
-      return
-    }
+    if (!activeThread) return
     void onMarkRead(activeThread.threadId, audience)
   }, [activeThread?.threadId, audience, onMarkRead])
 
+  useEffect(() => {
+    if (cancellationOrderId && !visibleCancellationOrders.some(order => order.orderId === cancellationOrderId)) {
+      setCancellationOrderId('')
+    }
+  }, [cancellationOrderId, visibleCancellationOrders])
+
   if (threads.length === 0) {
     return (
-      <section className={fullScreen ? 'page-card feedback-page-card feedback-page-card--fullscreen' : 'page-card feedback-page-card'}>
-        <div className="section-header">
-          <div>
-            <p className="eyebrow-label">{translate('feedback.title')}</p>
-            <h2 className="section-title">{emptyTitle}</h2>
-          </div>
+      <section className="mx-auto grid min-h-[calc(100vh-10rem)] w-full max-w-4xl content-start gap-4 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div>
+          <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{emptyTitle}</h2>
         </div>
-        <p className="empty-state">{emptyDescription}</p>
+        <p className="text-sm leading-6 text-slate-500">{emptyDescription}</p>
       </section>
     )
   }
 
   return (
-    <section className={fullScreen ? 'page-card feedback-page-card feedback-page-card--fullscreen' : 'page-card feedback-page-card'}>
-      <div className={fullScreen ? 'feedback-workspace feedback-workspace--fullscreen' : 'feedback-workspace'}>
-        <aside className="feedback-thread-list">
-          {threads.map(thread => {
-            const unreadCount = unreadCountSelector(thread)
-            return (
-              <button
-                key={thread.threadId}
-                type="button"
-                className={thread.threadId === activeThreadId ? 'feedback-thread-card is-active' : 'feedback-thread-card'}
-                onClick={() => {
-                  setActiveThreadId(thread.threadId)
-                  setDraftMessage('')
-                }}
-              >
-                <div className="feedback-thread-card-head">
-                  <strong>{thread.title}</strong>
-                  {unreadCount > 0 ? <span className="feedback-unread-badge">{unreadCount}</span> : null}
-                </div>
-                <span>{thread.subtitle}</span>
-                <span>{localizeManagerType(thread.managerType, translate)}</span>
-              </button>
-            )
-          })}
+    <section className="mx-auto grid min-h-[calc(100vh-8rem)] w-full max-w-6xl overflow-hidden border border-slate-200 bg-white text-slate-950 shadow-sm shadow-slate-200/70">
+      <div className="grid min-h-0 grid-cols-[19rem_minmax(0,1fr)]">
+        <aside className="min-h-0 border-r border-slate-300 bg-slate-50">
+          <div className="border-b border-slate-200 p-4">
+            <h2 className="m-0 text-2xl font-bold text-slate-950">客服反馈</h2>
+          </div>
+
+          <div className="grid">
+            {threads.map(thread => {
+              const unreadCount = unreadCountSelector(thread)
+              const identity = getThreadIdentity(thread, translate, supportIdentityOverrides)
+              const lastMessage = getLastMessage(thread)
+              const isActive = thread.threadId === activeThreadId
+              return (
+                <button
+                  key={thread.threadId}
+                  type="button"
+                  className={`grid grid-cols-[2.75rem_minmax(0,1fr)_3.5rem] items-center gap-3 border-b border-slate-200 p-4 text-left transition ${
+                    isActive ? 'bg-white' : 'bg-slate-50 hover:bg-white'
+                  }`}
+                  onClick={() => {
+                    setActiveThreadId(thread.threadId)
+                    setDraftMessage('')
+                    setShowCancellationForm(false)
+                  }}
+                >
+                  <Avatar imageUrl={identity.logoPath} fallback={identity.fallback} alt={identity.name} />
+                  <span className="grid min-w-0 gap-1">
+                    <span className="truncate text-base font-bold text-slate-950">{identity.name}</span>
+                    <span className="truncate text-sm text-slate-500">{getThreadPreview(thread)}</span>
+                  </span>
+                  <span className="grid justify-items-end gap-2">
+                    <span className="text-xs text-slate-400">{formatListTime(lastMessage?.createdAt ?? thread.updatedAt)}</span>
+                    {unreadCount > 0 ? <span className="min-w-5 bg-pink-500 px-1.5 py-0.5 text-center text-xs font-bold text-white">{unreadCount}</span> : null}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         </aside>
 
-        {activeThread ? (
-          <div className="feedback-thread-panel">
-            <div className="section-header">
-              <div>
-                <p className="eyebrow-label">{translate('feedback.thread')}</p>
-                <h2 className="section-title">{activeThread.title}</h2>
+        {activeThread && activeIdentity ? (
+          <div className="grid min-h-0 grid-rows-[4.5rem_minmax(0,1fr)_auto] bg-white">
+            <header className="flex items-center justify-between border-b border-slate-200 px-6">
+              <div className="flex min-w-0 items-center gap-3">
+                <Avatar imageUrl={activeIdentity.logoPath} fallback={activeIdentity.fallback} alt={activeIdentity.name} />
+                <div className="min-w-0">
+                  <h3 className="m-0 truncate text-xl font-bold text-slate-950">{activeIdentity.name}</h3>
+                  <p className="m-0 truncate text-sm text-slate-500">{activeThread.resourceSummaryTitle || activeThread.subtitle}</p>
+                </div>
+              </div>
+              {onEscalate && activeThread.kind === 'ServiceReview' ? (
+                <button type="button" className="min-h-10 border border-slate-300 bg-white px-4 text-sm font-bold text-slate-950 hover:border-black hover:bg-black hover:text-white" onClick={() => onEscalate(activeThread)}>
+                  {translate('feedback.escalate')}
+                </button>
+              ) : null}
+            </header>
+
+            <div className="min-h-0 overflow-y-auto bg-slate-50 px-6 py-5">
+              <div className="grid gap-4">
+                {activeThread.messages.map((message, index) => {
+                  const ownMessage = isOwnMessage(message.senderRole, audience)
+                  const senderName = ownMessage && audience === 'User' ? audienceDisplayName : message.senderDisplayName
+                  const avatar = ownMessage
+                    ? { imageUrl: audienceAvatarUrl, fallback: audienceDisplayName.slice(0, 1) || '我', useBackendAsset: true }
+                    : { imageUrl: activeIdentity.logoPath, fallback: activeIdentity.fallback, useBackendAsset: false }
+
+                  return (
+                    <div key={message.messageId} className="grid gap-3">
+                      {shouldShowTimeMarker(activeThread.messages, index) ? (
+                        <div className="justify-self-center bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-500">{formatCenterTime(message.createdAt)}</div>
+                      ) : null}
+
+                      {message.messageType === 'system' ? (
+                        <div className="justify-self-center bg-white px-4 py-2 text-sm font-semibold text-slate-500 shadow-sm shadow-slate-200/50">
+                          {message.content}
+                        </div>
+                      ) : null}
+
+                      {message.messageType === 'orderCancellationRequest' && message.payload ? (
+                        <div className={ownMessage ? 'grid grid-cols-[minmax(0,1fr)_2.75rem] gap-3 justify-self-end' : 'grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 justify-self-start'}>
+                          {!ownMessage ? <Avatar imageUrl={avatar.imageUrl} fallback={avatar.fallback} alt={senderName} useBackendAsset={avatar.useBackendAsset} /> : null}
+                          <article className="grid max-w-xl gap-3 border border-pink-200 bg-white p-4 shadow-sm shadow-pink-100">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <p className="m-0 text-xs font-bold text-pink-600">{senderName}</p>
+                                <h4 className="m-0 text-lg font-bold text-slate-950">取消订单请求</h4>
+                              </div>
+                              <span className="border border-pink-200 bg-pink-50 px-3 py-1 text-sm font-bold text-pink-700">{localizeCancellationStatus(message.payload.status)}</span>
+                            </div>
+                            <div className="grid gap-1 text-sm leading-6 text-slate-600">
+                              <span>订单编号：{message.payload.orderId}</span>
+                              <span>订单名称：{message.payload.orderTitle ?? '订单'}</span>
+                              <span>取消原因：{message.payload.reason}</span>
+                              {message.payload.requestedRefundAmount !== null ? <span>预计可退：¥{message.payload.requestedRefundAmount}</span> : null}
+                              {message.payload.managerNote ? <span>客服备注：{message.payload.managerNote}</span> : null}
+                              {message.payload.status === 'pending' && audience === 'User' ? <strong className="text-pink-700">等待客服处理</strong> : null}
+                            </div>
+                            {audience !== 'User' && message.payload.status === 'pending' && onHandleCancellationRequest ? (
+                              <div className="grid gap-3">
+                                <textarea
+                                  rows={3}
+                                  value={managerNotes[message.messageId] ?? ''}
+                                  onChange={event => setManagerNotes(previous => ({ ...previous, [message.messageId]: event.target.value }))}
+                                  className="min-h-20 border border-slate-300 bg-white p-3 text-base outline-none focus:border-black"
+                                />
+                                <div className="flex flex-wrap gap-3">
+                                  {(['approved', 'rejected', 'needMoreInfo'] as const).map(nextStatus => (
+                                    <button
+                                      key={nextStatus}
+                                      type="button"
+                                      className={nextStatus === 'approved' ? 'min-h-10 border border-pink-500 bg-pink-500 px-4 py-2 font-bold text-white' : 'min-h-10 border border-slate-300 bg-white px-4 py-2 font-bold text-slate-950 hover:border-black hover:bg-black hover:text-white'}
+                                      onClick={() => {
+                                        void onHandleCancellationRequest(activeThread.threadId, message.messageId, nextStatus, managerNotes[message.messageId] ?? '')
+                                      }}
+                                    >
+                                      {nextStatus === 'approved' ? '同意取消' : nextStatus === 'rejected' ? '拒绝取消' : '需要补充信息'}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ) : null}
+                          </article>
+                          {ownMessage ? <Avatar imageUrl={avatar.imageUrl} fallback={avatar.fallback} alt={senderName} useBackendAsset={avatar.useBackendAsset} /> : null}
+                        </div>
+                      ) : null}
+
+                      {message.messageType === 'text' ? (
+                        <div className={ownMessage ? 'grid grid-cols-[minmax(0,1fr)_2.75rem] gap-3 justify-self-end' : 'grid grid-cols-[2.75rem_minmax(0,1fr)] gap-3 justify-self-start'}>
+                          {!ownMessage ? <Avatar imageUrl={avatar.imageUrl} fallback={avatar.fallback} alt={senderName} useBackendAsset={avatar.useBackendAsset} /> : null}
+                          <div className={ownMessage ? 'grid justify-items-end gap-1' : 'grid justify-items-start gap-1'}>
+                            <span className="text-xs font-bold text-slate-500">{senderName}</span>
+                            <article className={ownMessage ? 'max-w-xl bg-sky-100 p-3 text-slate-950' : 'max-w-xl bg-white p-3 text-slate-950 shadow-sm shadow-slate-200/60'}>
+                              <p className="m-0 whitespace-pre-wrap text-base leading-7">{message.content}</p>
+                            </article>
+                          </div>
+                          {ownMessage ? <Avatar imageUrl={avatar.imageUrl} fallback={avatar.fallback} alt={senderName} useBackendAsset={avatar.useBackendAsset} /> : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  )
+                })}
               </div>
             </div>
 
-            <div className="manager-feedback-stats">
-              <article className="stat-card">
-                <span className="detail-label">{translate('feedback.counterparty')}</span>
-                <strong className="stat-card-value">{localizeManagerType(activeThread.managerType, translate)}</strong>
-              </article>
-              <article className="stat-card">
-                <span className="detail-label">{translate('feedback.owner')}</span>
-                <strong className="stat-card-value">{activeThread.ownerUserDisplayName}</strong>
-              </article>
-              <article className="stat-card">
-                <span className="detail-label">{translate('feedback.updatedAt')}</span>
-                <strong className="stat-card-value">{new Date(activeThread.updatedAt).toLocaleString()}</strong>
-              </article>
-            </div>
-
-            <div className="feedback-message-list">
-              {activeThread.messages.map(message => (
-                <article
-                  key={message.messageId}
-                  className={
-                    message.senderDisplayName === audienceDisplayName
-                      ? 'feedback-message-card is-self'
-                      : 'feedback-message-card'
-                  }
-                >
-                  <strong>{message.senderDisplayName}</strong>
-                  <p>{message.body}</p>
-                  <span>{new Date(message.sentAt).toLocaleString()}</span>
-                </article>
-              ))}
-            </div>
-
-            <form
-              className="stack-form feedback-composer"
-              onSubmit={event => {
-                event.preventDefault()
-                if (draftMessage.trim().length === 0) {
-                  return
-                }
-                onSendMessage(activeThread.threadId, draftMessage)
-                setDraftMessage('')
-              }}
-            >
-              <label>
-                {translate('feedback.message')}
-                <textarea
-                  rows={4}
-                  value={draftMessage}
-                  onChange={event => setDraftMessage(event.target.value)}
-                  placeholder={translate('feedback.messagePlaceholder')}
-                />
-              </label>
-              <div className="action-row">
-                {onEscalate && activeThread.kind === 'ServiceReview' ? (
-                  <button type="button" className="secondary-button" onClick={() => onEscalate(activeThread)}>
-                    {translate('feedback.escalate')}
+            <footer className="border-t border-slate-200 bg-white p-4">
+              {audience === 'User' && onCreateCancellationRequest ? (
+                <div className="grid gap-3">
+                  <button
+                    type="button"
+                    className="w-fit min-h-10 border border-pink-500 bg-white px-4 py-2 text-sm font-bold text-pink-600 hover:bg-pink-500 hover:text-white"
+                    onClick={() => setShowCancellationForm(value => !value)}
+                  >
+                    申请取消订单
                   </button>
-                ) : null}
-                <button type="submit">{translate('feedback.send')}</button>
-              </div>
-            </form>
+                  {showCancellationForm ? (
+                    <form
+                      className="grid gap-3 border border-slate-200 bg-slate-50 p-3"
+                      onSubmit={event => {
+                        event.preventDefault()
+                        if (!cancellationOrderId || cancellationReason.trim().length === 0) return
+                        void onCreateCancellationRequest(activeThread.threadId, cancellationOrderId, cancellationReason)
+                        setCancellationReason('')
+                        setShowCancellationForm(false)
+                      }}
+                    >
+                      <select className="min-h-12 border border-slate-300 bg-white px-3 text-base" value={cancellationOrderId} onChange={event => setCancellationOrderId(event.target.value)}>
+                        <option value="">请选择订单</option>
+                        {visibleCancellationOrders.map(order => (
+                          <option key={order.orderId} value={order.orderId}>
+                            {order.title}
+                          </option>
+                        ))}
+                      </select>
+                      <textarea
+                        className="min-h-28 border border-slate-300 bg-white p-3 text-base outline-none focus:border-black"
+                        rows={4}
+                        value={cancellationReason}
+                        onChange={event => setCancellationReason(event.target.value)}
+                        placeholder="请写明你想取消订单的原因，例如时间不合适、价格变化、行程有变等。"
+                      />
+                      <button type="submit" className="w-fit min-h-11 border border-pink-500 bg-pink-500 px-5 py-2 font-bold text-white">
+                        提交取消请求
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {!showCancellationForm ? (
+                <form
+                  className="mt-3 grid gap-3"
+                  onSubmit={event => {
+                    event.preventDefault()
+                    if (draftMessage.trim().length === 0) return
+                    void onSendMessage(activeThread.threadId, draftMessage)
+                    setDraftMessage('')
+                  }}
+                >
+                  <textarea
+                    className="min-h-24 resize-none border border-slate-300 bg-white p-3 text-base outline-none focus:border-black"
+                    rows={3}
+                    value={draftMessage}
+                    onChange={event => setDraftMessage(event.target.value)}
+                  />
+                  <button className="justify-self-end min-h-10 border border-pink-500 bg-pink-500 px-6 py-2 text-sm font-bold text-white hover:bg-pink-600" type="submit">
+                    {translate('feedback.send')}
+                  </button>
+                </form>
+              ) : null}
+            </footer>
           </div>
         ) : null}
       </div>

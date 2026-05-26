@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react'
 
-import { markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
+import { handleOrderCancellationRequest, markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
 import { AdvertisementReviewWorkspace } from '@/pages/ManagerPage/components/advertising/AdvertisementReviewWorkspace'
@@ -43,8 +43,11 @@ export function SupplierFeedbackSection({
 }: SupplierFeedbackSectionProps) {
   const loadManagerThreads = useFeedbackChatStore(state => state.loadManagerThreads)
   const managerThreads = useFeedbackChatStore(state => state.managerThreads)
-  const trainCount = currentTrainAdminSession?.managedTrains.length ?? 0
-  const attractionCount = currentAttractionAdminSession?.managedAttractions.length ?? 0
+  void managedFlightResponses
+  void managerTaskResponses
+  void managerRefundTaskResponses
+  void currentTrainAdminSession
+  void currentAttractionAdminSession
 
   useEffect(() => {
     if (!currentManagerSession) {
@@ -55,32 +58,13 @@ export function SupplierFeedbackSection({
   }, [currentManagerSession?.managerId, loadManagerThreads])
 
   return (
-    <section className="page-stack">
-      <section className="page-card">
-        <div className="section-header">
+    <section className="grid gap-5">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('manager.userFeedback')}</p>
-            <h2 className="section-title">{title}</h2>
+            <p className="text-sm font-bold text-slate-500">{translate('manager.userFeedback')}</p>
+            <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{title}</h2>
           </div>
-        </div>
-
-        <div className="manager-feedback-stats">
-          <article className="stat-card">
-            <span className="detail-label">{translate('manager.feedback.pendingDecisions')}</span>
-            <strong className="stat-card-value">{managerTaskResponses.length}</strong>
-          </article>
-          <article className="stat-card">
-            <span className="detail-label">{translate('manager.feedback.refundQueue')}</span>
-            <strong className="stat-card-value">{managerRefundTaskResponses.length}</strong>
-          </article>
-          <article className="stat-card">
-            <span className="detail-label">{translate('manager.feedback.flightInventory')}</span>
-            <strong className="stat-card-value">{managedFlightResponses.length}</strong>
-          </article>
-          <article className="stat-card">
-            <span className="detail-label">{translate('manager.feedback.resourceCount')}</span>
-            <strong className="stat-card-value">{trainCount + attractionCount}</strong>
-          </article>
         </div>
       </section>
 
@@ -101,53 +85,18 @@ export function SupplierFeedbackSection({
             body,
           })
         }
+        onHandleCancellationRequest={(threadId, messageId, status, managerNote) =>
+          handleOrderCancellationRequest({
+            threadId,
+            messageId,
+            status,
+            managerNote,
+            handledBy: currentManagerSession?.displayName ?? translate('manager.centerTitle'),
+            handlerRole: 'Manager',
+          })
+        }
       />
 
-      <section className="page-card">
-        <div className="section-header">
-          <div>
-            <p className="eyebrow-label">{translate('manager.feedback.pendingDecisions')}</p>
-            <h3 className="section-title">{translate('manager.feedback.pendingTitle')}</h3>
-          </div>
-        </div>
-
-        {managerTaskResponses.length === 0 ? (
-          <p className="empty-state">{translate('manager.feedback.empty')}</p>
-        ) : (
-          <div className="manager-feedback-list">
-            {managerTaskResponses.map(task => (
-              <article key={task.orderItemId} className="panel-card manager-feedback-card">
-                <strong>{task.summaryLabel}</strong>
-                <span>{task.detailLabel}</span>
-                <span>{task.requestedAt}</span>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="page-card">
-        <div className="section-header">
-          <div>
-            <p className="eyebrow-label">{translate('manager.feedback.refundQueue')}</p>
-            <h3 className="section-title">{translate('manager.feedback.refundTitle')}</h3>
-          </div>
-        </div>
-
-        {managerRefundTaskResponses.length === 0 ? (
-          <p className="empty-state">{translate('manager.feedback.emptyRefunds')}</p>
-        ) : (
-          <div className="manager-feedback-list">
-            {managerRefundTaskResponses.map(task => (
-              <article key={task.refundId} className="panel-card manager-feedback-card">
-                <strong>{task.summaryLabel}</strong>
-                <span>{task.refundReason}</span>
-                <span>{`${task.refundAmount} ${task.refundCurrency}`}</span>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
     </section>
   )
 }
@@ -168,15 +117,15 @@ export function SiteAdminPanel({ section, currentManagerSession, translate }: Si
 
   const sectionCopy = sectionCopyMap[section]
   return (
-    <section className="page-stack">
-      <section className="page-card">
-        <div className="section-header">
+    <section className="grid gap-5">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('manager.siteAdmin.title')}</p>
-            <h2 className="section-title">{sectionCopy.title}</h2>
+            <p className="text-sm font-bold text-slate-500">{translate('manager.siteAdmin.title')}</p>
+            <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{sectionCopy.title}</h2>
           </div>
         </div>
-        <p className="hero-copy">{sectionCopy.description}</p>
+        <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{sectionCopy.description}</p>
       </section>
 
       {section === 'blogAudit' ? (
@@ -231,32 +180,32 @@ function SiteAdminBlogAuditWorkspace({ translate }: { translate: (translationKey
   }
 
   return (
-    <section className="page-stack">
-      <section className="page-card">
-        <div className="section-header">
+    <section className="grid gap-5">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('manager.siteAdmin.blogAudit')}</p>
-            <h3 className="section-title">{translate('manager.siteAdmin.blogAuditPending')}</h3>
+            <p className="text-sm font-bold text-slate-500">{translate('manager.siteAdmin.blogAudit')}</p>
+            <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('manager.siteAdmin.blogAuditPending')}</h3>
           </div>
         </div>
 
         {isLoading ? (
-          <p className="empty-state">{translate('search.loading')}</p>
+          <p className="text-sm leading-6 text-slate-500">{translate('search.loading')}</p>
         ) : pendingPosts.length === 0 ? (
-          <p className="empty-state">{translate('manager.siteAdmin.blogAuditEmptyPending')}</p>
+          <p className="text-sm leading-6 text-slate-500">{translate('manager.siteAdmin.blogAuditEmptyPending')}</p>
         ) : (
-          <div className="manager-feedback-list">
+          <div className="grid gap-3">
             {pendingPosts.map(post => (
-              <article key={post.postId} className="panel-card manager-feedback-card">
+              <article key={post.postId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3">
                 <strong>{post.title}</strong>
                 <span>{post.authorDisplayName}</span>
                 <span>{post.summary}</span>
                 <span>{post.status}</span>
                 <div className="button-row">
-                  <button type="button" className="secondary-button" onClick={() => void handleDecision(post.postId, 'reject')}>
+                  <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={() => void handleDecision(post.postId, 'reject')}>
                     {translate('manager.siteAdmin.rejectBlog')}
                   </button>
-                  <button type="button" className="primary-button" onClick={() => void handleDecision(post.postId, 'approve')}>
+                  <button type="button" className="inline-flex min-h-11 items-center justify-center border border-black bg-black px-4 py-2 text-sm font-semibold text-white shadow-none transition hover:bg-white hover:text-black disabled:cursor-not-allowed disabled:opacity-55" onClick={() => void handleDecision(post.postId, 'approve')}>
                     {translate('manager.siteAdmin.approveBlog')}
                   </button>
                 </div>
@@ -266,22 +215,22 @@ function SiteAdminBlogAuditWorkspace({ translate }: { translate: (translationKey
         )}
       </section>
 
-      <section className="page-card">
-        <div className="section-header">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('manager.siteAdmin.blogAudit')}</p>
-            <h3 className="section-title">{translate('manager.siteAdmin.blogAuditReviewed')}</h3>
+            <p className="text-sm font-bold text-slate-500">{translate('manager.siteAdmin.blogAudit')}</p>
+            <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('manager.siteAdmin.blogAuditReviewed')}</h3>
           </div>
         </div>
 
         {isLoading ? (
-          <p className="empty-state">{translate('search.loading')}</p>
+          <p className="text-sm leading-6 text-slate-500">{translate('search.loading')}</p>
         ) : reviewedPosts.length === 0 ? (
-          <p className="empty-state">{translate('manager.siteAdmin.blogAuditEmptyReviewed')}</p>
+          <p className="text-sm leading-6 text-slate-500">{translate('manager.siteAdmin.blogAuditEmptyReviewed')}</p>
         ) : (
-          <div className="manager-feedback-list">
+          <div className="grid gap-3">
             {reviewedPosts.map(post => (
-              <article key={post.postId} className="panel-card manager-feedback-card">
+              <article key={post.postId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3">
                 <strong>{post.title}</strong>
                 <span>{post.authorDisplayName}</span>
                 <span>{post.summary}</span>
@@ -292,7 +241,7 @@ function SiteAdminBlogAuditWorkspace({ translate }: { translate: (translationKey
         )}
       </section>
 
-      {errorMessage ? <p className="empty-state">{errorMessage}</p> : null}
+      {errorMessage ? <p className="text-sm leading-6 text-slate-500">{errorMessage}</p> : null}
     </section>
   )
 }

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Nailong Airlines logo">
+  <rect width="100" height="100" fill="#fffaf0"/>
+  <circle cx="50" cy="50" r="35" fill="#ffe08a"/>
+  <path d="M23 55c18-27 48-27 60-8-18-6-34-1-46 14 9-2 18 0 27 6-18 9-36 4-41-12Z" fill="#1b7cc9"/>
+  <path d="M38 42c8-10 22-13 34-5-14-1-23 5-28 17" fill="none" stroke="#fff6d6" stroke-width="7" stroke-linecap="round"/>
+  <path d="M59 30l8-10 1 14" fill="none" stroke="#1b7cc9" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

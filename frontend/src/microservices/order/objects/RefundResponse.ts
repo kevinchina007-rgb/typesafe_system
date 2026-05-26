@@ -1,4 +1,4 @@
-export type RefundResponse = {
+﻿export type RefundResponse = {
   refundId: string
   refundAmount: string
   refundCurrency: string
@@ -8,3 +8,8 @@ export type RefundResponse = {
   approvedAt: string | null
   settledAt: string | null
 }
+export const refundResponseFromJson = (json: string): RefundResponse =>
+  JSON.parse(json) as RefundResponse
+
+export const refundResponseToJson = (value: RefundResponse): string =>
+  JSON.stringify(value)

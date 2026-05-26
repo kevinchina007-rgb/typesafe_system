@@ -1,5 +1,5 @@
-import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
-﻿import { useEffect, useState } from 'react'
+﻿import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+import { useEffect, useState } from 'react'
 
 import { setCurrentUserTravelers, useUserStore } from '@/app/stores/user-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
@@ -39,6 +39,7 @@ export function AccountPage({
 
   useEffect(() => {
     setAccountEntryMode(requestedEntryMode)
+    setLoginEmailDraft('')
   }, [requestedEntryMode])
 
   useEffect(() => {
@@ -135,3 +136,4 @@ export function AccountPage({
     />
   )
 }
+

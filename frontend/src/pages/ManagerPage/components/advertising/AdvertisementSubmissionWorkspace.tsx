@@ -87,17 +87,17 @@ export function AdvertisementSubmissionWorkspace({
   )
 
   return (
-    <section className="page-stack">
-      <section className="page-card">
-        <div className="section-header">
+    <section className="grid gap-5">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('advertising.submitEyebrow')}</p>
-            <h2 className="section-title">{translate('advertising.submitTitle')}</h2>
+            <p className="text-sm font-bold text-slate-500">{translate('advertising.submitEyebrow')}</p>
+            <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.submitTitle')}</h2>
           </div>
         </div>
 
         <form
-          className="advertising-form-grid"
+          className="grid gap-4 md:grid-cols-2"
           onSubmit={async event => {
             event.preventDefault()
             const createdAdvertisement = await createAdvertisement({
@@ -147,7 +147,7 @@ export function AdvertisementSubmissionWorkspace({
               disabled={isLoading}
             />
           </label>
-          <label className="advertising-form-span-two">
+          <label className="md:col-span-2">
             {translate('advertising.field.description')}
             <textarea
               value={formState.description}
@@ -178,7 +178,7 @@ export function AdvertisementSubmissionWorkspace({
               disabled={isLoading}
             />
           </label>
-          <label className="advertising-form-span-two">
+          <label className="md:col-span-2">
             {translate('advertising.field.imageFile')}
             <input
               type="file"
@@ -206,20 +206,20 @@ export function AdvertisementSubmissionWorkspace({
                 }
               }}
             />
-            {isUploadingImage ? <span className="detail-label">{translate('advertising.imageUploading')}</span> : null}
+            {isUploadingImage ? <span className="text-sm font-medium text-slate-500">{translate('advertising.imageUploading')}</span> : null}
             {selectedImagePreviewUrl ? (
-              <div className="advertising-upload-preview">
-                <img src={selectedImagePreviewUrl} alt={selectedImageName || translate('advertising.field.imageFile')} className="advertising-upload-preview-image" />
-                <div className="advertising-upload-preview-copy">
+              <div className="grid gap-3 border border-slate-200 bg-white p-3">
+                <img src={selectedImagePreviewUrl} alt={selectedImageName || translate('advertising.field.imageFile')} className="aspect-video w-full object-cover" />
+                <div className="text-sm text-slate-600">
                   <strong>{isUploadingImage ? translate('advertising.imageUploading') : translate('advertising.field.imageFile')}</strong>
                   <span>{selectedImageName}</span>
                 </div>
               </div>
             ) : null}
             {uploadedImage ? (
-              <div className="advertising-upload-preview">
-                <img src={uploadedImage.publicUrl} alt={uploadedImage.originalFileName} className="advertising-upload-preview-image" />
-                <div className="advertising-upload-preview-copy">
+              <div className="grid gap-3 border border-slate-200 bg-white p-3">
+                <img src={uploadedImage.publicUrl} alt={uploadedImage.originalFileName} className="aspect-video w-full object-cover" />
+                <div className="text-sm text-slate-600">
                   <strong>{translate('advertising.imageUploaded')}</strong>
                   <span>{uploadedImage.originalFileName}</span>
                 </div>
@@ -245,7 +245,6 @@ export function AdvertisementSubmissionWorkspace({
               <input
                 value={formState.targetResourceId}
                 onChange={event => setFormState(current => ({ ...current, targetResourceId: event.target.value }))}
-                placeholder={translate('advertising.field.targetResource')}
                 required
                 disabled={isLoading}
               />
@@ -272,8 +271,8 @@ export function AdvertisementSubmissionWorkspace({
             />
           </label>
 
-          <div className="advertising-form-actions advertising-form-span-two">
-            <button type="submit" disabled={isLoading || isUploadingImage}>
+          <div className="flex flex-wrap items-center gap-3 md:col-span-2">
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isLoading || isUploadingImage}>
               {translate('advertising.create')}
             </button>
           </div>
@@ -281,11 +280,11 @@ export function AdvertisementSubmissionWorkspace({
       </section>
 
       {latestCreatedAdvertisement ? (
-        <section className="page-card">
-          <div className="section-header">
+        <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="eyebrow-label">{translate('advertising.latestCreatedEyebrow')}</p>
-              <h3 className="section-title">{translate('advertising.latestCreatedTitle')}</h3>
+              <p className="text-sm font-bold text-slate-500">{translate('advertising.latestCreatedEyebrow')}</p>
+              <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.latestCreatedTitle')}</h3>
             </div>
           </div>
           <AdvertisementAdminCard
@@ -299,18 +298,18 @@ export function AdvertisementSubmissionWorkspace({
         </section>
       ) : null}
 
-      <section className="page-card">
-        <div className="section-header">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('advertising.myListEyebrow')}</p>
-            <h3 className="section-title">{translate('advertising.myListTitle')}</h3>
+            <p className="text-sm font-bold text-slate-500">{translate('advertising.myListEyebrow')}</p>
+            <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.myListTitle')}</h3>
           </div>
         </div>
 
         {ownerAdvertisements.length === 0 ? (
-          <p className="empty-state">{translate('advertising.empty')}</p>
+          <p className="text-sm leading-6 text-slate-500">{translate('advertising.empty')}</p>
         ) : (
-          <div className="advertising-admin-list">
+          <div className="grid gap-3">
             {ownerAdvertisements.map(advertisement => (
               <AdvertisementAdminCard
                 key={advertisement.advertisementId}
@@ -326,14 +325,14 @@ export function AdvertisementSubmissionWorkspace({
       </section>
 
       {reviewQueue.length > 0 ? (
-        <section className="page-card">
-          <div className="section-header">
+        <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p className="eyebrow-label">{translate('advertising.pendingEyebrow')}</p>
-              <h3 className="section-title">{translate('advertising.pendingTitle')}</h3>
+              <p className="text-sm font-bold text-slate-500">{translate('advertising.pendingEyebrow')}</p>
+              <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.pendingTitle')}</h3>
             </div>
           </div>
-          <div className="advertising-admin-list">
+          <div className="grid gap-3">
             {reviewQueue.map(advertisement => (
               <AdvertisementAdminCard
                 key={advertisement.advertisementId}
@@ -369,30 +368,30 @@ function AdvertisementAdminCard({
   isHighlighted = false,
 }: AdvertisementAdminCardProps) {
   return (
-    <article className={`panel-card advertising-admin-card${isHighlighted ? ' is-highlighted' : ''}`}>
+    <article className={`grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3 border border-slate-200 bg-white p-4${isHighlighted ? ' is-highlighted' : ''}`}>
       {advertisement.imageUrl ? (
-        <img src={advertisement.imageUrl} alt={advertisement.title} className="advertising-admin-image" />
+        <img src={advertisement.imageUrl} alt={advertisement.title} className="aspect-video w-full object-cover" />
       ) : null}
-      <div className="advertising-admin-copy">
+      <div className="grid gap-1">
         <strong>{advertisement.title}</strong>
         <span>{advertisement.subtitle}</span>
         <span>{advertisement.resourceSummaryTitle}</span>
         <span>{`${advertisement.reviewStatus} / ${advertisement.deliveryStatus}`}</span>
         {advertisement.rejectionNote ? (
-          <span className="detail-label">{`${translate('advertising.rejectionNote')}: ${advertisement.rejectionNote}`}</span>
+          <span className="text-sm font-medium text-slate-500">{`${translate('advertising.rejectionNote')}: ${advertisement.rejectionNote}`}</span>
         ) : null}
       </div>
-      <div className="advertising-admin-actions">
-        <button type="button" className="secondary-button" onClick={() => onOpenResource(advertisement.targetResourceId)}>
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={() => onOpenResource(advertisement.targetResourceId)}>
           {translate('advertising.openResource')}
         </button>
         {advertisement.reviewStatus === 'Draft' || advertisement.reviewStatus === 'Rejected' ? (
-          <button type="button" onClick={() => void onSubmitReview(advertisement.advertisementId)}>
+          <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" onClick={() => void onSubmitReview(advertisement.advertisementId)}>
             {translate('advertising.submitReview')}
           </button>
         ) : null}
         {advertisement.deliveryStatus === 'Active' ? (
-          <button type="button" className="secondary-button" onClick={() => void onPause(advertisement.advertisementId)}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={() => void onPause(advertisement.advertisementId)}>
             {translate('advertising.pause')}
           </button>
         ) : null}

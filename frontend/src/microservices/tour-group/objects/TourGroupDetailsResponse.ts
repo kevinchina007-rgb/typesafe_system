@@ -1,4 +1,4 @@
-import type { TourGroupSummaryResponse } from './TourGroupSummaryResponse'
+﻿import type { TourGroupSummaryResponse } from './TourGroupSummaryResponse'
 import type { TourGroupMembershipResponse } from './TourGroupMembershipResponse'
 import type { TourGroupMembershipTravelerResponse } from './TourGroupMembershipTravelerResponse'
 import type { GroupPlanItemResponse } from './GroupPlanItemResponse'
@@ -19,3 +19,8 @@ export type TourGroupDetailsResponse = {
   selectionOrderProjections: GroupSelectionOrderProjectionResponse[]
   bookings: OrderResponse[]
 }
+export const tourGroupDetailsResponseFromJson = (json: string): TourGroupDetailsResponse =>
+  JSON.parse(json) as TourGroupDetailsResponse
+
+export const tourGroupDetailsResponseToJson = (value: TourGroupDetailsResponse): string =>
+  JSON.stringify(value)

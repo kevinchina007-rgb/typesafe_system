@@ -52,23 +52,23 @@ export function ReviewComposerDialog({
   }
 
   return (
-    <div className="dialog-backdrop">
-      <section className="dialog-card">
-        <div className="panel-heading">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-6">
+      <section className="grid max-h-[90vh] w-full max-w-3xl gap-4 overflow-auto border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl shadow-slate-950/20">
+        <div className="text-lg font-bold text-slate-950">
           <div>
-            <p className="eyebrow-label">{translate('reviews.dialogEyebrow')}</p>
+            <p className="text-sm font-bold text-slate-500">{translate('reviews.dialogEyebrow')}</p>
             <h3>{title}</h3>
           </div>
-          <button type="button" className="secondary-button" onClick={onClose}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" onClick={onClose}>
             {translate('tourGroups.cancel')}
           </button>
         </div>
 
-        {mode === 'create' && eligibility && !eligibility.canReview ? <p className="empty-state">{eligibility.reason ?? translate('reviews.notEligible')}</p> : null}
+        {mode === 'create' && eligibility && !eligibility.canReview ? <p className="text-sm leading-6 text-slate-500">{eligibility.reason ?? translate('reviews.notEligible')}</p> : null}
 
         {mode === 'edit' || eligibility?.canReview ? (
           <form
-            className="stack-form"
+            className="grid gap-4"
             onSubmit={async event => {
               event.preventDefault()
               await onSubmit({
@@ -108,7 +108,7 @@ export function ReviewComposerDialog({
               onChangeImages={setImages}
             />
 
-            <button type="submit" disabled={isBusy}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
               {mode === 'edit' ? translate('reviews.save') : translate('reviews.submit')}
             </button>
           </form>

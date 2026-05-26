@@ -246,15 +246,15 @@ export function TourGroupsPanel({
   }
 
   return (
-    <section className="page-card">
-      <div className="panel-heading">
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('nav.tourGroups')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('nav.tourGroups')}</p>
           <h2>{translate('tourGroups.title')}</h2>
         </div>
         <button
           type="button"
-          className="secondary-button"
+          className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
           disabled={isBusy}
           onClick={async () => {
             const groups = await onListGroups()
@@ -269,9 +269,9 @@ export function TourGroupsPanel({
         </button>
       </div>
 
-      <p className="hero-copy">{translate('tourGroups.description')}</p>
+      <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('tourGroups.description')}</p>
 
-      <div className="tour-group-layout">
+      <div className="grid gap-5 xl:grid-cols-[18rem_1fr]">
         <TourGroupList
           currentLanguage={currentLanguage}
           groups={groupSummaries}
@@ -283,7 +283,7 @@ export function TourGroupsPanel({
           onSelectGroup={setSelectedGroupId}
         />
 
-        <div className="tour-group-detail-column">
+        <div className="grid gap-4">
           {selectedGroupDetails ? (
             <TourGroupDetail
               currentLanguage={currentLanguage}
@@ -408,8 +408,8 @@ export function TourGroupsPanel({
               onUpdateArchiveState={onUpdateArchiveState}
             />
           ) : (
-            <section className="list-surface">
-              <p className="empty-state">{translate('tourGroups.selectGroupHint')}</p>
+            <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+              <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.selectGroupHint')}</p>
             </section>
           )}
         </div>

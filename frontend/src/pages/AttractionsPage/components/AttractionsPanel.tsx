@@ -68,7 +68,7 @@ export function AttractionsPanel({
   }, [loadDeliverableAdvertisements])
 
   return (
-    <section className="page-card">
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
       <AttractionPageHero title={translate('attractions.title')} description={translate('attractions.description')} />
 
       <AttractionSearchCard
@@ -130,7 +130,7 @@ export function AttractionsPanel({
 
       <AttractionFilterBar translate={translate} />
 
-      {isGuestMode ? <p className="empty-state">{translate('attractions.guest')}</p> : null}
+      {isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('attractions.guest')}</p> : null}
 
       {hasSearchedAttractions ? (
         <AttractionResultsSection

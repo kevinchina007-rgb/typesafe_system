@@ -168,7 +168,16 @@ final case class TravelerProfile(
     travelerLoyaltyMemberships: List[TravelerLoyaltyMembership],
     travelerPreferences: TravelerPreferences,
     travelerProfileStatus: TravelerProfileStatus,
-    isDefaultTravelerProfile: Boolean
+    isDefaultTravelerProfile: Boolean,
+    travelerGender: String = "未填写",
+    travelerNationality: String = "中国",
+    travelerDocumentExpiryDate: Option[LocalDate] = None,
+    travelerEmail: Option[String] = None,
+    quietSeatPreferred: Boolean = false,
+    assistanceType: String = "无",
+    specialRequirementNote: Option[String] = None,
+    hasLargeLuggage: Boolean = false,
+    luggageNote: Option[String] = None
 )
 
 object TravelerProfile:

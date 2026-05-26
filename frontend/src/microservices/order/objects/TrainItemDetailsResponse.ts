@@ -1,4 +1,4 @@
-import type { TrainSeatAssignmentResponse } from '@/microservices/train/objects/TrainSeatAssignmentResponse'
+﻿import type { TrainSeatAssignmentResponse } from '@/microservices/train/objects/TrainSeatAssignmentResponse'
 
 export type TrainItemDetailsResponse = {
   trainId: string
@@ -19,3 +19,8 @@ export type TrainItemDetailsResponse = {
   totalPrice: string
   currency: string
 }
+export const trainItemDetailsResponseFromJson = (json: string): TrainItemDetailsResponse =>
+  JSON.parse(json) as TrainItemDetailsResponse
+
+export const trainItemDetailsResponseToJson = (value: TrainItemDetailsResponse): string =>
+  JSON.stringify(value)

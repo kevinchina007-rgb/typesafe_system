@@ -13,8 +13,8 @@ export function ResourceReviewSummary({
   translate,
 }: ResourceReviewSummaryProps) {
   if (!summary) {
-    return <p className="detail-label">{translate('reviews.summaryEmpty')}</p>
+    return <p className="text-sm font-medium text-slate-500">{translate('reviews.summaryEmpty')}</p>
   }
 
-  return <p className="detail-label">{summarizeReviewAggregate(summary, currentLanguage)}</p>
+  return <p className="text-sm font-medium text-slate-500">{summarizeReviewAggregate(summary, currentLanguage)}</p>
 }

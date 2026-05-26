@@ -137,21 +137,21 @@ export function TourGroupOptionPicker({
 
   const content = (
       <div
-        className={displayMode === 'modal' ? 'modal-card tour-group-dialog-wide' : 'list-surface tour-group-inline-picker'}
+        className={displayMode === 'modal' ? 'grid max-h-[90vh] w-full max-w-3xl gap-4 overflow-auto border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl shadow-slate-950/20 max-w-5xl' : 'grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-4'}
         role="dialog"
         aria-modal={displayMode === 'modal' ? 'true' : undefined}
         aria-label={title}
       >
-        <div className="panel-heading">
+        <div className="text-lg font-bold text-slate-950">
           <div>
-            <p className="eyebrow-label">{translate('tourGroups.optionPickerEyebrow')}</p>
+            <p className="text-sm font-bold text-slate-500">{translate('tourGroups.optionPickerEyebrow')}</p>
             <h3>{title}</h3>
             {displayMode === 'inline' ? (
-              <p className="hero-copy">{translate('tourGroups.optionPickerInlineHint')}</p>
+              <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('tourGroups.optionPickerInlineHint')}</p>
             ) : null}
           </div>
           {displayMode === 'modal' ? (
-            <button type="button" className="secondary-button" disabled={isBusy} onClick={onClose}>
+            <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={onClose}>
               {translate('payment.close')}
             </button>
           ) : null}
@@ -160,38 +160,38 @@ export function TourGroupOptionPicker({
         {planItem.itemType === 'Flight' ? (
           <>
             <form
-              className="panel-card stack-form"
+              className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-4"
               onSubmit={async event => {
                 event.preventDefault()
                 setFlightResults(await onSearchFlights({ departureAirport: flightFrom || undefined, arrivalAirport: flightTo || undefined, date: flightDate || undefined }))
               }}
             >
-              <div className="three-column-grid">
+              <div className="grid gap-4 md:grid-cols-3">
                 <label>
                   {translate('tourGroups.search.departure')}
-                  <input value={flightFrom} onChange={event => setFlightFrom(event.target.value)} placeholder="SHA / PVG / Shanghai" />
+                  <input value={flightFrom} onChange={event => setFlightFrom(event.target.value)} />
                 </label>
                 <label>
                   {translate('tourGroups.search.arrival')}
-                  <input value={flightTo} onChange={event => setFlightTo(event.target.value)} placeholder="HKG / TYO / Tokyo" />
+                  <input value={flightTo} onChange={event => setFlightTo(event.target.value)} />
                 </label>
                 <label>
                   {translate('tourGroups.search.date')}
                   <input type="date" value={flightDate} onChange={event => setFlightDate(event.target.value)} />
                 </label>
               </div>
-              <button type="submit" disabled={isBusy}>{translate('tourGroups.searchOptions')}</button>
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>{translate('tourGroups.searchOptions')}</button>
             </form>
-            <ul className="entity-list">
+            <ul className="grid gap-3">
               {flightResults.map(flight => (
                 <li key={flight.flightId}>
                   <div>
                     <strong>{`${flight.airlineCode} ${flight.flightNumber}`}</strong>
                     <p>{`${flight.departureAirport} 鈫?${flight.arrivalAirport}`}</p>
                     <p>{`${formatIsoDateTime(flight.departureTime, '-')} 路 ${mapBackendStatusToProductLabel(flight.status, currentLanguage)}`}</p>
-                    <div className="checkbox-list">
+                    <div className="grid gap-2">
                       {flight.cabinInventories.map(cabin => (
-                        <button
+                        <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                           key={cabin.inventoryId}
                           type="button"
                           disabled={isBusy}
@@ -220,16 +220,16 @@ export function TourGroupOptionPicker({
         {planItem.itemType === 'Hotel' ? (
           <>
             <form
-              className="panel-card stack-form"
+              className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-4"
               onSubmit={async event => {
                 event.preventDefault()
                 setHotelResults(await onSearchHotels({ location: hotelLocation || undefined, checkInDate: hotelCheckIn || undefined, checkOutDate: hotelCheckOut || undefined }))
               }}
             >
-              <div className="three-column-grid">
+              <div className="grid gap-4 md:grid-cols-3">
                 <label>
                   {translate('tourGroups.search.location')}
-                  <input value={hotelLocation} onChange={event => setHotelLocation(event.target.value)} placeholder={translate('tourGroups.destinationPlaceholder')} />
+                  <input value={hotelLocation} onChange={event => setHotelLocation(event.target.value)} />
                 </label>
                 <label>
                   {translate('hotels.checkInDate')}
@@ -240,17 +240,17 @@ export function TourGroupOptionPicker({
                   <input type="date" value={hotelCheckOut} onChange={event => setHotelCheckOut(event.target.value)} />
                 </label>
               </div>
-              <button type="submit" disabled={isBusy}>{translate('tourGroups.searchOptions')}</button>
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>{translate('tourGroups.searchOptions')}</button>
             </form>
-            <ul className="entity-list">
+            <ul className="grid gap-3">
               {hotelResults.map(hotel => (
                 <li key={hotel.hotelId}>
                   <div>
                     <strong>{hotel.hotelName}</strong>
                     <p>{hotel.location}</p>
-                    <div className="checkbox-list">
+                    <div className="grid gap-2">
                       {hotel.roomTypes.map(roomType => (
-                        <button
+                        <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                           key={roomType.roomTypeId}
                           type="button"
                           disabled={isBusy}
@@ -278,39 +278,39 @@ export function TourGroupOptionPicker({
         {planItem.itemType === 'Train' ? (
           <>
             <form
-              className="panel-card stack-form"
+              className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-4"
               onSubmit={async event => {
                 event.preventDefault()
                 setTrainResults(await onSearchTrains({ fromStation: trainFrom || undefined, toStation: trainTo || undefined, date: trainDate || undefined }))
               }}
             >
-              <div className="three-column-grid">
+              <div className="grid gap-4 md:grid-cols-3">
                 <label>
                   {translate('tourGroups.search.fromStation')}
-                  <input value={trainFrom} onChange={event => setTrainFrom(event.target.value)} placeholder="SHA" />
+                  <input value={trainFrom} onChange={event => setTrainFrom(event.target.value)} />
                 </label>
                 <label>
                   {translate('tourGroups.search.toStation')}
-                  <input value={trainTo} onChange={event => setTrainTo(event.target.value)} placeholder="HGH" />
+                  <input value={trainTo} onChange={event => setTrainTo(event.target.value)} />
                 </label>
                 <label>
                   {translate('tourGroups.search.date')}
                   <input type="date" value={trainDate} onChange={event => setTrainDate(event.target.value)} />
                 </label>
               </div>
-              <button type="submit" disabled={isBusy}>{translate('tourGroups.searchOptions')}</button>
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>{translate('tourGroups.searchOptions')}</button>
             </form>
-            <ul className="entity-list">
+            <ul className="grid gap-3">
               {trainResults.map(train => (
                 <li key={train.trainId}>
                   <div>
                     <strong>{train.trainNumber}</strong>
                     <p>{train.stops.map(stop => stop.stationCode).join(' 鈫?')}</p>
-                    <div className="checkbox-list">
+                    <div className="grid gap-2">
                       {train.seatInventories.map(seat => {
                         const quote = quoteTrainSegmentAmount(train, trainFrom, trainTo, seat.seatClass)
                         return (
-                          <button
+                          <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                             key={seat.inventoryId}
                             type="button"
                             disabled={isBusy || !quote}
@@ -343,29 +343,29 @@ export function TourGroupOptionPicker({
         {planItem.itemType === 'Attraction' ? (
           <>
             <form
-              className="panel-card stack-form"
+              className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-4"
               onSubmit={async event => {
                 event.preventDefault()
                 setAttractionResults(await onSearchAttractions({ city: attractionCity || undefined }))
               }}
             >
-              <div className="three-column-grid">
+              <div className="grid gap-4 md:grid-cols-3">
                 <label>
                   {translate('tourGroups.search.city')}
-                  <input value={attractionCity} onChange={event => setAttractionCity(event.target.value)} placeholder={translate('attractions.cityPlaceholder')} />
+                  <input value={attractionCity} onChange={event => setAttractionCity(event.target.value)} />
                 </label>
               </div>
-              <button type="submit" disabled={isBusy}>{translate('tourGroups.searchOptions')}</button>
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>{translate('tourGroups.searchOptions')}</button>
             </form>
-            <ul className="entity-list">
+            <ul className="grid gap-3">
               {attractionResults.map(attraction => (
                 <li key={attraction.attractionId}>
                   <div>
                     <strong>{attraction.attractionName}</strong>
                     <p>{`${attraction.city} 路 ${attraction.location}`}</p>
-                    <div className="checkbox-list">
+                    <div className="grid gap-2">
                       {attraction.ticketTypes.map(ticketType => (
-                        <button
+                        <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                           key={ticketType.ticketTypeId}
                           type="button"
                           disabled={isBusy}
@@ -398,7 +398,7 @@ export function TourGroupOptionPicker({
   }
 
   return (
-    <div className="modal-backdrop" role="presentation">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-6" role="presentation">
       {content}
     </div>
   )

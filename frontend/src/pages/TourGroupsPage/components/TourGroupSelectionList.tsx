@@ -81,19 +81,19 @@ export function TourGroupSelectionList({
   }
 
   return (
-    <section className="list-surface">
-      <div className="panel-heading">
+    <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{eyebrow || getTourGroupConceptLabel('selection', currentLanguage)}</p>
+          <p className="text-sm font-bold text-slate-500">{eyebrow || getTourGroupConceptLabel('selection', currentLanguage)}</p>
           <h3>{title}</h3>
         </div>
         {selectableSelectionIds.length > 0 ? (
-          <div className="action-cluster">
-            <button type="button" className="secondary-button" disabled={isBusy} onClick={selectAllCurrentSelections}>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={selectAllCurrentSelections}>
               {translate('tourGroups.selectAll')}
             </button>
             {onBatchConfirmSelections ? (
-              <button
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                 type="button"
                 disabled={isBusy || selectedSelectionIds.length === 0}
                 onClick={() => void onBatchConfirmSelections(selectedSelectionIds)}
@@ -104,7 +104,7 @@ export function TourGroupSelectionList({
             {onBatchRejectSelections ? (
               <button
                 type="button"
-                className="secondary-button"
+                className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                 disabled={isBusy || selectedSelectionIds.length === 0}
                 onClick={() => void onBatchRejectSelections(selectedSelectionIds, translate('tourGroups.defaultRejectNote'))}
               >
@@ -112,7 +112,7 @@ export function TourGroupSelectionList({
               </button>
             ) : null}
             {onBatchPaySelections ? (
-              <button
+              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                 type="button"
                 disabled={isBusy || selectedSelectionIds.length === 0}
                 onClick={() => void onBatchPaySelections(selectedSelectionIds)}
@@ -125,9 +125,9 @@ export function TourGroupSelectionList({
       </div>
 
       {selections.length === 0 ? (
-        <p className="empty-state">{translate('tourGroups.noSelections')}</p>
+        <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.noSelections')}</p>
       ) : (
-        <ul className="entity-list">
+        <ul className="grid gap-3">
           {selections.map(selection => {
             const planItem = planItems.find(item => item.planItemId === selection.planItemId)
             const planOption = planOptions.find(option => option.optionId === selection.optionId)
@@ -140,7 +140,7 @@ export function TourGroupSelectionList({
               <li key={selection.selectionId}>
                 <div>
                   {isSelectable ? (
-                    <label className="checkbox-row">
+                    <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={selectedSelectionIds.includes(selection.selectionId)}
@@ -166,21 +166,21 @@ export function TourGroupSelectionList({
                   ) : null}
                 </div>
 
-                <div className="compact-action-block">
+                <div className="flex flex-wrap items-center gap-3">
                   {isMySelection && selection.status === 'Draft' && onSubmitSelection ? (
-                    <button type="button" disabled={isBusy} onClick={() => void onSubmitSelection(selection.selectionId)}>
+                    <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={() => void onSubmitSelection(selection.selectionId)}>
                       {translate('tourGroups.submitSelection')}
                     </button>
                   ) : null}
 
                   {selection.status === 'Submitted' && onConfirmSelection && onRejectSelection ? (
                     <>
-                      <button type="button" disabled={isBusy} onClick={() => void onConfirmSelection(selection.selectionId, '')}>
+                      <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={() => void onConfirmSelection(selection.selectionId, '')}>
                         {translate('tourGroups.confirmSelection')}
                       </button>
                       <button
                         type="button"
-                        className="secondary-button"
+                        className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                         disabled={isBusy}
                         onClick={() => void onRejectSelection(selection.selectionId, translate('tourGroups.defaultRejectNote'))}
                       >
@@ -190,8 +190,8 @@ export function TourGroupSelectionList({
                   ) : null}
 
                   {isMySelection && selection.status === 'OrganizerConfirmed' && hasLinkedBooking && onOpenBookings ? (
-                    <div className="action-cluster">
-                      <button type="button" disabled={isBusy} onClick={onOpenBookings}>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={onOpenBookings}>
                         {translate('tourGroups.openLinkedBooking')}
                       </button>
                     </div>

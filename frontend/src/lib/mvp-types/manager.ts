@@ -3,3 +3,6 @@ export type { ManagerRefundTaskListResponse } from '@/microservices/operations/o
 export type { ManagerRefundTaskResponse } from '@/microservices/operations/objects/ManagerRefundTaskResponse'
 export type { ManagerTaskListResponse } from '@/microservices/operations/objects/ManagerTaskListResponse'
 export type { ManagerTaskResponse } from '@/microservices/operations/objects/ManagerTaskResponse'
+export type { ManagerFlightOrderListResponse } from '@/microservices/operations/objects/ManagerFlightOrderListResponse'
+export type { ManagerFlightOrderResponse } from '@/microservices/operations/objects/ManagerFlightOrderResponse'
+export type { ManagerFlightOrderTravelerResponse } from '@/microservices/operations/objects/ManagerFlightOrderTravelerResponse'

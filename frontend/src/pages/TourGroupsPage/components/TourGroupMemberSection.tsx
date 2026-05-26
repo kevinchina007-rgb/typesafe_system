@@ -37,51 +37,51 @@ export function TourGroupMemberSection({
   const joinedTravelers = travelers.filter(traveler => membershipTravelerIds.has(traveler.travelerId))
 
   return (
-    <section className="list-surface">
-      <div className="panel-heading">
+    <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{getTourGroupConceptLabel('member', currentLanguage)}</p>
+          <p className="text-sm font-bold text-slate-500">{getTourGroupConceptLabel('member', currentLanguage)}</p>
           <h3>{translate('tourGroups.memberSectionTitle')}</h3>
         </div>
       </div>
 
       {!signedInUser ? (
-        <p className="empty-state">{translate('tourGroups.guest')}</p>
+        <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.guest')}</p>
       ) : !activeMembership ? (
-        <div className="stack-form">
-          <p className="hero-copy">{translate('tourGroups.joinHint')}</p>
-          <div className="action-cluster">
-            <button type="button" disabled={isBusy} onClick={() => void onJoinGroup()}>
+        <div className="grid gap-4">
+          <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('tourGroups.joinHint')}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={() => void onJoinGroup()}>
               {translate('tourGroups.joinGroup')}
             </button>
           </div>
         </div>
       ) : (
-        <div className="stack-form">
-          <div className="detail-grid">
+        <div className="grid gap-4">
+          <div className="grid gap-3 md:grid-cols-2">
             <div>
-              <span className="detail-label">{translate('tourGroups.membershipStatus')}</span>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.membershipStatus')}</span>
               <strong>{localizeTourGroupStatus(activeMembership.status, currentLanguage)}</strong>
             </div>
             <div>
-              <span className="detail-label">{translate('tourGroups.joinedAt')}</span>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.joinedAt')}</span>
               <strong>{activeMembership.joinedAt}</strong>
             </div>
           </div>
 
-          <div className="panel-card">
+          <div className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
             <h4>{translate('tourGroups.myTravelers')}</h4>
             {joinedTravelers.length === 0 ? (
-              <p className="empty-state">{translate('tourGroups.noJoinedTravelers')}</p>
+              <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.noJoinedTravelers')}</p>
             ) : (
-              <ul className="entity-list">
+              <ul className="grid gap-3">
                 {joinedTravelers.map(traveler => (
                   <li key={traveler.travelerId}>
                     <div>
                       <strong>{traveler.fullName}</strong>
                       <p>{formatTravelerChipLabel(traveler)}</p>
                     </div>
-                    <span className="tag-chip">{translate('tourGroups.readyForChoices')}</span>
+                    <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{translate('tourGroups.readyForChoices')}</span>
                   </li>
                 ))}
               </ul>
@@ -89,7 +89,7 @@ export function TourGroupMemberSection({
           </div>
 
           <form
-            className="panel-card stack-form"
+            className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-4"
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
@@ -111,7 +111,7 @@ export function TourGroupMemberSection({
                 ))}
               </select>
             </label>
-            <button type="submit" disabled={isBusy || availableTravelers.length === 0}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy || availableTravelers.length === 0}>
               {translate('tourGroups.addMembershipTraveler')}
             </button>
           </form>

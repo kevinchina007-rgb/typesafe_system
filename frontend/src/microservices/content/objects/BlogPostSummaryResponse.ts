@@ -1,4 +1,4 @@
-import type { ContentImageResponse } from './ContentImageResponse'
+﻿import type { ContentImageResponse } from './ContentImageResponse'
 
 export type BlogPostSummaryResponse = {
   postId: string
@@ -20,3 +20,8 @@ export type BlogPostSummaryResponse = {
   images: ContentImageResponse[]
   searchResultSnippet: string | null
 }
+export const blogPostSummaryResponseFromJson = (json: string): BlogPostSummaryResponse =>
+  JSON.parse(json) as BlogPostSummaryResponse
+
+export const blogPostSummaryResponseToJson = (value: BlogPostSummaryResponse): string =>
+  JSON.stringify(value)

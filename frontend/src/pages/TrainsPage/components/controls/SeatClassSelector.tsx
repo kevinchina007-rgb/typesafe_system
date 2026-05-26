@@ -18,7 +18,7 @@ export function SeatClassSelector({ value, translate, onChange }: SeatClassSelec
   }
 
   return (
-    <label className="resource-search-label resource-inline-field">
+    <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
       <span>{translate('trains.seatPreference')}</span>
       <select value={value} onChange={event => onChange(event.target.value as TrainSeatPreference)}>
         {trainSeatPreferences.map(option => (

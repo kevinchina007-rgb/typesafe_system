@@ -3,6 +3,7 @@ import type { AppViewKey, CurrentManagerSessionResponse, UserResponse } from '@/
 
 export type TopNavKey =
   | 'overview'
+  | 'orders'
   | 'booking'
   | 'travelManagement'
   | 'community'
@@ -11,7 +12,10 @@ export type TopNavKey =
   | 'userCenter'
   | 'managerCenter'
   | 'managerWorkspace'
+  | 'managerCreateFlight'
+  | 'managerFlightManagement'
   | 'managerFeedback'
+  | 'managerProfile'
   | 'managerAdvertising'
   | 'siteAdminBlogAudit'
   | 'siteAdminAdvertisingReview'
@@ -47,6 +51,7 @@ export type TopNavItem = {
 
 export const topNavItems: TopNavItem[] = [
   { key: 'overview', titleKey: 'topnav.overview', icon: 'dashboard', defaultViewKey: 'overview' },
+  { key: 'orders', titleKey: 'topnav.orders', icon: 'orders', defaultViewKey: 'flightOrders' },
   { key: 'booking', titleKey: 'topnav.booking', icon: 'flight', defaultViewKey: 'flights' },
   { key: 'travelManagement', titleKey: 'topnav.travelManagement', icon: 'group', defaultViewKey: 'travelers' },
   { key: 'community', titleKey: 'topnav.community', icon: 'blog', defaultViewKey: 'blog' },
@@ -55,7 +60,10 @@ export const topNavItems: TopNavItem[] = [
   { key: 'userCenter', titleKey: 'topnav.userCenter', icon: 'account', defaultViewKey: 'account' },
   { key: 'managerCenter', titleKey: 'topnav.managerCenter', icon: 'account', defaultViewKey: 'manager' },
   { key: 'managerWorkspace', titleKey: 'topnav.managerWorkspace', icon: 'operations', defaultViewKey: 'managerWorkspace' },
+  { key: 'managerCreateFlight', titleKey: 'topnav.managerCreateFlight', icon: 'flight', defaultViewKey: 'managerCreateFlight' },
+  { key: 'managerFlightManagement', titleKey: 'topnav.managerFlightManagement', icon: 'operations', defaultViewKey: 'managerFlightManagement' },
   { key: 'managerFeedback', titleKey: 'topnav.managerFeedback', icon: 'review', defaultViewKey: 'managerFeedback' },
+  { key: 'managerProfile', titleKey: 'topnav.managerProfile', icon: 'account', defaultViewKey: 'managerProfile' },
   { key: 'managerAdvertising', titleKey: 'topnav.managerAdvertising', icon: 'orders', defaultViewKey: 'managerAdvertising' },
   { key: 'siteAdminBlogAudit', titleKey: 'topnav.siteAdminBlogAudit', icon: 'blog', defaultViewKey: 'siteAdminBlogAudit' },
   { key: 'siteAdminAdvertisingReview', titleKey: 'topnav.siteAdminAdvertisingReview', icon: 'orders', defaultViewKey: 'siteAdminAdvertisingReview' },
@@ -83,14 +91,48 @@ export const appRoutes: RouteMeta[] = [
     supportsGuests: true,
   },
   {
-    viewKey: 'orders',
-    titleKey: 'nav.orders',
-    descriptionKey: 'workspace.ordersDescription',
+    viewKey: 'flightOrders',
+    titleKey: 'nav.flightOrders',
+    descriptionKey: 'bookings.flightDescription',
     section: 'workspace',
-    topNav: 'overview',
-    icon: 'orders',
+    topNav: 'orders',
+    icon: 'flight',
+    sortOrder: 10,
+    prerequisiteState: 'account',
+    supportsGuests: true,
+  },
+  {
+    viewKey: 'hotelOrders',
+    titleKey: 'nav.hotelOrders',
+    descriptionKey: 'bookings.hotelDescription',
+    section: 'workspace',
+    topNav: 'orders',
+    icon: 'hotel',
     sortOrder: 20,
     prerequisiteState: 'account',
+    supportsGuests: true,
+  },
+  {
+    viewKey: 'trainOrders',
+    titleKey: 'nav.trainOrders',
+    descriptionKey: 'bookings.trainDescription',
+    section: 'workspace',
+    topNav: 'orders',
+    icon: 'train',
+    sortOrder: 30,
+    prerequisiteState: 'account',
+    supportsGuests: true,
+  },
+  {
+    viewKey: 'attractionOrders',
+    titleKey: 'nav.attractionOrders',
+    descriptionKey: 'bookings.attractionDescription',
+    section: 'workspace',
+    topNav: 'orders',
+    icon: 'attraction',
+    sortOrder: 40,
+    prerequisiteState: 'account',
+    supportsGuests: true,
   },
   {
     viewKey: 'flights',
@@ -205,6 +247,24 @@ export const appRoutes: RouteMeta[] = [
     sortOrder: 20,
   },
   {
+    viewKey: 'managerCreateFlight',
+    titleKey: 'nav.managerCreateFlight',
+    descriptionKey: 'manager.centerDescription',
+    section: 'managerCenter',
+    topNav: 'managerCreateFlight',
+    icon: 'flight',
+    sortOrder: 21,
+  },
+  {
+    viewKey: 'managerFlightManagement',
+    titleKey: 'nav.managerFlightManagement',
+    descriptionKey: 'manager.centerDescription',
+    section: 'managerCenter',
+    topNav: 'managerFlightManagement',
+    icon: 'operations',
+    sortOrder: 22,
+  },
+  {
     viewKey: 'managerFeedback',
     titleKey: 'nav.managerFeedback',
     descriptionKey: 'manager.feedback.title',
@@ -212,6 +272,15 @@ export const appRoutes: RouteMeta[] = [
     topNav: 'managerFeedback',
     icon: 'review',
     sortOrder: 30,
+  },
+  {
+    viewKey: 'managerProfile',
+    titleKey: 'nav.managerProfile',
+    descriptionKey: 'manager.centerDescription',
+    section: 'managerCenter',
+    topNav: 'managerProfile',
+    icon: 'account',
+    sortOrder: 31,
   },
   {
     viewKey: 'managerAdvertising',
@@ -264,7 +333,7 @@ function isRouteVisible(params: {
   }
 
   if (isGuestMode) {
-    if (route.viewKey === 'reviews' || route.viewKey === 'tourGroups' || route.viewKey === 'orders' || route.viewKey === 'travelers') {
+    if (route.viewKey === 'reviews' || route.viewKey === 'tourGroups' || route.viewKey === 'travelers') {
       return false
     }
     return route.supportsGuests === true
@@ -289,7 +358,10 @@ export function getVisibleTopNavItems(params: {
       return (
         item.key !== 'managerCenter' &&
         item.key !== 'managerWorkspace' &&
+        item.key !== 'managerCreateFlight' &&
+        item.key !== 'managerFlightManagement' &&
         item.key !== 'managerFeedback' &&
+        item.key !== 'managerProfile' &&
         item.key !== 'managerAdvertising' &&
         item.key !== 'siteAdminBlogAudit' &&
         item.key !== 'siteAdminAdvertisingReview'
@@ -304,6 +376,15 @@ export function getVisibleTopNavItems(params: {
         )
       }
 
+      if (signedInManager.managerType === 'Airline') {
+        return (
+          item.key === 'managerCreateFlight' ||
+          item.key === 'managerFlightManagement' ||
+          item.key === 'managerFeedback' ||
+          item.key === 'managerProfile'
+        )
+      }
+
       if (signedInManager.managerType === 'Hotel' || signedInManager.managerType === 'Attraction') {
         return item.key === 'managerWorkspace' || item.key === 'managerFeedback' || item.key === 'managerAdvertising'
       }
@@ -313,6 +394,7 @@ export function getVisibleTopNavItems(params: {
 
     return (
       item.key === 'overview' ||
+      item.key === 'orders' ||
       item.key === 'booking' ||
       item.key === 'community' ||
       item.key === 'smartPlanner' ||

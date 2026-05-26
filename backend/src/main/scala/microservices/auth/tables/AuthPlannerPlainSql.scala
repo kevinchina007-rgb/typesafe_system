@@ -13,6 +13,10 @@ import java.util.UUID
 object AuthPlannerPlainSql:
   def signup(connection: Connection, input: SignupPlannerRequest, passwordHash: String, now: Instant): IO[CurrentUserPlannerResponse] =
     IO.blocking {
+      val loginEmail = EmailAddress.create(input.email).fold(throw _, identity)
+      if userCredentialExists(connection, loginEmail.value) then
+        throw AuthError.UserCredentialAlreadyExists(loginEmail)
+
       val userId = s"user-${UUID.randomUUID().toString.take(12)}"
       val credentialId = s"credential-${UUID.randomUUID().toString.take(12)}"
       val sessionId = s"session-${UUID.randomUUID().toString.take(16)}"
@@ -49,6 +53,17 @@ object AuthPlannerPlainSql:
       }
       insertSession(connection, sessionId, userId, now, expiresAt)
       CurrentUserPlannerResponse(sessionId, userId, input.email.trim, input.nickname.trim, input.phone.trim, None, "Basic", 0L, expiresAt)
+    }
+
+  private def userCredentialExists(connection: Connection, email: String): Boolean =
+    PlainSqlSupport.withStatement(
+      connection,
+      "select 1 from user_credentials where login_email = ?"
+    ) { statement =>
+      statement.setString(1, email.trim)
+      val resultSet = statement.executeQuery()
+      try resultSet.next()
+      finally resultSet.close()
     }
 
   def login(connection: Connection, input: LoginPlannerRequest, now: Instant): IO[(String, CurrentUserPlannerResponse)] =

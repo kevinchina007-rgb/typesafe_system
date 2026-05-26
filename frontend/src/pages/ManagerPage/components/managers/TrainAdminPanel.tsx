@@ -2,6 +2,7 @@
 
 import type { AppLanguage, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, localizeTrainSeatClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
+import { getPasswordValidationMessage } from '@/pages/shared/auth/passwordValidation'
 
 function normalizeDateTimeInput(rawValue: string): string {
   const trimmedValue = rawValue.trim()
@@ -89,25 +90,26 @@ export function TrainAdminPanel({
   )
 
   return (
-    <section className="page-card">
-      <div className="panel-heading">
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('nav.trainAdmin')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('nav.trainAdmin')}</p>
           <h2>{translate('trainAdmin.title')}</h2>
         </div>
         {trainAdminSession ? (
-          <button type="button" className="secondary-button" disabled={isBusy} onClick={onLogoutRailwayManager}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={onLogoutRailwayManager}>
             {translate('trainAdmin.logout')}
           </button>
         ) : null}
       </div>
 
-      <p className="hero-copy">{translate('trainAdmin.description')}</p>
+      <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('trainAdmin.description')}</p>
 
       {!trainAdminSession ? (
-        <div className="two-column-grid">
+        <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-2">
           <form
-            className="stack-form panel-card"
+            className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
@@ -117,9 +119,15 @@ export function TrainAdminPanel({
                 onValidationError(translate('error.passwordMismatch'))
                 return
               }
+              const email = String(formData.get('email') ?? '').trim()
+              const passwordValidationMessage = getPasswordValidationMessage(password, email)
+              if (passwordValidationMessage) {
+                onValidationError(passwordValidationMessage)
+                return
+              }
               await onRegisterRailwayManager({
                 operatorCode: String(formData.get('operatorCode') ?? '').trim(),
-                email: String(formData.get('email') ?? '').trim(),
+                email,
                 displayName: String(formData.get('displayName') ?? '').trim(),
                 password,
               })
@@ -129,31 +137,32 @@ export function TrainAdminPanel({
             <h3>{translate('trainAdmin.registerManager')}</h3>
             <label>
               {translate('trainAdmin.operatorCode')}
-              <input name="operatorCode" placeholder="CRH" required />
+              <input name="operatorCode" autoComplete="off" required />
             </label>
             <label>
               {translate('trainAdmin.displayName')}
-              <input name="displayName" placeholder={translate('trainAdmin.displayName')} required />
+              <input name="displayName" autoComplete="off" required />
             </label>
             <label>
               {translate('trainAdmin.email')}
-              <input name="email" type="email" placeholder={translate('trainAdmin.email')} required />
+              <input name="email" type="email" autoComplete="off" required />
             </label>
             <label>
               {translate('account.password')}
-              <input name="password" type="password" placeholder={translate('account.password')} required />
+              <input name="password" type="password" autoComplete="off" required />
             </label>
             <label>
               {translate('account.confirmPassword')}
-              <input name="confirmPassword" type="password" placeholder={translate('account.confirmPassword')} required />
+              <input name="confirmPassword" type="password" autoComplete="new-password" required />
             </label>
-            <button type="submit" disabled={isBusy}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-none transition hover:border-pink-600 hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
               {translate('trainAdmin.createAccount')}
             </button>
           </form>
 
           <form
-            className="stack-form panel-card"
+            className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
@@ -166,40 +175,41 @@ export function TrainAdminPanel({
             <h3>{translate('trainAdmin.login')}</h3>
             <label>
               {translate('trainAdmin.email')}
-              <input name="email" type="email" placeholder={translate('trainAdmin.email')} required />
+              <input name="email" type="email" autoComplete="off" required />
             </label>
             <label>
               {translate('account.password')}
-              <input name="password" type="password" placeholder={translate('account.password')} required />
+              <input name="password" type="password" autoComplete="off" required />
             </label>
-            <button type="submit" disabled={isBusy}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-none transition hover:border-pink-600 hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
               {translate('trainAdmin.login')}
             </button>
           </form>
         </div>
       ) : (
         <>
-          <div className="detail-grid">
+          <div className="grid gap-3 md:grid-cols-2">
             <div>
-              <span className="detail-label">{translate('trainAdmin.displayName')}</span>
+              <span className="text-sm font-medium text-slate-500">{translate('trainAdmin.displayName')}</span>
               <strong>{trainAdminSession.displayName}</strong>
             </div>
             <div>
-              <span className="detail-label">{translate('trainAdmin.operatorCode')}</span>
+              <span className="text-sm font-medium text-slate-500">{translate('trainAdmin.operatorCode')}</span>
               <strong>{trainAdminSession.operatorCode}</strong>
             </div>
             <div>
-              <span className="detail-label">{translate('trainAdmin.email')}</span>
+              <span className="text-sm font-medium text-slate-500">{translate('trainAdmin.email')}</span>
               <strong>{trainAdminSession.email}</strong>
             </div>
             <div>
-              <span className="detail-label">{translate('trainAdmin.status')}</span>
+              <span className="text-sm font-medium text-slate-500">{translate('trainAdmin.status')}</span>
               <strong>{mapBackendStatusToProductLabel(trainAdminSession.status, currentLanguage)}</strong>
             </div>
           </div>
 
           <form
-            className="stack-form panel-card"
+            className="grid gap-4 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
+            autoComplete="off"
             onSubmit={async event => {
               event.preventDefault()
               const formData = new FormData(event.currentTarget)
@@ -262,10 +272,10 @@ export function TrainAdminPanel({
             }}
           >
             <h3>{translate('trainAdmin.createTrain')}</h3>
-            <div className="three-column-grid">
+            <div className="grid gap-4 md:grid-cols-3">
               <label>
                 {translate('trainAdmin.trainNumber')}
-                <input name="trainNumber" placeholder="G12" required />
+                <input name="trainNumber" required />
               </label>
               <label>
                 {translate('trainAdmin.saleStartsAt')}
@@ -288,22 +298,22 @@ export function TrainAdminPanel({
               {translate('trainAdmin.refundPolicies')}
               <textarea name="refundPolicies" rows={4} defaultValue={defaultRefundPolicyExample} />
             </label>
-            <button type="submit" disabled={isBusy}>
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
               {translate('trainAdmin.createTrain')}
             </button>
           </form>
 
-          <div className="action-cluster">
-            <button type="button" className="secondary-button" disabled={isBusy} onClick={() => void onReloadManagedTrains()}>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void onReloadManagedTrains()}>
               {translate('trainAdmin.refresh')}
             </button>
           </div>
 
-          <div className="list-surface">
+          <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
             {trainAdminSession.managedTrains.length === 0 ? (
-              <p className="empty-state">{translate('trainAdmin.empty')}</p>
+              <p className="text-sm leading-6 text-slate-500">{translate('trainAdmin.empty')}</p>
             ) : (
-              <ul className="entity-list">
+              <ul className="grid gap-3">
                 {trainAdminSession.managedTrains.map(train => (
                   <li key={train.trainId}>
                     <div>
@@ -317,7 +327,7 @@ export function TrainAdminPanel({
                           .join(' | ')}
                       </p>
                     </div>
-                    <span className="tag-chip">{train.segmentPrices.length}</span>
+                    <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{train.segmentPrices.length}</span>
                   </li>
                 ))}
               </ul>
@@ -328,3 +338,5 @@ export function TrainAdminPanel({
     </section>
   )
 }
+
+

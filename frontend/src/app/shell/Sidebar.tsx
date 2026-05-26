@@ -16,14 +16,14 @@ export function Sidebar({ currentTopNav, currentViewKey, items, onSelectView, tr
   const toggleSidebarCollapsed = useNavigationUiStore(state => state.toggleSidebarCollapsed)
 
   return (
-    <aside className={`context-sidebar app-card ${isCollapsed ? 'is-collapsed' : ''}`}>
-      <div className="context-sidebar-header">
+    <aside className={`grid gap-4 border border-slate-200 bg-white p-4 text-slate-950 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 ${isCollapsed ? 'hidden' : ''}`}>
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="eyebrow-label">{translate(`topnav.${currentTopNav}`)}</p>
+          <p className="text-sm font-bold text-slate-500">{translate(`topnav.${currentTopNav}`)}</p>
         </div>
         <button
           type="button"
-          className="secondary-button context-sidebar-toggle"
+          className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55 inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
           onClick={toggleSidebarCollapsed}
         >
           {translate(isCollapsed ? 'sidebar.expand' : 'sidebar.collapse')}
@@ -31,21 +31,21 @@ export function Sidebar({ currentTopNav, currentViewKey, items, onSelectView, tr
       </div>
 
       {!isCollapsed ? (
-        <nav className="sidebar-nav">
+        <nav className="grid gap-2">
           {items.map(item => (
             <button
               type="button"
               key={item.viewKey}
-              className={`sidebar-nav-button ${currentViewKey === item.viewKey ? 'is-active' : ''}`}
+              className={`grid min-h-12 grid-cols-[auto_1fr_auto] items-center gap-3 border border-transparent bg-white px-3 py-2 text-left text-slate-700 transition hover:border-black hover:bg-black hover:text-white ${currentViewKey === item.viewKey ? 'border-black bg-black text-white' : ''}`}
               onClick={() => onSelectView(item.viewKey)}
             >
-              <span className="sidebar-nav-icon">
+              <span className="grid place-items-center">
                 <Icon icon={item.icon} size={18} />
               </span>
-              <span className="sidebar-nav-labels">
+              <span className="grid gap-1">
                 <strong>{translate(item.titleKey)}</strong>
               </span>
-              {item.badgeCount ? <span className="sidebar-nav-badge">{item.badgeCount}</span> : null}
+              {item.badgeCount ? <span className="inline-flex min-h-6 min-w-6 items-center justify-center bg-slate-950 px-2 text-xs font-bold text-white">{item.badgeCount}</span> : null}
             </button>
           ))}
         </nav>

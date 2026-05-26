@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react'
-﻿import { useState } from 'react'
+﻿import type { ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import type { AppLanguage, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { formatTravelerReference, localizeAccountStatus, localizeMembershipLevel } from '@/lib/presenters/view-models'
+import { getPasswordValidationMessage } from '@/pages/shared/auth/passwordValidation'
 import { AvatarUploader } from './AvatarUploader'
 
 type AccountEntryMode = 'register' | 'login'
@@ -35,16 +36,20 @@ type UserPanelProps = {
 }
 
 const cardClassName =
-  'grid gap-4 rounded-2xl border border-slate-700/50 bg-slate-950/75 p-6 shadow-xl shadow-slate-950/25 backdrop-blur'
+  'grid gap-4 border border-slate-200 bg-white p-6 text-slate-950 shadow-xl shadow-slate-200/60'
+const accountEntryCardClassName =
+  'mx-auto grid w-full gap-4 self-start border border-slate-200 bg-white p-6 text-slate-950 shadow-xl shadow-slate-200/60 md:w-1/2 md:max-w-3xl'
 const heroCardClassName =
-  'grid gap-4 rounded-2xl border border-slate-700/50 bg-[radial-gradient(circle_at_top_right,rgba(14,165,233,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.18),transparent_30%),linear-gradient(135deg,rgba(15,23,42,0.97),rgba(30,41,59,0.9))] p-6 shadow-2xl shadow-cyan-950/25'
+  'grid gap-4 border border-slate-200 bg-white p-6 text-slate-950 shadow-xl shadow-slate-200/60'
 const primaryButtonClassName =
-  'inline-flex min-h-11 items-center justify-center rounded-xl border border-cyan-300/40 bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-950/20 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-55'
+  'inline-flex min-h-11 items-center justify-center !border !border-black ![background:#000] px-4 py-2 text-sm font-semibold !text-white !shadow-none ![transform:none] transition hover:![background:#000] hover:!text-white hover:![box-shadow:none] hover:![transform:none] disabled:cursor-not-allowed disabled:opacity-55'
 const secondaryButtonClassName =
-  'inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-600/70 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-cyan-300/50 hover:bg-cyan-300/10 disabled:cursor-not-allowed disabled:opacity-55'
-const labelClassName = 'grid gap-2 text-sm font-medium text-slate-300'
+  'inline-flex min-h-11 items-center justify-center !border !border-slate-300 ![background:transparent] px-4 py-2 text-sm font-semibold !text-slate-950 !shadow-none ![transform:none] transition hover:!border-black hover:![background:#000] hover:!text-white hover:![box-shadow:none] hover:![transform:none] disabled:cursor-not-allowed disabled:opacity-55'
+const authPrimaryButtonClassName =
+  'inline-flex min-h-11 items-center justify-center !border !border-pink-500 ![background:#ec4899] px-4 py-2 text-sm font-semibold !text-white !shadow-none ![transform:none] transition hover:![background:#db2777] hover:!text-white hover:![box-shadow:none] hover:![transform:none] disabled:cursor-not-allowed disabled:opacity-55'
+const labelClassName = 'grid gap-2 text-sm font-medium text-slate-700'
 const inputClassName =
-  'min-h-11 rounded-xl border border-slate-600/70 bg-slate-900/80 px-3 py-2 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-300/20'
+  'min-h-11 border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-black focus:ring-2 focus:ring-slate-200'
 
 function scrollToSection(sectionId: string) {
   document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -54,8 +59,8 @@ function SectionHeader({ eyebrow, title, actions }: { eyebrow: string; title: st
   return (
     <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
       <div>
-        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-cyan-300">{eyebrow}</p>
-        <h2 className="m-0 text-2xl font-bold leading-tight text-slate-50 md:text-3xl">{title}</h2>
+        <p className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-500">{eyebrow}</p>
+        <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950 md:text-3xl">{title}</h2>
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
     </div>
@@ -64,9 +69,9 @@ function SectionHeader({ eyebrow, title, actions }: { eyebrow: string; title: st
 
 function StatBlock({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="grid gap-1 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-inner shadow-white/5">
-      <span className="text-sm text-slate-400">{label}</span>
-      <strong className="text-xl font-bold text-slate-50">{value}</strong>
+    <div className="grid gap-1 border border-slate-200 bg-slate-50 p-4">
+      <span className="text-sm text-slate-500">{label}</span>
+      <strong className="text-xl font-bold text-slate-950">{value}</strong>
     </div>
   )
 }
@@ -74,8 +79,8 @@ function StatBlock({ label, value }: { label: string; value: ReactNode }) {
 function DetailField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <span className="mb-1 block text-sm text-slate-400">{label}</span>
-      <strong className="text-slate-50">{children}</strong>
+      <span className="mb-1 block text-sm text-slate-500">{label}</span>
+      <strong className="text-slate-950">{children}</strong>
     </div>
   )
 }
@@ -101,25 +106,43 @@ export function UserPanel({
   onLogoutCurrentSession,
   onLogout,
 }: UserPanelProps) {
+  const registerFormRef = useRef<HTMLFormElement>(null)
+  const loginFormRef = useRef<HTMLFormElement>(null)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
-  const placeholderTexts = {
-    nickname: currentLanguage === 'zh' ? '鏋楁櫒' : 'Lin Chen',
-    email: 'lin.chen@example.com',
-    phone: '+8613812345678',
-    password: currentLanguage === 'zh' ? '?? 8 ???' : 'At least 8 characters',
-    confirmPassword: currentLanguage === 'zh' ? '鍐嶆杈撳叆瀵嗙爜' : 'Repeat password',
-    currentPassword: currentLanguage === 'zh' ? '褰撳墠瀵嗙爜' : 'Current password',
-    newPassword: currentLanguage === 'zh' ? '???' : 'New password',
-  }
+  const [loginPasswordDraft, setLoginPasswordDraft] = useState('')
+  const [isLoginFormWritable, setIsLoginFormWritable] = useState(false)
   const defaultTraveler =
     account?.defaultTravelerProfileId
       ? travelers.find(traveler => traveler.travelerId === account.defaultTravelerProfileId) ?? null
       : null
 
+  function clearAccountEntryForms() {
+    registerFormRef.current?.reset()
+    loginFormRef.current?.reset()
+    onChangeLoginEmailDraft('')
+    setLoginPasswordDraft('')
+    setIsLoginFormWritable(false)
+  }
+
+  function switchAccountEntryMode(nextAccountEntryMode: AccountEntryMode) {
+    clearAccountEntryForms()
+    onChangeAccountEntryMode(nextAccountEntryMode)
+  }
+
+  useEffect(() => {
+    if (!isGuestMode) {
+      return
+    }
+
+    clearAccountEntryForms()
+    const resetTimers = [50, 250, 800].map(delay => window.setTimeout(clearAccountEntryForms, delay))
+    return () => resetTimers.forEach(timerId => window.clearTimeout(timerId))
+  }, [accountEntryMode, isGuestMode])
+
   if (isGuestMode) {
     return (
       <section className="grid gap-4">
-        <section className={cardClassName}>
+        <section className={accountEntryCardClassName}>
           <SectionHeader
             eyebrow={translate('account.entryEyebrow')}
             title={translate(accountEntryMode === 'register' ? 'account.registerTitle' : 'account.loginTitle')}
@@ -130,7 +153,7 @@ export function UserPanel({
               type="button"
               className={accountEntryMode === 'register' ? primaryButtonClassName : secondaryButtonClassName}
               disabled={isBusy}
-              onClick={() => onChangeAccountEntryMode('register')}
+              onClick={() => switchAccountEntryMode('register')}
             >
               {translate('account.create')}
             </button>
@@ -138,7 +161,7 @@ export function UserPanel({
               type="button"
               className={accountEntryMode === 'login' ? primaryButtonClassName : secondaryButtonClassName}
               disabled={isBusy}
-              onClick={() => onChangeAccountEntryMode('login')}
+              onClick={() => switchAccountEntryMode('login')}
             >
               {translate('account.login')}
             </button>
@@ -146,20 +169,29 @@ export function UserPanel({
 
           {accountEntryMode === 'register' ? (
             <form
+              key="register-account-form"
+              ref={registerFormRef}
               className="grid gap-4"
+              autoComplete="off"
               onSubmit={async event => {
                 event.preventDefault()
                 const formData = new FormData(event.currentTarget)
-                const password = String(formData.get('password') ?? '')
-                const confirmPassword = String(formData.get('confirmPassword') ?? '')
+                const password = String(formData.get('registerPassword') ?? '')
+                const confirmPassword = String(formData.get('registerConfirmPassword') ?? '')
                 if (password !== confirmPassword) {
                   onValidationError(translate('error.passwordMismatch'))
                   return
                 }
+                const email = String(formData.get('registerEmail') ?? '').trim()
+                const passwordValidationMessage = getPasswordValidationMessage(password, email)
+                if (passwordValidationMessage) {
+                  onValidationError(passwordValidationMessage)
+                  return
+                }
                 await onRegisterAccount({
-                  email: String(formData.get('email') ?? ''),
-                  nickname: String(formData.get('nickname') ?? ''),
-                  phone: String(formData.get('phone') ?? ''),
+                  email,
+                  nickname: String(formData.get('registerNickname') ?? ''),
+                  phone: String(formData.get('registerPhone') ?? ''),
                   password,
                 })
                 event.currentTarget.reset()
@@ -167,57 +199,78 @@ export function UserPanel({
             >
               <label className={labelClassName}>
                 {translate('account.nickname')}
-                <input className={inputClassName} name="nickname" placeholder={placeholderTexts.nickname} required />
+                <input className={inputClassName} name="registerNickname" autoComplete="off" required />
               </label>
               <label className={labelClassName}>
                 {translate('account.email')}
-                <input className={inputClassName} name="email" type="email" placeholder={placeholderTexts.email} required />
+                <input className={inputClassName} name="registerEmail" type="email" autoComplete="off" required />
               </label>
               <label className={labelClassName}>
                 {translate('account.phone')}
-                <input className={inputClassName} name="phone" placeholder={placeholderTexts.phone} required />
+                <input className={inputClassName} name="registerPhone" autoComplete="off" required />
               </label>
               <label className={labelClassName}>
                 {translate('account.password')}
-                <input className={inputClassName} name="password" type="password" placeholder={placeholderTexts.password} required />
+                <input className={inputClassName} name="registerPassword" type="password" autoComplete="new-password" required />
               </label>
               <label className={labelClassName}>
                 {translate('account.confirmPassword')}
-                <input className={inputClassName} name="confirmPassword" type="password" placeholder={placeholderTexts.confirmPassword} required />
+                <input className={inputClassName} name="registerConfirmPassword" type="password" autoComplete="new-password" required />
               </label>
-              <button className={primaryButtonClassName} type="submit" disabled={isBusy}>
+              <button className={authPrimaryButtonClassName} type="submit" disabled={isBusy}>
                 {translate('account.create')}
               </button>
             </form>
           ) : (
             <form
+              key="login-account-form"
+              ref={loginFormRef}
               className="grid gap-4"
+              autoComplete="new-password"
               onSubmit={async event => {
                 event.preventDefault()
-                const formData = new FormData(event.currentTarget)
                 await onLoginAccount({
                   email: loginEmailDraft,
-                  password: String(formData.get('password') ?? ''),
+                  password: loginPasswordDraft,
                 })
+                setLoginPasswordDraft('')
+                event.currentTarget.reset()
               }}
             >
+              <input className="hidden" tabIndex={-1} aria-hidden="true" autoComplete="username" />
+              <input className="hidden" tabIndex={-1} aria-hidden="true" type="password" autoComplete="current-password" />
               <label className={labelClassName}>
                 {translate('account.email')}
                 <input
                   className={inputClassName}
-                  name="loginEmail"
-                  type="email"
+                  name="fpAccountContact"
+                  type="text"
+                  inputMode="email"
                   value={loginEmailDraft}
-                  placeholder={placeholderTexts.email}
+                  autoComplete="new-password"
+                  readOnly={!isLoginFormWritable}
+                  onFocus={() => setIsLoginFormWritable(true)}
+                  onMouseDown={() => setIsLoginFormWritable(true)}
                   onChange={event => onChangeLoginEmailDraft(event.target.value)}
                   required
                 />
               </label>
               <label className={labelClassName}>
                 {translate('account.password')}
-                <input className={inputClassName} name="password" type="password" placeholder={placeholderTexts.currentPassword} required />
+                <input
+                  className={inputClassName}
+                  name="fpAccountSecret"
+                  type="password"
+                  value={loginPasswordDraft}
+                  autoComplete="new-password"
+                  readOnly={!isLoginFormWritable}
+                  onFocus={() => setIsLoginFormWritable(true)}
+                  onMouseDown={() => setIsLoginFormWritable(true)}
+                  onChange={event => setLoginPasswordDraft(event.target.value)}
+                  required
+                />
               </label>
-              <button className={primaryButtonClassName} type="submit" disabled={isBusy}>
+              <button className={authPrimaryButtonClassName} type="submit" disabled={isBusy}>
                 {translate('account.login')}
               </button>
             </form>
@@ -332,15 +385,15 @@ export function UserPanel({
           >
             <label className={labelClassName}>
               {translate('account.currentPassword')}
-              <input className={inputClassName} name="currentPassword" type="password" placeholder={placeholderTexts.currentPassword} required />
+              <input className={inputClassName} name="currentPassword" type="password" required />
             </label>
             <label className={labelClassName}>
               {translate('account.newPassword')}
-              <input className={inputClassName} name="newPassword" type="password" placeholder={placeholderTexts.newPassword} required />
+              <input className={inputClassName} name="newPassword" type="password" required />
             </label>
             <label className={labelClassName}>
               {translate('account.confirmPassword')}
-              <input className={inputClassName} name="confirmPassword" type="password" placeholder={placeholderTexts.confirmPassword} required />
+              <input className={inputClassName} name="confirmPassword" type="password" required />
             </label>
             <button className={primaryButtonClassName} type="submit" disabled={isBusy}>
               {translate('account.changePassword')}
@@ -351,3 +404,4 @@ export function UserPanel({
     </section>
   )
 }
+

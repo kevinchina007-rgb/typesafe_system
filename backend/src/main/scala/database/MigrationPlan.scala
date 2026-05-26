@@ -31,7 +31,13 @@ object MigrationPlan:
     loadMigrationStep(18, "train_attraction_enhancement_phase2", "V18__train_attraction_enhancement_phase2.sql"),
     loadMigrationStep(19, "uploaded_binary_assets", "V19__uploaded_binary_assets.sql"),
     loadMigrationStep(20, "feedback_chat_phase1", "V20__feedback_chat_phase1.sql"),
-    loadMigrationStep(21, "advertising_phase1", "V21__advertising_phase1.sql")
+    loadMigrationStep(21, "advertising_phase1", "V21__advertising_phase1.sql"),
+    loadMigrationStep(22, "advertising_slots", "V22__advertising_slots.sql"),
+    loadMigrationStep(23, "flight_demo_schedule", "V23__flight_demo_schedule.sql"),
+    loadMigrationStep(24, "flight_demo_schedule_refresh", "V24__flight_demo_schedule_refresh.sql"),
+    loadMigrationStep(25, "feedback_structured_messages", "V25__feedback_structured_messages.sql"),
+    loadMigrationStep(26, "clear_feedback_chat_history", "V26__clear_feedback_chat_history.sql"),
+    loadMigrationStep(27, "traveler_profile_service_details", "V27__traveler_profile_service_details.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

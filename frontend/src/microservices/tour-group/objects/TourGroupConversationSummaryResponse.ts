@@ -1,4 +1,4 @@
-export type TourGroupConversationSummaryResponse = {
+﻿export type TourGroupConversationSummaryResponse = {
   conversationId: string
   conversationType: string
   status: string
@@ -14,3 +14,8 @@ export type TourGroupConversationSummaryResponse = {
   isArchived: boolean
   canSendMessage: boolean
 }
+export const tourGroupConversationSummaryResponseFromJson = (json: string): TourGroupConversationSummaryResponse =>
+  JSON.parse(json) as TourGroupConversationSummaryResponse
+
+export const tourGroupConversationSummaryResponseToJson = (value: TourGroupConversationSummaryResponse): string =>
+  JSON.stringify(value)

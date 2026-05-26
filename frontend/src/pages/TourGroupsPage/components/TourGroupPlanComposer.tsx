@@ -216,23 +216,23 @@ export function TourGroupPlanComposer({
   }
 
   return (
-    <section className="list-surface">
-      <div className="panel-heading">
+    <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('tourGroups.createPlanEyebrow')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('tourGroups.createPlanEyebrow')}</p>
           <h3>{translate('tourGroups.createPlanSearchTitle')}</h3>
-          <p className="hero-copy">{translate('tourGroups.createPlanSearchHint')}</p>
+          <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('tourGroups.createPlanSearchHint')}</p>
         </div>
       </div>
 
       <form
-        className="panel-card stack-form"
+        className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-4"
         onSubmit={async event => {
           event.preventDefault()
           await runSearch()
         }}
       >
-        <div className={itemType === 'Hotel' ? 'tour-group-plan-search-grid hotel' : 'tour-group-plan-search-grid'}>
+        <div className={itemType === 'Hotel' ? 'grid gap-4 md:grid-cols-3 hotel' : 'grid gap-4 md:grid-cols-3'}>
           <label>
             {translate('tourGroups.itemType')}
             <select value={itemType} onChange={event => setItemType(event.target.value)}>
@@ -266,22 +266,17 @@ export function TourGroupPlanComposer({
                 setLocation(nextLocation)
                 void loadLocationSuggestions(nextLocation)
               }}
-              placeholder={
-                itemType === 'Flight' || itemType === 'Train'
-                  ? translate('tourGroups.locationRoutePlaceholder')
-                  : translate('tourGroups.locationCityPlaceholder')
-              }
               required
             />
           </label>
         </div>
         {locationSuggestions.length > 0 ? (
-          <ul className="entity-list compact-suggestion-list">
+          <ul className="grid gap-3 grid gap-2">
             {locationSuggestions.map(suggestion => (
               <li key={`${suggestion.resourceType}:${suggestion.value}`}>
                 <button
                   type="button"
-                  className="tour-group-link-button"
+                  className="inline-flex items-center justify-center text-sm font-bold text-sky-600 underline-offset-4 hover:underline"
                   onClick={() => {
                     setLocation(suggestion.value)
                     setLocationSuggestions([])
@@ -294,25 +289,25 @@ export function TourGroupPlanComposer({
             ))}
           </ul>
         ) : null}
-        <div className="action-cluster">
-          <button type="submit" disabled={isBusy}>
+        <div className="flex flex-wrap items-center gap-3">
+          <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
             {translate('tourGroups.searchOptions')}
           </button>
         </div>
-        {searchMessage ? <p className="empty-state">{searchMessage}</p> : null}
+        {searchMessage ? <p className="text-sm leading-6 text-slate-500">{searchMessage}</p> : null}
       </form>
 
       {itemType === 'Flight' && flightResults.length > 0 ? (
-        <ul className="entity-list">
+        <ul className="grid gap-3">
           {flightResults.map(flight => (
             <li key={flight.flightId}>
               <div>
                 <strong>{`${flight.airlineCode} ${flight.flightNumber}`}</strong>
                 <p>{`${flight.departureAirport} -> ${flight.arrivalAirport}`}</p>
                 <p>{formatIsoDateTime(flight.departureTime, '-')}</p>
-                <div className="checkbox-list">
+                <div className="grid gap-2">
                   {flight.cabinInventories.map(cabin => (
-                    <button
+                    <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                       key={cabin.inventoryId}
                       type="button"
                       disabled={isBusy}
@@ -347,15 +342,15 @@ export function TourGroupPlanComposer({
       ) : null}
 
       {itemType === 'Hotel' && hotelResults.length > 0 ? (
-        <ul className="entity-list">
+        <ul className="grid gap-3">
           {hotelResults.map(hotel => (
             <li key={hotel.hotelId}>
               <div>
                 <strong>{hotel.hotelName}</strong>
                 <p>{hotel.location}</p>
-                <div className="checkbox-list">
+                <div className="grid gap-2">
                   {hotel.roomTypes.map(roomType => (
-                    <button
+                    <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                       key={roomType.roomTypeId}
                       type="button"
                       disabled={isBusy}
@@ -389,7 +384,7 @@ export function TourGroupPlanComposer({
       ) : null}
 
       {itemType === 'Train' && trainResults.length > 0 ? (
-        <ul className="entity-list">
+        <ul className="grid gap-3">
           {trainResults.map(train => {
             const route = parseRouteInput(location)
             const fromStop = route ? resolveTrainStop(train, route.from) : null
@@ -399,10 +394,10 @@ export function TourGroupPlanComposer({
                 <div>
                   <strong>{train.trainNumber}</strong>
                   <p>{train.stops.map(stop => stop.stationCode).join(' -> ')}</p>
-                  <div className="checkbox-list">
+                  <div className="grid gap-2">
                     {route && fromStop && toStop
                       ? train.seatInventories.map(seat => (
-                          <button
+                          <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                             key={seat.inventoryId}
                             type="button"
                             disabled={isBusy}
@@ -430,7 +425,7 @@ export function TourGroupPlanComposer({
                           </button>
                         ))
                       : (
-                          <p className="empty-state">{translate('tourGroups.routeInputHint')}</p>
+                          <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.routeInputHint')}</p>
                         )}
                   </div>
                 </div>
@@ -441,15 +436,15 @@ export function TourGroupPlanComposer({
       ) : null}
 
       {itemType === 'Attraction' && attractionResults.length > 0 ? (
-        <ul className="entity-list">
+        <ul className="grid gap-3">
           {attractionResults.map(attraction => (
             <li key={attraction.attractionId}>
               <div>
                 <strong>{attraction.attractionName}</strong>
                 <p>{`${attraction.city} / ${attraction.location}`}</p>
-                <div className="checkbox-list">
+                <div className="grid gap-2">
                   {attraction.ticketTypes.map(ticketType => (
-                    <button
+                    <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                       key={ticketType.ticketTypeId}
                       type="button"
                       disabled={isBusy}

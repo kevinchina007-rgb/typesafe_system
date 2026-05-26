@@ -7,7 +7,7 @@
 
 export function CitySelector({ value, translate, suggestions, onChange }: CitySelectorProps) {
   return (
-    <label className="resource-search-label">
+    <label className="grid gap-2 text-sm font-medium text-slate-600">
       <span>{translate('attractions.city')}</span>
       <input list="attraction-city-suggestions" value={value} onChange={event => onChange(event.target.value)} />
       <datalist id="attraction-city-suggestions">

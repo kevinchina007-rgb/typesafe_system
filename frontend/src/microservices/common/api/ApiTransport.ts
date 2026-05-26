@@ -1,8 +1,8 @@
 ﻿import { getTravelBackendOrigin } from '@/lib/config/runtime-config'
 import type { ApiErrorResponse } from '@/lib/mvp-types/index'
 
-// 鎵€鏈夌湡姝ｇ殑缃戠粶 IO 閮芥敹鍙ｅ湪杩欎釜鏂囦欢閲岋細
-// fetch / headers / multipart / status code / 閿欒鏍煎紡鍖?缁熶竴鍦ㄨ繖閲屽鐞嗐€?
+// 所有真正的网络 IO 都收口在这个文件里：
+// fetch / headers / multipart / status code / 错误格式统一在这里处理。
 const travelBackendOrigin = getTravelBackendOrigin()
 const travelMvpApiBaseUrl = `${travelBackendOrigin}/api`
 
@@ -19,7 +19,7 @@ export function isUnauthorizedApiError(error: unknown): boolean {
 }
 
 export function createQueryString(queryEntries: Record<string, string | number | boolean | null | undefined>): string {
-  // 缁熶竴蹇界暐 null / undefined / 绌哄瓧绗︿覆锛岄伩鍏嶅悇涓氬姟璋冪敤鐐归噸澶嶅啓娓呮礂閫昏緫銆?
+  // 统一忽略 null / undefined / 空字符串，避免各业务调用点重复写清洗逻辑。
   const searchParams = new URLSearchParams()
 
   Object.entries(queryEntries).forEach(([key, value]) => {
@@ -46,7 +46,7 @@ export function createSingleFileFormData(fieldName: string, file: File): FormDat
 }
 
 export async function executeApiRequest<TResponse>(path: string, options?: RequestInit): Promise<TResponse> {
-  // multipart 涓嶈兘寮哄 application/json header锛岃繖閲岀粺涓€鍋氬垎鏀€?
+  // multipart 不能强塞 application/json header，这里统一做分支。
   const isMultipartBody = typeof FormData !== 'undefined' && options?.body instanceof FormData
   const response = await fetch(`${travelMvpApiBaseUrl}${path}`, {
     credentials: 'include',
@@ -62,13 +62,16 @@ export async function executeApiRequest<TResponse>(path: string, options?: Reque
   })
 
   if (!response.ok) {
-    // 鍚庣缁熶竴閿欒褰㈢姸鏄?{ code, message }锛岃繖閲岃浆鎴愬墠绔粺涓€ Error 鏂囨湰銆?
+    // 兼容旧接口的 { code, message } 和 PlannerRouter 的 { error }。
     let responseBodyText = ''
     try {
       responseBodyText = await response.text()
-      const parsedApiError = JSON.parse(responseBodyText) as Partial<ApiErrorResponse>
+      const parsedApiError = JSON.parse(responseBodyText) as Partial<ApiErrorResponse> & { error?: string }
       if (parsedApiError.code && parsedApiError.message) {
         throw new Error(formatApiErrorMessage(parsedApiError as ApiErrorResponse, response.status))
+      }
+      if (parsedApiError.error?.trim()) {
+        throw new Error(`planner_error|${parsedApiError.error}|HTTP ${response.status}`)
       }
     } catch (parsingError) {
       if (parsingError instanceof Error && parsingError.message.includes('|')) {
@@ -87,7 +90,7 @@ export async function executeApiRequest<TResponse>(path: string, options?: Reque
 }
 
 export function executeJsonApiRequest<TResponse>(path: string, method: string, payload?: unknown): Promise<TResponse> {
-  // 涓氬姟 API 鍙渶瑕佷紶 typed payload锛屼笉闇€瑕佺洿鎺ユ帴瑙?fetch 鎴?JSON.stringify銆?
+  // 业务 API 只需要传 typed payload，不需要直接接触 fetch 或 JSON.stringify。
   return executeApiRequest(path, {
     method,
     body: payload === undefined ? undefined : JSON.stringify(payload),

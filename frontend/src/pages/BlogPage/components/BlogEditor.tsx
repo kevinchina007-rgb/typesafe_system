@@ -46,7 +46,7 @@ export function BlogEditor({
 
   return (
     <form
-      className="stack-form panel-card"
+      className="grid gap-4 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
       onSubmit={async event => {
         event.preventDefault()
         await onSubmit({
@@ -63,9 +63,9 @@ export function BlogEditor({
         }
       }}
     >
-      <div className="panel-heading">
+      <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="eyebrow-label">{translate('blog.editorEyebrow')}</p>
+          <p className="text-sm font-bold text-slate-500">{translate('blog.editorEyebrow')}</p>
           <h3>{mode === 'edit' ? translate('blog.editorEditTitle') : translate('blog.editorTitle')}</h3>
         </div>
       </div>
@@ -93,12 +93,12 @@ export function BlogEditor({
         onChangeImages={setImages}
       />
 
-      <div className="manager-task-actions">
-        <button type="submit" disabled={isBusy}>
+      <div className="flex flex-wrap items-center gap-3">
+        <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
           {mode === 'edit' ? translate('blog.save') : translate('blog.publish')}
         </button>
         {onCancel ? (
-          <button type="button" className="secondary-button" disabled={isBusy} onClick={onCancel}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={onCancel}>
             {translate('tourGroups.cancel')}
           </button>
         ) : null}

@@ -25,11 +25,11 @@ object ReferenceDataSeeder:
       List(
         sql"""
           insert into airlines (airline_id, name, code, status, created_at)
-          values ('airline-mu', 'China Eastern', 'MU', 'Active', timestamp '2026-03-25 00:00:00')
+          values ('airline-mu', '奶龙航空', 'MU', 'Active', timestamp '2026-03-25 00:00:00')
         """.update.run,
         sql"""
           insert into airlines (airline_id, name, code, status, created_at)
-          values ('airline-9c', 'Spring Airlines', '9C', 'Active', timestamp '2026-03-25 00:00:00')
+          values ('airline-9c', '科比航空', '9C', 'Active', timestamp '2026-03-25 00:00:00')
         """.update.run
       )
 
@@ -73,11 +73,17 @@ object ReferenceDataSeeder:
     val insertInventories =
       List(
         insertCabinInventory("mu5123-economy", "flight-mu5123", "ECONOMY", 6, 680),
+        insertCabinInventory("mu5123-premium-economy", "flight-mu5123", "PREMIUM_ECONOMY", 4, 980),
         insertCabinInventory("mu5123-business", "flight-mu5123", "BUSINESS", 2, 1880),
+        insertCabinInventory("mu5123-first", "flight-mu5123", "FIRST", 1, 3280),
         insertCabinInventory("mu5210-economy", "flight-mu5210", "ECONOMY", 6, 2400),
+        insertCabinInventory("mu5210-premium-economy", "flight-mu5210", "PREMIUM_ECONOMY", 4, 2900),
         insertCabinInventory("mu5210-business", "flight-mu5210", "BUSINESS", 2, 3600),
+        insertCabinInventory("mu5210-first", "flight-mu5210", "FIRST", 1, 5200),
         insertCabinInventory("9c8821-economy", "flight-9c8821", "ECONOMY", 6, 1900),
-        insertCabinInventory("9c8821-business", "flight-9c8821", "BUSINESS", 2, 3100)
+        insertCabinInventory("9c8821-premium-economy", "flight-9c8821", "PREMIUM_ECONOMY", 4, 2300),
+        insertCabinInventory("9c8821-business", "flight-9c8821", "BUSINESS", 2, 3100),
+        insertCabinInventory("9c8821-first", "flight-9c8821", "FIRST", 1, 4600)
       )
 
     (insertAirlines ++ insertFlights ++ insertInventories).sequence.transact(transactor).void
@@ -124,11 +130,11 @@ object ReferenceDataSeeder:
     List(
       sql"""
         insert into airline_managers (manager_id, airline_id, email, display_name, status, created_at)
-        values ('manager-airline-mu', 'airline-mu', 'ops@mu.example', 'China Eastern Ops', 'Active', timestamp '2026-03-27 00:00:00')
+        values ('manager-airline-mu', 'airline-mu', 'ops@mu.example', '奶龙航空运营', 'Active', timestamp '2026-03-27 00:00:00')
       """.update.run,
       sql"""
         insert into airline_managers (manager_id, airline_id, email, display_name, status, created_at)
-        values ('manager-airline-9c', 'airline-9c', 'ops@9c.example', 'Spring Airlines Ops', 'Active', timestamp '2026-03-27 00:00:00')
+        values ('manager-airline-9c', 'airline-9c', 'ops@9c.example', '科比航空运营', 'Active', timestamp '2026-03-27 00:00:00')
       """.update.run
     ).sequence.transact(transactor).void
 

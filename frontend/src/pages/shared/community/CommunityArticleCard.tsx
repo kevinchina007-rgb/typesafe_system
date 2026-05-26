@@ -1,13 +1,13 @@
 ﻿import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 
 type CommunityArticleCardProps = {
-  title: string
-  summary: string
-  author: string
+  title: string | null | undefined
+  summary: string | null | undefined
+  author: string | null | undefined
   authorAvatarUrl?: string | null
   time: string
-  likes: number
-  comments: number
+  likes: number | null | undefined
+  comments: number | null | undefined
   likesLabel: string
   commentsLabel: string
   isActive?: boolean
@@ -31,35 +31,42 @@ export function CommunityArticleCard({
   snippet,
   onSelect,
 }: CommunityArticleCardProps) {
+  const displayTitle = title?.trim() || '未命名文章'
+  const displaySummary = summary?.trim() || '这篇文章暂时还没有摘要。'
+  const displayAuthor = author?.trim() || '匿名用户'
+  const authorInitial = displayAuthor.slice(0, 1).toUpperCase()
+  const displayLikes = likes ?? 0
+  const displayComments = comments ?? 0
+
   return (
     <button
       type="button"
-      className={isActive ? 'community-article-card is-active' : 'community-article-card'}
+      className={isActive ? 'grid gap-3 border border-slate-200 bg-white p-4 border-black bg-black text-white' : 'grid gap-3 border border-slate-200 bg-white p-4'}
       onClick={onSelect}
     >
-      <div className="community-article-head">
-        <div className="community-article-copy">
-          <strong className="community-article-title">{title}</strong>
-          <p className="community-article-summary">{summary}</p>
+      <div className="grid gap-2">
+        <div className="grid gap-2">
+          <strong className="m-0 text-xl font-bold text-slate-950">{displayTitle}</strong>
+          <p className="text-sm leading-6 text-slate-600">{displaySummary}</p>
         </div>
-        {badge ? <span className="tag-chip">{badge}</span> : null}
+        {badge ? <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{badge}</span> : null}
       </div>
 
-      {snippet ? <p className="community-article-snippet">{snippet}</p> : null}
+      {snippet ? <p className="text-sm leading-6 text-slate-500">{snippet}</p> : null}
 
-      <div className="community-article-meta">
-        <span className="community-inline-identity">
+      <div className="text-sm text-slate-500">
+        <span className="inline-flex items-center gap-2">
           <BackendAssetImage
-            className="community-inline-avatar"
+            className="h-8 w-8 object-cover"
             assetUrl={authorAvatarUrl}
-            alt={author}
-            fallbackContent={author.slice(0, 1).toUpperCase()}
+            alt={displayAuthor}
+            fallbackContent={authorInitial}
           />
-          <span>{author}</span>
+          <span>{displayAuthor}</span>
         </span>
         <span>{time}</span>
-        <span>{`${likesLabel} ${likes}`}</span>
-        <span>{`${commentsLabel} ${comments}`}</span>
+        <span>{`${likesLabel} ${displayLikes}`}</span>
+        <span>{`${commentsLabel} ${displayComments}`}</span>
       </div>
     </button>
   )

@@ -57,20 +57,20 @@ export function TourGroupSelectionDialog({
   }
 
   return (
-    <div className="modal-backdrop" role="presentation">
-      <div className="modal-card" role="dialog" aria-modal="true" aria-label={translate('tourGroups.createSelection')}>
-        <div className="panel-heading">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-6" role="presentation">
+      <div className="grid max-h-[90vh] w-full max-w-3xl gap-4 overflow-auto border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl shadow-slate-950/20" role="dialog" aria-modal="true" aria-label={translate('tourGroups.createSelection')}>
+        <div className="text-lg font-bold text-slate-950">
           <div>
-            <p className="eyebrow-label">{translate('tourGroups.selectionDialogEyebrow')}</p>
+            <p className="text-sm font-bold text-slate-500">{translate('tourGroups.selectionDialogEyebrow')}</p>
             <h3>{planItem.title}</h3>
             <p>{localizeTourGroupItemType(planItem.itemType, currentLanguage)}</p>
           </div>
-          <button type="button" className="secondary-button" disabled={isBusy} onClick={onClose}>
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={onClose}>
             {translate('payment.close')}
           </button>
         </div>
 
-        <div className="stack-form">
+        <div className="grid gap-4">
           <label>
             {translate('tourGroups.option')}
             <select value={selectedOptionId} onChange={event => setSelectedOptionId(event.target.value)}>
@@ -86,7 +86,7 @@ export function TourGroupSelectionDialog({
           </label>
 
           {selectedOption ? (
-            <div className="list-surface">
+            <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
               <strong>{selectedOption.label}</strong>
               <p>{selectedOption.description}</p>
             </div>
@@ -97,10 +97,10 @@ export function TourGroupSelectionDialog({
             <input type="number" min={1} value={quantity} onChange={event => setQuantity(Number(event.target.value || 1))} />
           </label>
 
-          <div className="checkbox-list">
-            <p className="detail-label">{translate('tourGroups.selectionTravelers')}</p>
+          <div className="grid gap-2">
+            <p className="text-sm font-medium text-slate-500">{translate('tourGroups.selectionTravelers')}</p>
             {availableTravelers.map(traveler => (
-              <label key={traveler.travelerId} className="checkbox-row">
+              <label key={traveler.travelerId} className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={selectedTravelerIds.includes(traveler.travelerId)}
@@ -111,8 +111,8 @@ export function TourGroupSelectionDialog({
             ))}
           </div>
 
-          <div className="action-cluster">
-            <button
+          <div className="flex flex-wrap items-center gap-3">
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
               type="button"
               disabled={isBusy || !selectedOptionId || selectedTravelerIds.length === 0}
               onClick={() => void onSaveDraft({ optionId: selectedOptionId, quantity, travelerIds: selectedTravelerIds })}
@@ -121,7 +121,7 @@ export function TourGroupSelectionDialog({
             </button>
             <button
               type="button"
-              className="secondary-button"
+              className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
               disabled={isBusy || !selectedOptionId || selectedTravelerIds.length === 0}
               onClick={() => void onSaveAndSubmit({ optionId: selectedOptionId, quantity, travelerIds: selectedTravelerIds })}
             >

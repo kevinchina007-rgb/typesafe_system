@@ -204,6 +204,10 @@ lazy val persistenceJdbc = module("persistence-jdbc")
       moduleSourceDir("inventory-domain") / "api",
       moduleSourceDir("order-domain") / "api",
       moduleSourceDir("operations-domain") / "api",
+      moduleSourceDir("operations-domain") / "airline" / "api",
+      moduleSourceDir("operations-domain") / "hotel" / "api",
+      moduleSourceDir("operations-domain") / "attraction" / "api",
+      moduleSourceDir("operations-domain") / "siteadmin" / "api",
       moduleSourceDir("advertising-domain") / "tables",
       moduleSourceDir("auth-domain") / "tables",
       moduleSourceDir("identity-domain") / "tables",
@@ -216,7 +220,11 @@ lazy val persistenceJdbc = module("persistence-jdbc")
       moduleSourceDir("tour-group-domain") / "tables",
       moduleSourceDir("inventory-domain") / "tables",
       moduleSourceDir("order-domain") / "tables",
-      moduleSourceDir("operations-domain") / "tables"
+      moduleSourceDir("operations-domain") / "tables",
+      moduleSourceDir("operations-domain") / "airline" / "tables",
+      moduleSourceDir("operations-domain") / "hotel" / "tables",
+      moduleSourceDir("operations-domain") / "attraction" / "tables",
+      moduleSourceDir("operations-domain") / "siteadmin" / "tables"
     ),
     Compile / unmanagedSources += backendSourceRoot / "routes" / "ApiPlan.scala",
     Compile / unmanagedResourceDirectories += backendSourceRoot / "database" / "migrations",
@@ -241,6 +249,12 @@ lazy val contentDomain = module("content-domain")
 lazy val operationsDomain = module("operations-domain")
   .dependsOn(sharedKernel)
   .settings(
+    Compile / unmanagedSourceDirectories ++= Seq(
+      moduleSourceDir("operations-domain") / "airline" / "objects",
+      moduleSourceDir("operations-domain") / "hotel" / "objects",
+      moduleSourceDir("operations-domain") / "attraction" / "objects",
+      moduleSourceDir("operations-domain") / "siteadmin" / "objects"
+    ),
     libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
@@ -281,7 +295,11 @@ lazy val apiGateway = Project(id = "api-gateway", base = file("projects/api-gate
       moduleSourceDir("tour-group-domain") / "api",
       moduleSourceDir("inventory-domain") / "api",
       moduleSourceDir("order-domain") / "api",
-      moduleSourceDir("operations-domain") / "api"
+      moduleSourceDir("operations-domain") / "api",
+      moduleSourceDir("operations-domain") / "airline" / "api",
+      moduleSourceDir("operations-domain") / "hotel" / "api",
+      moduleSourceDir("operations-domain") / "attraction" / "api",
+      moduleSourceDir("operations-domain") / "siteadmin" / "api"
     ),
     Test / unmanagedSourceDirectories ++= Seq(
       backendApiTestRoot / "identity-domain",

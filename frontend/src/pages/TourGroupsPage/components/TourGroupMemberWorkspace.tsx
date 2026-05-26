@@ -42,7 +42,7 @@ export function TourGroupMemberWorkspace({
   onOpenBookings,
 }: TourGroupMemberWorkspaceProps) {
   return (
-    <div className="tour-group-member-stack">
+    <div className="grid gap-4">
       <TourGroupMemberSection
         currentLanguage={currentLanguage}
         details={details}

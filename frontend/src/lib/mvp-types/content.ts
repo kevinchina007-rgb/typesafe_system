@@ -7,3 +7,7 @@ export type { ResourceReviewSummaryResponse } from '@/microservices/content/obje
 export type { ReviewEligibilityResponse } from '@/microservices/content/objects/ReviewEligibilityResponse'
 export type { ReviewListResponse } from '@/microservices/content/objects/ReviewListResponse'
 export type { ReviewResponse } from '@/microservices/content/objects/ReviewResponse'
+export type { FeedbackMessageType } from '@/microservices/content/objects/FeedbackMessageType'
+export type { FeedbackSenderRole } from '@/microservices/content/objects/FeedbackSenderRole'
+export type { FeedbackThreadResponse } from '@/microservices/content/objects/FeedbackThreadResponse'
+export type { OrderCancellationRequestPayload, OrderCancellationRequestStatus } from '@/microservices/content/objects/OrderCancellationRequestPayload'

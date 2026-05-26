@@ -10,6 +10,18 @@ import type { TourGroupPaySelectionResponse } from '@/microservices/tour-group/o
 import type { TourGroupUploadedAttachmentResponse } from '@/microservices/tour-group/objects/TourGroupUploadedAttachmentResponse'
 import { createQueryString, createSingleFileFormData, executeApiRequest, executeJsonApiRequest, executeMultipartApiRequest } from '@/microservices/common/api/ApiTransport'
 
+function normalizeTourGroupDetails(response: TourGroupDetailsResponse): TourGroupDetailsResponse {
+  return {
+    ...response,
+    planItems: response.planItems ?? [],
+    planOptions: response.planOptions ?? [],
+    selections: response.selections ?? [],
+    selectionOrderLinks: response.selectionOrderLinks ?? [],
+    selectionOrderProjections: response.selectionOrderProjections ?? [],
+    bookings: response.bookings ?? [],
+  }
+}
+
 export const createTourGroup = (payload: {
     organizerUserId: string
     title: string
@@ -19,19 +31,19 @@ export const createTourGroup = (payload: {
     endDate: string
     capacity: number
   }): Promise<TourGroupDetailsResponse> =>
-    executeJsonApiRequest('/tour-groups', 'POST', payload)
+    executeJsonApiRequest<TourGroupDetailsResponse>('/CreateTourGroupPlanner', 'POST', payload).then(normalizeTourGroupDetails)
 
 export const listTourGroups = (): Promise<TourGroupListResponse> =>
-    executeApiRequest('/tour-groups')
+    executeJsonApiRequest('/ListTourGroupsPlanner', 'POST', {})
 
 export const getTourGroup = (groupId: string): Promise<TourGroupDetailsResponse> =>
-    executeApiRequest(`/tour-groups/${groupId}`)
+    executeJsonApiRequest<TourGroupDetailsResponse>('/GetTourGroupDetailsPlanner', 'POST', { groupId }).then(normalizeTourGroupDetails)
 
 export const joinTourGroup = (groupId: string, payload: { userId: string }): Promise<TourGroupDetailsResponse> =>
-    executeJsonApiRequest(`/tour-groups/${groupId}/memberships`, 'POST', payload)
+    executeJsonApiRequest<TourGroupDetailsResponse>('/JoinTourGroupPlanner', 'POST', { groupId, ...payload }).then(normalizeTourGroupDetails)
 
 export const addTourGroupMembershipTraveler = (groupId: string, payload: { userId: string; travelerId: string }): Promise<TourGroupDetailsResponse> =>
-    executeJsonApiRequest(`/tour-groups/${groupId}/membership-travelers`, 'POST', payload)
+    executeJsonApiRequest<TourGroupDetailsResponse>('/AddMembershipTravelerPlanner', 'POST', { groupId, ...payload }).then(normalizeTourGroupDetails)
 
 export const createTourGroupPlanItem = (
     groupId: string,

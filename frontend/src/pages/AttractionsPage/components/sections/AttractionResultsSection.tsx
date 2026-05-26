@@ -38,11 +38,11 @@ export function AttractionResultsSection({
   onLoadReviews,
 }: AttractionResultsSectionProps) {
   return (
-    <div className="entity-list flights-list">
+    <div className="grid gap-3 grid gap-3">
       {attractionResponses.length > 0 ? (
         attractionResponses.map(attractionResponse => (
-          <article key={attractionResponse.attractionId} className="panel-card hotel-card">
-            <div className="panel-heading">
+          <article key={attractionResponse.attractionId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3">
+            <div className="text-lg font-bold text-slate-950">
               <div>
                 <strong>{attractionResponse.attractionName}</strong>
                 <p>{`${attractionResponse.city} | ${attractionResponse.location}`}</p>
@@ -58,12 +58,12 @@ export function AttractionResultsSection({
                   onLoadReviews={onLoadReviews}
                 />
               </div>
-              <span className="tag-chip">{mapBackendStatusToProductLabel(attractionResponse.status, currentLanguage)}</span>
+              <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{mapBackendStatusToProductLabel(attractionResponse.status, currentLanguage)}</span>
             </div>
 
             <p>{attractionResponse.description}</p>
 
-            <ul className="entity-list">
+            <ul className="grid gap-3">
               {attractionResponse.ticketTypes.map(ticketType => (
                 <li key={ticketType.ticketTypeId}>
                   <div>
@@ -79,7 +79,7 @@ export function AttractionResultsSection({
                   </div>
 
                   <form
-                    className="compact-action-block"
+                    className="flex flex-wrap items-center gap-3"
                     onSubmit={async event => {
                       event.preventDefault()
                       if (isGuestMode) {
@@ -118,17 +118,17 @@ export function AttractionResultsSection({
                       </label>
                     ) : null}
 
-                    <div className="checkbox-list">
-                      <p className="detail-label">{translate('attractions.selectTravelers')}</p>
+                    <div className="grid gap-2">
+                      <p className="text-sm font-medium text-slate-500">{translate('attractions.selectTravelers')}</p>
                       {travelers.map(traveler => (
-                        <label key={traveler.travelerId} className="checkbox-row">
+                        <label key={traveler.travelerId} className="flex items-center gap-2">
                           <input type="checkbox" name="travelerIds" value={traveler.travelerId} disabled={isBusy} />
                           {renderAttractionTravelerOptionLabel(traveler)}
                         </label>
                       ))}
                     </div>
 
-                    <button
+                    <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                       type="submit"
                       disabled={isBusy || !ticketType.isAvailableForRequestedDate || (ticketType.availableQuantityForRequestedDate ?? 0) <= 0}
                     >
@@ -141,7 +141,7 @@ export function AttractionResultsSection({
           </article>
         ))
       ) : (
-        <p className="empty-state">{translate('attractions.empty')}</p>
+        <p className="text-sm leading-6 text-slate-500">{translate('attractions.empty')}</p>
       )}
     </div>
   )

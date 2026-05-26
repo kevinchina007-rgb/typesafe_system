@@ -13,10 +13,25 @@ object EnsureReviewFeedbackThreadPlannerRequest:
   given sourceEncoder: Encoder[EnsureReviewFeedbackThreadPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[EnsureReviewFeedbackThreadPlannerRequest] = deriveDecoder
 
+final case class EnsureOrderCancellationThreadPlannerRequest(userId: String, orderId: String)
+object EnsureOrderCancellationThreadPlannerRequest:
+  given sourceEncoder: Encoder[EnsureOrderCancellationThreadPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[EnsureOrderCancellationThreadPlannerRequest] = deriveDecoder
+
 final case class SendFeedbackMessagePlannerRequest(threadId: String, senderDisplayName: String, senderRole: String, body: String)
 object SendFeedbackMessagePlannerRequest:
   given sourceEncoder: Encoder[SendFeedbackMessagePlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[SendFeedbackMessagePlannerRequest] = deriveDecoder
+
+final case class CreateOrderCancellationMessageRequest(threadId: String, orderId: String, reason: String)
+object CreateOrderCancellationMessageRequest:
+  given sourceEncoder: Encoder[CreateOrderCancellationMessageRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateOrderCancellationMessageRequest] = deriveDecoder
+
+final case class HandleOrderCancellationRequest(threadId: String, messageId: String, status: String, managerNote: Option[String], handledBy: Option[String], handlerRole: Option[String])
+object HandleOrderCancellationRequest:
+  given sourceEncoder: Encoder[HandleOrderCancellationRequest] = deriveEncoder
+  given sourceDecoder: Decoder[HandleOrderCancellationRequest] = deriveDecoder
 
 final case class MarkFeedbackThreadReadPlannerRequest(threadId: String, audience: String)
 object MarkFeedbackThreadReadPlannerRequest:

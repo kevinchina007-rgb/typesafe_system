@@ -55,12 +55,11 @@ export function MyReviewsPanel({
   })
 
   return (
-    <section className="page-stack community-page-stack">
+    <section className="grid gap-5 grid gap-5">
       <CommunityHero
         eyebrow={translate('community.reviewEyebrow')}
         title={translate('reviews.title')}
         searchValue={searchDraft}
-        searchPlaceholder={translate('reviews.searchHint')}
         searchButtonLabel={translate('search.confirm')}
         tabs={resourceTypes.map(resourceType => ({
           key: resourceType,
@@ -75,47 +74,47 @@ export function MyReviewsPanel({
         onSecondaryAction={() => void onListMyReviews().then(setReviews)}
       />
 
-      {!signedInUser ? <p className="empty-state">{translate('reviews.guest')}</p> : null}
+      {!signedInUser ? <p className="text-sm leading-6 text-slate-500">{translate('reviews.guest')}</p> : null}
 
-      <section className="page-card community-list-section">
-        <div className="section-header">
+      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="eyebrow-label">{translate('community.listEyebrow')}</p>
-            <h2 className="section-title">{translate('community.reviewListTitle')}</h2>
+            <p className="text-sm font-bold text-slate-500">{translate('community.listEyebrow')}</p>
+            <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('community.reviewListTitle')}</h2>
           </div>
         </div>
 
         {signedInUser && visibleReviews.length === 0 ? (
-          <div className="empty-state-panel">
-            <p className="empty-state">{translate('reviews.empty')}</p>
+          <div className="grid place-items-center gap-3 border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
+            <p className="text-sm leading-6 text-slate-500">{translate('reviews.empty')}</p>
           </div>
         ) : null}
 
         {visibleReviews.length > 0 ? (
-          <div className="community-review-grid">
+          <div className="grid gap-4 lg:grid-cols-2">
             {visibleReviews.map(review => (
-              <article key={review.reviewId} className="page-card community-review-card">
-                <div className="community-review-head">
+              <article key={review.reviewId} className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-3">
+                <div className="grid gap-1">
                   <div>
-                    <p className="eyebrow-label">{localizeReviewResourceType(review.resourceType, currentLanguage)}</p>
-                    <h3 className="community-review-title">{review.resourceSummaryTitle}</h3>
-                    <p className="community-review-subtitle">{review.resourceSummarySubtitle}</p>
+                    <p className="text-sm font-bold text-slate-500">{localizeReviewResourceType(review.resourceType, currentLanguage)}</p>
+                    <h3 className="m-0 text-xl font-bold text-slate-950">{review.resourceSummaryTitle}</h3>
+                    <p className="text-sm text-slate-500">{review.resourceSummarySubtitle}</p>
                   </div>
-                  <span className="tag-chip">{localizeReviewStatus(review.status, currentLanguage)}</span>
+                  <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{localizeReviewStatus(review.status, currentLanguage)}</span>
                 </div>
 
-                <div className="community-review-rating-row">
+                <div className="flex items-center gap-2">
                   <strong>{review.title}</strong>
                   <span>{summarizeRating(review.rating)}</span>
                 </div>
 
-                <p className="community-review-content">{review.content}</p>
+                <p className="text-sm leading-6 text-slate-600">{review.content}</p>
                 <ContentImageGallery images={review.images} />
 
-                <div className="community-article-meta">
-                  <span className="community-inline-identity">
+                <div className="text-sm text-slate-500">
+                  <span className="inline-flex items-center gap-2">
                     <BackendAssetImage
-                      className="community-inline-avatar"
+                      className="h-8 w-8 object-cover"
                       assetUrl={review.authorAvatarUrl}
                       alt={review.authorDisplayName}
                       fallbackContent={review.authorDisplayName.slice(0, 1).toUpperCase()}
@@ -125,16 +124,16 @@ export function MyReviewsPanel({
                   <span>{formatReviewMeta(review, translate('booking.notYet'))}</span>
                 </div>
 
-                <div className="action-row">
+                <div className="flex flex-wrap items-center gap-3">
                   {review.canEdit ? (
-                    <button type="button" className="secondary-button" disabled={isBusy} onClick={() => setEditingReview(review)}>
+                    <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => setEditingReview(review)}>
                       {translate('reviews.edit')}
                     </button>
                   ) : null}
                   {review.canDelete ? (
                     <button
                       type="button"
-                      className="secondary-button"
+                      className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                       disabled={isBusy}
                       onClick={() =>
                         void onDeleteReview(review.reviewId).then(async () => {

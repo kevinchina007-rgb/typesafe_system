@@ -38,6 +38,57 @@ object FeedbackSenderRole:
       case "system"    => System
       case _           => User
 
+final case class FeedbackMessageType(value: String):
+  override def toString: String = value
+
+object FeedbackMessageType:
+  val Text: FeedbackMessageType = FeedbackMessageType("text")
+  val OrderCancellationRequest: FeedbackMessageType = FeedbackMessageType("orderCancellationRequest")
+  val System: FeedbackMessageType = FeedbackMessageType("system")
+  given sourceEncoder: Encoder[FeedbackMessageType] = Encoder.encodeString.contramap(_.toString)
+  given sourceDecoder: Decoder[FeedbackMessageType] = Decoder.decodeString.map(fromText)
+
+  def fromText(value: String): FeedbackMessageType =
+    value.trim match
+      case "orderCancellationRequest" => OrderCancellationRequest
+      case "system"                   => System
+      case _                          => Text
+
+final case class OrderCancellationRequestStatus(value: String):
+  override def toString: String = value
+
+object OrderCancellationRequestStatus:
+  val Pending: OrderCancellationRequestStatus = OrderCancellationRequestStatus("pending")
+  val Approved: OrderCancellationRequestStatus = OrderCancellationRequestStatus("approved")
+  val Rejected: OrderCancellationRequestStatus = OrderCancellationRequestStatus("rejected")
+  val NeedMoreInfo: OrderCancellationRequestStatus = OrderCancellationRequestStatus("needMoreInfo")
+  given sourceEncoder: Encoder[OrderCancellationRequestStatus] = Encoder.encodeString.contramap(_.toString)
+  given sourceDecoder: Decoder[OrderCancellationRequestStatus] = Decoder.decodeString.map(fromText)
+
+  def fromText(value: String): OrderCancellationRequestStatus =
+    value.trim match
+      case "approved"     => Approved
+      case "rejected"     => Rejected
+      case "needMoreInfo" => NeedMoreInfo
+      case _              => Pending
+
+final case class OrderCancellationRequestPayload(
+    orderId: String,
+    orderTitle: Option[String],
+    reason: String,
+    requestedRefundAmount: Option[BigDecimal],
+    status: OrderCancellationRequestStatus,
+    createdAt: String,
+    handledAt: Option[String],
+    handledBy: Option[String],
+    handlerRole: Option[FeedbackSenderRole],
+    managerNote: Option[String]
+)
+object OrderCancellationRequestPayload:
+  import ContentSourceJsonCodecs.given
+  given sourceEncoder: Encoder[OrderCancellationRequestPayload] = deriveEncoder
+  given sourceDecoder: Decoder[OrderCancellationRequestPayload] = deriveDecoder
+
 final case class FeedbackManagerType(value: String):
   override def toString: String = value
 
@@ -61,10 +112,14 @@ object FeedbackManagerType:
 final case class FeedbackMessage(
     messageId: SupportMessageId,
     threadId: SupportTicketId,
+    senderId: String,
     senderRole: FeedbackSenderRole,
     senderDisplayName: String,
-    body: String,
-    sentAt: Instant
+    messageType: FeedbackMessageType,
+    content: String,
+    payload: Option[OrderCancellationRequestPayload],
+    isRead: Boolean,
+    createdAt: Instant
 )
 object FeedbackMessage:
   import ContentSourceJsonCodecs.given
@@ -108,120 +163,3 @@ object FeedbackError:
 
   final case class ReviewWasNotFound(reviewId: ReviewId) extends FeedbackError:
     override def message: String = s"Feedback thread could not be created because review '${reviewId.value}' was not found"
-
-def createFeedbackThread(
-    threadId: SupportTicketId,
-    kind: FeedbackThreadKind,
-    managerType: FeedbackManagerType,
-    ownerUserId: Option[UserId],
-    ownerUserDisplayName: String,
-    title: String,
-    subtitle: String,
-    resourceType: String,
-    resourceSummaryTitle: String,
-    orderId: Option[OrderId],
-    orderItemId: Option[OrderItemId],
-    reviewId: Option[ReviewId],
-    relatedThreadId: Option[SupportTicketId],
-    unreadByUser: Int,
-    unreadByManager: Int,
-    unreadBySiteAdmin: Int,
-    createdAt: Instant,
-    updatedAt: Instant
-): Either[FeedbackError, FeedbackThread] =
-  if title.trim.isEmpty then Left(FeedbackError.ThreadBodyWasInvalid(threadId))
-  else
-    Right(
-      FeedbackThread(
-        threadId = threadId,
-        kind = kind,
-        managerType = managerType,
-        ownerUserId = ownerUserId,
-        ownerUserDisplayName = ownerUserDisplayName,
-        title = title.trim,
-        subtitle = subtitle.trim,
-        resourceType = resourceType.trim,
-        resourceSummaryTitle = resourceSummaryTitle.trim,
-        orderId = orderId,
-        orderItemId = orderItemId,
-        reviewId = reviewId,
-        relatedThreadId = relatedThreadId,
-        unreadByUser = unreadByUser,
-        unreadByManager = unreadByManager,
-        unreadBySiteAdmin = unreadBySiteAdmin,
-        createdAt = createdAt,
-        updatedAt = updatedAt
-      )
-    )
-
-def restorePersistedFeedbackThread(
-    threadId: SupportTicketId,
-    kind: FeedbackThreadKind,
-    managerType: FeedbackManagerType,
-    ownerUserId: Option[UserId],
-    ownerUserDisplayName: String,
-    title: String,
-    subtitle: String,
-    resourceType: String,
-    resourceSummaryTitle: String,
-    orderId: Option[OrderId],
-    orderItemId: Option[OrderItemId],
-    reviewId: Option[ReviewId],
-    relatedThreadId: Option[SupportTicketId],
-    unreadByUser: Int,
-    unreadByManager: Int,
-    unreadBySiteAdmin: Int,
-    createdAt: Instant,
-    updatedAt: Instant
-): FeedbackThread =
-  createFeedbackThread(
-    threadId,
-    kind,
-    managerType,
-    ownerUserId,
-    ownerUserDisplayName,
-    title,
-    subtitle,
-    resourceType,
-    resourceSummaryTitle,
-    orderId,
-    orderItemId,
-    reviewId,
-    relatedThreadId,
-    unreadByUser,
-    unreadByManager,
-    unreadBySiteAdmin,
-    createdAt,
-    updatedAt
-  ).fold(throw _, identity)
-
-def createFeedbackMessage(
-    messageId: SupportMessageId,
-    threadId: SupportTicketId,
-    senderRole: FeedbackSenderRole,
-    senderDisplayName: String,
-    body: String,
-    sentAt: Instant
-): Either[FeedbackError, FeedbackMessage] =
-  if body.trim.isEmpty then Left(FeedbackError.ThreadBodyWasInvalid(threadId))
-  else
-    Right(
-      FeedbackMessage(
-        messageId = messageId,
-        threadId = threadId,
-        senderRole = senderRole,
-        senderDisplayName = senderDisplayName.trim,
-        body = body.trim,
-        sentAt = sentAt
-      )
-    )
-
-def restorePersistedFeedbackMessage(
-    messageId: SupportMessageId,
-    threadId: SupportTicketId,
-    senderRole: FeedbackSenderRole,
-    senderDisplayName: String,
-    body: String,
-    sentAt: Instant
-): FeedbackMessage =
-  createFeedbackMessage(messageId, threadId, senderRole, senderDisplayName, body, sentAt).fold(throw _, identity)

@@ -15,11 +15,11 @@ export function DateRangeSelector({
 }: DateRangeSelectorProps) {
   return (
     <>
-      <label className="resource-search-label">
+      <label className="grid gap-2 text-sm font-medium text-slate-600">
         <span>{translate('hotels.checkInDate')}</span>
         <input type="date" value={checkInDate} onChange={event => onCheckInDateChange(event.target.value)} />
       </label>
-      <label className="resource-search-label">
+      <label className="grid gap-2 text-sm font-medium text-slate-600">
         <span>{translate('hotels.checkOutDate')}</span>
         <input type="date" value={checkOutDate} onChange={event => onCheckOutDateChange(event.target.value)} />
       </label>

@@ -5,8 +5,10 @@ const travelBackendOrigin = getTravelBackendOrigin()
 
 // 这里集中收口“核心值 -> 展示值”的转换。
 // 后端状态、技术错误、资源相对路径都会先过这一层，再进入页面组件。
-function chooseLabel(language: AppLanguage, englishLabel: string, chineseLabel: string): string {
-  return language === 'zh' ? chineseLabel : englishLabel
+function chooseLabel(language: AppLanguage, fallbackLabel: string, chineseLabel: string): string {
+  void language
+  void fallbackLabel
+  return chineseLabel
 }
 
 export function deriveTravelerTypeLabelFromBirthDate(birthDateValue: string, language: AppLanguage): string {
@@ -35,44 +37,7 @@ export function deriveTravelerTypeLabelFromBirthDate(birthDateValue: string, lan
 }
 
 export function mapBackendStatusToProductLabel(backendStatus: string, language: AppLanguage): string {
-  const englishStatusLabels: Record<string, string> = {
-    PendingActivation: 'Pending setup',
-    Active: 'Active',
-    Suspended: 'Paused',
-    Closed: 'Closed',
-    Draft: 'Draft',
-    Verified: 'Ready to travel',
-    Archived: 'Archived',
-    PendingPayment: 'Pending payment',
-    Confirmed: 'Booked',
-    PartiallyRefunded: 'Partially refunded',
-    Refunded: 'Refunded',
-    Cancelled: 'Cancelled',
-    Authorized: 'Authorized',
-    Captured: 'Paid',
-    Requested: 'Requested',
-    Approved: 'Approved',
-    Settled: 'Settled',
-    Scheduled: 'Scheduled',
-    OpenForBooking: 'Open for booking',
-    ClosedForBooking: 'Closed for booking',
-    SoldOut: 'Sold out',
-    Open: 'Available',
-    Available: 'Available',
-    Inactive: 'Inactive',
-    NotSubmitted: 'Not submitted',
-    PendingSupplierConfirmation: 'Waiting for supplier confirmation',
-    SupplierConfirmed: 'Confirmed by supplier',
-    SupplierRejected: 'Rejected by supplier',
-    Paid: 'Paid',
-    Booked: 'Booked',
-    PendingRefund: 'Pending refund',
-    Expired: 'Expired',
-    Released: 'Released',
-    OnSale: 'On sale',
-    Published: 'Published',
-    Completed: 'Completed',
-  }
+  void language
 
   const chineseStatusLabels: Record<string, string> = {
     PendingActivation: '待启用',
@@ -113,16 +78,64 @@ export function mapBackendStatusToProductLabel(backendStatus: string, language: 
     Completed: '已完成',
   }
 
-  const labelTable = language === 'zh' ? chineseStatusLabels : englishStatusLabels
-  return labelTable[backendStatus] ?? backendStatus
+  return chineseStatusLabels[backendStatus] ?? backendStatus
 }
 
 export function mapTechnicalErrorToFriendlyMessage(backendMessage: string, language: AppLanguage): string {
-  const [errorCode, messageBody] = backendMessage.includes('|') ? backendMessage.split('|', 2) : [backendMessage, backendMessage]
-  const normalizedMessage = `${errorCode} ${messageBody}`.toLowerCase()
+  const normalizedMessage = backendMessage.toLowerCase()
 
-  if (normalizedMessage.includes('user_email_exists')) {
-    return chooseLabel(language, 'This email is already linked to an account.', '这个邮箱已经注册过账户了。')
+  if (normalizedMessage.includes('password cannot be empty') || normalizedMessage.includes('passwordwasempty')) {
+    return chooseLabel(language, 'Password is required.', '密码还没填呢，小猪没法帮你悄悄猜。')
+  }
+  if (normalizedMessage.includes('password must be at least 10') || normalizedMessage.includes('passwordwastooshort')) {
+    return chooseLabel(language, 'Password must be at least 10 characters.', '密码至少需要 10 位，再给它加一点长度吧。')
+  }
+  if (normalizedMessage.includes('password must include letters and numbers') || normalizedMessage.includes('passwordwastooweak')) {
+    return chooseLabel(language, 'Password is too weak.', '这个密码太好猜啦，请同时包含字母和数字，并避开 1234567890、qwerty123 这类弱密码。')
+  }
+  if (normalizedMessage.includes('invalid password') || normalizedMessage.includes('password did not match')) {
+    return chooseLabel(language, 'The password is not correct.', '密码不对，再检查一下输入吧。')
+  }
+  if (
+    normalizedMessage.includes('user credential') &&
+    normalizedMessage.includes('was not found')
+  ) {
+    return chooseLabel(language, 'This account does not exist.', '没有找到这个用户账号，先确认邮箱有没有写错吧。')
+  }
+  if (
+    normalizedMessage.includes('credential') &&
+    normalizedMessage.includes('was not found') &&
+    (normalizedMessage.includes('airline') ||
+      normalizedMessage.includes('hotel') ||
+      normalizedMessage.includes('train') ||
+      normalizedMessage.includes('attraction') ||
+      normalizedMessage.includes('siteadmin') ||
+      normalizedMessage.includes('site admin'))
+  ) {
+    return chooseLabel(language, 'This manager account does not exist.', '没有找到这个管理者账号，先确认邮箱和管理身份有没有选对。')
+  }
+  if (normalizedMessage.includes('email') && (normalizedMessage.includes('invalid') || normalizedMessage.includes('format'))) {
+    return chooseLabel(language, 'Please check the email address.', '邮箱格式看起来不太对，请检查一下 @ 和后缀。')
+  }
+  if (normalizedMessage.includes('failed to fetch') || normalizedMessage.includes('networkerror')) {
+    return chooseLabel(language, 'The backend is not reachable.', '后端好像没连上，请确认服务已经启动。')
+  }
+  if (
+    normalizedMessage.includes('org.h2.driver') ||
+    normalizedMessage.includes('org.postgresql.driver') ||
+    normalizedMessage.includes('jdbc') ||
+    normalizedMessage.includes('connection refused')
+  ) {
+    return chooseLabel(language, 'The database is not ready.', '数据库还没接好，请确认后端正在连接 PostgreSQL。')
+  }
+  if (normalizedMessage.includes('http 404') || normalizedMessage.includes('unknown planner')) {
+    return chooseLabel(language, 'The API endpoint was not found.', '没有找到对应接口，前后端地址可能没对上。')
+  }
+  if (
+    normalizedMessage.includes('user_email_exists') ||
+    (normalizedMessage.includes('user credential') && normalizedMessage.includes('already exists'))
+  ) {
+    return chooseLabel(language, 'This email is already linked to an account.', '这个邮箱已经注册过账户了，换一个邮箱试试吧。')
   }
   if (normalizedMessage.includes('user_not_found') || normalizedMessage.includes('order_not_found')) {
     return chooseLabel(language, 'We could not find the requested record.', '没有找到对应的数据。')
@@ -221,7 +234,7 @@ export function mapTechnicalErrorToFriendlyMessage(backendMessage: string, langu
     return chooseLabel(language, 'Please check your dates and input values, then try again.', '请检查日期和输入内容后再试。')
   }
 
-  return chooseLabel(language, 'Something went wrong. Please try again.', '操作未成功，请稍后再试。')
+  return chooseLabel(language, 'Something went wrong. Please try again.', '未知错误。小猪还没定位到摔在哪一步。')
 }
 
 export function formatIsoDateTime(isoDateTime: string | null, fallbackLabel: string): string {
@@ -264,6 +277,10 @@ export function localizeBookingKind(kindValue: string, language: AppLanguage): s
       ? {
           hotel: '酒店',
           flight: '航班',
+          Flight: '航班订单',
+          Hotel: '酒店订单',
+          Train: '火车票订单',
+          Attraction: '景点门票订单',
           train: '火车票',
           attraction: '景点门票',
           HotelBooking: '酒店订单',

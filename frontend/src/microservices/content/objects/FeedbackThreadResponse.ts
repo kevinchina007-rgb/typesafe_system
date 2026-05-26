@@ -1,4 +1,4 @@
-import type { FeedbackThreadKind } from './FeedbackThreadKind'
+﻿import type { FeedbackThreadKind } from './FeedbackThreadKind'
 import type { FeedbackManagerType } from './FeedbackManagerType'
 import type { FeedbackMessageResponse } from './FeedbackMessageResponse'
 
@@ -23,3 +23,8 @@ export type FeedbackThreadResponse = {
   updatedAt: string
   messages: FeedbackMessageResponse[]
 }
+export const feedbackThreadResponseFromJson = (json: string): FeedbackThreadResponse =>
+  JSON.parse(json) as FeedbackThreadResponse
+
+export const feedbackThreadResponseToJson = (value: FeedbackThreadResponse): string =>
+  JSON.stringify(value)

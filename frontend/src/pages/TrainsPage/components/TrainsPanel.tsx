@@ -44,7 +44,7 @@ export function TrainsPanel({
   } = useTrainSearchState()
 
   return (
-    <section className="page-card">
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
       <TrainPageHero title={translate('trains.title')} description={translate('trains.description')} />
 
       <TrainSearchCard
@@ -102,7 +102,7 @@ export function TrainsPanel({
 
       <TrainFilterBar translate={translate} />
 
-      {isGuestMode ? <p className="empty-state">{translate('trains.guest')}</p> : null}
+      {isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('trains.guest')}</p> : null}
 
       {hasSearchedTrains ? (
         <TrainResultsSection
@@ -120,7 +120,7 @@ export function TrainsPanel({
           onLoadReviews={onLoadReviews}
         />
       ) : (
-        <p className="empty-state">{formatTrainRecommendation(searchFromStation, searchToStation, translate)}</p>
+        <p className="text-sm leading-6 text-slate-500">{formatTrainRecommendation(searchFromStation, searchToStation, translate)}</p>
       )}
     </section>
   )

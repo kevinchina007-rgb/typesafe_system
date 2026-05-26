@@ -1,20 +1,23 @@
-import type { AttractionAdminSessionResponse } from '@/microservices/auth/objects/AttractionAdminSessionResponse'
 import type { CurrentManagerSessionResponse } from '@/microservices/auth/objects/CurrentManagerSessionResponse'
 import type { ManagerSessionResponse } from '@/microservices/auth/objects/ManagerSessionResponse'
 import type { TrainAdminSessionResponse } from '@/microservices/auth/objects/TrainAdminSessionResponse'
 import type { AttractionListResponse } from '@/microservices/attraction/objects/AttractionListResponse'
+import type { CreateAttractionTicketRulePlannerRequest } from '@/microservices/attraction/objects/CreateAttractionTicketRulePlannerRequest'
+import type { CreateAttractionTicketSessionPlannerRequest } from '@/microservices/attraction/objects/CreateAttractionTicketSessionPlannerRequest'
+import type { CreateAttractionTicketTypePlannerRequest } from '@/microservices/attraction/objects/CreateAttractionTicketTypePlannerRequest'
 import type { FlightListResponse } from '@/microservices/flight/objects/FlightListResponse'
 import type { FlightResponse } from '@/microservices/flight/objects/FlightResponse'
 import type { HotelListResponse } from '@/microservices/hotel/objects/HotelListResponse'
 import type { HotelResponse } from '@/microservices/hotel/objects/HotelResponse'
 import type { ManagerBatchDecisionResponse } from '@/microservices/operations/objects/ManagerBatchDecisionResponse'
+import type { ManagerFlightOrderListResponse } from '@/microservices/operations/objects/ManagerFlightOrderListResponse'
 import type { ManagerRefundTaskListResponse } from '@/microservices/operations/objects/ManagerRefundTaskListResponse'
 import type { ManagerTaskListResponse } from '@/microservices/operations/objects/ManagerTaskListResponse'
-import type { TrainListResponse } from '@/microservices/train/objects/TrainListResponse'
-import { createQueryString, executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
-
-export const loginManager = (payload: { managerType: string; email: string }): Promise<ManagerSessionResponse> =>
-    executeJsonApiRequest('/manager/session/login', 'POST', payload)
+import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
+import type { RegisterAttractionManagerPlannerRequest } from '@/microservices/operations/objects/RegisterAttractionManagerPlannerRequest'
+import type { UpdateAirlineManagerProfilePlannerRequest } from '@/microservices/operations/objects/UpdateAirlineManagerProfilePlannerRequest'
+import type { TrainListResponse } from '@/microservices/train/objects/TrainListResponse'
+import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const registerAirlineManager = (payload: {
     email: string
@@ -23,7 +26,7 @@ export const registerAirlineManager = (payload: {
     airlineCode: string
     password: string
   }): Promise<ManagerSessionResponse> =>
-    executeJsonApiRequest('/manager/airline/register', 'POST', payload)
+    executeJsonApiRequest('/RegisterAirlineManagerPlanner', 'POST', payload)
 
 export const registerHotelManager = (payload: {
     email: string
@@ -32,74 +35,38 @@ export const registerHotelManager = (payload: {
     location: string
     password: string
   }): Promise<ManagerSessionResponse> =>
-    executeJsonApiRequest('/manager/hotel/register', 'POST', payload)
+    executeJsonApiRequest('/RegisterHotelManagerPlanner', 'POST', payload)
 
 export const registerSiteAdmin = (payload: {
     email: string
     displayName: string
     password: string
   }): Promise<CurrentManagerSessionResponse> =>
-    executeJsonApiRequest('/manager/site-admin/register', 'POST', payload)
+    executeJsonApiRequest('/RegisterSiteAdminPlanner', 'POST', payload)
 
 export const registerRailwayManager = (payload: { operatorCode: string; email: string; displayName: string; password: string }): Promise<TrainAdminSessionResponse> =>
-    executeJsonApiRequest('/train-admin/managers', 'POST', payload)
+    executeJsonApiRequest('/RegisterRailwayManagerPlanner', 'POST', payload)
 
-export const loginRailwayManager = (payload: { email: string }): Promise<TrainAdminSessionResponse> =>
-    executeJsonApiRequest('/train-admin/session/login', 'POST', payload)
-
-export const registerAttractionManager = (payload: { email: string; displayName: string; password: string }): Promise<AttractionAdminSessionResponse> =>
-    executeJsonApiRequest('/attraction-admin/managers', 'POST', payload)
-
-export const loginAttractionManager = (payload: { email: string }): Promise<AttractionAdminSessionResponse> =>
-    executeJsonApiRequest('/attraction-admin/session/login', 'POST', payload)
+export const registerAttractionManager = (payload: RegisterAttractionManagerPlannerRequest): Promise<ManagerSessionResponse> =>
+    executeJsonApiRequest('/RegisterAttractionManagerPlanner', 'POST', payload)
 
 export const listManagedAttractions = (managerId: string): Promise<AttractionListResponse> =>
-    executeApiRequest(`/attraction-admin/attractions${createQueryString({ managerId })}`)
+    executeJsonApiRequest('/ListManagedAttractionsPlanner', 'POST', { managerId })
 
 export const createAttraction = (payload: { managerId: string; attractionName: string; city: string; location: string; description: string }) =>
-    executeJsonApiRequest('/attraction-admin/attractions', 'POST', payload)
+    executeJsonApiRequest('/CreateAttractionPlanner', 'POST', payload)
 
-export const createAttractionTicketType = (payload: {
-    managerId: string
-    attractionId: string
-    ticketTypeName: string
-    description: string
-    unitPrice: string
-    currency: string
-    availableFromDate: string
-    availableToDate: string
-    totalQuantity: number
-    validWeekdays: string[]
-  }) =>
-    executeJsonApiRequest('/attraction-admin/ticket-types', 'POST', payload)
+export const createAttractionTicketType = (payload: CreateAttractionTicketTypePlannerRequest) =>
+    executeJsonApiRequest('/CreateAttractionTicketTypePlanner', 'POST', payload)
 
-export const createAttractionTicketSession = (payload: {
-    managerId: string
-    attractionId: string
-    ticketTypeId: string
-    sessionName: string
-    useDate: string
-    startsAt: string
-    endsAt: string
-    capacity: number
-  }) =>
-    executeJsonApiRequest('/attraction-admin/ticket-sessions', 'POST', payload)
+export const createAttractionTicketSession = (payload: CreateAttractionTicketSessionPlannerRequest) =>
+    executeJsonApiRequest('/CreateAttractionTicketSessionPlanner', 'POST', payload)
 
-export const createAttractionTicketRule = (payload: {
-    managerId: string
-    attractionId: string
-    ticketTypeId: string
-    ruleType: string
-    ageValue?: number | null
-    minAge?: number | null
-    maxAge?: number | null
-    documentType?: string | null
-    documentNumberPrefix?: string | null
-  }) =>
-    executeJsonApiRequest('/attraction-admin/ticket-types/rules', 'POST', payload)
+export const createAttractionTicketRule = (payload: CreateAttractionTicketRulePlannerRequest) =>
+    executeJsonApiRequest('/CreateAttractionTicketRulePlanner', 'POST', payload)
 
 export const listManagedTrains = (managerId: string): Promise<TrainListResponse> =>
-    executeApiRequest(`/train-admin/trains${createQueryString({ managerId })}`)
+    executeJsonApiRequest('/ListManagedTrainsPlanner', 'POST', { managerId })
 
 export const createTrainJourney = (payload: {
     managerId: string
@@ -110,7 +77,7 @@ export const createTrainJourney = (payload: {
     segmentPrices: Array<{ fromStationCode: string; toStationCode: string; seatClass: string; amount: string; currency: string }>
     refundPolicies: Array<{ startOffsetMinutesBeforeDeparture: number; endOffsetMinutesBeforeDeparture: number; refundType: string; refundRate: string }>
   }) =>
-    executeJsonApiRequest('/train-admin/trains', 'POST', payload)
+    executeJsonApiRequest('/CreateTrainJourneyPlanner', 'POST', payload)
 
 export const createManagerRoomType = (payload: {
     managerId: string
@@ -123,25 +90,45 @@ export const createManagerRoomType = (payload: {
     inventoryStartDate: string
     inventoryEndDate: string
   }): Promise<HotelResponse> =>
-    executeJsonApiRequest('/manager/hotel-room-types', 'POST', payload)
+    executeJsonApiRequest('/CreateManagerRoomTypePlanner', 'POST', payload)
 
 export const listManagedHotels = (managerId: string): Promise<HotelListResponse> =>
-    executeApiRequest(`/manager/hotels${createQueryString({ managerId })}`)
+    executeJsonApiRequest('/ListManagerHotelsPlanner', 'POST', { managerId, managerType: 'Hotel' })
 
 export const listManagerTasks = (query: { managerId: string; managerType: string; status?: string; resourceType?: string }): Promise<ManagerTaskListResponse> =>
-    executeApiRequest(`/manager/tasks${createQueryString(query)}`)
+    executeJsonApiRequest('/ListManagerTasksPlanner', 'POST', {
+      managerId: query.managerId,
+      managerType: query.managerType,
+      taskStatus: query.status,
+      taskResourceType: query.resourceType,
+    })
 
 export const batchConfirmManagerBookingItems = (payload: { managerId: string; managerType: string; orderItemIds: string[]; note?: string | null }): Promise<ManagerBatchDecisionResponse> =>
-    executeJsonApiRequest('/manager/tasks/batch-confirm', 'POST', payload)
+    executeJsonApiRequest('/BatchConfirmManagerTasksPlanner', 'POST', payload)
 
 export const batchRejectManagerBookingItems = (payload: { managerId: string; managerType: string; orderItemIds: string[]; reason: string }): Promise<ManagerBatchDecisionResponse> =>
-    executeJsonApiRequest('/manager/tasks/batch-reject', 'POST', payload)
+    executeJsonApiRequest('/BatchRejectManagerTasksPlanner', 'POST', payload)
 
-export const listManagerFlights = (managerId: string): Promise<FlightListResponse> =>
-    executeApiRequest(`/manager/flights${createQueryString({ managerId })}`)
+export const listManagerFlights = (
+    managerId: string,
+    filters: {
+      departureAirports?: string[]
+      arrivalAirports?: string[]
+      departureDate?: string
+      timeRange?: string
+      sortDirection?: 'asc' | 'desc'
+    } = {},
+): Promise<FlightListResponse> =>
+    executeJsonApiRequest('/ListManagerFlightsPlanner', 'POST', { managerId, managerType: 'Airline', ...filters })
+
+export const listManagerFlightOrders = (managerId: string, flightId: string): Promise<ManagerFlightOrderListResponse> =>
+    executeJsonApiRequest('/ListManagerFlightOrdersPlanner', 'POST', { managerId, flightId })
 
 export const listManagerRefundTasks = (query: { managerId: string; managerType: string }): Promise<ManagerRefundTaskListResponse> =>
-    executeApiRequest(`/manager/refund-tasks${createQueryString(query)}`)
+    executeJsonApiRequest('/ListManagerRefundTasksPlanner', 'POST', query)
+
+export const updateAirlineManagerProfile = (payload: UpdateAirlineManagerProfilePlannerRequest): Promise<ManagerSessionResponse> =>
+    executeJsonApiRequest('/UpdateAirlineManagerProfilePlanner', 'POST', payload)
 
 export const createManagerFlight = (payload: {
     managerId: string
@@ -150,16 +137,19 @@ export const createManagerFlight = (payload: {
     arrivalAirport: string
     departureTime: string
     arrivalTime: string
-    economySeatCount: number
-    economyPrice: string
-    businessSeatCount: number
-    businessPrice: string
+    economyCabin: ManagerCabinPricingInput
+    premiumEconomyCabin: ManagerCabinPricingInput
+    businessCabin: ManagerCabinPricingInput
+    firstCabin: ManagerCabinPricingInput
     currency: string
   }): Promise<FlightResponse> =>
-    executeJsonApiRequest('/manager/flights', 'POST', payload)
+    executeJsonApiRequest('/CreateManagerFlightPlanner', 'POST', payload)
+
+export const toggleManagerFlightStatus = (payload: { managerId: string; flightId: string }): Promise<FlightResponse> =>
+    executeJsonApiRequest('/ToggleManagerFlightStatusPlanner', 'POST', payload)
 
 export const confirmManagerBookingItem = (orderItemId: string, payload: { managerId: string; managerType: string; note?: string | null }) =>
-    executeJsonApiRequest(`/manager/booking-items/${orderItemId}/confirm`, 'POST', payload)
+    executeJsonApiRequest('/ConfirmManagerBookingItemPlanner', 'POST', { ...payload, orderItemId })
 
 export const rejectManagerBookingItem = (orderItemId: string, payload: { managerId: string; managerType: string; reason: string }) =>
-    executeJsonApiRequest(`/manager/booking-items/${orderItemId}/reject`, 'POST', payload)
+    executeJsonApiRequest('/RejectManagerBookingItemPlanner', 'POST', { ...payload, orderItemId })

@@ -1,4 +1,4 @@
-import type { TourGroupMessageAttachmentResponse } from './TourGroupMessageAttachmentResponse'
+﻿import type { TourGroupMessageAttachmentResponse } from './TourGroupMessageAttachmentResponse'
 import type { TourGroupMessageReactionResponse } from './TourGroupMessageReactionResponse'
 
 export type TourGroupMessageResponse = {
@@ -22,3 +22,8 @@ export type TourGroupMessageResponse = {
   canReact: boolean
   isMine: boolean
 }
+export const tourGroupMessageResponseFromJson = (json: string): TourGroupMessageResponse =>
+  JSON.parse(json) as TourGroupMessageResponse
+
+export const tourGroupMessageResponseToJson = (value: TourGroupMessageResponse): string =>
+  JSON.stringify(value)
