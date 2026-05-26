@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import type { FlightResponse } from '@/lib/mvp-types/flights'
+import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import { buildLateBookingNotice, loadFlightResultGroups, validateFlightSearchState } from '@/app/stores/models/flights/flightPanelHelpers'
 import type { FlightsPanelProps } from '@/app/stores/models/flights/flightTypes'
 import { FlightBookingWindowDialog } from '@/pages/FlightsPage/components/dialogs/FlightBookingWindowDialog'
@@ -11,6 +11,7 @@ import { FlightSearchCard } from '@/pages/FlightsPage/components/sections/Flight
 export function FlightsPanel({
   isBusy,
   isGuestMode,
+  signedInUserId,
   travelers,
   translate,
   onRequireLogin,
@@ -19,7 +20,7 @@ export function FlightsPanel({
   onBookFlight,
   onValidationError,
 }: FlightsPanelProps) {
-  const [lateBookingFlight, setLateBookingFlight] = useState<FlightResponse | null>(null)
+  const [lateBookingFlight, setLateBookingFlight] = useState<FlightPlannerResponse | null>(null)
   const {
     searchState,
     flightResponses,
@@ -121,6 +122,7 @@ export function FlightsPanel({
           hasSearchedFlights={hasSearchedFlights}
           isBusy={isBusy}
           isGuestMode={isGuestMode}
+          signedInUserId={signedInUserId}
           travelers={travelers}
           translate={translate}
           onRequireLogin={onRequireLogin}

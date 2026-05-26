@@ -6,10 +6,10 @@ import com.typesafe.travel.persistence.flight.FlightSuggestionsPlannerPlainSql
 
 import java.sql.Connection
 
-object FlightSuggestionsPlanner extends ConnectionApiPlan[FlightSuggestionRequest, SearchSuggestionListPlannerResponse]:
+object FlightSuggestionsPlanner extends ConnectionApiPlan[FlightSuggestionsPlannerRequest, SearchSuggestionListPlannerResponse]:
   override val name: String = "FlightSuggestionsPlanner"
 
-  override def plan(input: FlightSuggestionRequest, connection: Connection): IO[SearchSuggestionListPlannerResponse] =
+  override def plan(input: FlightSuggestionsPlannerRequest, connection: Connection): IO[SearchSuggestionListPlannerResponse] =
     FlightSuggestionsPlannerPlainSql.suggestFlights(connection, input).map { rows =>
       SearchSuggestionListPlannerResponse(rows.map(toSuggestionResponse))
     }

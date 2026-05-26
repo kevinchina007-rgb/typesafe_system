@@ -1,7 +1,7 @@
-﻿import type { FlightBookingWindowStatus } from './FlightBookingWindowStatus'
+import type { FlightBookingWindowStatus } from './FlightBookingWindowStatus'
 import type { CabinInventoryResponse } from './CabinInventoryResponse'
 
-export type FlightResponse = {
+export type FlightPlannerResponse = {
   flightId: string
   airlineId: string
   airlineName: string
@@ -24,8 +24,11 @@ export type FlightResponse = {
   createdAt: string
   cabinInventories: CabinInventoryResponse[]
 }
-export const flightResponseFromJson = (json: string): FlightResponse =>
-  JSON.parse(json) as FlightResponse
 
-export const flightResponseToJson = (value: FlightResponse): string =>
+export type FlightResponse = FlightPlannerResponse
+
+export const flightResponseFromJson = (json: string): FlightPlannerResponse =>
+  JSON.parse(json) as FlightPlannerResponse
+
+export const flightResponseToJson = (value: FlightPlannerResponse): string =>
   JSON.stringify(value)

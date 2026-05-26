@@ -1,17 +1,15 @@
 package com.typesafe.travel.persistence.flight
 
 import cats.effect.IO
-import com.typesafe.travel.flight.domain.{CabinInventoryPlannerRow, FlightPlannerRow, FlightSearchRequest}
+import com.typesafe.travel.flight.domain.{CabinInventoryPlannerRow, FlightPlannerRow, FlightSearchPlannerRequest}
 
 import java.sql.Connection
 
 object SearchFlightsPlannerPlainSql:
-  def searchFlights(connection: Connection, request: FlightSearchRequest): IO[List[FlightPlannerRow]] =
+  def searchFlights(connection: Connection, request: FlightSearchPlannerRequest): IO[List[FlightPlannerRow]] =
     IO.blocking {
       val filters = List.newBuilder[String]
       val values = List.newBuilder[String]
-
-      filters += "f.status = 'OpenForBooking'"
 
       request.departureAirport.map(_.trim).filter(_.nonEmpty).foreach { value =>
         filters += "f.departure_airport in (select airport_code from flight_airports where city_name = ? or airport_code = ?)"

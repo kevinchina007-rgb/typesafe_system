@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState, type FocusEvent, type FormEvent, type ReactNode } from 'react'
 
 import type { TravelerResponse } from '@/lib/mvp-types/index'
-import type { FlightResponse } from '@/lib/mvp-types/flights'
+import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { FlightResultGroup, FlightSearchState } from '@/app/stores/models/flights'
-import type { BookFlightRequest } from '@/microservices/flight/objects/BookFlightRequest'
-import type { FlightSearchQuery } from '@/microservices/flight/objects/FlightSearchQuery'
-import type { FlightDailyLowestPricesRequest, FlightDailyLowestPricesResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
+import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightRequest'
+import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchQuery'
+import type { FlightDailyLowestPricesPlannerRequest, FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
 import { formatFlightRouteCity } from '@/app/stores/models/flights/flightConstants'
 import {
   departureTimeWindows,
@@ -19,17 +19,18 @@ type RoundTripLeg = 'outbound' | 'return'
 
 type FlightResultsSectionProps = {
   searchState: FlightSearchState
-  flightResponses: FlightResponse[]
+  flightResponses: FlightPlannerResponse[]
   flightResultGroups: FlightResultGroup[]
   hasSearchedFlights: boolean
   isBusy: boolean
   isGuestMode: boolean
+  signedInUserId: string | null
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
   onRequireLogin: () => void
-  onBookFlight: (payload: BookFlightRequest) => Promise<void>
-  onSearchFlights: (payload: FlightSearchQuery) => Promise<FlightResponse[]>
-  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesRequest) => Promise<FlightDailyLowestPricesResponse>
+  onBookFlight: (payload: BookFlightPlannerRequest) => Promise<void>
+  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>
+  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>
   onDepartureDateChange: (value: string) => void
   onReturnDateChange: (value: string) => void
   onMultiCitySegmentChange: (
@@ -37,8 +38,8 @@ type FlightResultsSectionProps = {
     key: 'departureAirport' | 'arrivalAirport' | 'departureDate' | 'arrivalDate',
     value: string,
   ) => void
-  onRequireLateBookingReview: (flightResponse: FlightResponse) => void
-  getLateBookingNotice: (flightResponse: FlightResponse) => string
+  onRequireLateBookingReview: (flightResponse: FlightPlannerResponse) => void
+  getLateBookingNotice: (flightResponse: FlightPlannerResponse) => string
 }
 
 const legTheme = {
@@ -66,6 +67,7 @@ export function FlightResultsSection({
   hasSearchedFlights,
   isBusy,
   isGuestMode,
+  signedInUserId,
   travelers,
   translate,
   onRequireLogin,
@@ -176,12 +178,18 @@ export function FlightResultsSection({
       return
     }
 
+    if (!signedInUserId) {
+      onRequireLogin()
+      return
+    }
+
     if (displayFlight.flight.bookingWindowStatus === 'SurchargeRequired') {
       onRequireLateBookingReview(displayFlight.flight)
       return
     }
 
     await onBookFlight({
+      userId: signedInUserId,
       flightId: displayFlight.flight.flightId,
       travelerIds: [],
       cabinClass: displayFlight.displayCabinClass,
@@ -417,7 +425,7 @@ function ResultsBody({
   showRouteHeading?: boolean
   isBusy: boolean
   translate: (translationKey: string) => string
-  getLateBookingNotice: (flightResponse: FlightResponse) => string
+  getLateBookingNotice: (flightResponse: FlightPlannerResponse) => string
   onDateSelect: (date: string) => void
   onSubmit: (event: FormEvent<HTMLFormElement>, displayFlight: DisplayFlight) => Promise<void>
 }) {
@@ -684,7 +692,7 @@ function FlightResultCard({
 }: {
   displayFlight: DisplayFlight
   isBusy: boolean
-  getLateBookingNotice: (flightResponse: FlightResponse) => string
+  getLateBookingNotice: (flightResponse: FlightPlannerResponse) => string
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }) {
   const flight = displayFlight.flight

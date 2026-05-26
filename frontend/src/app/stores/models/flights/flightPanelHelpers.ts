@@ -1,9 +1,9 @@
 import type { FlightResponse } from '@/lib/mvp-types/flights'
-import type { FlightSearchQuery } from '@/microservices/flight/objects/FlightSearchQuery'
+import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchQuery'
 import type { FlightResultGroup, FlightSearchState } from '@/app/stores/models/flights/flightTypes'
 import { formatFlightRouteCity, getFlightCityAirportCodes, normalizeFlightAirportForApi } from '@/app/stores/models/flights/flightConstants'
 
-export function buildFlightSearchRequest(searchState: FlightSearchState): FlightSearchQuery {
+export function buildFlightSearchRequest(searchState: FlightSearchState): FlightSearchPlannerRequest {
   const primarySegment = searchState.tripType === 'multiCity' ? searchState.multiCitySegments[0] ?? null : null
 
   return {
@@ -15,7 +15,7 @@ export function buildFlightSearchRequest(searchState: FlightSearchState): Flight
 
 export function buildFlightSearchRequests(
   searchState: FlightSearchState,
-): Array<{ id: string; title: string; subtitle: string; query: FlightSearchQuery }> {
+): Array<{ id: string; title: string; subtitle: string; query: FlightSearchPlannerRequest }> {
   if (searchState.tripType === 'multiCity') {
     return searchState.multiCitySegments.map((segment, index) => ({
       id: segment.id,
@@ -66,7 +66,7 @@ export function buildFlightSearchRequests(
 
 export async function loadFlightResultGroups(
   searchState: FlightSearchState,
-  onSearchFlights: (payload: FlightSearchQuery) => Promise<FlightResponse[]>,
+  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightResponse[]>,
 ): Promise<FlightResultGroup[]> {
   const requests = buildFlightSearchRequests(searchState)
   if (requests.some(request => !request.query.departureAirport || !request.query.arrivalAirport || !request.query.date)) {
@@ -84,8 +84,8 @@ export async function loadFlightResultGroups(
 }
 
 async function searchFlightsAcrossAirportCodes(
-  query: FlightSearchQuery,
-  onSearchFlights: (payload: FlightSearchQuery) => Promise<FlightResponse[]>,
+  query: FlightSearchPlannerRequest,
+  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightResponse[]>,
 ): Promise<FlightResponse[]> {
   const departureAirportOptions = expandAirportSearchValues(query.departureAirport)
   const arrivalAirportOptions = expandAirportSearchValues(query.arrivalAirport)

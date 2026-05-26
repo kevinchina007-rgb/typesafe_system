@@ -1,4 +1,4 @@
-export type FlightDailyLowestPricesRequest = {
+export type FlightDailyLowestPricesPlannerRequest = {
   departureAirport: string
   arrivalAirport: string
   startDate: string
@@ -6,18 +6,24 @@ export type FlightDailyLowestPricesRequest = {
   cabinClass?: string
 }
 
-export type FlightDailyLowestPriceResponse = {
+export type FlightDailyLowestPricesRequest = FlightDailyLowestPricesPlannerRequest
+
+export type FlightDailyLowestPricePlannerResponse = {
   date: string
   lowestPrice: string | null
   currency: string | null
 }
 
-export type FlightDailyLowestPricesResponse = {
-  prices: FlightDailyLowestPriceResponse[]
+export type FlightDailyLowestPriceResponse = FlightDailyLowestPricePlannerResponse
+
+export type FlightDailyLowestPricesPlannerResponse = {
+  prices: FlightDailyLowestPricePlannerResponse[]
 }
 
-export const flightDailyLowestPricesRequestFromJson = (json: string): FlightDailyLowestPricesRequest =>
-  JSON.parse(json) as FlightDailyLowestPricesRequest
+export type FlightDailyLowestPricesResponse = FlightDailyLowestPricesPlannerResponse
 
-export const flightDailyLowestPricesRequestToJson = (value: FlightDailyLowestPricesRequest): string =>
+export const flightDailyLowestPricesRequestFromJson = (json: string): FlightDailyLowestPricesPlannerRequest =>
+  JSON.parse(json) as FlightDailyLowestPricesPlannerRequest
+
+export const flightDailyLowestPricesRequestToJson = (value: FlightDailyLowestPricesPlannerRequest): string =>
   JSON.stringify(value)

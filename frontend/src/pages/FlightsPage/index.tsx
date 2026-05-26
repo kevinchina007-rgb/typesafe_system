@@ -37,6 +37,7 @@ export function FlightsPage({
       <FlightsPanel
         isBusy={isBusy}
         isGuestMode={signedInUser === null}
+        signedInUserId={signedInUser?.userId ?? null}
         travelers={travelers}
         translate={translate}
         onRequireLogin={() => setIsAuthDialogOpen(true)}
@@ -53,7 +54,7 @@ export function FlightsPage({
           }
           await runPageAction(async () => {
             await travelMvpApiClient.createFlightOrder({
-              userId: signedInUser.userId,
+              userId: payload.userId,
               flightId: payload.flightId,
               travelerIds: payload.travelerIds,
               cabinClass: payload.cabinClass,

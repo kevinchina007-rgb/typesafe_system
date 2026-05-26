@@ -1,19 +1,21 @@
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
-export type FlightSuggestionRequest = {
+export type FlightSuggestionsPlannerRequest = {
   q: string
 }
 
-export type SearchSuggestionResponse = {
+export type FlightSuggestionRequest = FlightSuggestionsPlannerRequest
+
+export type SearchSuggestionPlannerResponse = {
   resourceType: string
   value: string
   title: string
   subtitle: string
 }
 
-export type SearchSuggestionListResponse = {
-  suggestions: SearchSuggestionResponse[]
+export type SearchSuggestionListPlannerResponse = {
+  suggestions: SearchSuggestionPlannerResponse[]
 }
 
-export const listFlightSuggestions = (payload: FlightSuggestionRequest): Promise<SearchSuggestionListResponse> =>
+export const listFlightSuggestions = (payload: FlightSuggestionsPlannerRequest): Promise<SearchSuggestionListPlannerResponse> =>
   executeJsonApiRequest('/FlightSuggestionsPlanner', 'POST', payload)

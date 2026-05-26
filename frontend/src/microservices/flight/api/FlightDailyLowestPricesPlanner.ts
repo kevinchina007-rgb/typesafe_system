@@ -1,10 +1,10 @@
 import type {
-  FlightDailyLowestPricesRequest,
-  FlightDailyLowestPricesResponse,
+  FlightDailyLowestPricesPlannerRequest,
+  FlightDailyLowestPricesPlannerResponse,
 } from '@/microservices/flight/objects/FlightDailyLowestPrices'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const listFlightDailyLowestPrices = (
-  payload: FlightDailyLowestPricesRequest,
-): Promise<FlightDailyLowestPricesResponse> =>
+  payload: FlightDailyLowestPricesPlannerRequest,
+): Promise<FlightDailyLowestPricesPlannerResponse> =>
   executeJsonApiRequest('/FlightDailyLowestPricesPlanner', 'POST', payload)

@@ -6,19 +6,23 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import java.math.BigDecimal
 import java.time.{Instant, LocalDate, OffsetDateTime}
 
-final case class FlightSuggestionRequest(q: String)
-object FlightSuggestionRequest:
-  given sourceEncoder: Encoder[FlightSuggestionRequest] = deriveEncoder
-  given sourceDecoder: Decoder[FlightSuggestionRequest] = deriveDecoder
+final case class FlightSuggestionsPlannerRequest(q: String)
+object FlightSuggestionsPlannerRequest:
+  given sourceEncoder: Encoder[FlightSuggestionsPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[FlightSuggestionsPlannerRequest] = deriveDecoder
 
-final case class FlightSearchRequest(
+type FlightSuggestionRequest = FlightSuggestionsPlannerRequest
+
+final case class FlightSearchPlannerRequest(
     departureAirport: Option[String],
     arrivalAirport: Option[String],
     date: Option[String]
 )
-object FlightSearchRequest:
-  given sourceEncoder: Encoder[FlightSearchRequest] = deriveEncoder
-  given sourceDecoder: Decoder[FlightSearchRequest] = deriveDecoder
+object FlightSearchPlannerRequest:
+  given sourceEncoder: Encoder[FlightSearchPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[FlightSearchPlannerRequest] = deriveDecoder
+
+type FlightSearchRequest = FlightSearchPlannerRequest
 
 final case class FlightDetailsRequest(flightId: String)
 object FlightDetailsRequest:
@@ -146,7 +150,9 @@ final case class CabinInventoryPlannerRow(
 final case class FlightBookingCabinPlannerRow(
     unitPriceAmount: BigDecimal,
     unitPriceCurrency: String,
-    cabinClass: String
+    cabinClass: String,
+    availableSeats: Int,
+    inventoryStatus: String
 )
 
 final case class FlightBookingSnapshotPlannerRow(
@@ -157,7 +163,8 @@ final case class FlightBookingSnapshotPlannerRow(
     departureAirport: String,
     arrivalAirport: String,
     departureTime: String,
-    arrivalTime: String
+    arrivalTime: String,
+    flightStatus: String
 )
 
 final case class FlightDailyLowestPricePlannerRow(

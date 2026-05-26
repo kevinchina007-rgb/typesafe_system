@@ -25,8 +25,10 @@ private[domain] object FlightPlannerResponseBuilder:
       now: Instant
   ): FlightPlannerResponse =
     val departureInstant = row.departureTime.toInstant
+    val flightStatus = FlightStatus.fromText(row.status)
     val bookingWindowStatus =
-      if !departureInstant.isAfter(now) then "Expired"
+      if flightStatus != FlightStatus.OpenForBooking then "Expired"
+      else if !departureInstant.isAfter(now) then "Expired"
       else if departureInstant.isBefore(now.plusSeconds(48L * 3600L)) then "SurchargeRequired"
       else "Available"
     val lateBookingSurcharge =
@@ -48,11 +50,12 @@ private[domain] object FlightPlannerResponseBuilder:
       arrivalTime = row.arrivalTime.toString,
       status = row.status,
       bookingWindowStatus = bookingWindowStatus,
-      canBookOnline = bookingWindowStatus == "Available",
+      canBookOnline = bookingWindowStatus == "Available" && flightStatus == FlightStatus.OpenForBooking,
       bookingNotice =
         bookingWindowStatus match
           case "Available" => None
           case "SurchargeRequired" => lateBookingSurcharge.map(amount => s"Departure is within 48 hours. Online booking is paused until a late-booking surcharge of ${amount.toString} ${row.basePriceCurrency} is confirmed.")
+          case _ if flightStatus != FlightStatus.OpenForBooking => Some("This flight is no longer open for booking.")
           case _ => Some("This flight has already departed and is no longer searchable."),
       lateBookingSurchargeAmount = lateBookingSurcharge.map(_.toString),
       lateBookingSurchargeCurrency = lateBookingSurcharge.map(_ => row.basePriceCurrency),

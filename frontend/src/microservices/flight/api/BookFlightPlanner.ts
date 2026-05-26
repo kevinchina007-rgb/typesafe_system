@@ -1,6 +1,6 @@
-import type { BookFlightRequest } from '@/microservices/flight/objects/BookFlightRequest'
-import type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
+import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightRequest'
+import type { FlightBookingPlannerResponse } from '@/microservices/flight/objects/FlightBookingPlannerResponse'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
-export const createFlightOrder = (payload: BookFlightRequest): Promise<OrderResponse> =>
+export const createFlightOrder = (payload: BookFlightPlannerRequest): Promise<FlightBookingPlannerResponse> =>
   executeJsonApiRequest('/BookFlightPlanner', 'POST', payload)

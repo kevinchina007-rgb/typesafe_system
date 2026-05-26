@@ -19,10 +19,12 @@ object BookFlightPlanner extends ConnectionApiPlan[BookFlightPlannerRequest, Fli
         case Some(value) => IO.pure(value)
         case None => IO.raiseError(new IllegalArgumentException(s"Flight '${input.flightId}' was not found"))
       }
+      _ <- validateFlightBookable(flight, input.flightId)
       cabin <- BookFlightPlannerPlainSql.findCabinForBooking(connection, input.flightId, input.cabinClass).flatMap {
         case Some(value) => IO.pure(value)
         case None => IO.raiseError(new IllegalArgumentException(s"Cabin '${input.cabinClass}' for flight '${input.flightId}' was not found"))
       }
+      _ <- validateCabinBookable(cabin, input.flightId, input.cabinClass)
       response <- createFlightOrder(connection, input, flight, cabin, Instant.now())
     yield response
 
@@ -31,6 +33,19 @@ object BookFlightPlanner extends ConnectionApiPlan[BookFlightPlannerRequest, Fli
     else if input.flightId.trim.isEmpty then IO.raiseError(new IllegalArgumentException("Flight id is required to book a flight"))
     else if input.cabinClass.trim.isEmpty then IO.raiseError(new IllegalArgumentException("Cabin class is required to book a flight"))
     else IO.unit
+
+  private def validateFlightBookable(flight: FlightBookingSnapshotPlannerRow, flightId: String): IO[Unit] =
+    if flightSnapshotIsOpenForBooking(flight) then IO.unit
+    else IO.raiseError(new IllegalArgumentException(s"Flight '$flightId' is not open for booking"))
+
+  private def validateCabinBookable(cabin: FlightBookingCabinPlannerRow, flightId: String, cabinClass: String): IO[Unit] =
+    if cabinBookingRowIsBookable(cabin) then IO.unit
+    else
+      IO.raiseError(
+        new IllegalArgumentException(
+          s"Cabin '$cabinClass' for flight '$flightId' is not bookable because it is closed or has no available seats"
+        )
+      )
 
   private def createFlightOrder(
       connection: Connection,

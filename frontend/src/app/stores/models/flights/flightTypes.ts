@@ -1,7 +1,7 @@
-import type { FlightResponse, TravelerResponse } from '@/lib/mvp-types/index'
-import type { BookFlightRequest } from '@/microservices/flight/objects/BookFlightRequest'
-import type { FlightSearchQuery } from '@/microservices/flight/objects/FlightSearchQuery'
-import type { FlightDailyLowestPricesRequest, FlightDailyLowestPricesResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
+import type { FlightPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightRequest'
+import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchQuery'
+import type { FlightDailyLowestPricesPlannerRequest, FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
 
 export type TripType = 'oneWay' | 'roundTrip' | 'multiCity'
 
@@ -17,7 +17,7 @@ export type FlightResultGroup = {
   id: string
   title: string
   subtitle: string
-  flightResponses: FlightResponse[]
+  flightResponses: FlightPlannerResponse[]
 }
 
 export type FlightSearchState = {
@@ -34,11 +34,12 @@ export type FlightSearchState = {
 export type FlightsPanelProps = {
   isBusy: boolean
   isGuestMode: boolean
+  signedInUserId: string | null
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
   onRequireLogin: () => void
-  onSearchFlights: (payload: FlightSearchQuery) => Promise<FlightResponse[]>
-  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesRequest) => Promise<FlightDailyLowestPricesResponse>
-  onBookFlight: (payload: BookFlightRequest) => Promise<void>
+  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>
+  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>
+  onBookFlight: (payload: BookFlightPlannerRequest) => Promise<void>
   onValidationError: (message: string) => void
 }

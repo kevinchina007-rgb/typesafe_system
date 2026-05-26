@@ -1,4 +1,4 @@
-﻿import type { ChangeEventHandler, ReactNode } from 'react'
+import type { ChangeEventHandler, ReactNode } from 'react'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeftRight } from 'lucide-react'
 
@@ -50,12 +50,12 @@ const defaultManagerFlightSearchDraft: ManagerFlightSearchDraft = {
 }
 
 const createFlightTimeWindows = [
-  { value: '00:00-03:59', label: '鍑屾櫒 00:00-03:59', start: '00:00', end: '03:59' },
-  { value: '04:00-07:59', label: '娓呮櫒 04:00-07:59', start: '04:00', end: '07:59' },
-  { value: '08:00-11:59', label: '涓婂崍 08:00-11:59', start: '08:00', end: '11:59' },
-  { value: '12:00-15:59', label: '涓嬪崍 12:00-15:59', start: '12:00', end: '15:59' },
-  { value: '16:00-19:59', label: '鍌嶆櫄 16:00-19:59', start: '16:00', end: '19:59' },
-  { value: '20:00-23:59', label: '澶滈棿 20:00-23:59', start: '20:00', end: '23:59' },
+  { value: '00:00-03:59', label: '凌晨 00:00-03:59', start: '00:00', end: '03:59' },
+  { value: '04:00-07:59', label: '清晨 04:00-07:59', start: '04:00', end: '07:59' },
+  { value: '08:00-11:59', label: '上午 08:00-11:59', start: '08:00', end: '11:59' },
+  { value: '12:00-15:59', label: '下午 12:00-15:59', start: '12:00', end: '15:59' },
+  { value: '16:00-19:59', label: '傍晚 16:00-19:59', start: '16:00', end: '19:59' },
+  { value: '20:00-23:59', label: '夜间 20:00-23:59', start: '20:00', end: '23:59' },
 ]
 
 type CreateFlightDraft = {
@@ -434,18 +434,18 @@ function CreateFlightSection({
       }}
     >
       <div>
-        <p className="m-0 text-base font-bold text-slate-500">鍒涘缓鑸彮</p>
-        <h3 className="m-0 text-3xl font-black text-slate-950">濉啓鏍稿績鑸彮淇℃伅</h3>
+        <p className="m-0 text-base font-bold text-slate-500">创建航班</p>
+        <h3 className="m-0 text-3xl font-black text-slate-950">填写核心航班信息</h3>
       </div>
 
       <div className="grid gap-5">
         <div className="grid gap-4 xl:grid-cols-2">
-          <CreateFlightField label="鍑哄彂鍦扮偣" important>
-            <CitySelect value={draft.departureCity} placeholder="璇烽€夋嫨鍑哄彂鍦扮偣" onChange={event => setDraft({ ...draft, departureCity: event.target.value, departureAirport: '' })} />
+          <CreateFlightField label="出发地点" important>
+            <CitySelect value={draft.departureCity} placeholder="请选择出发地点" onChange={event => setDraft({ ...draft, departureCity: event.target.value, departureAirport: '' })} />
           </CreateFlightField>
-          <CreateFlightField label="鍑哄彂鏈哄満" important>
+          <CreateFlightField label="出发机场" important>
             <select value={draft.departureAirport} onChange={event => setDraft({ ...draft, departureAirport: event.target.value })} className="min-h-14 w-full border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none transition focus:border-slate-950">
-              <option value="">璇峰厛閫夋嫨鍑哄彂鏈哄満</option>
+              <option value="">请先选择出发机场</option>
               {departureAirportOptions.map(airport => <option key={airport} value={airport}>{formatFlightAirportLabel(airport)}</option>)}
             </select>
           </CreateFlightField>
@@ -455,19 +455,19 @@ function CreateFlightSection({
           <CreateFlightField label="目的地" important>
             <CitySelect value={draft.arrivalCity} placeholder="请选择目的地" onChange={event => setDraft({ ...draft, arrivalCity: event.target.value, arrivalAirport: '' })} />
           </CreateFlightField>
-          <CreateFlightField label="鍒拌揪鏈哄満" important>
+          <CreateFlightField label="到达机场" important>
             <select value={draft.arrivalAirport} onChange={event => setDraft({ ...draft, arrivalAirport: event.target.value })} className="min-h-14 w-full border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none transition focus:border-slate-950">
-              <option value="">璇峰厛閫夋嫨鍒拌揪鏈哄満</option>
+              <option value="">请先选择到达机场</option>
               {arrivalAirportOptions.map(airport => <option key={airport} value={airport}>{formatFlightAirportLabel(airport)}</option>)}
             </select>
           </CreateFlightField>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-4">
-          <CreateFlightField label="鏃ユ湡" important>
+          <CreateFlightField label="日期" important>
             <input type="date" value={draft.departureDate} onChange={event => setDraft({ ...draft, departureDate: event.target.value })} className="min-h-14 w-full border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none transition focus:border-slate-950" />
           </CreateFlightField>
-          <CreateFlightField label="鏃舵" important>
+          <CreateFlightField label="时段" important>
             <select
               value={draft.timeRange}
               onChange={event => {
@@ -479,10 +479,10 @@ function CreateFlightSection({
               {createFlightTimeWindows.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </CreateFlightField>
-          <CreateFlightField label="鍑哄彂鏃堕棿" important>
+          <CreateFlightField label="出发时间" important>
             <input type="time" min={selectedWindow.start} max={selectedWindow.end} value={draft.departureClock} onChange={event => setDraft({ ...draft, departureClock: event.target.value })} className="min-h-14 w-full border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none transition focus:border-slate-950" />
           </CreateFlightField>
-          <CreateFlightField label="鍒拌揪鏃堕棿" important>
+          <CreateFlightField label="到达时间" important>
             <input type="time" min={selectedWindow.start} max={selectedWindow.end} value={draft.arrivalClock} onChange={event => setDraft({ ...draft, arrivalClock: event.target.value })} className="min-h-14 w-full border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none transition focus:border-slate-950" />
           </CreateFlightField>
         </div>
@@ -503,7 +503,7 @@ function CreateFlightSection({
       </div>
 
       <button className="inline-flex min-h-12 w-fit items-center justify-center bg-pink-500 px-8 py-3 text-base font-bold text-white transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
-        鍒涘缓鑸彮
+        创建航班
       </button>
     </form>
   )
@@ -544,19 +544,19 @@ function CabinDraftCard({
     <div className="grid gap-3 border border-slate-200 bg-slate-50 p-4">
       <strong className="text-lg font-black text-slate-950">{title}</strong>
       <label className="grid gap-1">
-        <span className="text-sm font-bold text-slate-500">鏁伴噺</span>
+        <span className="text-sm font-bold text-slate-500">数量</span>
         <input type="number" min={1} value={seats} onChange={event => onSeatsChange(Number(event.target.value))} className="min-h-11 border-2 border-slate-300 bg-white px-3 text-base outline-none focus:border-slate-950" />
       </label>
       <label className="grid gap-1">
-        <span className="text-sm font-bold text-slate-500">鍘熶环</span>
+        <span className="text-sm font-bold text-slate-500">原价</span>
         <input type="number" min={1} value={price} onChange={event => onPriceChange(event.target.value)} className="min-h-11 border-2 border-slate-300 bg-white px-3 text-base outline-none focus:border-slate-950" />
       </label>
       <label className="flex items-center gap-2 text-sm font-bold text-slate-600">
         <input type="checkbox" checked={discounted} onChange={event => onDiscountedChange(event.target.checked)} className="h-4 w-4 accent-pink-500" />
-        鏄惁鎵撴姌
+        是否打折
       </label>
       <label className="grid gap-1">
-        <span className="text-sm font-bold text-slate-500">鎶樻墸</span>
+        <span className="text-sm font-bold text-slate-500">折扣</span>
         <input type="number" min={0.1} max={10} step={0.1} value={discountRate} disabled={!discounted} onChange={event => onDiscountRateChange(event.target.value)} className="min-h-11 border-2 border-slate-300 bg-white px-3 text-base outline-none focus:border-slate-950 disabled:bg-slate-100 disabled:text-slate-400" />
       </label>
       <p className="m-0 text-base font-black text-orange-600">{`实际价格：¥${actualPrice}`}</p>
@@ -605,7 +605,7 @@ function ManagerFlightSearchCard({
           />
         </ManagerSearchField>
 
-        <ManagerSearchField label="鍑哄彂鏃ユ湡">
+        <ManagerSearchField label="出发日期">
           <input
             type="date"
             value={draft.departureDate}
@@ -614,13 +614,13 @@ function ManagerFlightSearchCard({
           />
         </ManagerSearchField>
 
-        <ManagerSearchField label="鍑哄彂鏃舵">
+        <ManagerSearchField label="出发时段">
           <select
             value={draft.timeRange}
             onChange={event => onDraftChange({ ...draft, timeRange: event.target.value })}
             className="min-h-14 w-full border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none transition focus:border-slate-950"
           >
-            <option value="all">鍏ㄥぉ</option>
+            <option value="all">全天</option>
             {timeWindows.map(option => (
               <option key={option} value={option}>
                 {option}
@@ -636,7 +636,7 @@ function ManagerFlightSearchCard({
           className="inline-flex min-h-14 min-w-64 items-center justify-center bg-gradient-to-r from-amber-400 to-orange-500 px-10 py-3 text-xl font-bold text-white shadow-xl shadow-orange-200/70 transition hover:from-amber-500 hover:to-orange-600"
           onClick={onSubmit}
         >
-          鎼滅储鑸彮
+          搜索航班
         </button>
       </div>
     </section>
@@ -731,8 +731,8 @@ function FlightManagementSection({
 
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h3 className="m-0 text-3xl font-bold text-slate-950">
-          <span className="mr-3 text-xl font-medium">鑸彮绠＄悊:</span>
-          {profile.companyName || '鑸┖鍏徃'}
+          <span className="mr-3 text-xl font-medium">航班管理:</span>
+          {profile.companyName || '航空公司'}
           <span className="ml-4 text-lg font-medium text-slate-600">
             {hasSubmittedSearch ? `${flights.length} / ${totalCount} 条航班` : `${totalCount} 条航班`}
           </span>
@@ -741,8 +741,8 @@ function FlightManagementSection({
 
       <div className="grid items-center gap-4 bg-white px-6 py-5 lg:grid-cols-[minmax(0,1fr)_auto]">
         <div className="grid max-w-3xl grid-cols-2 gap-3">
-          <FilterSelect label="鍑哄彂鏈哄満" value={selectedDepartureAirport} onChange={onDepartureAirportChange} options={departureAirportOptions} renderOption={formatFlightAirportLabel} />
-          <FilterSelect label="鍒拌揪鏈哄満" value={selectedArrivalAirport} onChange={onArrivalAirportChange} options={arrivalAirportOptions} renderOption={formatFlightAirportLabel} />
+          <FilterSelect label="出发机场" value={selectedDepartureAirport} onChange={onDepartureAirportChange} options={departureAirportOptions} renderOption={formatFlightAirportLabel} />
+          <FilterSelect label="到达机场" value={selectedArrivalAirport} onChange={onArrivalAirportChange} options={arrivalAirportOptions} renderOption={formatFlightAirportLabel} />
         </div>
         <button
           type="button"
@@ -846,7 +846,7 @@ function ManagerFlightCard({
         >
           {isOpenForBooking ? '可预订' : isClosedForBooking ? '不可预订' : mapBackendStatusToProductLabel(flight.status, currentLanguage)}
         </button>
-        <span className="text-sm text-slate-500">{`${formatFlightRouteCity(flight.departureAirport)} 鈫?${formatFlightRouteCity(flight.arrivalAirport)}`}</span>
+        <span className="text-sm text-slate-500">{`${formatFlightRouteCity(flight.departureAirport)} →${formatFlightRouteCity(flight.arrivalAirport)}`}</span>
       </div>
     </article>
   )
@@ -883,7 +883,7 @@ function ManagerFlightOrdersSection({
           className="inline-flex min-h-11 w-fit items-center justify-center border border-slate-300 bg-white px-5 py-2 text-sm font-bold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
           onClick={onBack}
         >
-          杩斿洖鑸彮绠＄悊
+          返回航班管理
         </button>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(260px,1fr)_minmax(360px,1.2fr)]">
@@ -1122,7 +1122,7 @@ function ManagerProfileSection({
           <div className="flex h-32 w-32 items-center justify-center border-2 border-slate-200 bg-slate-950 text-xl font-bold text-white">
             {profileDraft.logoPath ? <img src={profileDraft.logoPath} alt="" className="h-full w-full object-cover" /> : profileDraft.airlineCode || 'LOGO'}
           </div>
-          <strong className="text-2xl font-bold text-slate-950">{profileDraft.companyName || '鑸┖鍏徃'}</strong>
+          <strong className="text-2xl font-bold text-slate-950">{profileDraft.companyName || '航空公司'}</strong>
           <span className="text-sm font-medium text-slate-500">{mapBackendStatusToProductLabel(managerSession.status, currentLanguage)}</span>
         </div>
 
@@ -1135,7 +1135,7 @@ function ManagerProfileSection({
         >
           <div>
             <p className="text-sm font-bold text-slate-500">管理者信息</p>
-            <h3 className="m-0 text-3xl font-bold text-slate-950">璧勬枡璁剧疆</h3>
+            <h3 className="m-0 text-3xl font-bold text-slate-950">资料设置</h3>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <label>管理者昵称<input value={profileDraft.displayName} onChange={event => onProfileChange({ ...profileDraft, displayName: event.target.value })} /></label>
@@ -1146,16 +1146,16 @@ function ManagerProfileSection({
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <button type="submit" className="inline-flex min-h-12 items-center justify-center bg-pink-500 px-8 py-3 text-base font-bold text-white transition hover:bg-pink-600">
-              淇濆瓨璧勬枡
+              保存资料
             </button>
             <button
               type="button"
               className="inline-flex min-h-12 items-center justify-center border border-slate-300 bg-white px-8 py-3 text-base font-bold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
               onClick={onLogout}
             >
-              閫€鍑虹櫥褰?
+              退出登录
             </button>
-            {profileSavedAt ? <span className="text-sm font-medium text-slate-500">{`宸蹭繚瀛?${formatIsoDateTime(profileSavedAt, '-')}`}</span> : null}
+            {profileSavedAt ? <span className="text-sm font-medium text-slate-500">{`已保存 ${formatIsoDateTime(profileSavedAt, '-')}`}</span> : null}
           </div>
         </form>
       </div>
@@ -1346,4 +1346,3 @@ function statusBadgeClassName(status: string): string {
 function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))]
 }
-

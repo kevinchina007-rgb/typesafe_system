@@ -23,9 +23,18 @@ export type { TrainSegmentPriceResponse } from '@/microservices/train/objects/Tr
 
 export type {
   CabinInventoryResponse,
+  FlightBookingPlannerResponse,
   FlightBookingWindowStatus,
+  FlightDailyLowestPricesPlannerRequest,
+  FlightDailyLowestPricesPlannerResponse,
+  FlightDailyLowestPricesRequest,
+  FlightDailyLowestPricesResponse,
   FlightListResponse,
+  FlightListPlannerResponse,
+  FlightPlannerResponse,
   FlightResponse,
+  FlightSearchPlannerRequest,
   FlightSearchQuery,
   BookFlightRequest,
+  BookFlightPlannerRequest,
 } from '@/lib/mvp-types/flights'

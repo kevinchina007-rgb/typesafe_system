@@ -1,12 +1,12 @@
 package com.typesafe.travel.persistence.flight
 
 import cats.effect.IO
-import com.typesafe.travel.flight.domain.{FlightPlannerRow, FlightSuggestionRequest}
+import com.typesafe.travel.flight.domain.{FlightPlannerRow, FlightSuggestionsPlannerRequest}
 
 import java.sql.Connection
 
 object FlightSuggestionsPlannerPlainSql:
-  def suggestFlights(connection: Connection, request: FlightSuggestionRequest): IO[List[FlightPlannerRow]] =
+  def suggestFlights(connection: Connection, request: FlightSuggestionsPlannerRequest): IO[List[FlightPlannerRow]] =
     IO.blocking {
       val like = s"%${request.q.trim.toUpperCase}%"
       val statement = connection.prepareStatement(

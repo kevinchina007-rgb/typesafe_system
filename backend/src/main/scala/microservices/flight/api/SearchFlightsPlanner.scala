@@ -7,11 +7,11 @@ import com.typesafe.travel.persistence.flight.SearchFlightsPlannerPlainSql
 import java.sql.Connection
 import java.time.Instant
 
-object SearchFlightsPlanner extends ConnectionApiPlan[FlightSearchRequest, FlightListPlannerResponse]:
+object SearchFlightsPlanner extends ConnectionApiPlan[FlightSearchPlannerRequest, FlightListPlannerResponse]:
   override val name: String = "SearchFlightsPlanner"
 
-  override def plan(input: FlightSearchRequest, connection: Connection): IO[FlightListPlannerResponse] =
+  override def plan(input: FlightSearchPlannerRequest, connection: Connection): IO[FlightListPlannerResponse] =
     for
       rows <- SearchFlightsPlannerPlainSql.searchFlights(connection, input)
-      flights <- FlightPlannerResponseBuilder.buildFlightResponses(connection, rows, Instant.now())
+      flights <- FlightPlannerResponseBuilder.buildFlightResponses(connection, rows.filter(flightRowIsOpenForBooking), Instant.now())
     yield FlightListPlannerResponse(flights)

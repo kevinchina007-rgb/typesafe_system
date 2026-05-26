@@ -17,10 +17,11 @@ object BookFlightPlannerPlainSql:
                  f.departure_airport,
                  f.arrival_airport,
                  f.departure_time,
-                 f.arrival_time
+                 f.arrival_time,
+                 f.status as flight_status
           from flights f
           left join airlines a on a.airline_id = f.airline_id
-          where f.flight_id = ? and f.status = 'OpenForBooking'
+          where f.flight_id = ?
           limit 1
         """
       )
@@ -37,7 +38,8 @@ object BookFlightPlannerPlainSql:
               departureAirport = resultSet.getString("departure_airport"),
               arrivalAirport = resultSet.getString("arrival_airport"),
               departureTime = resultSet.getObject("departure_time", classOf[java.time.OffsetDateTime]).toString,
-              arrivalTime = resultSet.getObject("arrival_time", classOf[java.time.OffsetDateTime]).toString
+              arrivalTime = resultSet.getObject("arrival_time", classOf[java.time.OffsetDateTime]).toString,
+              flightStatus = resultSet.getString("flight_status")
             )
           )
         finally resultSet.close()
@@ -48,13 +50,11 @@ object BookFlightPlannerPlainSql:
     IO.blocking {
       val statement = connection.prepareStatement(
         """
-          select i.unit_price_amount, i.unit_price_currency, i.cabin_class
+          select i.unit_price_amount, i.unit_price_currency, i.cabin_class, i.available_seats, i.status as inventory_status
           from flight_cabin_inventories i
           join flights f on f.flight_id = i.flight_id
           where i.flight_id = ?
             and lower(i.cabin_class) = lower(?)
-            and i.status = 'Open'
-            and f.status = 'OpenForBooking'
           limit 1
         """
       )
@@ -67,7 +67,9 @@ object BookFlightPlannerPlainSql:
             FlightBookingCabinPlannerRow(
               unitPriceAmount = resultSet.getBigDecimal("unit_price_amount"),
               unitPriceCurrency = resultSet.getString("unit_price_currency"),
-              cabinClass = resultSet.getString("cabin_class")
+              cabinClass = resultSet.getString("cabin_class"),
+              availableSeats = resultSet.getInt("available_seats"),
+              inventoryStatus = resultSet.getString("inventory_status")
             )
           )
         finally resultSet.close()

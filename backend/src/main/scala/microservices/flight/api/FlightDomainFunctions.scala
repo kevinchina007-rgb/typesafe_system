@@ -47,6 +47,15 @@ def ensureBookableCabinInventory(flight: Flight, cabinClass: CabinClass): Either
     bookableCabinInventory <- ensureCabinInventoryBookable(cabinInventory)
   yield bookableCabinInventory
 
+def flightRowIsOpenForBooking(flightRow: FlightPlannerRow): Boolean =
+  FlightStatus.fromText(flightRow.status) == FlightStatus.OpenForBooking
+
+def flightSnapshotIsOpenForBooking(flightSnapshot: FlightBookingSnapshotPlannerRow): Boolean =
+  FlightStatus.fromText(flightSnapshot.flightStatus) == FlightStatus.OpenForBooking
+
+def cabinBookingRowIsBookable(cabinRow: FlightBookingCabinPlannerRow): Boolean =
+  InventoryStatus.fromText(cabinRow.inventoryStatus) == InventoryStatus.Open && cabinRow.availableSeats > 0
+
 def flightMatchesSearch(
     flight: Flight,
     departureAirportFilter: Option[AirportCode],
