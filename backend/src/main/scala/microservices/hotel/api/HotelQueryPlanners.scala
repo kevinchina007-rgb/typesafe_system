@@ -3,8 +3,10 @@ package com.typesafe.travel.hotel.domain
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
 import com.typesafe.travel.persistence.hotel.HotelPlannerPlainSql
+import com.typesafe.travel.shared.kernel.{RoomCount, StayPeriod}
 
 import java.sql.Connection
+import java.time.LocalDate
 
 object HotelSuggestionsPlanner extends ConnectionApiPlan[HotelSuggestionRequest, SearchSuggestionListPlannerResponse]:
   override val name: String = "HotelSuggestionsPlanner"
@@ -28,4 +30,10 @@ object BookHotelPlanner extends ConnectionApiPlan[BookHotelPlannerRequest, Hotel
   override val name: String = "BookHotelPlanner"
 
   override def plan(input: BookHotelPlannerRequest, connection: Connection): IO[HotelBookingPlannerResponse] =
-    HotelPlannerPlainSql.book(connection, input, java.time.Instant.now())
+    for
+      _ <- IO.fromEither(StayPeriod.create(LocalDate.parse(input.checkInDate), LocalDate.parse(input.checkOutDate)))
+      roomCount <- IO.fromEither(RoomCount.create(input.roomCount))
+      _ <- if roomCount.value > 0 then IO.unit else IO.raiseError(new IllegalArgumentException("Room count must be greater than zero"))
+      _ <- if input.guestTravelerIds.nonEmpty then IO.unit else IO.raiseError(new IllegalArgumentException("At least one guest traveler is required for hotel booking"))
+      response <- HotelPlannerPlainSql.book(connection, input, java.time.Instant.now())
+    yield response

@@ -8,6 +8,7 @@ type HotelResultsSectionProps = {
   hotelResponses: HotelResponse[]
   isBusy: boolean
   isGuestMode: boolean
+  defaultRoomCount: number
   searchCheckInDate: string
   searchCheckOutDate: string
   travelers: TravelerResponse[]
@@ -29,6 +30,7 @@ export function HotelResultsSection({
   hotelResponses,
   isBusy,
   isGuestMode,
+  defaultRoomCount,
   searchCheckInDate,
   searchCheckOutDate,
   travelers,
@@ -39,12 +41,12 @@ export function HotelResultsSection({
   onLoadReviews,
 }: HotelResultsSectionProps) {
   return (
-    <div className="grid gap-3 grid gap-3">
+    <div className="grid gap-4">
       {hotelResponses.length > 0 ? (
         hotelResponses.map(hotelResponse => (
-          <article key={hotelResponse.hotelId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50 grid gap-3">
-            <div className="text-lg font-bold text-slate-950">
-              <div>
+          <article key={hotelResponse.hotelId} className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="grid gap-1">
                 <strong>{hotelResponse.hotelName}</strong>
                 <p>{hotelResponse.location}</p>
                 <ResourceReviewSummaryLoader
@@ -120,7 +122,7 @@ export function HotelResultsSection({
                         type="number"
                         min={1}
                         max={roomTypeResponse.availableRoomsForRequestedStay ?? undefined}
-                        defaultValue={1}
+                        defaultValue={defaultRoomCount}
                         disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}
                       />
                     </label>

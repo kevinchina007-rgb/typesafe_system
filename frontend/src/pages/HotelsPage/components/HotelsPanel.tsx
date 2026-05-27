@@ -5,7 +5,7 @@ import { AdvertisementCardRail } from '@/pages/shared/advertising/sections/Adver
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 import { useHotelSearchState } from '@/pages/HotelsPage/components/hooks/useHotelSearchState'
-import { formatHotelPriceInsight, hotelHotDestinations, hotelRecentSearches } from '@/app/stores/models/hotel-booking-model'
+import { hotelHotDestinations } from '@/app/stores/models/hotel-booking-model'
 import { HotelFilterBar } from '@/pages/HotelsPage/components/sections/HotelFilterBar'
 import { HotelPageHero } from '@/pages/HotelsPage/components/sections/HotelPageHero'
 import { HotelResultsSection } from '@/pages/HotelsPage/components/sections/HotelResultsSection'
@@ -34,7 +34,6 @@ export function HotelsPanel({
     guestCount,
     hotelPreference,
     nearbyPreference,
-    selectedQuickDatePreset,
     setHotelResponses,
     setHasSearchedHotels,
     setSearchLocation,
@@ -44,7 +43,6 @@ export function HotelsPanel({
     setGuestCount,
     setHotelPreference,
     setNearbyPreference,
-    setSelectedQuickDatePreset,
   } = useHotelSearchState()
   const deliveryAdvertisements = useDeliverableAdvertisements('hotelBooking')
   const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
@@ -76,41 +74,21 @@ export function HotelsPanel({
       <HotelPageHero title={translate('hotels.title')} description={translate('hotels.description')} />
 
       <HotelSearchCard
-        averagePriceInsight={formatHotelPriceInsight(hotelResponses, translate)}
-        guestCount={guestCount}
-        hotelPreference={hotelPreference}
         hotDestinations={hotelHotDestinations}
         isBusy={isBusy}
-        nearbyPreference={nearbyPreference}
-        recentSearches={hotelRecentSearches}
-        roomCount={roomCount}
         searchCheckInDate={searchCheckInDate}
         searchCheckOutDate={searchCheckOutDate}
         searchLocation={searchLocation}
-        selectedQuickDatePreset={selectedQuickDatePreset}
         translate={translate}
         onSearchLocationChange={setSearchLocation}
         onSearchCheckInDateChange={setSearchCheckInDate}
         onSearchCheckOutDateChange={setSearchCheckOutDate}
-        onRoomCountChange={setRoomCount}
-        onGuestCountChange={setGuestCount}
-        onHotelPreferenceChange={setHotelPreference}
-        onNearbyPreferenceChange={setNearbyPreference}
-        onSelectQuickDatePreset={(preset, nextDates) => {
-          setSelectedQuickDatePreset(preset)
-          setSearchCheckInDate(nextDates.checkInDate)
-          setSearchCheckOutDate(nextDates.checkOutDate)
-        }}
         onSelectDestination={setSearchLocation}
         onSearch={async () => {
           const nextHotelResponses = await onSearchHotels({
             location: searchLocation,
             checkInDate: searchCheckInDate,
             checkOutDate: searchCheckOutDate,
-            roomCount,
-            guestCount,
-            hotelPreference,
-            nearbyPreference,
           })
           setHasSearchedHotels(true)
           setHotelResponses(nextHotelResponses)
@@ -149,7 +127,20 @@ export function HotelsPanel({
         </section>
       ) : null}
 
-      <HotelFilterBar translate={translate} />
+      {hasSearchedHotels ? (
+        <HotelFilterBar
+          roomCount={roomCount}
+          guestCount={guestCount}
+          hotelPreference={hotelPreference}
+          nearbyPreference={nearbyPreference}
+          isBusy={isBusy}
+          translate={translate}
+          onRoomCountChange={setRoomCount}
+          onGuestCountChange={setGuestCount}
+          onHotelPreferenceChange={setHotelPreference}
+          onNearbyPreferenceChange={setNearbyPreference}
+        />
+      ) : null}
 
       {isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('hotels.guest')}</p> : null}
 
@@ -159,6 +150,7 @@ export function HotelsPanel({
           hotelResponses={hotelResponses}
           isBusy={isBusy}
           isGuestMode={isGuestMode}
+          defaultRoomCount={roomCount}
           searchCheckInDate={searchCheckInDate}
           searchCheckOutDate={searchCheckOutDate}
           travelers={travelers}

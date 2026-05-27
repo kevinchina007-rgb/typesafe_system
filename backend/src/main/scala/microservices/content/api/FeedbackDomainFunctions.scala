@@ -1,5 +1,7 @@
 package com.typesafe.travel.content.domain
 
+import com.typesafe.travel.content.domain.*
+
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.persistence.content.FeedbackOrderCancellationSummary
 
@@ -35,7 +37,7 @@ def createFeedbackThread(
         ownerUserId = ownerUserId,
         ownerUserDisplayName = ownerUserDisplayName,
         title = title.trim,
-        subtitle = subtitle.trim,
+    subtitle = "退款与客服沟通",
         resourceType = resourceType.trim,
         resourceSummaryTitle = resourceSummaryTitle.trim,
         orderId = orderId,
@@ -107,9 +109,9 @@ def createFeedbackMessage(
         threadId = threadId,
         senderId = senderDisplayName.trim,
         senderRole = senderRole,
-        senderDisplayName = senderDisplayName.trim,
+    senderDisplayName = "系统",
         messageType = FeedbackMessageType.Text,
-        content = body.trim,
+        content = "申请取消订单",
         payload = None,
         isRead = false,
         createdAt = sentAt
@@ -227,7 +229,7 @@ def createReviewFeedbackThread(input: EnsureReviewFeedbackThreadPlannerRequest, 
     ownerUserId = Some(UserId(input.userId)),
     ownerUserDisplayName = input.userId,
     title = s"Review feedback ${input.reviewId}",
-    subtitle = "Review feedback",
+    subtitle = "退款与客服沟通",
     resourceType = "review",
     resourceSummaryTitle = input.reviewId,
     orderId = None,
@@ -241,18 +243,61 @@ def createReviewFeedbackThread(input: EnsureReviewFeedbackThreadPlannerRequest, 
     updatedAt = now
   ).fold(throw _, identity)
 
+final case class CancellationThreadDescriptor(
+    managerType: FeedbackManagerType,
+    resourceType: String,
+    resourceSummaryTitle: String,
+    title: String
+)
+
+def cancellationThreadDescriptor(summary: FeedbackOrderCancellationSummary): CancellationThreadDescriptor =
+  val normalizedOrderType = summary.orderType.trim.toLowerCase
+  val normalizedItemKind = summary.itemKind.trim.toLowerCase
+  val isHotel = normalizedOrderType.contains("hotel") || normalizedItemKind.contains("hotel")
+  val isTrain = normalizedOrderType.contains("train") || normalizedItemKind.contains("train")
+  val isAttraction = normalizedOrderType.contains("attraction") || normalizedItemKind.contains("attraction")
+  val resourceLabel =
+    summary.hotelName.map(_.trim).filter(_.nonEmpty).orElse(summary.orderTitle.map(_.trim).filter(_.nonEmpty)).getOrElse {
+      if isHotel then "酒店"
+      else if isTrain then "火车"
+      else if isAttraction then "景点"
+      else summary.airlineName.map(_.trim).filter(_.nonEmpty).getOrElse("航空公司")
+    }
+  val resourceSummaryTitle =
+    summary.hotelName.map(_.trim).filter(_.nonEmpty).map { hotelName =>
+      summary.hotelLocation.map(_.trim).filter(_.nonEmpty).map(location => s"$hotelName · $location").getOrElse(hotelName)
+    }.getOrElse(resourceLabel)
+
+  val managerType =
+    if isHotel then FeedbackManagerType.Hotel
+    else if isTrain then FeedbackManagerType.Train
+    else if isAttraction then FeedbackManagerType.Attraction
+    else FeedbackManagerType.Airline
+
+  val resourceType =
+    if managerType == FeedbackManagerType.Hotel then "hotelOrderCancellation"
+    else if managerType == FeedbackManagerType.Train then "trainOrderCancellation"
+    else if managerType == FeedbackManagerType.Attraction then "attractionOrderCancellation"
+    else "flightOrderCancellation"
+
+  CancellationThreadDescriptor(
+    managerType = managerType,
+    resourceType = resourceType,
+    resourceSummaryTitle = resourceSummaryTitle,
+    title = s"${resourceLabel}客服"
+  )
 def createOrderCancellationThread(input: EnsureOrderCancellationThreadPlannerRequest, summary: FeedbackOrderCancellationSummary, now: Instant): FeedbackThread =
-  val airlineName = summary.airlineName.map(_.trim).filter(_.nonEmpty).getOrElse("航空公司")
+  val descriptor = cancellationThreadDescriptor(summary)
   createFeedbackThread(
     threadId = SupportTicketId(s"support-thread-${java.util.UUID.randomUUID().toString.take(12)}"),
     kind = FeedbackThreadKind.ServiceReview,
-    managerType = FeedbackManagerType.Airline,
+    managerType = descriptor.managerType,
     ownerUserId = Some(UserId(input.userId)),
     ownerUserDisplayName = input.userId,
-    title = s"${airlineName}客服",
+    title = descriptor.title,
     subtitle = "退款与客服沟通",
-    resourceType = "flightOrderCancellation",
-    resourceSummaryTitle = airlineName,
+    resourceType = descriptor.resourceType,
+    resourceSummaryTitle = descriptor.resourceSummaryTitle,
     orderId = Some(OrderId(summary.orderId)),
     orderItemId = summary.orderItemId.map(OrderItemId.apply),
     reviewId = None,
@@ -263,7 +308,6 @@ def createOrderCancellationThread(input: EnsureOrderCancellationThreadPlannerReq
     createdAt = now,
     updatedAt = now
   ).fold(throw _, identity)
-
 def updateFeedbackUnreadAfterMessage(thread: FeedbackThread, message: FeedbackMessage): FeedbackThread =
   message.senderRole match
     case FeedbackSenderRole.User =>
@@ -289,3 +333,5 @@ def createEscalatedFeedbackThread(source: FeedbackThread, now: Instant): Feedbac
     createdAt = now,
     updatedAt = now
   )
+
+

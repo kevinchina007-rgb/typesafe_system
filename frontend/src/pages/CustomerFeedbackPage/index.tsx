@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
 import { createOrderCancellationMessage, markFeedbackThreadRead, sendFeedbackMessage, setActiveFeedbackMiniThread, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
 import { formatFlightRouteCity } from '@/app/stores/models/flights/flightConstants'
@@ -6,8 +6,10 @@ import { getFlightAirlineDisplayNameByCode } from '@/app/stores/models/flights/f
 import type { AppLanguage, UserResponse } from '@/lib/mvp-types/index'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { OrderLineItemResponse } from '@/microservices/order/objects/OrderLineItemResponse'
+import type { HotelItemDetailsResponse } from '@/microservices/order/objects/HotelItemDetailsResponse'
 import type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
+import { orderMatchesCategory, type OrderCategory } from '@/pages/BookingsPage/components/orderViewModel'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
 type CustomerFeedbackPageProps = {
@@ -21,7 +23,7 @@ export function CustomerFeedbackPage({ currentLanguage, signedInUser, translate,
   const threads = useFeedbackChatStore(state => state.userThreads)
   const activeThread = useFeedbackChatStore(state => state.activeMiniThread)
   const loadUserThreads = useFeedbackChatStore(state => state.loadUserThreads)
-  const [cancellationOrders, setCancellationOrders] = useState<{ orderId: string; title: string }[]>([])
+  const [cancellationOrders, setCancellationOrders] = useState<{ orderId: string; title: string; category: OrderCategory }[]>([])
   void currentLanguage
   void onShowNotice
 
@@ -33,6 +35,7 @@ export function CustomerFeedbackPage({ currentLanguage, signedInUser, translate,
       setCancellationOrders(response.orders.map(order => ({
         orderId: order.orderId,
         title: buildCancellationOrderTitle(order),
+        category: inferOrderCategory(order),
       })))
     })
   }, [loadUserThreads, signedInUser])
@@ -82,6 +85,13 @@ export function CustomerFeedbackPage({ currentLanguage, signedInUser, translate,
 }
 
 function buildCancellationOrderTitle(order: OrderResponse) {
+  const hotelItem = order.orderLineItems.find(item => item.hotelDetails || parseHotelSnapshot(item.summaryLabel))
+  const hotelDetails = hotelItem?.hotelDetails ?? (hotelItem ? parseHotelSnapshot(hotelItem.summaryLabel) : null)
+  if (hotelDetails) {
+    const hotelLocation = getHotelLocation(hotelDetails)
+    return `${hotelDetails.hotelName} · ${hotelLocation} · ${hotelDetails.roomTypeName} · ${hotelDetails.checkInDate} → ${hotelDetails.checkOutDate} · ${order.totalPrice} ${order.orderCurrency}`
+  }
+
   const flightItem = order.orderLineItems.find(item => item.flightDetails) ?? order.orderLineItems[0]
   if (!flightItem) {
     return `${order.orderType} · ${order.totalPrice} ${order.orderCurrency}`
@@ -93,6 +103,13 @@ function buildCancellationOrderTitle(order: OrderResponse) {
   }
 
   return `${flight.airlineName} ${flight.flightNumber} · ${formatFlightRouteCity(flight.departureAirport)} → ${formatFlightRouteCity(flight.arrivalAirport)} · ${formatFlightDate(flight.departureTime)} · ${formatCabinClass(flight.cabinClass)} · ${order.totalPrice} ${order.orderCurrency}`
+}
+
+function inferOrderCategory(order: OrderResponse): OrderCategory {
+  if (orderMatchesCategory(order, 'hotelOrders')) return 'hotelOrders'
+  if (orderMatchesCategory(order, 'flightOrders')) return 'flightOrders'
+  if (orderMatchesCategory(order, 'trainOrders')) return 'trainOrders'
+  return 'attractionOrders'
 }
 
 function buildFlightOrderSummary(orderLineItem: OrderLineItemResponse) {
@@ -124,6 +141,18 @@ type FlightSnapshotSummary = {
   cabinClass?: string
 }
 
+type HotelSnapshotSummary = {
+  hotelId?: string
+  hotelName?: string
+  hotelLocation?: string
+  roomTypeId?: string
+  roomTypeName?: string
+  checkInDate?: string
+  checkOutDate?: string
+  guestTravelerIds?: string[]
+  roomCount?: number
+}
+
 function parseFlightSnapshot(summaryLabel: string): FlightSnapshotSummary | null {
   if (!summaryLabel.trim().startsWith('{')) return null
 
@@ -143,6 +172,31 @@ function parseFlightSnapshot(summaryLabel: string): FlightSnapshotSummary | null
   } catch {
     return null
   }
+}
+
+function parseHotelSnapshot(summaryLabel: string): HotelSnapshotSummary | null {
+  if (!summaryLabel.trim().startsWith('{')) return null
+
+  try {
+    const parsed = JSON.parse(summaryLabel) as Record<string, unknown>
+    return {
+      hotelId: getStringField(parsed, 'hotelId'),
+      hotelName: getStringField(parsed, 'hotelName'),
+      hotelLocation: getStringField(parsed, 'hotelLocation') ?? getStringField(parsed, 'location'),
+      roomTypeId: getStringField(parsed, 'roomTypeId'),
+      roomTypeName: getStringField(parsed, 'roomTypeName') ?? getStringField(parsed, 'roomName'),
+      checkInDate: getStringField(parsed, 'checkInDate'),
+      checkOutDate: getStringField(parsed, 'checkOutDate'),
+      guestTravelerIds: Array.isArray(parsed.guestTravelerIds) ? parsed.guestTravelerIds.filter((value): value is string => typeof value === 'string') : undefined,
+      roomCount: typeof parsed.roomCount === 'number' ? parsed.roomCount : undefined,
+    }
+  } catch {
+    return null
+  }
+}
+
+function getHotelLocation(hotel: HotelItemDetailsResponse | HotelSnapshotSummary) {
+  return 'hotelLocation' in hotel ? hotel.hotelLocation : (hotel as HotelItemDetailsResponse).location
 }
 
 function getStringField(record: Record<string, unknown>, key: string) {
@@ -167,3 +221,4 @@ function formatCabinClass(cabinClass: string) {
   }
   return cabinClassLabelMap[normalizedCabinClass] ?? (cabinClass || '舱位未注明')
 }
+

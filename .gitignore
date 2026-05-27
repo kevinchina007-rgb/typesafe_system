@@ -7,8 +7,13 @@ Thumbs.db
 # Runtime artifacts
 .launcher-logs/
 gcm-diagnose.log
+Git/
+nodejs/
+postgresql/
+target/
 backend/.postgres-dev/
 backend/uploads/
+backend/projects/**/target/
 
 # Frontend
 frontend/node_modules/
@@ -27,3 +32,4 @@ backend/*.log
 # Environment files
 .env
 .env.*
+!deploy/.env.production.example

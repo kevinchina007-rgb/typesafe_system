@@ -1,15 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 
 import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
 import type { FeedbackManagerType } from '@/microservices/content/objects/FeedbackManagerType'
 import type { FeedbackMessageResponse } from '@/microservices/content/objects/FeedbackMessageResponse'
 import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
 import type { OrderCancellationRequestStatus } from '@/microservices/content/objects/OrderCancellationRequestPayload'
+import type { OrderCategory } from '@/pages/BookingsPage/components/orderViewModel'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 
 type CancellationOrderOption = {
   orderId: string
   title: string
+  category: OrderCategory
 }
 
 type SupportIdentityOverride = {
@@ -136,10 +138,30 @@ function findAirlineIdentity(text: string): ChatIdentity | null {
   }
 }
 
+function managerTypeToOrderCategory(managerType: FeedbackManagerType): OrderCategory | null {
+  if (managerType === 'Hotel') return 'hotelOrders'
+  if (managerType === 'Airline') return 'flightOrders'
+  if (managerType === 'Train') return 'trainOrders'
+  if (managerType === 'Attraction') return 'attractionOrders'
+  return null
+}
+
+function extractHotelIdentityName(text: string) {
+  const trimmed = text.trim()
+  if (trimmed.length === 0) return null
+  const firstSegment = trimmed.split(/[·•|｜\/]/)[0]?.trim() ?? trimmed
+  const candidate = firstSegment.endsWith('客服') ? firstSegment.slice(0, -2).trim() : firstSegment
+  if (candidate.length === 0) return null
+  const normalized = candidate.toLowerCase().replace(/\s+/g, '')
+  if (normalized === 'hotel' || normalized === '酒店' || normalized === '酒店管理者' || normalized === '酒店客服' || normalized === 'hotel客服') return null
+  return candidate
+}
+
 function getThreadIdentity(
   thread: FeedbackThread,
   translate: (translationKey: string) => string,
   supportIdentityOverrides: Record<string, SupportIdentityOverride>,
+  cancellationOrderTitleById: Map<string, string>,
 ): ChatIdentity {
   const override = supportIdentityOverrides[thread.threadId]
   if (override) {
@@ -160,11 +182,41 @@ function getThreadIdentity(
   if (airlineIdentity) return airlineIdentity
 
   const managerName = localizeManagerType(thread.managerType, translate)
+  if (thread.managerType === 'Hotel') {
+    const hotelIdentityName = resolveHotelIdentityName(thread, managerName, cancellationOrderTitleById)
+    return {
+      name: hotelIdentityName,
+      logoPath: null,
+      fallback: hotelIdentityName.slice(0, 1) || '酒',
+    }
+  }
+
   return {
     name: thread.managerType === 'Airline' ? '航空公司客服' : `${managerName}客服`,
     logoPath: thread.managerType === 'Airline' ? '/images/airlines/MU.svg' : null,
     fallback: managerName.slice(0, 1) || '客',
   }
+}
+
+function resolveHotelIdentityName(thread: FeedbackThread, fallbackName: string, cancellationOrderTitleById: Map<string, string>) {
+  const orderTitle = thread.orderId ? cancellationOrderTitleById.get(thread.orderId) ?? '' : ''
+  const resourceTitle = thread.resourceSummaryTitle.trim()
+  const messageHotelName = thread.messages
+    .map(message => message.payload?.orderTitle?.trim() ?? '')
+    .find(value => value.length > 0)
+
+  const candidates = [
+    extractHotelIdentityName(orderTitle),
+    extractHotelIdentityName(resourceTitle),
+    extractHotelIdentityName(messageHotelName ?? ''),
+  ].filter((value): value is string => Boolean(value))
+
+  const hotelName = candidates[0]
+  if (hotelName) {
+    return hotelName.endsWith('客服') ? hotelName : `${hotelName}客服`
+  }
+
+  return `${fallbackName}客服`
 }
 
 function Avatar({
@@ -232,12 +284,26 @@ export function FeedbackConversationWorkspace({
     () => threads.find(thread => thread.threadId === activeThreadId) ?? null,
     [activeThreadId, threads],
   )
-  const activeIdentity = activeThread ? getThreadIdentity(activeThread, translate, supportIdentityOverrides) : null
+  const cancellationOrderTitleById = useMemo(
+    () => new Map(cancellationOrders.map(order => [order.orderId, order.title])),
+    [cancellationOrders],
+  )
+  const activeIdentity = activeThread
+    ? getThreadIdentity(activeThread, translate, supportIdentityOverrides, cancellationOrderTitleById)
+    : null
   const visibleCancellationOrders = useMemo(() => {
-    if (!activeThread || activeThread.resourceType !== 'flightOrderCancellation') return cancellationOrders
-    return cancellationOrders.filter(order => order.title.includes(activeThread.resourceSummaryTitle))
+    if (!activeThread) return cancellationOrders
+    const threadCategory = managerTypeToOrderCategory(activeThread.managerType)
+    const categoryOrders = threadCategory ? cancellationOrders.filter(order => order.category === threadCategory) : cancellationOrders
+    if (activeThread.orderId) {
+      const matchedOrders = categoryOrders.filter(order => order.orderId === activeThread.orderId)
+      if (matchedOrders.length > 0) return matchedOrders
+    }
+    if (threadCategory) return categoryOrders
+    const resourceTitle = activeThread.resourceSummaryTitle.trim()
+    if (resourceTitle.length === 0) return categoryOrders
+    return categoryOrders.filter(order => order.title.includes(resourceTitle) || resourceTitle.includes(order.title))
   }, [activeThread, cancellationOrders])
-
   useEffect(() => {
     onThreadChange?.(activeThread)
   }, [activeThread, onThreadChange])
@@ -275,7 +341,7 @@ export function FeedbackConversationWorkspace({
           <div className="grid">
             {threads.map(thread => {
               const unreadCount = unreadCountSelector(thread)
-              const identity = getThreadIdentity(thread, translate, supportIdentityOverrides)
+              const identity = getThreadIdentity(thread, translate, supportIdentityOverrides, cancellationOrderTitleById)
               const lastMessage = getLastMessage(thread)
               const isActive = thread.threadId === activeThreadId
               return (
@@ -482,3 +548,9 @@ export function FeedbackConversationWorkspace({
     </section>
   )
 }
+
+
+
+
+
+

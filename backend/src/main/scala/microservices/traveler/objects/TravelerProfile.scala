@@ -36,9 +36,10 @@ object TravelerDocumentType:
 
   def fromText(value: String): TravelerDocumentType =
     value.trim.toLowerCase match
-      case "nationalidentitycard" | "national_identity_card" => NationalIdentityCard
-      case "residencepermit" | "residence_permit" => ResidencePermit
-      case "othergovernmentdocument" | "other_government_document" => OtherGovernmentDocument
+      case "passport" => Passport
+      case "identity-card" | "identity_card" | "nationalidentitycard" | "national_identity_card" => NationalIdentityCard
+      case "residence-permit" | "residence_permit" | "residencepermit" => ResidencePermit
+      case "other" | "other-government-document" | "other_government_document" | "othergovernmentdocument" => OtherGovernmentDocument
       case _ => Passport
 
   given sourceEncoder: Encoder[TravelerDocumentType] = Encoder.encodeString.contramap(_.toString)

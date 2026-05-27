@@ -94,6 +94,13 @@ final class TravelerProfileSpec extends FunSuite:
     assert(duplicateAttempt.swap.exists(_.isInstanceOf[TravelerError.DuplicateTravelerIdentityDocument]))
   }
 
+  test("document type parsing accepts the traveler form values") {
+    assertEquals(TravelerDocumentType.fromText("passport"), TravelerDocumentType.Passport)
+    assertEquals(TravelerDocumentType.fromText("identity-card"), TravelerDocumentType.NationalIdentityCard)
+    assertEquals(TravelerDocumentType.fromText("residence-permit"), TravelerDocumentType.ResidencePermit)
+    assertEquals(TravelerDocumentType.fromText("other"), TravelerDocumentType.OtherGovernmentDocument)
+  }
+
   test("creating another traveler with the same document number is rejected") {
     val existingTravelerProfile =
       newTravelerProfile(
@@ -188,4 +195,3 @@ final class TravelerProfileSpec extends FunSuite:
 
     override def saveUser(user: User): TestEither[User] =
       Right(user)
-

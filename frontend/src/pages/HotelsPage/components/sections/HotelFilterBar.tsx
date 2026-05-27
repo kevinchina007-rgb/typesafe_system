@@ -1,19 +1,54 @@
-﻿import { hotelFilterOptions } from '@/app/stores/models/hotel-booking-model'
+import { GuestRoomSelector } from '@/pages/HotelsPage/components/controls/GuestRoomSelector'
+import { HotelPreferenceSelector } from '@/pages/HotelsPage/components/controls/HotelPreferenceSelector'
+import type { HotelPreference } from '@/app/stores/models/hotel-booking-model'
 
 type HotelFilterBarProps = {
+  roomCount: number
+  guestCount: number
+  hotelPreference: HotelPreference
+  nearbyPreference: string
+  isBusy: boolean
   translate: (translationKey: string) => string
+  onRoomCountChange: (value: number) => void
+  onGuestCountChange: (value: number) => void
+  onHotelPreferenceChange: (value: HotelPreference) => void
+  onNearbyPreferenceChange: (value: string) => void
 }
 
-export function HotelFilterBar({ translate }: HotelFilterBarProps) {
+export function HotelFilterBar({
+  roomCount,
+  guestCount,
+  hotelPreference,
+  nearbyPreference,
+  isBusy,
+  translate,
+  onRoomCountChange,
+  onGuestCountChange,
+  onHotelPreferenceChange,
+  onNearbyPreferenceChange,
+}: HotelFilterBarProps) {
   return (
-    <section className="flex flex-wrap items-center gap-3 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
-      <p className="text-sm font-bold text-slate-500">{translate('hotels.filterTitle')}</p>
-      <div className="flex flex-wrap items-center gap-3">
-        {hotelFilterOptions.map(filterKey => (
-          <button key={filterKey} type="button" className="inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55">
-            {translate(`hotels.filter.${filterKey}`)}
-          </button>
-        ))}
+    <section className="grid gap-5 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-bold text-slate-500">{translate('hotels.filterTitle')}</p>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
+        <GuestRoomSelector
+          roomCount={roomCount}
+          guestCount={guestCount}
+          translate={translate}
+          onRoomCountChange={onRoomCountChange}
+          onGuestCountChange={onGuestCountChange}
+        />
+        <HotelPreferenceSelector
+          hotelPreference={hotelPreference}
+          nearbyPreference={nearbyPreference}
+          translate={translate}
+          onHotelPreferenceChange={onHotelPreferenceChange}
+          onNearbyPreferenceChange={onNearbyPreferenceChange}
+          disabled={isBusy}
+        />
       </div>
     </section>
   )
