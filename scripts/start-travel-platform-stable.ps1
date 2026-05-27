@@ -126,6 +126,52 @@ else:
   return $null
 }
 
+function Get-PostgresBinRoot {
+  $candidateRoots = @(
+    (Join-Path $templateRoot 'postgresql\bin'),
+    (Join-Path $workspaceRoot 'tools\postgresql-18\bin'),
+    (Join-Path $workspaceRoot 'postgresql\bin'),
+    'C:\typesafe\tools\postgresql-18\bin',
+    'C:\Program Files\PostgreSQL\18\bin',
+    'C:\Program Files\PostgreSQL\17\bin',
+    'C:\Program Files\PostgreSQL\16\bin'
+  )
+
+  foreach ($candidateRoot in $candidateRoots) {
+    if (
+      (Test-Path (Join-Path $candidateRoot 'postgres.exe'))
+    ) {
+      return $candidateRoot
+    }
+  }
+
+  $pgCtlCommand = Get-Command 'pg_ctl.exe' -ErrorAction SilentlyContinue
+  if ($pgCtlCommand) {
+    $commandRoot = Split-Path -Parent $pgCtlCommand.Source
+    if (Test-Path (Join-Path $commandRoot 'postgres.exe')) {
+      return $commandRoot
+    }
+  }
+
+  return $null
+}
+
+function Test-PostgresPortReady {
+  try {
+    $connection = New-Object System.Net.Sockets.TcpClient
+    $connectResult = $connection.BeginConnect('127.0.0.1', 5432, $null, $null)
+    if (-not $connectResult.AsyncWaitHandle.WaitOne(1000, $false)) {
+      $connection.Close()
+      return $false
+    }
+    $connection.EndConnect($connectResult)
+    $connection.Close()
+    return $true
+  } catch {
+    return $false
+  }
+}
+
 function Start-BackgroundCommand {
   param(
     [string]$FilePath,
@@ -258,9 +304,13 @@ window.__TRAVEL_INITIAL_BACKEND_HEALTH__ = $initialHealthJson;
 
 function Get-BackendDatabaseSettings {
   $localPostgresDataRoot = Join-Path $backendRoot '.postgres-dev\data'
-  $localPostgresBinRoot = Join-Path $templateRoot 'postgresql\bin'
-  $localPostgresPgCtl = Join-Path $localPostgresBinRoot 'pg_ctl.exe'
-  $localPostgresReady = Join-Path $localPostgresBinRoot 'pg_isready.exe'
+  $localPostgresBinRoot = Get-PostgresBinRoot
+  $localPostgresExe =
+    if ($localPostgresBinRoot) {
+      Join-Path $localPostgresBinRoot 'postgres.exe'
+    } else {
+      $null
+    }
 
   if (
     -not $env:TRAVEL_DB_URL -and
@@ -268,18 +318,25 @@ function Get-BackendDatabaseSettings {
     -not $env:TRAVEL_DB_USER -and
     $null -eq $env:TRAVEL_DB_PASSWORD -and
     (Test-Path (Join-Path $localPostgresDataRoot 'PG_VERSION')) -and
-    (Test-Path $localPostgresPgCtl) -and
-    (Test-Path $localPostgresReady)
+    $localPostgresExe -and
+    (Test-Path $localPostgresExe)
   ) {
-    & $localPostgresReady -h 127.0.0.1 -p 5432 | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-      $localPostgresLog = Join-Path $templateRoot '.launcher-logs\postgres.local.log'
-      & $localPostgresPgCtl -D $localPostgresDataRoot -l $localPostgresLog -o '-p 5432' start | Out-Null
-      Start-Sleep -Seconds 3
-      & $localPostgresReady -h 127.0.0.1 -p 5432 | Out-Null
+    Write-LauncherLog "using postgres tools at $localPostgresBinRoot"
+    $hasLocalPostgresData = Test-Path (Join-Path $localPostgresDataRoot 'PG_VERSION')
+    if (-not (Test-PostgresPortReady)) {
+      Write-LauncherLog "starting local postgres with data root $localPostgresDataRoot"
+      $postgresProcess = Start-BackgroundCommand -FilePath $localPostgresExe -Arguments "-D ""$localPostgresDataRoot"" -p 5432" -WorkingDirectory $backendRoot
+      Write-LauncherLog "postgres process started pid=$($postgresProcess.Id)"
+      for ($attempt = 0; $attempt -lt 30; $attempt++) {
+        if (Test-PostgresPortReady) {
+          break
+        }
+        Start-Sleep -Seconds 1
+      }
     }
 
-    if ($LASTEXITCODE -eq 0) {
+    if (Test-PostgresPortReady) {
+      Write-LauncherLog "local postgres ready on 127.0.0.1:5432"
       return @{
         Url = 'jdbc:postgresql://127.0.0.1:5432/travel_platform'
         Driver = 'org.postgresql.Driver'
@@ -287,6 +344,22 @@ function Get-BackendDatabaseSettings {
         Password = 'root'
       }
     }
+
+    if ($hasLocalPostgresData) {
+      throw "Local PostgreSQL data exists at $localPostgresDataRoot, but PostgreSQL did not become ready on 127.0.0.1:5432. Check .launcher-logs\postgres.local.log or start PostgreSQL manually."
+    }
+  }
+
+  if (
+    -not $env:TRAVEL_DB_URL -and
+    -not $env:TRAVEL_DB_DRIVER -and
+    -not $env:TRAVEL_DB_USER -and
+    $null -eq $env:TRAVEL_DB_PASSWORD -and
+    (Test-Path (Join-Path $localPostgresDataRoot 'PG_VERSION')) -and
+    -not (Test-PostgresPortReady) -and
+    -not $localPostgresBinRoot
+  ) {
+    throw "Local PostgreSQL data exists at $localPostgresDataRoot, but postgres.exe was not found. Put PostgreSQL bin under <repo>\postgresql\bin, <repo-parent>\tools\postgresql-18\bin, C:\typesafe\tools\postgresql-18\bin, or add it to PATH."
   }
 
   return @{
