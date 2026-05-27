@@ -258,8 +258,9 @@ window.__TRAVEL_INITIAL_BACKEND_HEALTH__ = $initialHealthJson;
 
 function Get-BackendDatabaseSettings {
   $localPostgresDataRoot = Join-Path $backendRoot '.postgres-dev\data'
-  $localPostgresPgCtl = 'C:\Program Files\PostgreSQL\18\bin\pg_ctl.exe'
-  $localPostgresReady = 'C:\Program Files\PostgreSQL\18\bin\pg_isready.exe'
+  $localPostgresBinRoot = Join-Path $templateRoot 'postgresql\bin'
+  $localPostgresPgCtl = Join-Path $localPostgresBinRoot 'pg_ctl.exe'
+  $localPostgresReady = Join-Path $localPostgresBinRoot 'pg_isready.exe'
 
   if (
     -not $env:TRAVEL_DB_URL -and
