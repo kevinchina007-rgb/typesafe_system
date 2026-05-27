@@ -16,7 +16,7 @@ object ListFeedbackThreadsPlanner extends ConnectionApiPlan[ListFeedbackThreadsP
     val threads =
       input.userId
         .map(userId => FeedbackPlannerPlainSql.listByOwnerUserId(connection, userId))
-        .orElse(input.managerType.map(managerType => FeedbackPlannerPlainSql.listServiceReviewsByManagerType(connection, managerType)))
+        .orElse(input.managerType.map(managerType => FeedbackPlannerPlainSql.listServiceReviewsByManagerType(connection, managerType, input.scopeId)))
         .orElse(input.channel.map(channel => FeedbackPlannerPlainSql.listByKind(connection, feedbackKindForChannel(channel))))
         .getOrElse(FeedbackPlannerPlainSql.listAll(connection))
 
@@ -41,8 +41,12 @@ object EnsureOrderCancellationThreadPlanner extends ConnectionApiPlan[EnsureOrde
         case Some(_) => IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' does not belong to user '${input.userId}'"))
         case None    => IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' was not found"))
       }
-      airlineName = summary.airlineName.map(_.trim).filter(_.nonEmpty).getOrElse("航空公司")
-      existingThread <- FeedbackPlannerPlainSql.findByOwnerAndResource(connection, input.userId, "flightOrderCancellation", airlineName)
+      descriptor = cancellationThreadDescriptor(summary)
+      existingThread <- FeedbackPlannerPlainSql.findByOrderId(connection, input.orderId).flatMap {
+        case Some(thread) if thread.ownerUserId.exists(_.value == input.userId) => IO.pure(Some(thread))
+        case Some(_) => IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' does not belong to user '${input.userId}'"))
+        case None => IO.pure(None)
+      }
       thread <- existingThread match
         case Some(existing) => IO.pure(existing)
         case None =>
@@ -76,13 +80,15 @@ object CreateOrderCancellationMessagePlanner extends ConnectionApiPlan[CreateOrd
     for
       thread <- requireFeedbackThread(connection, SupportTicketId(input.threadId))
       orderSummary <- FeedbackPlannerPlainSql.findOrderCancellationSummary(connection, input.orderId).flatMap {
-        case Some(summary)
-            if thread.ownerUserId.exists(_.value == summary.buyerUserId) &&
-              thread.resourceType == "flightOrderCancellation" &&
-              thread.resourceSummaryTitle == summary.airlineName.getOrElse("航空公司") =>
-          IO.pure(summary)
-        case Some(_) => IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' cannot be cancelled in this feedback thread"))
-        case None          => IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' was not found"))
+        case Some(summary) =>
+          val descriptor = cancellationThreadDescriptor(summary)
+          if thread.ownerUserId.exists(_.value == summary.buyerUserId) &&
+            thread.orderId.exists(_.value == summary.orderId) &&
+            thread.resourceType == descriptor.resourceType &&
+            thread.resourceSummaryTitle == descriptor.resourceSummaryTitle then
+            IO.pure(summary)
+          else IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' cannot be cancelled in this feedback thread"))
+        case None => IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' was not found"))
       }
       now = Instant.now()
       message = createOrderCancellationMessage(

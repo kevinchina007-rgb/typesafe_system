@@ -25,7 +25,6 @@ export type FlightPlannerResponse = {
   cabinInventories: CabinInventoryResponse[]
 }
 
-export type FlightResponse = FlightPlannerResponse
 
 export const flightResponseFromJson = (json: string): FlightPlannerResponse =>
   JSON.parse(json) as FlightPlannerResponse

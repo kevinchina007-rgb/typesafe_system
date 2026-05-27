@@ -1,7 +1,7 @@
-﻿import type { FlightResponse } from '@/lib/mvp-types/flights'
+import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 
 type FlightBookingWindowDialogProps = {
-  flight: FlightResponse | null
+  flight: FlightPlannerResponse | null
   translate: (translationKey: string) => string
   onClose: () => void
 }

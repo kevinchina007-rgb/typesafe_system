@@ -1,7 +1,7 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { AppLanguage, AttractionResponse, FlightResponse, GroupPlanItemResponse, HotelResponse, SearchSuggestionResponse, TrainResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, SearchSuggestionResponse, TrainResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, localizeCabinClass, localizeTrainSeatClass } from '@/lib/presenters/view-models'
 
 type TourGroupPlanComposerProps = {
@@ -9,8 +9,8 @@ type TourGroupPlanComposerProps = {
   isBusy: boolean
   existingPlanItems: GroupPlanItemResponse[]
   translate: (translationKey: string) => string
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelResponse[]>
+  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
+  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
   onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onCreatePlanItem: (payload: {
@@ -107,8 +107,8 @@ export function TourGroupPlanComposer({
   const [location, setLocation] = useState('')
   const [searchMessage, setSearchMessage] = useState('')
   const [locationSuggestions, setLocationSuggestions] = useState<SearchSuggestionResponse[]>([])
-  const [flightResults, setFlightResults] = useState<FlightResponse[]>([])
-  const [hotelResults, setHotelResults] = useState<HotelResponse[]>([])
+  const [flightResults, setFlightResults] = useState<FlightPlannerResponse[]>([])
+  const [hotelResults, setHotelResults] = useState<HotelPlannerResponse[]>([])
   const [trainResults, setTrainResults] = useState<TrainResponse[]>([])
   const [attractionResults, setAttractionResults] = useState<AttractionResponse[]>([])
 

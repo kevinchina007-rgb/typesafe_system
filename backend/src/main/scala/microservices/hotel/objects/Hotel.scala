@@ -1,4 +1,4 @@
-package com.typesafe.travel.hotel.domain
+package com.typesafe.travel.hotel.objects
 
 import com.typesafe.travel.shared.kernel.*
 import io.circe.{Decoder, Encoder}

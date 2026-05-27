@@ -258,6 +258,7 @@ export function MvpApp() {
       } else if (
         normalizedViewKey !== 'managerWorkspace' &&
         normalizedViewKey !== 'managerFeedback' &&
+        !(normalizedViewKey === 'managerProfile' && signedInManagerSessionResponse?.managerType === 'Hotel') &&
         !(normalizedViewKey === 'managerAdvertising' &&
           (signedInManagerSessionResponse?.managerType === 'Hotel' || signedInManagerSessionResponse?.managerType === 'Attraction'))
       ) {
@@ -550,7 +551,6 @@ export function MvpApp() {
     </>
   )
 }
-
 
 
 

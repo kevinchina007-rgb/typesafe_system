@@ -1,6 +1,6 @@
-package com.typesafe.travel.persistence.flight
+package com.typesafe.travel.flight.tables
 
-import com.typesafe.travel.flight.domain.FlightPlannerRow
+import com.typesafe.travel.flight.objects.FlightPlannerRow
 
 import java.sql.ResultSet
 

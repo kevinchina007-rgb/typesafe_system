@@ -3,8 +3,8 @@ import { useEffect, useMemo, useState, type FocusEvent, type FormEvent, type Rea
 import type { TravelerResponse } from '@/lib/mvp-types/index'
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { FlightResultGroup, FlightSearchState } from '@/app/stores/models/flights'
-import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightRequest'
-import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchQuery'
+import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightPlannerRequest'
+import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
 import type { FlightDailyLowestPricesPlannerRequest, FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
 import { formatFlightRouteCity } from '@/app/stores/models/flights/flightConstants'
 import {

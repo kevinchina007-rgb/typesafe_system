@@ -1,6 +1,6 @@
-package com.typesafe.travel.persistence.flight
+package com.typesafe.travel.flight.tables
 
-import com.typesafe.travel.flight.domain.CabinInventoryPlannerRow
+import com.typesafe.travel.flight.objects.CabinInventoryPlannerRow
 
 import java.sql.{Connection, ResultSet}
 

@@ -1,8 +1,8 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import { createOrderCancellationMessage, markFeedbackThreadRead, sendFeedbackMessage, setActiveFeedbackMiniThread, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
+import { createOrderCancellationMessage, markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
 import { formatFlightRouteCity } from '@/app/stores/models/flights/flightConstants'
-import { getFlightAirlineDisplayNameByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
+import { getFlightDetailsPlannerAirlineDisplayNameByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
 import type { AppLanguage, UserResponse } from '@/lib/mvp-types/index'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { OrderLineItemResponse } from '@/microservices/order/objects/OrderLineItemResponse'
@@ -48,6 +48,10 @@ export function CustomerFeedbackPage({ currentLanguage, signedInUser, translate,
     )
   }
 
+  const orderedThreads = activeThread
+    ? [activeThread, ...threads.filter(thread => thread.threadId !== activeThread.threadId)]
+    : threads
+
   return (
     <>
       <FeedbackConversationWorkspace
@@ -57,8 +61,7 @@ export function CustomerFeedbackPage({ currentLanguage, signedInUser, translate,
         emptyTitle={translate('feedback.userTitle')}
         emptyDescription={translate('feedback.userEmpty')}
         fullScreen
-        preferredThreadId={activeThread?.threadId ?? null}
-        threads={threads}
+        threads={orderedThreads}
         cancellationOrders={cancellationOrders}
         translate={translate}
         unreadCountSelector={thread => thread.unreadByUser}
@@ -78,7 +81,6 @@ export function CustomerFeedbackPage({ currentLanguage, signedInUser, translate,
             reason,
           })
         }
-        onThreadChange={thread => setActiveFeedbackMiniThread(thread)}
       />
     </>
   )
@@ -88,7 +90,7 @@ function buildCancellationOrderTitle(order: OrderResponse) {
   const hotelItem = order.orderLineItems.find(item => item.hotelDetails || parseHotelSnapshot(item.summaryLabel))
   const hotelDetails = hotelItem?.hotelDetails ?? (hotelItem ? parseHotelSnapshot(hotelItem.summaryLabel) : null)
   if (hotelDetails) {
-    const hotelLocation = getHotelLocation(hotelDetails)
+    const hotelLocation = getHotelDetailsPlannerLocation(hotelDetails)
     return `${hotelDetails.hotelName} · ${hotelLocation} · ${hotelDetails.roomTypeName} · ${hotelDetails.checkInDate} → ${hotelDetails.checkOutDate} · ${order.totalPrice} ${order.orderCurrency}`
   }
 
@@ -119,7 +121,7 @@ function buildFlightOrderSummary(orderLineItem: OrderLineItemResponse) {
 
   const airlineCode = details?.airlineCode ?? snapshot?.airlineCode ?? ''
   return {
-    airlineName: getFlightAirlineDisplayNameByCode(airlineCode, details?.airlineName ?? snapshot?.airlineName ?? '航空公司'),
+    airlineName: getFlightDetailsPlannerAirlineDisplayNameByCode(airlineCode, details?.airlineName ?? snapshot?.airlineName ?? '航空公司'),
     flightNumber: details?.flightNumber ?? snapshot?.flightNumber ?? snapshot?.flightId ?? '',
     departureAirport: details?.departureAirport ?? snapshot?.departureAirport ?? '',
     arrivalAirport: details?.arrivalAirport ?? snapshot?.arrivalAirport ?? '',
@@ -195,7 +197,7 @@ function parseHotelSnapshot(summaryLabel: string): HotelSnapshotSummary | null {
   }
 }
 
-function getHotelLocation(hotel: HotelItemDetailsResponse | HotelSnapshotSummary) {
+function getHotelDetailsPlannerLocation(hotel: HotelItemDetailsResponse | HotelSnapshotSummary) {
   return 'hotelLocation' in hotel ? hotel.hotelLocation : (hotel as HotelItemDetailsResponse).location
 }
 

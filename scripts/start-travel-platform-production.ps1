@@ -47,6 +47,30 @@ function Start-BackgroundCommand {
   return $process
 }
 
+function Get-CommandPath {
+  param(
+    [string[]]$Candidates,
+    [string]$DisplayName
+  )
+
+  foreach ($candidate in $Candidates) {
+    if (-not $candidate) {
+      continue
+    }
+
+    $resolved = Get-Command $candidate -ErrorAction SilentlyContinue
+    if ($resolved) {
+      return $resolved.Source
+    }
+
+    if (Test-Path $candidate) {
+      return $candidate
+    }
+  }
+
+  throw "Required command '$DisplayName' was not found. Checked: $($Candidates -join ', ')"
+}
+
 function Get-ConfiguredOrigin {
   param(
     [string]$ExplicitOrigin,
@@ -96,6 +120,11 @@ $publicScheme =
 $publicFrontendOrigin = Get-ConfiguredOrigin -ExplicitOrigin $env:TRAVEL_PUBLIC_FRONTEND_ORIGIN -Scheme $publicScheme -HostName $publicHost -Port 443
 $publicBackendOrigin = Get-ConfiguredOrigin -ExplicitOrigin $env:TRAVEL_PUBLIC_BACKEND_ORIGIN -Scheme $publicScheme -HostName $publicHost -Port 443
 $backendHealthUrl = "http://127.0.0.1:$BackendPort/api/health"
+$sbtCommand = Get-CommandPath -Candidates @(
+  (Join-Path $templateRoot 'bin\sbt.cmd'),
+  'sbt',
+  'sbt.bat'
+) -DisplayName 'sbt'
 $allowedOrigins =
   if ($env:TRAVEL_ALLOWED_ORIGINS -and $env:TRAVEL_ALLOWED_ORIGINS.Trim().Length -gt 0) {
     $env:TRAVEL_ALLOWED_ORIGINS.Trim()
@@ -146,7 +175,7 @@ if (-not (Test-BackendHealthy -BackendHealthUrl $backendHealthUrl)) {
 
   Remove-Item $backendStdout, $backendStderr -Force -ErrorAction SilentlyContinue
 
-  $backendCommand = "/c cd /d ""$backendRoot"" && set ""TRAVEL_REPOSITORY_MODE=database"" && set ""TRAVEL_BACKEND_PORT=$BackendPort"" && set ""TRAVEL_DB_URL=$databaseUrl"" && set ""TRAVEL_DB_DRIVER=$databaseDriver"" && set ""TRAVEL_DB_USER=$databaseUser"" && set ""TRAVEL_DB_PASSWORD=$databasePassword"" && set ""TRAVEL_ALLOWED_ORIGINS=$allowedOrigins"" && set ""TRAVEL_ALLOW_PRIVATE_NETWORK_ORIGINS=false"" && set ""TRAVEL_PUBLIC_FRONTEND_ORIGIN=$publicFrontendOrigin"" && set ""TRAVEL_PUBLIC_BACKEND_ORIGIN=$publicBackendOrigin"" && set ""TRAVEL_SESSION_COOKIE_SECURE=true"" && set ""TRAVEL_SESSION_COOKIE_SAMESITE=lax"" && set ""TRAVEL_AVATAR_UPLOAD_ROOT=$backendRoot\uploads\avatars"" && set ""TRAVEL_CONTENT_UPLOAD_ROOT=$backendRoot\uploads\content"" && set ""TRAVEL_FRONTEND_DIST_ROOT=$distDir"" && sbt --batch ""api-gateway / runMain com.typesafe.travel.api.Main"" 1>>""$backendStdout"" 2>>""$backendStderr"""
+  $backendCommand = "/c cd /d ""$backendRoot"" && set ""TRAVEL_REPOSITORY_MODE=database"" && set ""TRAVEL_BACKEND_PORT=$BackendPort"" && set ""TRAVEL_DB_URL=$databaseUrl"" && set ""TRAVEL_DB_DRIVER=$databaseDriver"" && set ""TRAVEL_DB_USER=$databaseUser"" && set ""TRAVEL_DB_PASSWORD=$databasePassword"" && set ""TRAVEL_ALLOWED_ORIGINS=$allowedOrigins"" && set ""TRAVEL_ALLOW_PRIVATE_NETWORK_ORIGINS=false"" && set ""TRAVEL_PUBLIC_FRONTEND_ORIGIN=$publicFrontendOrigin"" && set ""TRAVEL_PUBLIC_BACKEND_ORIGIN=$publicBackendOrigin"" && set ""TRAVEL_SESSION_COOKIE_SECURE=true"" && set ""TRAVEL_SESSION_COOKIE_SAMESITE=lax"" && set ""TRAVEL_AVATAR_UPLOAD_ROOT=$backendRoot\uploads\avatars"" && set ""TRAVEL_CONTENT_UPLOAD_ROOT=$backendRoot\uploads\content"" && set ""TRAVEL_FRONTEND_DIST_ROOT=$distDir"" && call ""$sbtCommand"" --batch ""api-gateway / runMain com.typesafe.travel.api.Main"" 1>>""$backendStdout"" 2>>""$backendStderr"""
   $backendProcess = Start-BackgroundCommand -FilePath 'cmd.exe' -Arguments $backendCommand -WorkingDirectory $backendRoot
   Write-LauncherLog "backend process started pid=$($backendProcess.Id)"
 } else {

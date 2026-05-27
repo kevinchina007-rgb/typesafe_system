@@ -1,4 +1,4 @@
-﻿import { useFlightSearchStore } from '@/app/stores/flight-search-store'
+import { useFlightSearchStore } from '@/app/stores/flight-search-store'
 
 export function useFlightSearchState() {
   const searchState = useFlightSearchStore(state => state.searchState)
@@ -6,7 +6,7 @@ export function useFlightSearchState() {
   const flightResultGroups = useFlightSearchStore(state => state.flightResultGroups)
   const hasSearchedFlights = useFlightSearchStore(state => state.hasSearchedFlights)
   const setSearchState = useFlightSearchStore(state => state.setSearchState)
-  const setFlightResponses = useFlightSearchStore(state => state.setFlightResponses)
+  const setFlightPlannerResponses = useFlightSearchStore(state => state.setFlightPlannerResponses)
   const setFlightResultGroups = useFlightSearchStore(state => state.setFlightResultGroups)
   const setHasSearchedFlights = useFlightSearchStore(state => state.setHasSearchedFlights)
   const updateSearchState = useFlightSearchStore(state => state.updateSearchState)
@@ -21,7 +21,7 @@ export function useFlightSearchState() {
     flightResultGroups,
     hasSearchedFlights,
     setSearchState,
-    setFlightResponses,
+    setFlightPlannerResponses,
     setFlightResultGroups,
     setHasSearchedFlights,
     updateSearchState,

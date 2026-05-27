@@ -1,7 +1,7 @@
-package com.typesafe.travel.persistence.flight
+package com.typesafe.travel.flight.tables
 
 import cats.effect.IO
-import com.typesafe.travel.flight.domain.{FlightPlannerRow, FlightSuggestionsPlannerRequest}
+import com.typesafe.travel.flight.objects.{FlightPlannerRow, FlightSuggestionsPlannerRequest}
 
 import java.sql.Connection
 

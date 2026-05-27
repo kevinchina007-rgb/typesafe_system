@@ -17,5 +17,5 @@ export type SearchSuggestionListPlannerResponse = {
   suggestions: SearchSuggestionPlannerResponse[]
 }
 
-export const listFlightSuggestions = (payload: FlightSuggestionsPlannerRequest): Promise<SearchSuggestionListPlannerResponse> =>
+export const flightSuggestionsPlanner = (payload: FlightSuggestionsPlannerRequest): Promise<SearchSuggestionListPlannerResponse> =>
   executeJsonApiRequest('/FlightSuggestionsPlanner', 'POST', payload)

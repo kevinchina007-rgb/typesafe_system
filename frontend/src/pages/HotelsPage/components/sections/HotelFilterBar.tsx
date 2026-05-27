@@ -1,46 +1,33 @@
-import { GuestRoomSelector } from '@/pages/HotelsPage/components/controls/GuestRoomSelector'
 import { HotelPreferenceSelector } from '@/pages/HotelsPage/components/controls/HotelPreferenceSelector'
 import type { HotelPreference } from '@/app/stores/models/hotel-booking-model'
 
 type HotelFilterBarProps = {
-  roomCount: number
-  guestCount: number
   hotelPreference: HotelPreference
   nearbyPreference: string
   isBusy: boolean
   translate: (translationKey: string) => string
-  onRoomCountChange: (value: number) => void
-  onGuestCountChange: (value: number) => void
   onHotelPreferenceChange: (value: HotelPreference) => void
   onNearbyPreferenceChange: (value: string) => void
 }
 
 export function HotelFilterBar({
-  roomCount,
-  guestCount,
   hotelPreference,
   nearbyPreference,
   isBusy,
   translate,
-  onRoomCountChange,
-  onGuestCountChange,
   onHotelPreferenceChange,
   onNearbyPreferenceChange,
 }: HotelFilterBarProps) {
   return (
-    <section className="grid gap-5 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
+    <section className="grid gap-5 border border-cyan-100 bg-gradient-to-r from-white via-cyan-50 to-emerald-50 p-5 text-slate-950 shadow-sm shadow-cyan-100/50">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-bold text-slate-500">{translate('hotels.filterTitle')}</p>
+        <div className="grid gap-1">
+          <p className="text-sm font-black uppercase tracking-[0.18em] text-cyan-600">{translate('hotels.filterTitle')}</p>
+          <h3 className="m-0 text-2xl font-black text-slate-950">偏好筛选</h3>
+        </div>
+        <span className="inline-flex w-fit bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">房型 / 周边 / 品牌</span>
       </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1fr_1.2fr]">
-        <GuestRoomSelector
-          roomCount={roomCount}
-          guestCount={guestCount}
-          translate={translate}
-          onRoomCountChange={onRoomCountChange}
-          onGuestCountChange={onGuestCountChange}
-        />
+      <div className="grid gap-4">
         <HotelPreferenceSelector
           hotelPreference={hotelPreference}
           nearbyPreference={nearbyPreference}

@@ -28,12 +28,12 @@ export const flightAirlineLogoPathByCode: Record<string, string> = {
   '9C': '/images/airlines/9C.svg',
 }
 
-export function getFlightAirlineDisplayNameByCode(airlineCode: string | undefined, fallbackName = '航空公司'): string {
+export function getFlightDetailsPlannerAirlineDisplayNameByCode(airlineCode: string | undefined, fallbackName = '航空公司'): string {
   const normalizedCode = airlineCode?.trim().toUpperCase()
   return normalizedCode ? flightAirlineNameByCode[normalizedCode] ?? fallbackName : fallbackName
 }
 
-export function getFlightAirlineLogoPathByCode(airlineCode: string | undefined, fallbackPath: string | null = null): string | null {
+export function getFlightDetailsPlannerAirlineLogoPathByCode(airlineCode: string | undefined, fallbackPath: string | null = null): string | null {
   const normalizedCode = airlineCode?.trim().toUpperCase()
   return normalizedCode ? flightAirlineLogoPathByCode[normalizedCode] ?? fallbackPath : fallbackPath
 }

@@ -1,6 +1,6 @@
-import type { FlightListPlannerResponse } from '@/microservices/flight/objects/FlightListResponse'
-import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchQuery'
+import type { FlightListPlannerResponse } from '@/microservices/flight/objects/FlightListPlannerResponse'
+import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
-export const listFlights = (query: FlightSearchPlannerRequest): Promise<FlightListPlannerResponse> =>
+export const searchFlightsPlanner = (query: FlightSearchPlannerRequest): Promise<FlightListPlannerResponse> =>
   executeJsonApiRequest('/SearchFlightsPlanner', 'POST', query)

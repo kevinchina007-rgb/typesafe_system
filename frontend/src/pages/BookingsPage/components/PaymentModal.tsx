@@ -51,7 +51,7 @@ export function PaymentModal({
   }
 
   const activeOrder = order
-  const flightTravelerIds = getFlightOrderTravelerIds(order)
+  const flightTravelerIds = getFlightDetailsPlannerOrderTravelerIds(order)
   const needsTravelerSelection = isFlightOrder(order) && !isOrderPaid(order.status)
   const selectedPaymentTravelerId = needsTravelerSelection ? selectedTravelerId : flightTravelerIds[0] ?? ''
   const canConfirmPayment = !!selectedPaymentMethod && (!needsTravelerSelection || !!selectedTravelerId)
@@ -246,29 +246,44 @@ function SelectionCard({
 }
 
 function isFlightOrder(order: OrderResponse) {
-  return order.orderType.toLowerCase().includes('flight') || (order.orderLineItems ?? []).some(orderLineItem => orderLineItem.flightDetails || parseFlightSnapshot(orderLineItem.summaryLabel))
+  return order.orderType.toLowerCase().includes('flight') || (order.orderLineItems ?? []).some(orderLineItem => orderLineItem.flightDetails || hasFlightSnapshot(orderLineItem.summaryLabel))
 }
 
 function isOrderPaid(status: string) {
   return status === 'Confirmed' || status === 'Paid' || status === 'Booked'
 }
 
-function getFlightOrderTravelerIds(order: OrderResponse) {
-  const flightItem = (order.orderLineItems ?? []).find(orderLineItem => orderLineItem.flightDetails || parseFlightSnapshot(orderLineItem.summaryLabel))
+function getFlightDetailsPlannerOrderTravelerIds(order: OrderResponse) {
+  const flightItem = (order.orderLineItems ?? []).find(orderLineItem => orderLineItem.flightDetails || hasFlightSnapshot(orderLineItem.summaryLabel))
   if (!flightItem) {
     return []
   }
   return flightItem.flightDetails?.travelerIds ?? parseFlightSnapshot(flightItem.summaryLabel)?.travelerIds ?? []
 }
 
-function parseFlightSnapshot(summaryLabel: string): { travelerIds: string[] } | null {
+function hasFlightSnapshot(summaryLabel: string) {
+  const snapshot = parseFlightSnapshot(summaryLabel)
+  return !!snapshot && (!!snapshot.airlineName || !!snapshot.flightNumber || !!snapshot.flightId || !!snapshot.cabinClass || snapshot.travelerIds.length > 0)
+}
+
+function parseFlightSnapshot(summaryLabel: string): { airlineName?: string; flightNumber?: string; flightId?: string; cabinClass?: string; travelerIds: string[] } | null {
   if (!summaryLabel.trim().startsWith('{')) {
     return null
   }
 
   try {
-    const parsed = JSON.parse(summaryLabel) as { travelerIds?: unknown }
+    const parsed = JSON.parse(summaryLabel) as {
+      airlineName?: unknown
+      flightNumber?: unknown
+      flightId?: unknown
+      cabinClass?: unknown
+      travelerIds?: unknown
+    }
     return {
+      airlineName: typeof parsed.airlineName === 'string' ? parsed.airlineName : undefined,
+      flightNumber: typeof parsed.flightNumber === 'string' ? parsed.flightNumber : undefined,
+      flightId: typeof parsed.flightId === 'string' ? parsed.flightId : undefined,
+      cabinClass: typeof parsed.cabinClass === 'string' ? parsed.cabinClass : undefined,
       travelerIds: Array.isArray(parsed.travelerIds) ? parsed.travelerIds.filter((value): value is string => typeof value === 'string' && value.trim().length > 0) : [],
     }
   } catch {

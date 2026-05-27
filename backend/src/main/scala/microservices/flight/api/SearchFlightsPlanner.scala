@@ -1,8 +1,10 @@
-package com.typesafe.travel.flight.domain
+package com.typesafe.travel.flight.api
+
+import com.typesafe.travel.flight.objects.*
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
-import com.typesafe.travel.persistence.flight.SearchFlightsPlannerPlainSql
+import com.typesafe.travel.flight.tables.SearchFlightsPlannerPlainSql
 
 import java.sql.Connection
 import java.time.Instant
@@ -15,3 +17,4 @@ object SearchFlightsPlanner extends ConnectionApiPlan[FlightSearchPlannerRequest
       rows <- SearchFlightsPlannerPlainSql.searchFlights(connection, input)
       flights <- FlightPlannerResponseBuilder.buildFlightResponses(connection, rows.filter(flightRowIsOpenForBooking), Instant.now())
     yield FlightListPlannerResponse(flights)
+

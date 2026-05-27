@@ -32,13 +32,18 @@ export function HotelSearchCard({
   onSearch,
 }: HotelSearchCardProps) {
   return (
-    <section className="grid gap-6 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
-      <div className="grid gap-1">
-        <p className="text-sm font-bold text-slate-500">{translate('nav.hotels')}</p>
-        <h2 className="m-0 text-4xl font-bold leading-tight text-slate-950">{translate('hotels.searchModuleTitle')}</h2>
+    <section className="grid gap-6 border border-rose-100 bg-gradient-to-br from-white via-rose-50 to-sky-50 p-6 text-slate-950 shadow-lg shadow-sky-100/50">
+      <div className="grid gap-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="m-0 text-sm font-black uppercase tracking-[0.18em] text-sky-600">{translate('nav.hotels')}</p>
+          <span className="inline-flex w-fit bg-rose-500 px-2 py-1 text-xs font-bold text-white">目的地 + 日期</span>
+          <span className="inline-flex w-fit bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">智能筛选</span>
+        </div>
+        <h2 className="m-0 text-5xl font-black leading-tight text-slate-950">{translate('hotels.searchModuleTitle')}</h2>
+        <p className="m-0 max-w-4xl text-lg leading-8 text-slate-600">先用一组核心条件锁定入住，再展开偏好筛选和房源结果。</p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr_auto]">
+      <div className="grid gap-4 rounded-2xl border border-slate-200 bg-white/90 p-4 lg:grid-cols-[1.2fr_1fr_1fr_auto]">
         <DestinationSelector
           value={searchLocation}
           translate={translate}
@@ -55,7 +60,7 @@ export function HotelSearchCard({
         <div className="flex items-end">
           <button
             type="button"
-            className="inline-flex min-h-14 w-full items-center justify-center gap-2 bg-gradient-to-r from-amber-400 to-orange-500 px-6 py-3 text-lg font-bold text-white shadow-xl shadow-orange-200/70 transition hover:from-amber-500 hover:to-orange-600 disabled:cursor-not-allowed disabled:opacity-55"
+            className="inline-flex min-h-14 w-full items-center justify-center gap-2 bg-gradient-to-r from-fuchsia-500 via-pink-500 to-orange-500 px-6 py-3 text-lg font-black text-white shadow-xl shadow-pink-200/70 transition hover:from-fuchsia-600 hover:via-pink-600 hover:to-orange-600 disabled:cursor-not-allowed disabled:opacity-55"
             onClick={onSearch}
             disabled={isBusy}
           >

@@ -120,11 +120,11 @@ export function TourGroupsPage({
         )
       }
       onSearchFlights={async payload => {
-        const flightListResponse = await travelMvpApiClient.listFlights(payload)
+        const flightListResponse = await travelMvpApiClient.searchFlightsPlanner(payload)
         return flightListResponse.flights
       }}
       onSearchHotels={async payload => {
-        const hotelListResponse = await travelMvpApiClient.listHotels(payload)
+        const hotelListResponse = await travelMvpApiClient.searchHotelsPlanner(payload)
         return hotelListResponse.hotels
       }}
       onSearchTrains={async payload => {

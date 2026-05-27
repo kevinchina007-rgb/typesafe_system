@@ -1,7 +1,7 @@
-﻿import { AttractionAdminPanel } from '@/pages/ManagerPage/components/managers/AttractionAdminPanel'
+import { AttractionAdminPanel } from '@/pages/ManagerPage/components/managers/AttractionAdminPanel'
 import { ManagerPanel } from '@/pages/ManagerPage/components/managers/ManagerPanel'
 import { TrainAdminPanel } from '@/pages/ManagerPage/components/managers/TrainAdminPanel'
-import type { AppLanguage, AttractionAdminSessionResponse, FlightResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionAdminSessionResponse, FlightPlannerResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
 
 type BasePanelProps = {
   currentLanguage: AppLanguage
@@ -12,7 +12,7 @@ type BasePanelProps = {
 type SupplierManagerPanelSectionProps = BasePanelProps & {
   isVisible: boolean
   managerSession: ManagerSessionResponse | null
-  managedFlights: FlightResponse[]
+  managedFlights: FlightPlannerResponse[]
   managedHotels: Parameters<typeof ManagerPanel>[0]['managedHotels']
   managerTasks: ManagerTaskResponse[]
   managerRefundTasks: ManagerRefundTaskResponse[]
@@ -29,6 +29,7 @@ type SupplierManagerPanelSectionProps = BasePanelProps & {
   onSearchManagerFlights: Parameters<typeof ManagerPanel>[0]['onSearchManagerFlights']
   onLoadManagerFlightOrders: Parameters<typeof ManagerPanel>[0]['onLoadManagerFlightOrders']
   onUpdateAirlineManagerProfile: Parameters<typeof ManagerPanel>[0]['onUpdateAirlineManagerProfile']
+  onUpdateHotelManagerProfile: Parameters<typeof ManagerPanel>[0]['onUpdateHotelManagerProfile']
   onConfirmTask: Parameters<typeof ManagerPanel>[0]['onConfirmTask']
   onRejectTask: Parameters<typeof ManagerPanel>[0]['onRejectTask']
   onBatchConfirmTasks: Parameters<typeof ManagerPanel>[0]['onBatchConfirmTasks']

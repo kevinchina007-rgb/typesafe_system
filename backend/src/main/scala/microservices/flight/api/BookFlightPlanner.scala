@@ -1,8 +1,10 @@
-package com.typesafe.travel.flight.domain
+package com.typesafe.travel.flight.api
+
+import com.typesafe.travel.flight.objects.*
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
-import com.typesafe.travel.persistence.flight.BookFlightPlannerPlainSql
+import com.typesafe.travel.flight.tables.BookFlightPlannerPlainSql
 import io.circe.Json
 
 import java.sql.Connection

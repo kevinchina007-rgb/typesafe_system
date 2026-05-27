@@ -1,4 +1,4 @@
-package com.typesafe.travel.flight.domain
+package com.typesafe.travel.flight.objects
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}

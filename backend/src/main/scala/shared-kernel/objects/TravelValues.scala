@@ -72,7 +72,7 @@ object HotelLocation:
 
 final case class BedType private (value: String)
 object BedType:
-  private val supportedBedTypes = Set("SINGLE", "DOUBLE", "TWIN", "QUEEN", "KING", "FAMILY")
+  private val supportedBedTypes = Set("SINGLE", "DOUBLE", "TWIN", "QUEEN", "KING", "FAMILY", "SUITE")
 
   def create(value: String): Either[SharedValidationError, BedType] =
     val normalizedValue = value.trim.toUpperCase.replace('-', '_').replace(' ', '_')
@@ -91,4 +91,3 @@ object AirportCode:
 
   def unsafe(value: String): AirportCode =
     create(value).fold(throw _, identity)
-

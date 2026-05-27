@@ -1,11 +1,11 @@
 import type { HotelPreference, HotelQuickDatePreset } from '@/app/stores/models/hotel-booking-model'
 ﻿import { create } from 'zustand'
 
-import type { HotelResponse } from '@/lib/mvp-types/index'
+import type { HotelPlannerResponse } from '@/lib/mvp-types/index'
 import { defaultHotelSearchState } from '@/app/stores/models/hotel-booking-model'
 
 type HotelSearchStore = {
-  hotelResponses: HotelResponse[]
+  hotelResponses: HotelPlannerResponse[]
   hasSearchedHotels: boolean
   searchLocation: string
   searchCheckInDate: string
@@ -15,7 +15,7 @@ type HotelSearchStore = {
   hotelPreference: HotelPreference
   nearbyPreference: string
   selectedQuickDatePreset: HotelQuickDatePreset | null
-  setHotelResponses: (hotelResponses: HotelResponse[]) => void
+  setHotelPlannerResponses: (hotelResponses: HotelPlannerResponse[]) => void
   setHasSearchedHotels: (hasSearchedHotels: boolean) => void
   setSearchLocation: (searchLocation: string) => void
   setSearchCheckInDate: (searchCheckInDate: string) => void
@@ -38,7 +38,7 @@ export const useHotelSearchStore = create<HotelSearchStore>(set => ({
   hotelPreference: defaultHotelSearchState.hotelPreference,
   nearbyPreference: defaultHotelSearchState.nearbyPreference,
   selectedQuickDatePreset: defaultHotelSearchState.selectedQuickDatePreset,
-  setHotelResponses: hotelResponses => set({ hotelResponses }),
+  setHotelPlannerResponses: hotelResponses => set({ hotelResponses }),
   setHasSearchedHotels: hasSearchedHotels => set({ hasSearchedHotels }),
   setSearchLocation: searchLocation => set({ searchLocation }),
   setSearchCheckInDate: searchCheckInDate => set({ searchCheckInDate }),
@@ -50,7 +50,7 @@ export const useHotelSearchStore = create<HotelSearchStore>(set => ({
   setSelectedQuickDatePreset: selectedQuickDatePreset => set({ selectedQuickDatePreset }),
 }))
 
-export function getHotelSearchSnap() {
+export function getHotelDetailsPlannerSearchSnap() {
   const {
     hotelResponses,
     hasSearchedHotels,

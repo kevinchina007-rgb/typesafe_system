@@ -107,7 +107,7 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
     set({ isLoading: true })
     try {
       const manager = getManagerSnap().signedInManagerSession
-      const response = await travelMvpApiClient.listManagerFeedbackThreads(manager?.managerType)
+      const response = await travelMvpApiClient.listManagerFeedbackThreads(manager?.managerType, manager?.scopeId)
       const threads = sortThreads(response.threads)
       set({ managerThreads: threads, isLoading: false })
       return threads

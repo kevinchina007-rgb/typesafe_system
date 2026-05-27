@@ -1,4 +1,4 @@
-import type { TranslationDictionary } from '@/lib/i18n/types'
+﻿import type { TranslationDictionary } from '@/lib/i18n/types'
 
 export const chineseTranslations: TranslationDictionary = {
   'app.eyebrow': '旅行工作台',

@@ -26,7 +26,7 @@ export function FlightsPanel({
     flightResponses,
     flightResultGroups,
     hasSearchedFlights,
-    setFlightResponses,
+    setFlightPlannerResponses,
     setFlightResultGroups,
     setHasSearchedFlights,
     updateSearchState,
@@ -66,15 +66,15 @@ export function FlightsPanel({
       lastReportedErrorKey.current = null
       lastSubmittedSearchKey.current = searchKey
       setFlightResultGroups(nextResultGroups)
-      setFlightResponses(nextFlights)
+      setFlightPlannerResponses(nextFlights)
       setHasSearchedFlights(nextResultGroups.length > 0)
     } catch {
       setFlightResultGroups([])
-      setFlightResponses([])
+      setFlightPlannerResponses([])
       setHasSearchedFlights(false)
       reportErrorOnce('航班接口摔了一跤：请先确认后端已重启，并且新的航班演示数据迁移已经跑完。')
     }
-  }, [onSearchFlights, reportErrorOnce, searchKey, searchState, setFlightResponses, setFlightResultGroups, setHasSearchedFlights])
+  }, [onSearchFlights, reportErrorOnce, searchKey, searchState, setFlightPlannerResponses, setFlightResultGroups, setHasSearchedFlights])
 
   useEffect(() => {
     if (!hasSearchedFlights || lastSubmittedSearchKey.current === searchKey) {

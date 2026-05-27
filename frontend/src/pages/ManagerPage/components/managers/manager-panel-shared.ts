@@ -1,4 +1,4 @@
-﻿import type { AppLanguage, FlightResponse, HotelResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, ManagerType } from '@/lib/mvp-types/index'
+import type { AppLanguage, FlightPlannerResponse, HotelPlannerResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, ManagerType } from '@/lib/mvp-types/index'
 import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
 
 import type { ManagerFlightOrderResponse } from '@/lib/mvp-types/index'
@@ -23,8 +23,8 @@ export type ManagerPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
   managerSession: ManagerSessionResponse | null
-  managedFlights: FlightResponse[]
-  managedHotels: HotelResponse[]
+  managedFlights: FlightPlannerResponse[]
+  managedHotels: HotelPlannerResponse[]
   managerTasks: ManagerTaskResponse[]
   managerRefundTasks: ManagerRefundTaskResponse[]
   initialAirlineSection?: AirlineWorkspaceSection
@@ -87,6 +87,13 @@ export type ManagerPanelProps = {
     airlineName: string
     airlineCode: string
     logoAssetPath?: string | null
+  }) => Promise<void>
+  onUpdateHotelManagerProfile: (payload: {
+    managerId: string
+    displayName: string
+    email: string
+    hotelName: string
+    hotelLocation: string
   }) => Promise<void>
   onConfirmTask: (payload: { orderItemId: string; note: string }) => Promise<void>
   onRejectTask: (payload: { orderItemId: string; reason: string }) => Promise<void>

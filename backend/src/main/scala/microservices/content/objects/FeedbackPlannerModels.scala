@@ -3,7 +3,7 @@ package com.typesafe.travel.content.domain
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
-final case class ListFeedbackThreadsPlannerRequest(userId: Option[String], managerType: Option[String], channel: Option[String])
+final case class ListFeedbackThreadsPlannerRequest(userId: Option[String], managerType: Option[String], scopeId: Option[String], channel: Option[String])
 object ListFeedbackThreadsPlannerRequest:
   given sourceEncoder: Encoder[ListFeedbackThreadsPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[ListFeedbackThreadsPlannerRequest] = deriveDecoder

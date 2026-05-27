@@ -1,4 +1,4 @@
-package com.typesafe.travel.hotel.domain
+package com.typesafe.travel.hotel.objects
 
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
@@ -7,6 +7,8 @@ final case class HotelSuggestionRequest(q: String)
 object HotelSuggestionRequest:
   given sourceEncoder: Encoder[HotelSuggestionRequest] = deriveEncoder
   given sourceDecoder: Decoder[HotelSuggestionRequest] = deriveDecoder
+
+type HotelSuggestionPlannerRequest = HotelSuggestionRequest
 
 final case class HotelSearchRequest(
     location: Option[String],
@@ -17,6 +19,8 @@ object HotelSearchRequest:
   given sourceEncoder: Encoder[HotelSearchRequest] = deriveEncoder
   given sourceDecoder: Decoder[HotelSearchRequest] = deriveDecoder
 
+type HotelSearchPlannerRequest = HotelSearchRequest
+
 final case class HotelDetailsRequest(
     hotelId: String,
     checkInDate: Option[String],
@@ -25,6 +29,8 @@ final case class HotelDetailsRequest(
 object HotelDetailsRequest:
   given sourceEncoder: Encoder[HotelDetailsRequest] = deriveEncoder
   given sourceDecoder: Decoder[HotelDetailsRequest] = deriveDecoder
+
+type HotelDetailsPlannerRequest = HotelDetailsRequest
 
 final case class BookHotelPlannerRequest(userId: String, roomTypeId: String, guestTravelerIds: List[String], checkInDate: String, checkOutDate: String, roomCount: Int)
 object BookHotelPlannerRequest:

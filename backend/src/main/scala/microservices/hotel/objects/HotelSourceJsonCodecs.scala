@@ -1,4 +1,4 @@
-package com.typesafe.travel.hotel.domain
+package com.typesafe.travel.hotel.objects
 
 import com.typesafe.travel.shared.kernel.*
 import io.circe.{Decoder, Encoder}
@@ -6,7 +6,7 @@ import io.circe.{Decoder, Encoder}
 import java.time.{Instant, LocalDate}
 import scala.util.Try
 
-private[domain] object HotelSourceJsonCodecs:
+private[objects] object HotelSourceJsonCodecs:
   given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   given Decoder[Instant] = Decoder.decodeString.emap(value => Try(Instant.parse(value)).toEither.left.map(_.getMessage))
   given Encoder[LocalDate] = Encoder.encodeString.contramap(_.toString)

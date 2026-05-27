@@ -65,12 +65,12 @@ export function formatFlightRouteCity(value: string): string {
   return option?.cityName ?? value
 }
 
-export function getFlightCityAirportCodes(cityOrAirport: string): string[] {
+export function getFlightDetailsPlannerCityAirportCodes(cityOrAirport: string): string[] {
   const cityName = formatFlightRouteCity(cityOrAirport)
   return flightCities.find(city => city.cityName === cityName)?.airports.map(airport => airport.airportCode) ?? []
 }
 
-export function getFlightCityByAirportCode(airportCode: string): string {
+export function getFlightDetailsPlannerCityByAirportCode(airportCode: string): string {
   return cityByAirportCode.get(airportCode.toUpperCase()) ?? airportCode
 }
 

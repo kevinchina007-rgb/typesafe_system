@@ -1,6 +1,6 @@
-﻿import { useEffect } from 'react'
+import { useEffect } from 'react'
 
-import type { AppLanguage, AttractionResponse, FlightResponse, GroupPlanItemResponse, GroupPlanOptionResponse, GroupSelectionOrderProjectionResponse, GroupPlanSelectionResponse, HotelResponse, TourGroupMembershipResponse, TrainResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, GroupPlanOptionResponse, GroupSelectionOrderProjectionResponse, GroupPlanSelectionResponse, HotelPlannerResponse, TourGroupMembershipResponse, TrainResponse } from '@/lib/mvp-types/index'
 import { TourGroupPlanComposer } from '@/pages/TourGroupsPage/components/TourGroupPlanComposer'
 import { TourGroupPlanSection } from '@/pages/TourGroupsPage/components/TourGroupPlanSection'
 import { TourGroupSelectionList } from '@/pages/TourGroupsPage/components/TourGroupSelectionList'
@@ -24,8 +24,8 @@ type TourGroupOrganizerWorkspaceProps = {
     sequenceNo: number
   }) => Promise<GroupPlanItemResponse | null>
   onSelectPlanItem: (planItem: GroupPlanItemResponse) => void
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelResponse[]>
+  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
+  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
   onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onCreateOption: (

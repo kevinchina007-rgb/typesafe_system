@@ -1,4 +1,4 @@
-export type BookHotelRequest = {
+export type BookHotelPlannerRequest = {
   userId: string
   roomTypeId: string
   guestTravelerIds: string[]
@@ -7,8 +7,9 @@ export type BookHotelRequest = {
   roomCount: number
 }
 
-export const bookHotelRequestFromJson = (json: string): BookHotelRequest =>
-  JSON.parse(json) as BookHotelRequest
 
-export const bookHotelRequestToJson = (value: BookHotelRequest): string =>
+export const bookHotelRequestFromJson = (json: string): BookHotelPlannerRequest =>
+  JSON.parse(json) as BookHotelPlannerRequest
+
+export const bookHotelRequestToJson = (value: BookHotelPlannerRequest): string =>
   JSON.stringify(value)

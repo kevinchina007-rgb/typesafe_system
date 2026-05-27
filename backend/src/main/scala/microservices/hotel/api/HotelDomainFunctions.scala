@@ -1,4 +1,6 @@
-package com.typesafe.travel.hotel.domain
+package com.typesafe.travel.hotel.api
+
+import com.typesafe.travel.hotel.objects.*
 
 import cats.syntax.all.*
 import com.typesafe.travel.shared.kernel.*

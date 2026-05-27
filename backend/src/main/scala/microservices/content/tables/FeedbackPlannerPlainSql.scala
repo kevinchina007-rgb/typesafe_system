@@ -13,9 +13,14 @@ import java.time.Instant
 final case class FeedbackOrderCancellationSummary(
     orderId: String,
     buyerUserId: String,
+    orderType: String,
+    itemKind: String,
     orderItemId: Option[String],
     airlineName: Option[String],
     airlineCode: Option[String],
+    hotelId: Option[String],
+    hotelName: Option[String],
+    hotelLocation: Option[String],
     orderTitle: Option[String],
     requestedRefundAmount: Option[BigDecimal]
 )
@@ -23,11 +28,11 @@ final case class FeedbackOrderCancellationSummary(
 object FeedbackPlannerPlainSql:
   private val selectThreadSql =
     """
-      select thread_id, kind, manager_type, owner_user_id, owner_user_display_name,
-             title, subtitle, resource_type, resource_summary_title, order_id, order_item_id,
-             review_id, related_thread_id, unread_by_user, unread_by_manager, unread_by_site_admin,
-             created_at, updated_at
-      from feedback_threads
+      select ft.thread_id, ft.kind, ft.manager_type, ft.owner_user_id, ft.owner_user_display_name,
+             ft.title, ft.subtitle, ft.resource_type, ft.resource_summary_title, ft.order_id, ft.order_item_id,
+             ft.review_id, ft.related_thread_id, ft.unread_by_user, ft.unread_by_manager, ft.unread_by_site_admin,
+             ft.created_at, ft.updated_at
+      from feedback_threads ft
     """
 
   def listAll(connection: Connection): IO[List[FeedbackThread]] =
@@ -40,10 +45,29 @@ object FeedbackPlannerPlainSql:
       queryThreads(connection, selectThreadSql + " where owner_user_id = ? order by updated_at desc", List(userId))
     }
 
-  def listServiceReviewsByManagerType(connection: Connection, managerType: String): IO[List[FeedbackThread]] =
-    IO.blocking {
-      queryThreads(connection, selectThreadSql + " where kind = ? and manager_type = ? order by updated_at desc", List(FeedbackThreadKind.ServiceReview.toString, managerType))
-    }
+  def listServiceReviewsByManagerType(connection: Connection, managerType: String, scopeId: Option[String]): IO[List[FeedbackThread]] =
+    scopeId.map(_.trim).filter(_.nonEmpty) match
+      case Some(scope) if FeedbackManagerType.fromText(managerType) == FeedbackManagerType.Hotel ||
+        FeedbackManagerType.fromText(managerType) == FeedbackManagerType.Airline ||
+        FeedbackManagerType.fromText(managerType) == FeedbackManagerType.Train ||
+        FeedbackManagerType.fromText(managerType) == FeedbackManagerType.Attraction =>
+        val scopeField = managerScopeFieldFor(FeedbackManagerType.fromText(managerType)).getOrElse("hotelId")
+        IO.blocking {
+          queryThreads(
+            connection,
+            selectThreadSql +
+              s"""
+                 join order_line_items li on li.order_id = ft.order_id and li.order_item_id = ft.order_item_id
+                 where ft.kind = ? and ft.manager_type = ? and li.snapshot_json::jsonb ->> '$scopeField' = ?
+                 order by ft.updated_at desc
+               """,
+            List(FeedbackThreadKind.ServiceReview.toString, FeedbackManagerType.fromText(managerType).toString, scope)
+          )
+        }
+      case _ =>
+        IO.blocking {
+          queryThreads(connection, selectThreadSql + " where ft.kind = ? and ft.manager_type = ? order by ft.updated_at desc", List(FeedbackThreadKind.ServiceReview.toString, managerType))
+        }
 
   def listByKind(connection: Connection, kind: FeedbackThreadKind): IO[List[FeedbackThread]] =
     IO.blocking {
@@ -52,20 +76,29 @@ object FeedbackPlannerPlainSql:
 
   def findByReviewId(connection: Connection, reviewId: ReviewId): IO[Option[FeedbackThread]] =
     IO.blocking {
-      queryThreads(connection, selectThreadSql + " where review_id = ? order by updated_at desc", List(reviewId.value)).headOption
+      queryThreads(connection, selectThreadSql + " where ft.review_id = ? order by ft.updated_at desc", List(reviewId.value)).headOption
     }
 
   def findByThreadId(connection: Connection, threadId: SupportTicketId): IO[Option[FeedbackThread]] =
     IO.blocking {
-      queryThreads(connection, selectThreadSql + " where thread_id = ?", List(threadId.value)).headOption
+      queryThreads(connection, selectThreadSql + " where ft.thread_id = ?", List(threadId.value)).headOption
     }
 
   def findByOwnerAndResource(connection: Connection, userId: String, resourceType: String, resourceSummaryTitle: String): IO[Option[FeedbackThread]] =
     IO.blocking {
       queryThreads(
         connection,
-        selectThreadSql + " where owner_user_id = ? and resource_type = ? and resource_summary_title = ? order by updated_at desc",
+        selectThreadSql + " where ft.owner_user_id = ? and ft.resource_type = ? and ft.resource_summary_title = ? order by ft.updated_at desc",
         List(userId, resourceType, resourceSummaryTitle)
+      ).headOption
+    }
+
+  def findByOrderId(connection: Connection, orderId: String): IO[Option[FeedbackThread]] =
+    IO.blocking {
+      queryThreads(
+        connection,
+        selectThreadSql + " where ft.order_id = ? order by ft.updated_at desc",
+        List(orderId)
       ).headOption
     }
 
@@ -176,10 +209,14 @@ object FeedbackPlannerPlainSql:
       PlainSqlSupport.withStatement(
         connection,
         """
-          select o.order_id, o.buyer_user_id, o.remaining_refundable_amount,
-                 li.order_item_id, li.snapshot_json, li.item_kind
+          select o.order_id, o.buyer_user_id, o.order_type, o.remaining_refundable_amount,
+                 li.order_item_id, li.snapshot_json, li.item_kind, li.room_type_id,
+                 rt.hotel_id as joined_hotel_id, rt.name as joined_room_type_name,
+                 h.name as joined_hotel_name, h.location as joined_hotel_location
           from orders o
           left join order_line_items li on li.order_id = o.order_id
+          left join hotel_room_types rt on rt.room_type_id = li.room_type_id
+          left join hotels h on h.hotel_id = rt.hotel_id
           where o.order_id = ?
           order by li.sort_index
           limit 1
@@ -189,13 +226,22 @@ object FeedbackPlannerPlainSql:
         PlainSqlSupport.queryOptional(statement) { resultSet =>
           val snapshotJson = Option(resultSet.getString("snapshot_json"))
           val snapshotTitle = snapshotJson.flatMap(extractOrderTitle)
+          val hotelDetails =
+            snapshotJson.flatMap(extractHotelDetails).orElse(extractJoinedHotelDetails(resultSet))
           FeedbackOrderCancellationSummary(
             orderId = resultSet.getString("order_id"),
             buyerUserId = resultSet.getString("buyer_user_id"),
+            orderType = resultSet.getString("order_type"),
+            itemKind = resultSet.getString("item_kind"),
             orderItemId = Option(resultSet.getString("order_item_id")),
             airlineName = snapshotJson.flatMap(extractStringField(_, "airlineName")),
             airlineCode = snapshotJson.flatMap(extractStringField(_, "airlineCode")),
-            orderTitle = snapshotTitle.orElse(Option(resultSet.getString("item_kind"))),
+            hotelId = hotelDetails.flatMap(_._1),
+            hotelName = hotelDetails.flatMap(_._2),
+            hotelLocation = hotelDetails.flatMap(_._3),
+            orderTitle = snapshotTitle
+              .orElse(Option(resultSet.getString("joined_hotel_name")).map(_.trim).filter(_.nonEmpty))
+              .orElse(Option(resultSet.getString("item_kind"))),
             requestedRefundAmount = Option(resultSet.getBigDecimal("remaining_refundable_amount")).map(BigDecimal.apply)
           )
         }
@@ -327,6 +373,31 @@ object FeedbackPlannerPlainSql:
         .orElse(cursor.get[String]("trainNumber").toOption)
         .orElse(cursor.get[String]("attractionName").toOption)
     }
+
+  private def extractHotelDetails(snapshotJson: String): Option[(Option[String], Option[String], Option[String])] =
+    decode[io.circe.Json](snapshotJson).toOption.map { json =>
+      val cursor = json.hcursor
+      (
+        cursor.get[String]("hotelId").toOption.filter(_.trim.nonEmpty),
+        cursor.get[String]("hotelName").toOption.filter(_.trim.nonEmpty),
+        cursor.get[String]("hotelLocation").toOption.orElse(cursor.get[String]("location").toOption).filter(_.trim.nonEmpty)
+      )
+    }.filter(details => details._1.isDefined || details._2.isDefined || details._3.isDefined)
+
+  private def extractJoinedHotelDetails(resultSet: ResultSet): Option[(Option[String], Option[String], Option[String])] =
+    val hotelId = Option(resultSet.getString("joined_hotel_id")).map(_.trim).filter(_.nonEmpty)
+    val hotelName = Option(resultSet.getString("joined_hotel_name")).map(_.trim).filter(_.nonEmpty)
+    val hotelLocation = Option(resultSet.getString("joined_hotel_location")).map(_.trim).filter(_.nonEmpty)
+    if hotelId.isDefined || hotelName.isDefined || hotelLocation.isDefined then Some((hotelId, hotelName, hotelLocation))
+    else None
+
+  private def managerScopeFieldFor(managerType: FeedbackManagerType): Option[String] =
+    managerType match
+      case FeedbackManagerType.Hotel      => Some("hotelId")
+      case FeedbackManagerType.Airline    => Some("airlineId")
+      case FeedbackManagerType.Train      => Some("trainId")
+      case FeedbackManagerType.Attraction => Some("managerId")
+      case _                              => None
 
   private def extractStringField(snapshotJson: String, fieldName: String): Option[String] =
     decode[io.circe.Json](snapshotJson).toOption.flatMap(_.hcursor.get[String](fieldName).toOption).filter(_.trim.nonEmpty)

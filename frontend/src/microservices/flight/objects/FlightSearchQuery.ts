@@ -4,7 +4,6 @@ export type FlightSearchPlannerRequest = {
   date?: string
 }
 
-export type FlightSearchQuery = FlightSearchPlannerRequest
 
 export const flightSearchQueryFromJson = (json: string): FlightSearchPlannerRequest =>
   JSON.parse(json) as FlightSearchPlannerRequest

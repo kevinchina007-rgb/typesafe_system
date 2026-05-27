@@ -35,8 +35,8 @@ export const listMyFeedbackThreads = (userId?: string): Promise<FeedbackThreadLi
     executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId, managerType: null, channel: null })
       .then(response => ({ threads: response.threads.map(flattenThread) }))
 
-export const listManagerFeedbackThreads = (managerType?: string): Promise<FeedbackThreadListResponse> =>
-    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId: null, managerType, channel: null })
+export const listManagerFeedbackThreads = (managerType?: string, scopeId?: string): Promise<FeedbackThreadListResponse> =>
+    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId: null, managerType, scopeId, channel: null })
       .then(response => ({ threads: response.threads.map(flattenThread) }))
 
 export const listSiteAdminFeedbackThreads = (channel: FeedbackSiteAdminChannel): Promise<FeedbackThreadListResponse> =>

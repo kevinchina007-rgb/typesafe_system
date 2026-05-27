@@ -1,14 +1,15 @@
-﻿import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { ManagerCenterSectionKey } from '@/pages/ManagerPage/sections/ManagerCenterSections'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { AdvertisementSubmissionWorkspace } from '@/pages/ManagerPage/components/advertising/AdvertisementSubmissionWorkspace'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { AppLanguage, AppViewKey, AttractionAdminSessionResponse, CurrentManagerSessionResponse, FlightResponse, HotelResponse, ManagerFlightOrderResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AppViewKey, AttractionAdminSessionResponse, CurrentManagerSessionResponse, FlightPlannerResponse, HotelPlannerResponse, ManagerFlightOrderResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse, UserResponse } from '@/lib/mvp-types/index'
 import { getPasswordValidationMessage } from '@/pages/shared/auth/passwordValidation'
 import { SiteAdminPanel, SupplierFeedbackSection } from '@/pages/ManagerPage/sections/ManagerCenterSections'
 import { AttractionManagerPanelSection, SupplierManagerPanelSection, TrainManagerPanelSection } from '@/pages/ManagerPage/sections/ManagerPagePanels'
+import { HotelProfileSection } from '@/pages/ManagerPage/components/managers/manager-panel-workspace'
 import { toLegacyManagerSession, toManagerTypeKey } from '@/pages/ManagerPage/models/managerPageSession'
 
 type ManagerPageProps = {
@@ -452,8 +453,8 @@ export function ManagerPage({
   const [selectedEntryType, setSelectedEntryType] = useState<LoginManagerType | null>(null)
   const [selectedEntryAuthMode, setSelectedEntryAuthMode] = useState<ManagerAuthMode>('register')
   const [currentSupplierManagerSession, setCurrentSupplierManagerSession] = useState<ManagerSessionResponse | null>(null)
-  const [managedFlightResponses, setManagedFlightResponses] = useState<FlightResponse[]>([])
-  const [managedHotelResponses, setManagedHotelResponses] = useState<HotelResponse[]>([])
+  const [managedFlightPlannerResponses, setManagedFlightPlannerResponses] = useState<FlightPlannerResponse[]>([])
+  const [managedHotelPlannerResponses, setManagedHotelPlannerResponses] = useState<HotelPlannerResponse[]>([])
   const [currentTrainAdminSession, setCurrentTrainAdminSession] = useState<TrainAdminSessionResponse | null>(null)
   const [currentAttractionAdminSession, setCurrentAttractionAdminSession] = useState<AttractionAdminSessionResponse | null>(null)
   const [managerTaskResponses, setManagerTaskResponses] = useState<ManagerTaskResponse[]>([])
@@ -505,7 +506,7 @@ export function ManagerPage({
     } = {},
   ) {
     const flightListResponse = await travelMvpApiClient.listManagerFlights(managerId, filters)
-    setManagedFlightResponses(flightListResponse.flights)
+    setManagedFlightPlannerResponses(flightListResponse.flights)
   }
 
   async function loadManagerFlightOrders(flightId: string): Promise<ManagerFlightOrderResponse[]> {
@@ -518,7 +519,7 @@ export function ManagerPage({
 
   async function reloadManagedHotels(managerId: string) {
     const hotelListResponse = await travelMvpApiClient.listManagedHotels(managerId)
-    setManagedHotelResponses(hotelListResponse.hotels)
+    setManagedHotelPlannerResponses(hotelListResponse.hotels)
   }
 
   async function reloadManagedTrains(managerId: string, baseSession?: CurrentManagerSessionResponse | null) {
@@ -560,8 +561,8 @@ export function ManagerPage({
         setCurrentSupplierManagerSession(null)
         setCurrentTrainAdminSession(null)
         setCurrentAttractionAdminSession(null)
-        setManagedFlightResponses([])
-        setManagedHotelResponses([])
+        setManagedFlightPlannerResponses([])
+        setManagedHotelPlannerResponses([])
         setManagerTaskResponses([])
         setManagerRefundTaskResponses([])
         return
@@ -586,10 +587,10 @@ export function ManagerPage({
             : reloadManagerRefundTasks(legacySession),
           managerType === 'airline'
             ? reloadManagedFlights(currentManagerSession.managerId)
-            : Promise.resolve(setManagedFlightResponses([])),
+            : Promise.resolve(setManagedFlightPlannerResponses([])),
           managerType === 'hotel'
             ? reloadManagedHotels(currentManagerSession.managerId)
-            : Promise.resolve(setManagedHotelResponses([])),
+            : Promise.resolve(setManagedHotelPlannerResponses([])),
           managerType === 'attraction'
             ? reloadManagedAttractions(currentManagerSession.managerId, currentManagerSession)
             : Promise.resolve(),
@@ -597,8 +598,8 @@ export function ManagerPage({
       } else if (managerType === 'train') {
         setCurrentSupplierManagerSession(null)
         setCurrentAttractionAdminSession(null)
-        setManagedFlightResponses([])
-        setManagedHotelResponses([])
+        setManagedFlightPlannerResponses([])
+        setManagedHotelPlannerResponses([])
         setManagerTaskResponses([])
         setManagerRefundTaskResponses([])
         await reloadManagedTrains(currentManagerSession.managerId, currentManagerSession)
@@ -606,8 +607,8 @@ export function ManagerPage({
         setCurrentSupplierManagerSession(null)
         setCurrentTrainAdminSession(null)
         setCurrentAttractionAdminSession(null)
-        setManagedFlightResponses([])
-        setManagedHotelResponses([])
+        setManagedFlightPlannerResponses([])
+        setManagedHotelPlannerResponses([])
         setManagerTaskResponses([])
         setManagerRefundTaskResponses([])
       }
@@ -622,8 +623,8 @@ export function ManagerPage({
     setCurrentSupplierManagerSession(null)
     setCurrentTrainAdminSession(null)
     setCurrentAttractionAdminSession(null)
-    setManagedFlightResponses([])
-    setManagedHotelResponses([])
+    setManagedFlightPlannerResponses([])
+    setManagedHotelPlannerResponses([])
     setManagerTaskResponses([])
     setManagerRefundTaskResponses([])
     onNavigate('manager')
@@ -700,8 +701,8 @@ export function ManagerPage({
       return []
     }
 
-    if (managedHotelResponses.length > 0) {
-      return managedHotelResponses.map(hotel => ({
+    if (managedHotelPlannerResponses.length > 0) {
+      return managedHotelPlannerResponses.map(hotel => ({
         value: hotel.hotelId,
         label: `${hotel.hotelName} · ${hotel.location}`,
       }))
@@ -717,7 +718,7 @@ export function ManagerPage({
         label: currentManagerSession.displayName,
       },
     ]
-  }, [activeManagerType, currentManagerSession?.scopeId, currentManagerSession?.displayName, managedHotelResponses])
+  }, [activeManagerType, currentManagerSession?.scopeId, currentManagerSession?.displayName, managedHotelPlannerResponses])
 
   const attractionAdvertisementOptions = useMemo(
     () =>
@@ -730,9 +731,13 @@ export function ManagerPage({
 
   const isSiteAdmin = activeManagerType === 'siteAdmin'
   const canSubmitAdvertisements = activeManagerType === 'hotel' || activeManagerType === 'attraction'
-  const shouldShowWorkspace = !isSiteAdmin && (activeSection === 'workspace' || (activeManagerType === 'airline' && activeSection === 'feedback'))
+  const shouldShowWorkspace =
+    !isSiteAdmin &&
+    (activeSection === 'workspace' || (activeManagerType === 'airline' && activeSection === 'feedback')) &&
+    !(activeManagerType === 'hotel' && currentViewKey === 'managerProfile')
   const shouldShowFeedback = !isSiteAdmin && activeSection === 'feedback' && activeManagerType !== 'airline'
   const shouldShowAdvertising = !isSiteAdmin && activeSection === 'advertising' && canSubmitAdvertisements
+  const shouldShowHotelProfile = !isSiteAdmin && currentViewKey === 'managerProfile' && activeManagerType === 'hotel'
   const shouldShowSiteAdminPanel = isSiteAdmin && (activeSection === 'blogAudit' || activeSection === 'advertisingReview')
 
   if (!currentManagerSession) {
@@ -813,8 +818,8 @@ export function ManagerPage({
         currentLanguage={currentLanguage}
         isBusy={isBusy}
         managerSession={currentSupplierManagerSession}
-        managedFlights={managedFlightResponses}
-        managedHotels={managedHotelResponses}
+        managedFlights={managedFlightPlannerResponses}
+        managedHotels={managedHotelPlannerResponses}
         managerTasks={managerTaskResponses}
         managerRefundTasks={managerRefundTaskResponses}
         initialAirlineSection={toInitialAirlineSection(currentViewKey)}
@@ -913,6 +918,25 @@ export function ManagerPage({
             await reloadManagedFlights(currentSupplierManagerSession.managerId)
           }, '保存资料', translate('notice.actionSuccess'))
         }}
+        onUpdateHotelManagerProfile={async payload => {
+          if (!currentSupplierManagerSession) {
+            throw new Error(translate('error.managerNotFound'))
+          }
+          await runPageAction(async () => {
+            const nextSession = await travelMvpApiClient.updateHotelManagerProfile(payload)
+            setCurrentSupplierManagerSession(nextSession)
+            if (currentManagerSession) {
+              onManagerSessionChange({
+                ...currentManagerSession,
+                email: nextSession.email,
+                displayName: nextSession.displayName,
+                status: nextSession.status,
+                scopeId: nextSession.scopeId,
+              })
+            }
+            await reloadManagedHotels(currentSupplierManagerSession.managerId)
+          }, '保存资料', translate('notice.actionSuccess'))
+        }}
         onConfirmTask={async payload => {
           if (!currentSupplierManagerSession) {
             throw new Error(translate('error.managerNotFound'))
@@ -999,6 +1023,39 @@ export function ManagerPage({
           }, translate('manager.logout'), translate('notice.logoutSuccess'))
         }}
       />
+
+      {shouldShowHotelProfile && currentSupplierManagerSession ? (
+        <HotelProfileSection
+          currentLanguage={currentLanguage}
+          managerSession={currentSupplierManagerSession}
+          managedHotels={managedHotelPlannerResponses}
+          translate={translate}
+          onUpdateHotelManagerProfile={async payload => {
+            if (!currentSupplierManagerSession) {
+              throw new Error(translate('error.managerNotFound'))
+            }
+            await runPageAction(async () => {
+              const nextSession = await travelMvpApiClient.updateHotelManagerProfile(payload)
+              setCurrentSupplierManagerSession(nextSession)
+              if (currentManagerSession) {
+                onManagerSessionChange({
+                  ...currentManagerSession,
+                  email: nextSession.email,
+                  displayName: nextSession.displayName,
+                  status: nextSession.status,
+                  scopeId: nextSession.scopeId,
+                })
+              }
+              await reloadManagedHotels(currentSupplierManagerSession.managerId)
+            }, '保存资料', translate('notice.actionSuccess'))
+          }}
+          onLogoutManager={() => {
+            void runPageAction(async () => {
+              await logoutManager()
+            }, translate('manager.logout'), translate('notice.logoutSuccess'))
+          }}
+        />
+      ) : null}
 
       <TrainManagerPanelSection
         isVisible={shouldShowWorkspace && activeManagerType === 'train'}
@@ -1134,7 +1191,7 @@ export function ManagerPage({
         <SupplierFeedbackSection
           title={translate('manager.feedback.title')}
           currentManagerSession={currentManagerSession}
-          managedFlightResponses={managedFlightResponses}
+          managedFlightPlannerResponses={managedFlightPlannerResponses}
           managerTaskResponses={managerTaskResponses}
           managerRefundTaskResponses={managerRefundTaskResponses}
           currentTrainAdminSession={currentTrainAdminSession}
@@ -1168,4 +1225,3 @@ export function ManagerPage({
     </>
   )
 }
-

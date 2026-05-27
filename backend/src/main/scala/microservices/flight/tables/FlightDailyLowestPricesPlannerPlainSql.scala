@@ -1,7 +1,7 @@
-package com.typesafe.travel.persistence.flight
+package com.typesafe.travel.flight.tables
 
 import cats.effect.IO
-import com.typesafe.travel.flight.domain.{FlightDailyLowestPricePlannerRow, FlightDailyLowestPricesPlannerRequest}
+import com.typesafe.travel.flight.objects.{FlightDailyLowestPricePlannerRow, FlightDailyLowestPricesPlannerRequest}
 
 import java.sql.Connection
 import java.time.LocalDate

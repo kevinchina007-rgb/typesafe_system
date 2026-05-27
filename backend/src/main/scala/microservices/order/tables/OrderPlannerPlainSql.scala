@@ -195,17 +195,31 @@ object OrderPlannerPlainSql:
     )
 
   private def readLineItems(connection: Connection, orderId: String): List[OrderLineItemPlannerResponse] =
-    PlainSqlSupport.withStatement(connection, "select order_item_id, item_kind, item_status, supplier_review_status, booked_amount, booked_currency, snapshot_json from order_line_items where order_id = ? order by sort_index") { statement =>
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select li.order_item_id, li.item_kind, li.item_status, li.supplier_review_status, li.booked_amount, li.booked_currency, li.snapshot_json,
+               li.room_type_id, rt.name as room_type_name, rt.hotel_id, h.name as hotel_name, h.location as hotel_location
+        from order_line_items li
+        left join hotel_room_types rt on rt.room_type_id = li.room_type_id
+        left join hotels h on h.hotel_id = rt.hotel_id
+        where li.order_id = ?
+        order by li.sort_index
+      """
+    ) { statement =>
       statement.setString(1, orderId)
       PlainSqlSupport.queryList(statement) { resultSet =>
+        val itemKind = resultSet.getString("item_kind")
         OrderLineItemPlannerResponse(
           orderItemId = resultSet.getString("order_item_id"),
-          orderItemKind = resultSet.getString("item_kind"),
+          orderItemKind = itemKind,
           orderItemStatus = resultSet.getString("item_status"),
           supplierReviewStatus = resultSet.getString("supplier_review_status"),
           bookedAmount = resultSet.getBigDecimal("booked_amount").toString,
           bookedCurrency = resultSet.getString("booked_currency"),
-          summaryLabel = Option(resultSet.getString("snapshot_json")).getOrElse(resultSet.getString("item_kind"))
+          summaryLabel =
+            if itemKind == "Hotel" then enrichHotelSummaryLabel(resultSet)
+            else Option(resultSet.getString("snapshot_json")).getOrElse(itemKind)
         )
       }
     }
@@ -242,3 +256,22 @@ object OrderPlannerPlainSql:
         )
       }
     }
+
+  private def enrichHotelSummaryLabel(resultSet: ResultSet): String =
+    val snapshotJson = Option(resultSet.getString("snapshot_json")).getOrElse("{}")
+    val baseJson = parse(snapshotJson).getOrElse(Json.obj())
+    baseJson
+      .mapObject { jsonObject =>
+        val withHotelId = addStringField(jsonObject, "hotelId", resultSet.getString("hotel_id"))
+        val withHotelName = addStringField(withHotelId, "hotelName", resultSet.getString("hotel_name"))
+        val withHotelLocation = addStringField(withHotelName, "hotelLocation", resultSet.getString("hotel_location"))
+        val withRoomTypeId = addStringField(withHotelLocation, "roomTypeId", resultSet.getString("room_type_id"))
+        val withRoomTypeName = addStringField(withRoomTypeId, "roomTypeName", resultSet.getString("room_type_name"))
+        withRoomTypeName
+      }
+      .noSpaces
+
+  private def addStringField(jsonObject: io.circe.JsonObject, fieldName: String, fieldValue: String | Null): io.circe.JsonObject =
+    Option(fieldValue).map(_.trim).filter(_.nonEmpty) match
+      case Some(value) => jsonObject.add(fieldName, Json.fromString(value))
+      case None        => jsonObject

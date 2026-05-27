@@ -1,6 +1,6 @@
-import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
-﻿import { useState } from 'react'
+import { useState } from 'react'
 
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
 import { HotelsPanel } from '@/pages/HotelsPage/components/HotelsPanel'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
@@ -65,8 +65,9 @@ export function HotelsPage({
         travelers={travelers}
         translate={translate}
         onRequireLogin={() => setIsAuthDialogOpen(true)}
+        onValidationError={message => onShowNotice('error', translate('error.friendly.default'), message)}
         onSearchHotels={async payload => {
-          const hotelListResponse = await travelMvpApiClient.listHotels(payload)
+          const hotelListResponse = await travelMvpApiClient.searchHotelsPlanner(payload)
           return hotelListResponse.hotels
         }}
         onBookHotel={async payload => {
@@ -83,7 +84,7 @@ export function HotelsPage({
               checkOutDate: payload.checkOutDate,
               roomCount: payload.roomCount,
             })
-            onNavigate('bookings')
+            onNavigate('hotelOrders')
           }, translate('hotels.bookNow'), translate('notice.bookingCreated'))
         }}
         onLoadReviewSummary={loadReviewSummary}

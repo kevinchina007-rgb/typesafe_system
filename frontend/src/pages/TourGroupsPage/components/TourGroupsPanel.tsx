@@ -1,6 +1,6 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import type { AppLanguage, AttractionResponse, FlightResponse, GroupPlanItemResponse, TourGroupDetailsResponse, TourGroupSummaryResponse, TrainResponse, HotelResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, TourGroupDetailsResponse, TourGroupSummaryResponse, TrainResponse, HotelPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { CreateTourGroupDialog } from '@/pages/TourGroupsPage/components/CreateTourGroupDialog'
 import { TourGroupDetail } from '@/pages/TourGroupsPage/components/TourGroupDetail'
 import { TourGroupList } from '@/pages/TourGroupsPage/components/TourGroupList'
@@ -68,8 +68,8 @@ type TourGroupsPanelProps = {
     selectionIds: string[]
     paymentMethod: string
   }) => Promise<{ group: TourGroupDetailsResponse; orders: import('@/lib/mvp-types/index').OrderResponse[] }>
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelResponse[]>
+  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
+  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
   onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onOpenBookings: () => Promise<void>

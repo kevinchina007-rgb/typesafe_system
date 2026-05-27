@@ -27,8 +27,8 @@ export function FlightsPage({
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const loadDailyLowestPrices = useCallback(
-    (payload: Parameters<typeof travelMvpApiClient.listFlightDailyLowestPrices>[0]) =>
-      travelMvpApiClient.listFlightDailyLowestPrices(payload),
+    (payload: Parameters<typeof travelMvpApiClient.flightDailyLowestPricesPlanner>[0]) =>
+      travelMvpApiClient.flightDailyLowestPricesPlanner(payload),
     [],
   )
 
@@ -42,7 +42,7 @@ export function FlightsPage({
         translate={translate}
         onRequireLogin={() => setIsAuthDialogOpen(true)}
         onSearchFlights={async payload => {
-          const flightListResponse = await travelMvpApiClient.listFlights(payload)
+          const flightListResponse = await travelMvpApiClient.searchFlightsPlanner(payload)
           return flightListResponse.flights
         }}
         onLoadDailyLowestPrices={loadDailyLowestPrices}
@@ -53,7 +53,7 @@ export function FlightsPage({
             return
           }
           await runPageAction(async () => {
-            await travelMvpApiClient.createFlightOrder({
+            await travelMvpApiClient.bookFlightPlanner({
               userId: payload.userId,
               flightId: payload.flightId,
               travelerIds: payload.travelerIds,

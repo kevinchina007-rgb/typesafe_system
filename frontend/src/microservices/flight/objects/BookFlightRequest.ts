@@ -4,7 +4,6 @@ export type BookFlightPlannerRequest = {
   travelerIds: string[]
   cabinClass: string
 }
-export type BookFlightRequest = BookFlightPlannerRequest
 
 export const bookFlightRequestFromJson = (json: string): BookFlightPlannerRequest =>
   JSON.parse(json) as BookFlightPlannerRequest

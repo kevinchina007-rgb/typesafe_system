@@ -1,10 +1,9 @@
-import type { FlightResponse } from './FlightResponse'
+import type { FlightPlannerResponse } from './FlightPlannerResponse'
 
 export type FlightListPlannerResponse = {
-  flights: FlightResponse[]
+  flights: FlightPlannerResponse[]
 }
 
-export type FlightListResponse = FlightListPlannerResponse
 
 export const flightListResponseFromJson = (json: string): FlightListPlannerResponse =>
   JSON.parse(json) as FlightListPlannerResponse

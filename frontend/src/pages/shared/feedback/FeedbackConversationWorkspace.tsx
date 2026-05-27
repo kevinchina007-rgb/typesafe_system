@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
 import type { FeedbackManagerType } from '@/microservices/content/objects/FeedbackManagerType'
@@ -149,7 +149,7 @@ function managerTypeToOrderCategory(managerType: FeedbackManagerType): OrderCate
 function extractHotelIdentityName(text: string) {
   const trimmed = text.trim()
   if (trimmed.length === 0) return null
-  const firstSegment = trimmed.split(/[·•|｜\/]/)[0]?.trim() ?? trimmed
+  const firstSegment = trimmed.split(/[·?|｜\/]/)[0]?.trim() ?? trimmed
   const candidate = firstSegment.endsWith('客服') ? firstSegment.slice(0, -2).trim() : firstSegment
   if (candidate.length === 0) return null
   const normalized = candidate.toLowerCase().replace(/\s+/g, '')
@@ -159,6 +159,7 @@ function extractHotelIdentityName(text: string) {
 
 function getThreadIdentity(
   thread: FeedbackThread,
+  audience: FeedbackAudience,
   translate: (translationKey: string) => string,
   supportIdentityOverrides: Record<string, SupportIdentityOverride>,
   cancellationOrderTitleById: Map<string, string>,
@@ -180,6 +181,15 @@ function getThreadIdentity(
   ].join(' ')
   const airlineIdentity = findAirlineIdentity(searchableText)
   if (airlineIdentity) return airlineIdentity
+
+  if (audience === 'Manager') {
+    const userIdentityName = thread.ownerUserDisplayName.trim() || thread.title.trim() || thread.resourceSummaryTitle.trim() || '用户'
+    return {
+      name: userIdentityName,
+      logoPath: null,
+      fallback: userIdentityName.slice(0, 1) || '客',
+    }
+  }
 
   const managerName = localizeManagerType(thread.managerType, translate)
   if (thread.managerType === 'Hotel') {
@@ -289,8 +299,9 @@ export function FeedbackConversationWorkspace({
     [cancellationOrders],
   )
   const activeIdentity = activeThread
-    ? getThreadIdentity(activeThread, translate, supportIdentityOverrides, cancellationOrderTitleById)
+    ? getThreadIdentity(activeThread, audience, translate, supportIdentityOverrides, cancellationOrderTitleById)
     : null
+  const lastNotifiedThreadIdRef = useRef<string | null>(null)
   const visibleCancellationOrders = useMemo(() => {
     if (!activeThread) return cancellationOrders
     const threadCategory = managerTypeToOrderCategory(activeThread.managerType)
@@ -305,6 +316,11 @@ export function FeedbackConversationWorkspace({
     return categoryOrders.filter(order => order.title.includes(resourceTitle) || resourceTitle.includes(order.title))
   }, [activeThread, cancellationOrders])
   useEffect(() => {
+    const nextThreadId = activeThread?.threadId ?? null
+    if (lastNotifiedThreadIdRef.current === nextThreadId) {
+      return
+    }
+    lastNotifiedThreadIdRef.current = nextThreadId
     onThreadChange?.(activeThread)
   }, [activeThread, onThreadChange])
 
@@ -341,7 +357,7 @@ export function FeedbackConversationWorkspace({
           <div className="grid">
             {threads.map(thread => {
               const unreadCount = unreadCountSelector(thread)
-              const identity = getThreadIdentity(thread, translate, supportIdentityOverrides, cancellationOrderTitleById)
+              const identity = getThreadIdentity(thread, audience, translate, supportIdentityOverrides, cancellationOrderTitleById)
               const lastMessage = getLastMessage(thread)
               const isActive = thread.threadId === activeThreadId
               return (
@@ -396,7 +412,9 @@ export function FeedbackConversationWorkspace({
                   const senderName = ownMessage && audience === 'User' ? audienceDisplayName : message.senderDisplayName
                   const avatar = ownMessage
                     ? { imageUrl: audienceAvatarUrl, fallback: audienceDisplayName.slice(0, 1) || '我', useBackendAsset: true }
-                    : { imageUrl: activeIdentity.logoPath, fallback: activeIdentity.fallback, useBackendAsset: false }
+                    : audience === 'Manager'
+                      ? { imageUrl: null, fallback: senderName.slice(0, 1) || '客', useBackendAsset: false }
+                      : { imageUrl: activeIdentity.logoPath, fallback: activeIdentity.fallback, useBackendAsset: false }
 
                   return (
                     <div key={message.messageId} className="grid gap-3">
@@ -425,7 +443,7 @@ export function FeedbackConversationWorkspace({
                               <span>订单编号：{message.payload.orderId}</span>
                               <span>订单名称：{message.payload.orderTitle ?? '订单'}</span>
                               <span>取消原因：{message.payload.reason}</span>
-                              {message.payload.requestedRefundAmount !== null ? <span>预计可退：¥{message.payload.requestedRefundAmount}</span> : null}
+                              {message.payload.requestedRefundAmount !== null ? <span>预计可退：￥{message.payload.requestedRefundAmount}</span> : null}
                               {message.payload.managerNote ? <span>客服备注：{message.payload.managerNote}</span> : null}
                               {message.payload.status === 'pending' && audience === 'User' ? <strong className="text-pink-700">等待客服处理</strong> : null}
                             </div>
@@ -548,6 +566,12 @@ export function FeedbackConversationWorkspace({
     </section>
   )
 }
+
+
+
+
+
+
 
 
 

@@ -1,6 +1,6 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
-import type { AppLanguage, AttractionResponse, FlightResponse, GroupPlanItemResponse, HotelResponse, TourGroupDetailsResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TourGroupDetailsResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { localizeTourGroupStatus } from '@/lib/presenters/view-models'
 import { TourGroupMemberWorkspace } from '@/pages/TourGroupsPage/components/TourGroupMemberWorkspace'
 import { TourGroupOrganizerWorkspace } from '@/pages/TourGroupsPage/components/TourGroupOrganizerWorkspace'
@@ -45,8 +45,8 @@ type TourGroupDetailProps = {
   onBatchRejectSelections: (selectionIds: string[], note: string) => Promise<void>
   onBatchPaySelections: (selectionIds: string[]) => Promise<void>
   onOpenBookings: () => void
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelResponse[]>
+  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
+  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
   onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onLoadChatSettings: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupChatSettingsResponse>

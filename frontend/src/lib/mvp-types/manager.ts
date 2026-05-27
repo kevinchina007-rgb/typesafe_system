@@ -6,3 +6,4 @@ export type { ManagerTaskResponse } from '@/microservices/operations/objects/Man
 export type { ManagerFlightOrderListResponse } from '@/microservices/operations/objects/ManagerFlightOrderListResponse'
 export type { ManagerFlightOrderResponse } from '@/microservices/operations/objects/ManagerFlightOrderResponse'
 export type { ManagerFlightOrderTravelerResponse } from '@/microservices/operations/objects/ManagerFlightOrderTravelerResponse'
+export type { UpdateHotelManagerProfilePlannerRequest } from '@/microservices/operations/objects/UpdateHotelManagerProfilePlannerRequest'

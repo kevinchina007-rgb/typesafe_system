@@ -3,9 +3,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeftRight } from 'lucide-react'
 
 import { handleOrderCancellationRequest, markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
-import { flightCityOptions, formatFlightAirportLabel, formatFlightRouteCity, getFlightCityAirportCodes } from '@/app/stores/models/flights/flightConstants'
-import { getFlightAirlineDisplayNameByCode, getFlightAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
-import type { FlightResponse } from '@/lib/mvp-types/flights'
+import { flightCityOptions, formatFlightAirportLabel, formatFlightRouteCity, getFlightDetailsPlannerCityAirportCodes } from '@/app/stores/models/flights/flightConstants'
+import { getFlightDetailsPlannerAirlineDisplayNameByCode, getFlightDetailsPlannerAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
+import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { ManagerFlightOrderResponse } from '@/lib/mvp-types/manager'
 import { formatIsoDateTime, localizeBedType, localizeCabinClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import type { AirlineWorkspaceSection, ManagerPanelProps } from '@/pages/ManagerPage/components/managers/manager-panel-shared'
@@ -28,6 +28,7 @@ type ManagerPanelWorkspaceProps = Pick<
   | 'onSearchManagerFlights'
   | 'onLoadManagerFlightOrders'
   | 'onUpdateAirlineManagerProfile'
+  | 'onUpdateHotelManagerProfile'
   | 'onCreateManagerRoomType'
   | 'onValidationError'
   | 'onLogoutManager'
@@ -139,7 +140,7 @@ export function ManagerPanelWorkspace({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [selectedDepartureAirport, setSelectedDepartureAirport] = useState('all')
   const [selectedArrivalAirport, setSelectedArrivalAirport] = useState('all')
-  const [selectedFlight, setSelectedFlight] = useState<FlightResponse | null>(null)
+  const [selectedFlight, setSelectedFlight] = useState<FlightPlannerResponse | null>(null)
   const [selectedFlightOrders, setSelectedFlightOrders] = useState<ManagerFlightOrderResponse[]>([])
   const [isLoadingSelectedFlightOrders, setIsLoadingSelectedFlightOrders] = useState(false)
   const [profileDraft, setProfileDraft] = useState(() => buildProfileDraft(managerSession, managedFlights))
@@ -205,6 +206,31 @@ export function ManagerPanelWorkspace({
         translate={translate}
         onCreateManagerRoomType={onCreateManagerRoomType}
       />
+    )
+  }
+
+  if (initialAirlineSection === 'managerProfile') {
+    return (
+      <section className="grid gap-6">
+        <ManagerProfileSection
+          managerSession={managerSession}
+          profileDraft={profileDraft}
+          profileSavedAt={profileSavedAt}
+          currentLanguage={currentLanguage}
+          onProfileChange={setProfileDraft}
+          onSaveProfile={async () => {
+            await onUpdateAirlineManagerProfile({
+              displayName: profileDraft.displayName,
+              airlineName: profileDraft.companyName,
+              airlineCode: profileDraft.airlineCode,
+              logoAssetPath: profileDraft.logoPath.trim() || null,
+            })
+            setSavedProfile(profileDraft)
+            setProfileSavedAt(new Date().toISOString())
+          }}
+          onLogout={onLogoutManager}
+        />
+      </section>
     )
   }
 
@@ -367,8 +393,8 @@ function CreateFlightSection({
   onValidationError: ManagerPanelProps['onValidationError']
 }) {
   const [draft, setDraft] = useState<CreateFlightDraft>(defaultCreateFlightDraft)
-  const departureAirportOptions = useMemo(() => getFlightCityAirportCodes(draft.departureCity), [draft.departureCity])
-  const arrivalAirportOptions = useMemo(() => getFlightCityAirportCodes(draft.arrivalCity), [draft.arrivalCity])
+  const departureAirportOptions = useMemo(() => getFlightDetailsPlannerCityAirportCodes(draft.departureCity), [draft.departureCity])
+  const arrivalAirportOptions = useMemo(() => getFlightDetailsPlannerCityAirportCodes(draft.arrivalCity), [draft.arrivalCity])
   const selectedWindow = createFlightTimeWindows.find(option => option.value === draft.timeRange) ?? createFlightTimeWindows[2]
 
   function validateDraft(): string | null {
@@ -700,7 +726,7 @@ function FlightManagementSection({
   onSortDirectionChange,
 }: {
   currentLanguage: ManagerPanelProps['currentLanguage']
-  flights: FlightResponse[]
+  flights: FlightPlannerResponse[]
   totalCount: number
   searchDraft: ManagerFlightSearchDraft
   hasSubmittedSearch: boolean
@@ -714,7 +740,7 @@ function FlightManagementSection({
   onSearchDraftChange: (value: ManagerFlightSearchDraft) => void
   onSearchSubmit: () => void
   onSwapSearchRoute: () => void
-  onOpenFlight: (flight: FlightResponse) => void | Promise<void>
+  onOpenFlight: (flight: FlightPlannerResponse) => void | Promise<void>
   onToggleFlightStatus: (flightId: string) => void | Promise<void>
   onDepartureAirportChange: (value: string) => void
   onArrivalAirportChange: (value: string) => void
@@ -780,14 +806,14 @@ function ManagerFlightCard({
   onOpen,
   onToggleStatus,
 }: {
-  flight: FlightResponse
+  flight: FlightPlannerResponse
   profile: AirlineProfileDraft
   currentLanguage: ManagerPanelProps['currentLanguage']
   onOpen: () => void
   onToggleStatus: () => void
 }) {
-  const airlineName = profile.companyName || getFlightAirlineDisplayNameByCode(flight.airlineCode, flight.airlineName)
-  const logoPath = profile.logoPath || getFlightAirlineLogoPathByCode(flight.airlineCode, flight.airlineLogoPath)
+  const airlineName = profile.companyName || getFlightDetailsPlannerAirlineDisplayNameByCode(flight.airlineCode, flight.airlineName)
+  const logoPath = profile.logoPath || getFlightDetailsPlannerAirlineLogoPathByCode(flight.airlineCode, flight.airlineLogoPath)
   const isOpenForBooking = flight.status === 'OpenForBooking'
   const isClosedForBooking = flight.status === 'ClosedForBooking'
 
@@ -861,7 +887,7 @@ function ManagerFlightOrdersSection({
   onBack,
 }: {
   currentLanguage: ManagerPanelProps['currentLanguage']
-  flight: FlightResponse
+  flight: FlightPlannerResponse
   isLoading: boolean
   orders: ManagerFlightOrderResponse[]
   profile: AirlineProfileDraft
@@ -873,7 +899,7 @@ function ManagerFlightOrdersSection({
     { key: 'BUSINESS', label: '商务舱' },
     { key: 'FIRST', label: '头等舱' },
   ]
-  const airlineName = profile.companyName || getFlightAirlineDisplayNameByCode(flight.airlineCode, flight.airlineName)
+  const airlineName = profile.companyName || getFlightDetailsPlannerAirlineDisplayNameByCode(flight.airlineCode, flight.airlineName)
 
   return (
     <section className="grid gap-6 bg-slate-100 px-6 pb-8 pt-8">
@@ -1074,8 +1100,8 @@ function validateManagerFlightSearchDraft(draft: ManagerFlightSearchDraft): stri
 
 function buildManagerFlightSearchPayload(draft: ManagerFlightSearchDraft, sortDirection: 'asc' | 'desc') {
   return {
-    departureAirports: draft.departureCity ? getFlightCityAirportCodes(draft.departureCity) : undefined,
-    arrivalAirports: draft.arrivalCity ? getFlightCityAirportCodes(draft.arrivalCity) : undefined,
+    departureAirports: draft.departureCity ? getFlightDetailsPlannerCityAirportCodes(draft.departureCity) : undefined,
+    arrivalAirports: draft.arrivalCity ? getFlightDetailsPlannerCityAirportCodes(draft.arrivalCity) : undefined,
     departureDate: draft.departureDate || undefined,
     timeRange: draft.timeRange === 'all' ? undefined : draft.timeRange,
     sortDirection,
@@ -1083,7 +1109,7 @@ function buildManagerFlightSearchPayload(draft: ManagerFlightSearchDraft, sortDi
 }
 
 function buildManagerAirportOptions(cityName: string, fallbackAirportCodes: string[]): string[] {
-  const cityAirportCodes = cityName ? getFlightCityAirportCodes(cityName) : []
+  const cityAirportCodes = cityName ? getFlightDetailsPlannerCityAirportCodes(cityName) : []
   if (cityAirportCodes.length > 0) {
     return cityAirportCodes
   }
@@ -1180,16 +1206,6 @@ function HotelWorkspace({
 }) {
   return (
     <section className="grid gap-5">
-      <div className="grid gap-3 md:grid-cols-2">
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('manager.profile')}</span>
-          <strong>{managerSession.displayName}</strong>
-        </div>
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('manager.status')}</span>
-          <strong>{mapBackendStatusToProductLabel(managerSession.status, currentLanguage)}</strong>
-        </div>
-      </div>
       <form
         className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
         onSubmit={async event => {
@@ -1209,7 +1225,7 @@ function HotelWorkspace({
           event.currentTarget.reset()
         }}
       >
-        <h3>{translate('manager.createRoomType')}</h3>
+        <h3 className="m-0 text-2xl font-bold text-slate-950">{translate('manager.createRoomType')}</h3>
         <div className="grid gap-4 md:grid-cols-3">
           <label>{translate('manager.roomTypeName')}<input name="roomTypeName" required /></label>
           <label>{translate('manager.capacity')}<input name="capacity" type="number" min={1} defaultValue={2} required /></label>
@@ -1222,21 +1238,24 @@ function HotelWorkspace({
           {translate('manager.createRoomType')}
         </button>
       </form>
+
       <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
-        <h3>{translate('manager.hotelName')}</h3>
+        <h3 className="m-0 text-2xl font-bold text-slate-950">{translate('manager.hotelName')}</h3>
         {managedHotels.length === 0 ? (
           <p className="text-sm leading-6 text-slate-500">{translate('manager.empty')}</p>
         ) : (
           <ul className="grid gap-3">
             {managedHotels.map(hotel => (
-              <li key={hotel.hotelId}>
-                <strong>{hotel.hotelName}</strong>
-                <p>{`${translate('manager.hotelLocation')}: ${hotel.location}`}</p>
-                {hotel.roomTypes.map(roomType => (
-                  <span key={roomType.roomTypeId} className="mr-2 inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">
-                    {`${roomType.roomTypeName} 路 ${localizeBedType(roomType.bedType, currentLanguage)} 路 ${roomType.basePrice} ${roomType.currency}`}
-                  </span>
-                ))}
+              <li key={hotel.hotelId} className="grid gap-2 border border-slate-200 bg-slate-50 p-4">
+                <strong className="text-xl font-black text-slate-950">{hotel.hotelName}</strong>
+                <p className="m-0 text-sm font-medium text-slate-600">{`${translate('manager.hotelLocation')}: ${hotel.location}`}</p>
+                <div className="flex flex-wrap gap-2">
+                  {(hotel.roomTypes ?? []).map(roomType => (
+                    <span key={roomType.roomTypeId} className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">
+                      {`${roomType.roomTypeName} · ${localizeBedType(roomType.bedType, currentLanguage)} · ${roomType.basePrice} ${roomType.currency}`}
+                    </span>
+                  ))}
+                </div>
               </li>
             ))}
           </ul>
@@ -1246,13 +1265,140 @@ function HotelWorkspace({
   )
 }
 
-function buildProfileDraft(managerSession: ManagerPanelProps['managerSession'], managedFlights: FlightResponse[]): AirlineProfileDraft {
+export function HotelProfileSection({
+  currentLanguage,
+  managerSession,
+  managedHotels,
+  translate,
+  onUpdateHotelManagerProfile,
+  onLogoutManager,
+}: {
+  currentLanguage: ManagerPanelProps['currentLanguage']
+  managerSession: NonNullable<ManagerPanelProps['managerSession']>
+  managedHotels: ManagerPanelProps['managedHotels']
+  translate: (translationKey: string) => string
+  onUpdateHotelManagerProfile: ManagerPanelProps['onUpdateHotelManagerProfile']
+  onLogoutManager: ManagerPanelProps['onLogoutManager']
+}) {
+  const currentHotel = managedHotels.find(hotel => hotel.hotelId === managerSession.scopeId) ?? managedHotels[0] ?? null
+  const [profileDraft, setProfileDraft] = useState(() => buildHotelProfileDraft(managerSession, currentHotel))
+
+  useEffect(() => {
+    setProfileDraft(buildHotelProfileDraft(managerSession, currentHotel))
+  }, [currentHotel?.hotelId, currentHotel?.hotelName, currentHotel?.location, managerSession.displayName, managerSession.email, managerSession.managerId])
+
+  return (
+    <section className="grid gap-6 bg-slate-100 px-6 py-8">
+      <div className="grid gap-6 bg-white p-7 md:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="grid content-start justify-items-center gap-4">
+          <div className="flex h-32 w-32 items-center justify-center border-2 border-slate-200 bg-slate-950 text-xl font-bold text-white">
+            {currentHotel?.hotelName?.slice(0, 1) ?? '酒'}
+          </div>
+          <strong className="text-2xl font-bold text-slate-950">{currentHotel?.hotelName ?? '酒店'}</strong>
+          <span className="text-sm font-medium text-slate-500">{mapBackendStatusToProductLabel(managerSession.status, currentLanguage)}</span>
+        </div>
+
+        <form
+          className="grid gap-5"
+          onSubmit={event => {
+            event.preventDefault()
+            void onUpdateHotelManagerProfile({
+              managerId: managerSession.managerId,
+              displayName: profileDraft.displayName.trim(),
+              email: profileDraft.email.trim(),
+              hotelName: profileDraft.hotelName.trim(),
+              hotelLocation: profileDraft.hotelLocation.trim(),
+            })
+          }}
+        >
+          <div>
+            <p className="text-sm font-bold text-slate-500">管理者信息</p>
+            <h3 className="m-0 text-3xl font-bold text-slate-950">资料设置</h3>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-2 text-lg font-medium text-slate-950">
+              {translate('manager.displayName')}
+              <input
+                className="min-h-14 border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none"
+                value={profileDraft.displayName}
+                onChange={event => setProfileDraft({ ...profileDraft, displayName: event.target.value })}
+              />
+            </label>
+            <label className="grid gap-2 text-lg font-medium text-slate-950">
+              {translate('manager.email')}
+              <input
+                className="min-h-14 border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none"
+                value={profileDraft.email}
+                onChange={event => setProfileDraft({ ...profileDraft, email: event.target.value })}
+              />
+            </label>
+            <label className="grid gap-2 text-lg font-medium text-slate-950">
+              {translate('manager.hotelName')}
+              <input
+                className="min-h-14 border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none"
+                value={profileDraft.hotelName}
+                onChange={event => setProfileDraft({ ...profileDraft, hotelName: event.target.value })}
+              />
+            </label>
+            <label className="grid gap-2 text-lg font-medium text-slate-950">
+              {translate('manager.hotelLocation')}
+              <input
+                className="min-h-14 border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none"
+                value={profileDraft.hotelLocation}
+                onChange={event => setProfileDraft({ ...profileDraft, hotelLocation: event.target.value })}
+              />
+            </label>
+            <label className="grid gap-2 text-lg font-medium text-slate-950 md:col-span-2">
+              {translate('manager.scope')}
+              <input className="min-h-14 border-2 border-slate-300 bg-white px-5 text-xl font-medium text-slate-950 outline-none" value={currentHotel?.hotelId ?? managerSession.scopeId} readOnly />
+            </label>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-5 pt-2">
+            <button type="submit" className="inline-flex min-h-12 items-center justify-center bg-pink-500 px-12 py-3 text-base font-bold text-white transition hover:bg-pink-600">
+              保存资料
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-12 items-center justify-center border border-slate-300 bg-white px-12 py-3 text-base font-bold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
+              onClick={onLogoutManager}
+            >
+              退出登录
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+  )
+}
+
+type HotelProfileDraft = {
+  displayName: string
+  email: string
+  hotelName: string
+  hotelLocation: string
+}
+
+function buildHotelProfileDraft(
+  managerSession: NonNullable<ManagerPanelProps['managerSession']>,
+  currentHotel: ManagerPanelProps['managedHotels'][number] | null,
+): HotelProfileDraft {
+  return {
+    displayName: managerSession.displayName,
+    email: managerSession.email,
+    hotelName: currentHotel?.hotelName ?? '',
+    hotelLocation: currentHotel?.location ?? '',
+  }
+}
+
+function buildProfileDraft(managerSession: ManagerPanelProps['managerSession'], managedFlights: FlightPlannerResponse[]): AirlineProfileDraft {
   const firstFlight = managedFlights[0]
   return {
     displayName: managerSession?.displayName ?? '',
-    companyName: firstFlight ? getFlightAirlineDisplayNameByCode(firstFlight.airlineCode, firstFlight.airlineName) : '',
+    companyName: firstFlight ? getFlightDetailsPlannerAirlineDisplayNameByCode(firstFlight.airlineCode, firstFlight.airlineName) : '',
     airlineCode: firstFlight?.airlineCode ?? '',
-    logoPath: firstFlight ? getFlightAirlineLogoPathByCode(firstFlight.airlineCode, firstFlight.airlineLogoPath) ?? '' : '',
+    logoPath: firstFlight ? getFlightDetailsPlannerAirlineLogoPathByCode(firstFlight.airlineCode, firstFlight.airlineLogoPath) ?? '' : '',
   }
 }
 

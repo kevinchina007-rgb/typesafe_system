@@ -5,8 +5,8 @@ import com.typesafe.travel.api.{ExploreSearchPlanner, ExploreSuggestionsPlanner}
 import com.typesafe.travel.attraction.domain.{AttractionSuggestionsPlanner, CreateAttractionPlanner, CreateAttractionTicketRulePlanner, CreateAttractionTicketSessionPlanner, CreateAttractionTicketTypePlanner, GetAttractionDetailsPlanner, ListAttractionsPlanner, ListManagedAttractionsPlanner}
 import com.typesafe.travel.auth.domain.*
 import com.typesafe.travel.content.domain.*
-import com.typesafe.travel.flight.domain.{BookFlightPlanner, FlightDailyLowestPricesPlanner, FlightSuggestionsPlanner, GetFlightDetailsPlanner, SearchFlightsPlanner}
-import com.typesafe.travel.hotel.domain.{BookHotelPlanner, GetHotelDetailsPlanner, HotelSuggestionsPlanner, SearchHotelsPlanner}
+import com.typesafe.travel.flight.api.{BookFlightPlanner, FlightDailyLowestPricesPlanner, FlightSuggestionsPlanner, GetFlightDetailsPlanner, SearchFlightsPlanner}
+import com.typesafe.travel.hotel.api.{BookHotelPlanner, GetHotelDetailsPlanner, HotelSuggestionsPlanner, SearchHotelsPlanner}
 import com.typesafe.travel.identity.domain.{CreateUserPlanner, GetUserPlanner, LoginUserPlanner, UploadUserAvatarPlanner}
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
@@ -105,6 +105,7 @@ object PlannerDefinitions:
         WithConnection(ListManagerHotelsPlanner),
         WithConnection(ListManagerRefundTasksPlanner),
         WithConnection(UpdateAirlineManagerProfilePlanner),
+        WithConnection(UpdateHotelManagerProfilePlanner),
         WithConnection(CreateManagerFlightPlanner),
         WithConnection(ToggleManagerFlightStatusPlanner),
         WithConnection(CreateManagerRoomTypePlanner),

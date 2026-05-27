@@ -1,10 +1,12 @@
-﻿import type { HotelResponse } from './HotelResponse'
+import type { HotelPlannerResponse } from './HotelPlannerResponse'
 
-export type HotelListResponse = {
-  hotels: HotelResponse[]
+export type HotelListPlannerResponse = {
+  hotels: HotelPlannerResponse[]
 }
-export const hotelListResponseFromJson = (json: string): HotelListResponse =>
-  JSON.parse(json) as HotelListResponse
 
-export const hotelListResponseToJson = (value: HotelListResponse): string =>
+
+export const hotelListResponseFromJson = (json: string): HotelListPlannerResponse =>
+  JSON.parse(json) as HotelListPlannerResponse
+
+export const hotelListResponseToJson = (value: HotelListPlannerResponse): string =>
   JSON.stringify(value)

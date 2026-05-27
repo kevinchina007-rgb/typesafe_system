@@ -2,7 +2,7 @@ import type { OrderListResponse } from '@/microservices/order/objects/OrderListR
 import type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
 
 import type { BookAttractionItemRequest } from '@/microservices/attraction/objects/BookAttractionItemRequest'
-import type { BookHotelRequest } from '@/microservices/hotel/objects/BookHotelRequest'
+import type { BookHotelPlannerRequest } from '@/microservices/hotel/objects/BookHotelPlannerRequest'
 import type { BookTrainItemRequest } from '@/microservices/train/objects/BookTrainItemRequest'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
@@ -17,7 +17,7 @@ export const addTrainItemToOrder = async (orderId: string, payload: BookTrainIte
 export const addAttractionItemToOrder = (orderId: string, payload: BookAttractionItemRequest): Promise<OrderResponse> =>
     executeJsonApiRequest(`/orders/${orderId}/attraction-items`, 'POST', payload)
 
-export const createHotelOrder = async (payload: BookHotelRequest): Promise<OrderResponse> => {
+export const createHotelOrder = async (payload: BookHotelPlannerRequest): Promise<OrderResponse> => {
     const response = await executeJsonApiRequest<{ orderId: string }>('/BookHotelPlanner', 'POST', payload)
     return getOrder(response.orderId)
 }

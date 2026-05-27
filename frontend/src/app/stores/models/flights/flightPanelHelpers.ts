@@ -1,7 +1,7 @@
-import type { FlightResponse } from '@/lib/mvp-types/flights'
-import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchQuery'
+import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
+import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
 import type { FlightResultGroup, FlightSearchState } from '@/app/stores/models/flights/flightTypes'
-import { formatFlightRouteCity, getFlightCityAirportCodes, normalizeFlightAirportForApi } from '@/app/stores/models/flights/flightConstants'
+import { formatFlightRouteCity, getFlightDetailsPlannerCityAirportCodes, normalizeFlightAirportForApi } from '@/app/stores/models/flights/flightConstants'
 
 export function buildFlightSearchRequest(searchState: FlightSearchState): FlightSearchPlannerRequest {
   const primarySegment = searchState.tripType === 'multiCity' ? searchState.multiCitySegments[0] ?? null : null
@@ -66,7 +66,7 @@ export function buildFlightSearchRequests(
 
 export async function loadFlightResultGroups(
   searchState: FlightSearchState,
-  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightResponse[]>,
+  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>,
 ): Promise<FlightResultGroup[]> {
   const requests = buildFlightSearchRequests(searchState)
   if (requests.some(request => !request.query.departureAirport || !request.query.arrivalAirport || !request.query.date)) {
@@ -85,8 +85,8 @@ export async function loadFlightResultGroups(
 
 async function searchFlightsAcrossAirportCodes(
   query: FlightSearchPlannerRequest,
-  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightResponse[]>,
-): Promise<FlightResponse[]> {
+  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>,
+): Promise<FlightPlannerResponse[]> {
   const departureAirportOptions = expandAirportSearchValues(query.departureAirport)
   const arrivalAirportOptions = expandAirportSearchValues(query.arrivalAirport)
 
@@ -113,7 +113,7 @@ function expandAirportSearchValues(value: string | undefined): string[] {
     return []
   }
 
-  const airportCodes = getFlightCityAirportCodes(value)
+  const airportCodes = getFlightDetailsPlannerCityAirportCodes(value)
   if (airportCodes.length > 0) {
     return airportCodes
   }
@@ -121,7 +121,7 @@ function expandAirportSearchValues(value: string | undefined): string[] {
   return [normalizeFlightAirportForApi(value) ?? value]
 }
 
-function uniqueFlights(flights: FlightResponse[]): FlightResponse[] {
+function uniqueFlights(flights: FlightPlannerResponse[]): FlightPlannerResponse[] {
   const seenFlightIds = new Set<string>()
   return flights.filter(flight => {
     if (seenFlightIds.has(flight.flightId)) {
@@ -189,7 +189,7 @@ export function validateFlightSearchState(searchState: FlightSearchState): strin
 }
 
 export function buildLateBookingNotice(
-  flightResponse: FlightResponse,
+  flightResponse: FlightPlannerResponse,
   translate: (translationKey: string) => string,
 ): string {
   if (!flightResponse.lateBookingSurchargeAmount) {

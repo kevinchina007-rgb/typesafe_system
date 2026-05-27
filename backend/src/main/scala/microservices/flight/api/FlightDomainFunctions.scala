@@ -1,4 +1,6 @@
-package com.typesafe.travel.flight.domain
+package com.typesafe.travel.flight.api
+
+import com.typesafe.travel.flight.objects.*
 
 import com.typesafe.travel.shared.kernel.*
 import java.time.Instant

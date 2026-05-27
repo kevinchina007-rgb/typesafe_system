@@ -1,25 +1,12 @@
 export type { FlightBookingWindowStatus } from '@/microservices/flight/objects/FlightBookingWindowStatus'
-export type {
-  BookFlightPlannerRequest,
-  BookFlightRequest,
-} from '@/microservices/flight/objects/BookFlightRequest'
+export type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightPlannerRequest'
 export type { CabinInventoryResponse } from '@/microservices/flight/objects/CabinInventoryResponse'
 export type {
   FlightDailyLowestPricesPlannerRequest,
+  FlightDailyLowestPricePlannerResponse,
   FlightDailyLowestPricesPlannerResponse,
-  FlightDailyLowestPricesRequest,
-  FlightDailyLowestPricesResponse,
 } from '@/microservices/flight/objects/FlightDailyLowestPrices'
 export type { FlightBookingPlannerResponse } from '@/microservices/flight/objects/FlightBookingPlannerResponse'
-export type {
-  FlightListPlannerResponse,
-  FlightListResponse,
-} from '@/microservices/flight/objects/FlightListResponse'
-export type {
-  FlightPlannerResponse,
-  FlightResponse,
-} from '@/microservices/flight/objects/FlightResponse'
-export type {
-  FlightSearchPlannerRequest,
-  FlightSearchQuery,
-} from '@/microservices/flight/objects/FlightSearchQuery'
+export type { FlightListPlannerResponse } from '@/microservices/flight/objects/FlightListPlannerResponse'
+export type { FlightPlannerResponse } from '@/microservices/flight/objects/FlightPlannerResponse'
+export type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'

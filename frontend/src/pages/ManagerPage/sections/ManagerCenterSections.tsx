@@ -1,15 +1,16 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { handleOrderCancellationRequest, markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
 import { AdvertisementReviewWorkspace } from '@/pages/ManagerPage/components/advertising/AdvertisementReviewWorkspace'
 import type { BlogPostSummaryResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
-import type { AttractionAdminSessionResponse, CurrentManagerSessionResponse, FlightResponse, ManagerRefundTaskResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
+import type { AttractionAdminSessionResponse, CurrentManagerSessionResponse, FlightPlannerResponse, ManagerRefundTaskResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
 
 export type ManagerCenterSectionKey =
   | 'workspace'
   | 'feedback'
+  | 'profile'
   | 'advertising'
   | 'blogAudit'
   | 'advertisingReview'
@@ -17,7 +18,7 @@ export type ManagerCenterSectionKey =
 type SupplierFeedbackSectionProps = {
   title: string
   currentManagerSession: CurrentManagerSessionResponse | null
-  managedFlightResponses: FlightResponse[]
+  managedFlightPlannerResponses: FlightPlannerResponse[]
   managerTaskResponses: ManagerTaskResponse[]
   managerRefundTaskResponses: ManagerRefundTaskResponse[]
   currentTrainAdminSession: TrainAdminSessionResponse | null
@@ -34,7 +35,7 @@ type SiteAdminPanelProps = {
 export function SupplierFeedbackSection({
   title,
   currentManagerSession,
-  managedFlightResponses,
+  managedFlightPlannerResponses,
   managerTaskResponses,
   managerRefundTaskResponses,
   currentTrainAdminSession,
@@ -43,7 +44,7 @@ export function SupplierFeedbackSection({
 }: SupplierFeedbackSectionProps) {
   const loadManagerThreads = useFeedbackChatStore(state => state.loadManagerThreads)
   const managerThreads = useFeedbackChatStore(state => state.managerThreads)
-  void managedFlightResponses
+  void managedFlightPlannerResponses
   void managerTaskResponses
   void managerRefundTaskResponses
   void currentTrainAdminSession

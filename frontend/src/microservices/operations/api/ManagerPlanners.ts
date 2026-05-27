@@ -5,15 +5,16 @@ import type { AttractionListResponse } from '@/microservices/attraction/objects/
 import type { CreateAttractionTicketRulePlannerRequest } from '@/microservices/attraction/objects/CreateAttractionTicketRulePlannerRequest'
 import type { CreateAttractionTicketSessionPlannerRequest } from '@/microservices/attraction/objects/CreateAttractionTicketSessionPlannerRequest'
 import type { CreateAttractionTicketTypePlannerRequest } from '@/microservices/attraction/objects/CreateAttractionTicketTypePlannerRequest'
-import type { FlightListResponse } from '@/microservices/flight/objects/FlightListResponse'
-import type { FlightResponse } from '@/microservices/flight/objects/FlightResponse'
-import type { HotelListResponse } from '@/microservices/hotel/objects/HotelListResponse'
-import type { HotelResponse } from '@/microservices/hotel/objects/HotelResponse'
+import type { FlightListPlannerResponse } from '@/microservices/flight/objects/FlightListPlannerResponse'
+import type { FlightPlannerResponse } from '@/microservices/flight/objects/FlightPlannerResponse'
+import type { HotelListPlannerResponse } from '@/microservices/hotel/objects/HotelListPlannerResponse'
+import type { HotelPlannerResponse } from '@/microservices/hotel/objects/HotelPlannerResponse'
 import type { ManagerBatchDecisionResponse } from '@/microservices/operations/objects/ManagerBatchDecisionResponse'
 import type { ManagerFlightOrderListResponse } from '@/microservices/operations/objects/ManagerFlightOrderListResponse'
 import type { ManagerRefundTaskListResponse } from '@/microservices/operations/objects/ManagerRefundTaskListResponse'
 import type { ManagerTaskListResponse } from '@/microservices/operations/objects/ManagerTaskListResponse'
 import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
+import type { UpdateHotelManagerProfilePlannerRequest } from '@/microservices/operations/objects/UpdateHotelManagerProfilePlannerRequest'
 import type { RegisterAttractionManagerPlannerRequest } from '@/microservices/operations/objects/RegisterAttractionManagerPlannerRequest'
 import type { UpdateAirlineManagerProfilePlannerRequest } from '@/microservices/operations/objects/UpdateAirlineManagerProfilePlannerRequest'
 import type { TrainListResponse } from '@/microservices/train/objects/TrainListResponse'
@@ -89,10 +90,10 @@ export const createManagerRoomType = (payload: {
     availableRooms: number
     inventoryStartDate: string
     inventoryEndDate: string
-  }): Promise<HotelResponse> =>
+  }): Promise<HotelPlannerResponse> =>
     executeJsonApiRequest('/CreateManagerRoomTypePlanner', 'POST', payload)
 
-export const listManagedHotels = (managerId: string): Promise<HotelListResponse> =>
+export const listManagedHotels = (managerId: string): Promise<HotelListPlannerResponse> =>
     executeJsonApiRequest('/ListManagerHotelsPlanner', 'POST', { managerId, managerType: 'Hotel' })
 
 export const listManagerTasks = (query: { managerId: string; managerType: string; status?: string; resourceType?: string }): Promise<ManagerTaskListResponse> =>
@@ -118,7 +119,7 @@ export const listManagerFlights = (
       timeRange?: string
       sortDirection?: 'asc' | 'desc'
     } = {},
-): Promise<FlightListResponse> =>
+): Promise<FlightListPlannerResponse> =>
     executeJsonApiRequest('/ListManagerFlightsPlanner', 'POST', { managerId, managerType: 'Airline', ...filters })
 
 export const listManagerFlightOrders = (managerId: string, flightId: string): Promise<ManagerFlightOrderListResponse> =>
@@ -129,6 +130,9 @@ export const listManagerRefundTasks = (query: { managerId: string; managerType: 
 
 export const updateAirlineManagerProfile = (payload: UpdateAirlineManagerProfilePlannerRequest): Promise<ManagerSessionResponse> =>
     executeJsonApiRequest('/UpdateAirlineManagerProfilePlanner', 'POST', payload)
+
+export const updateHotelManagerProfile = (payload: UpdateHotelManagerProfilePlannerRequest): Promise<ManagerSessionResponse> =>
+    executeJsonApiRequest('/UpdateHotelManagerProfilePlanner', 'POST', payload)
 
 export const createManagerFlight = (payload: {
     managerId: string
@@ -142,10 +146,10 @@ export const createManagerFlight = (payload: {
     businessCabin: ManagerCabinPricingInput
     firstCabin: ManagerCabinPricingInput
     currency: string
-  }): Promise<FlightResponse> =>
+  }): Promise<FlightPlannerResponse> =>
     executeJsonApiRequest('/CreateManagerFlightPlanner', 'POST', payload)
 
-export const toggleManagerFlightStatus = (payload: { managerId: string; flightId: string }): Promise<FlightResponse> =>
+export const toggleManagerFlightStatus = (payload: { managerId: string; flightId: string }): Promise<FlightPlannerResponse> =>
     executeJsonApiRequest('/ToggleManagerFlightStatusPlanner', 'POST', payload)
 
 export const confirmManagerBookingItem = (orderItemId: string, payload: { managerId: string; managerType: string; note?: string | null }) =>

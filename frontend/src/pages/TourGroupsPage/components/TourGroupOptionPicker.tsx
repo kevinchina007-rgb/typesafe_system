@@ -1,6 +1,6 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
-import type { AppLanguage, AttractionResponse, FlightResponse, GroupPlanItemResponse, HotelResponse, TrainResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TrainResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, localizeCabinClass, localizeTourGroupItemType, localizeTrainSeatClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 
 type TourGroupOptionPickerProps = {
@@ -11,8 +11,8 @@ type TourGroupOptionPickerProps = {
   planItem: GroupPlanItemResponse | null
   translate: (translationKey: string) => string
   onClose: () => void
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelResponse[]>
+  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
+  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
   onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onCreateOption: (payload: {
@@ -82,8 +82,8 @@ export function TourGroupOptionPicker({
   onSearchAttractions,
   onCreateOption,
 }: TourGroupOptionPickerProps) {
-  const [flightResults, setFlightResults] = useState<FlightResponse[]>([])
-  const [hotelResults, setHotelResults] = useState<HotelResponse[]>([])
+  const [flightResults, setFlightResults] = useState<FlightPlannerResponse[]>([])
+  const [hotelResults, setHotelResults] = useState<HotelPlannerResponse[]>([])
   const [trainResults, setTrainResults] = useState<TrainResponse[]>([])
   const [attractionResults, setAttractionResults] = useState<AttractionResponse[]>([])
   const [flightFrom, setFlightFrom] = useState('')

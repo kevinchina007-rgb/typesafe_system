@@ -14,10 +14,10 @@ import { listBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listB
 import { listExploreSuggestions, searchExplore } from '@/microservices/content/api/ExplorePlanners'
 import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedbackThreads, listSiteAdminFeedbackThreads, sendFeedbackMessage, createOrderCancellationMessage, handleOrderCancellationRequest, markFeedbackThreadRead, escalateFeedbackThread } from '@/microservices/content/api/FeedbackPlanners'
 import { listMyReviews, listReviewsByResource, getReviewResourceSummary, getReviewEligibility, createReview, updateReview, uploadReviewImage, deleteReview } from '@/microservices/content/api/ReviewPlanners'
-import { listFlights, listFlightDailyLowestPrices, getFlight, createFlightOrder } from '@/microservices/flight/api'
-import { listHotels, getHotel } from '@/microservices/hotel/api/HotelQueryPlanners'
+import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
+import { searchHotelsPlanner, getHotelDetailsPlanner } from '@/microservices/hotel/api'
 import { createUser, loginUser, getUser, uploadUserAvatar } from '@/microservices/identity/api/UserQueryPlanners'
-import { registerAirlineManager, registerHotelManager, registerSiteAdmin, registerRailwayManager, registerAttractionManager, listManagedAttractions, createAttraction, createAttractionTicketType, createAttractionTicketSession, createAttractionTicketRule, listManagedTrains, createTrainJourney, createManagerRoomType, listManagedHotels, listManagerTasks, batchConfirmManagerBookingItems, batchRejectManagerBookingItems, listManagerFlights, listManagerFlightOrders, listManagerRefundTasks, updateAirlineManagerProfile, createManagerFlight, toggleManagerFlightStatus, confirmManagerBookingItem, rejectManagerBookingItem } from '@/microservices/operations/api/ManagerPlanners'
+import { registerAirlineManager, registerHotelManager, registerSiteAdmin, registerRailwayManager, registerAttractionManager, listManagedAttractions, createAttraction, createAttractionTicketType, createAttractionTicketSession, createAttractionTicketRule, listManagedTrains, createTrainJourney, createManagerRoomType, listManagedHotels, listManagerTasks, batchConfirmManagerBookingItems, batchRejectManagerBookingItems, listManagerFlights, listManagerFlightOrders, listManagerRefundTasks, updateAirlineManagerProfile, updateHotelManagerProfile, createManagerFlight, toggleManagerFlightStatus, confirmManagerBookingItem, rejectManagerBookingItem } from '@/microservices/operations/api/ManagerPlanners'
 import { createPaymentLink } from '@/microservices/order/api/FindOrderPaymentPlanner'
 import { createOrder, addTrainItemToOrder, addAttractionItemToOrder, createHotelOrder, getOrder, listOrders, payOrder, cancelOrder, requestRefund, approveRefund, rejectRefund } from '@/microservices/order/api/OrderPlanners'
 import { createTourGroup, listTourGroups, getTourGroup, joinTourGroup, addTourGroupMembershipTraveler, createTourGroupPlanItem, createTourGroupPlanOption, createTourGroupSelection, submitTourGroupSelection, confirmTourGroupSelection, rejectTourGroupSelection, payTourGroupSelection, batchPayTourGroupSelections, batchConfirmTourGroupSelections, batchRejectTourGroupSelections, listTourGroupBookings, getTourGroupChatSettings, updateTourGroupChatSettings, listTourGroupChatMessages, sendTourGroupChatMessage, listTourGroupDirectConversations, listTourGroupConversations, searchTourGroupConversations, searchTourGroupMessages, getOrCreateTourGroupDirectConversation, listDirectConversationMessages, listConversationMessages, markConversationRead, uploadConversationAttachment, sendConversationMessage, sendDirectConversationMessage, editConversationMessage, deleteConversationMessage, recallConversationMessage, addConversationReaction, removeConversationReaction, updateDirectConversationMuteState, updateDirectConversationArchiveState } from '@/microservices/tour-group/api/TourGroupPlanners'
@@ -88,12 +88,12 @@ export const travelMvpApiClient = {
   updateReview,
   uploadReviewImage,
   deleteReview,
-  listFlights,
-  listFlightDailyLowestPrices,
-  getFlight,
-  createFlightOrder,
-  listHotels,
-  getHotel,
+  searchFlightsPlanner,
+  flightDailyLowestPricesPlanner,
+  getFlightDetailsPlanner,
+  bookFlightPlanner,
+  searchHotelsPlanner,
+  getHotelDetailsPlanner,
   createUser,
   loginUser,
   getUser,
@@ -119,6 +119,7 @@ export const travelMvpApiClient = {
   listManagerFlightOrders,
   listManagerRefundTasks,
   updateAirlineManagerProfile,
+  updateHotelManagerProfile,
   createManagerFlight,
   toggleManagerFlightStatus,
   confirmManagerBookingItem,

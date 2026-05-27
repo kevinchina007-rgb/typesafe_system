@@ -1,4 +1,4 @@
-package com.typesafe.travel.flight.domain
+package com.typesafe.travel.flight.objects
 
 import com.typesafe.travel.shared.kernel.*
 import io.circe.{Decoder, Encoder}

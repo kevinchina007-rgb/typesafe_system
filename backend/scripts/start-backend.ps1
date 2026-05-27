@@ -13,11 +13,39 @@ $backendRunLog = Join-Path $logDir 'backend-run.log'
 $backendErrorLog = Join-Path $logDir 'backend-error.log'
 
 $bundledJavaHome = Join-Path $backendRoot '.jdks\temurin-21-unpacked\jdk-21.0.10+7'
-if ($env:JAVA_HOME -and (Test-Path $env:JAVA_HOME)) {
-  $javaHome = $env:JAVA_HOME
-} elseif (Test-Path $bundledJavaHome) {
-  $javaHome = $bundledJavaHome
-} else {
+$javaHomeCandidates = @(
+  $env:JAVA_HOME
+  $bundledJavaHome
+  (Join-Path $env:USERPROFILE '.jdks\*')
+  (Join-Path $env:USERPROFILE '.java\*')
+  "$env:ProgramFiles\Java\*"
+  "$env:ProgramFiles\Eclipse Adoptium\*"
+  "$env:ProgramFiles\Eclipse Temurin\*"
+  "$env:ProgramFiles(x86)\Java\*"
+)
+
+$javaHome = $null
+foreach ($candidate in $javaHomeCandidates) {
+  if (-not $candidate) {
+    continue
+  }
+
+  if ($candidate.Contains('*')) {
+    Get-ChildItem -Path $candidate -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+      if (-not $javaHome -and (Test-Path (Join-Path $_.FullName 'bin\java.exe'))) {
+        $javaHome = $_.FullName
+      }
+    }
+  } elseif (Test-Path (Join-Path $candidate 'bin\java.exe')) {
+    $javaHome = $candidate
+  }
+
+  if ($javaHome) {
+    break
+  }
+}
+
+if (-not $javaHome) {
   throw 'JAVA_HOME is required. Set JAVA_HOME or place a bundled JDK under backend/.jdks.'
 }
 
@@ -43,8 +71,17 @@ $env:COURSIER_JVM_CACHE = Join-Path $backendCoursierHome 'jvm'
 
 Add-Content -Path $backendScriptLog -Value "[backend] start script entered $(Get-Date -Format o) mode=$RepositoryMode port=$BackendPort db=$($env:TRAVEL_DB_URL)"
 Set-Location $backendRoot
-$classpathExport = Join-Path $backendRoot 'modules\api-gateway\target\streams\runtime\fullClasspathAsJars\_global\streams\export'
-if (-not (Test-Path $classpathExport)) {
+$classpathExportCandidates = @(
+  (Join-Path $backendRoot 'projects\api-gateway\target\streams\runtime\fullClasspathAsJars\_global\streams\export'),
+  (Join-Path $backendRoot 'projects\api-gateway\target\streams\runtime\dependencyClasspathAsJars\_global\streams\export'),
+  (Join-Path $backendRoot 'modules\api-gateway\target\streams\runtime\fullClasspathAsJars\_global\streams\export'),
+  (Join-Path $backendRoot 'modules\api-gateway\target\streams\runtime\dependencyClasspathAsJars\_global\streams\export'),
+  (Join-Path $backendRoot 'target\streams\runtime\fullClasspathAsJars\_global\streams\export'),
+  (Join-Path $backendRoot 'target\streams\runtime\dependencyClasspathAsJars\_global\streams\export')
+)
+
+$classpathExport = $classpathExportCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $classpathExport) {
   Add-Content -Path $backendScriptLog -Value "[backend] classpath export missing at $classpathExport"
   Write-Host "[travel-platform] Backend runtime classpath was not found. Compile the backend once before using the shortcut."
   exit 1
@@ -53,7 +90,7 @@ if (-not (Test-Path $classpathExport)) {
 $runtimeClasspathEntries =
   (Get-Content -Path $classpathExport -Raw).Trim().Split(';', [System.StringSplitOptions]::RemoveEmptyEntries) |
   ForEach-Object {
-    if ($_ -match '^(.*\\modules\\[^\\]+\\target\\scala-3\.3\.3)\\[^\\]+_3-[^\\]+\.jar$') {
+    if ($_ -match '^(.*\\(?:modules|projects)\\[^\\]+\\target\\scala-3\.3\.3)\\[^\\]+_3-[^\\]+\.jar$') {
       $classesDir = Join-Path $matches[1] 'classes'
       if (Test-Path $classesDir) {
         $classesDir

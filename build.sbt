@@ -14,15 +14,4 @@ lazy val root = (project in file("."))
       "org.http4s" %% "http4s-dsl" % "1.0.0-M44",
       "ch.qos.logback" % "logback-classic" % "1.5.16"
     ),
-
-    // assembly 设置
-    assembly / mainClass := Some("Main"),
-
-    assembly / assemblyMergeStrategy := {
-      case PathList("module-info.class") => MergeStrategy.discard
-      case PathList("META-INF", "services", _*) => MergeStrategy.concat
-      case PathList("META-INF", _*) => MergeStrategy.discard
-      case "reference.conf" => MergeStrategy.concat
-      case _ => MergeStrategy.first
-    }
-  )
+)

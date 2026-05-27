@@ -1,4 +1,4 @@
-﻿import { useHotelSearchStore } from '@/app/stores/hotel-search-store'
+import { useHotelSearchStore } from '@/app/stores/hotel-search-store'
 
 export function useHotelSearchState() {
   const hotelResponses = useHotelSearchStore(state => state.hotelResponses)
@@ -11,7 +11,7 @@ export function useHotelSearchState() {
   const hotelPreference = useHotelSearchStore(state => state.hotelPreference)
   const nearbyPreference = useHotelSearchStore(state => state.nearbyPreference)
   const selectedQuickDatePreset = useHotelSearchStore(state => state.selectedQuickDatePreset)
-  const setHotelResponses = useHotelSearchStore(state => state.setHotelResponses)
+  const setHotelPlannerResponses = useHotelSearchStore(state => state.setHotelPlannerResponses)
   const setHasSearchedHotels = useHotelSearchStore(state => state.setHasSearchedHotels)
   const setSearchLocation = useHotelSearchStore(state => state.setSearchLocation)
   const setSearchCheckInDate = useHotelSearchStore(state => state.setSearchCheckInDate)
@@ -33,7 +33,7 @@ export function useHotelSearchState() {
     hotelPreference,
     nearbyPreference,
     selectedQuickDatePreset,
-    setHotelResponses,
+    setHotelPlannerResponses,
     setHasSearchedHotels,
     setSearchLocation,
     setSearchCheckInDate,

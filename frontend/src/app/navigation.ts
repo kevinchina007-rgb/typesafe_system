@@ -386,6 +386,9 @@ export function getVisibleTopNavItems(params: {
       }
 
       if (signedInManager.managerType === 'Hotel' || signedInManager.managerType === 'Attraction') {
+        if (signedInManager.managerType === 'Hotel') {
+          return item.key === 'managerWorkspace' || item.key === 'managerFeedback' || item.key === 'managerAdvertising' || item.key === 'managerProfile'
+        }
         return item.key === 'managerWorkspace' || item.key === 'managerFeedback' || item.key === 'managerAdvertising'
       }
 
@@ -428,4 +431,3 @@ export function getSidebarItemsForTopNav(params: {
 export function shouldShowSidebar(sidebarItems: NavItem[]) {
   return sidebarItems.length > 1
 }
-

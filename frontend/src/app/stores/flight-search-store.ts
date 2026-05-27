@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-import type { FlightResponse } from '@/lib/mvp-types/flights'
+import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { FlightResultGroup, FlightSearchState } from '@/app/stores/models/flights/flightTypes'
 import { createFlightSearchSegment, defaultFlightSearchState } from '@/app/stores/models/flights'
 
@@ -15,14 +15,14 @@ function buildDefaultSearchState(tripType: FlightSearchState['tripType']): Fligh
 
 type FlightSearchStoreState = {
   searchState: FlightSearchState
-  flightResponses: FlightResponse[]
+  flightResponses: FlightPlannerResponse[]
   flightResultGroups: FlightResultGroup[]
   hasSearchedFlights: boolean
 }
 
 type FlightSearchStoreActions = {
   setSearchState: (searchState: FlightSearchState) => void
-  setFlightResponses: (flightResponses: FlightResponse[]) => void
+  setFlightPlannerResponses: (flightResponses: FlightPlannerResponse[]) => void
   setFlightResultGroups: (flightResultGroups: FlightResultGroup[]) => void
   setHasSearchedFlights: (hasSearchedFlights: boolean) => void
   updateSearchState: <K extends keyof FlightSearchState>(key: K, value: FlightSearchState[K]) => void
@@ -48,7 +48,7 @@ const flightSearchStoreDefaultState: FlightSearchStoreState = {
 export const useFlightSearchStore = create<FlightSearchStore>(set => ({
   ...flightSearchStoreDefaultState,
   setSearchState: searchState => set({ searchState }),
-  setFlightResponses: flightResponses => set({ flightResponses }),
+  setFlightPlannerResponses: flightResponses => set({ flightResponses }),
   setFlightResultGroups: flightResultGroups => set({ flightResultGroups }),
   setHasSearchedFlights: hasSearchedFlights => set({ hasSearchedFlights }),
   updateSearchState: (key, value) =>
@@ -102,7 +102,7 @@ export const useFlightSearchStore = create<FlightSearchStore>(set => ({
     })),
 }))
 
-export function getFlightSearchSnap() {
+export function getFlightDetailsPlannerSearchSnap() {
   const { searchState, flightResponses, flightResultGroups, hasSearchedFlights } = useFlightSearchStore.getState()
   return { searchState, flightResponses, flightResultGroups, hasSearchedFlights }
 }

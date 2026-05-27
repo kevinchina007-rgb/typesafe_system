@@ -5,7 +5,7 @@ export function renderFlightTravelerOptionLabel(traveler: TravelerResponse): str
   return `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
 }
 
-export function getFlightStatusLabel(status: string, currentLanguage: AppLanguage) {
+export function getFlightDetailsPlannerStatusLabel(status: string, currentLanguage: AppLanguage) {
   return mapBackendStatusToProductLabel(status, currentLanguage)
 }
 

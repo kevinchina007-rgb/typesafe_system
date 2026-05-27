@@ -1,12 +1,14 @@
-package com.typesafe.travel.flight.domain
+package com.typesafe.travel.flight.api
+
+import com.typesafe.travel.flight.objects.*
 
 import cats.effect.IO
-import com.typesafe.travel.persistence.flight.SearchFlightsPlannerPlainSql
+import com.typesafe.travel.flight.tables.SearchFlightsPlannerPlainSql
 
 import java.sql.Connection
 import java.time.Instant
 
-private[domain] object FlightPlannerResponseBuilder:
+private[api] object FlightPlannerResponseBuilder:
   def buildFlightResponses(
       connection: Connection,
       rows: List[FlightPlannerRow],

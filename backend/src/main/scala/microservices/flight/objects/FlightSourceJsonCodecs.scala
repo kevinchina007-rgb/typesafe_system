@@ -1,4 +1,4 @@
-package com.typesafe.travel.flight.domain
+package com.typesafe.travel.flight.objects
 
 import com.typesafe.travel.shared.kernel.*
 import io.circe.{Decoder, Encoder}
@@ -6,7 +6,7 @@ import io.circe.{Decoder, Encoder}
 import java.time.{Instant, OffsetDateTime}
 import scala.util.Try
 
-private[domain] object FlightSourceJsonCodecs:
+private[objects] object FlightSourceJsonCodecs:
   given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   given Decoder[Instant] = Decoder.decodeString.emap(value => Try(Instant.parse(value)).toEither.left.map(_.getMessage))
   given Encoder[OffsetDateTime] = Encoder.encodeString.contramap(_.toString)

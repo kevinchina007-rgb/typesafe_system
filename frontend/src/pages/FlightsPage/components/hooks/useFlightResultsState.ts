@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import type { FlightResponse } from '@/lib/mvp-types/flights'
-import type { FlightSearchQuery } from '@/microservices/flight/objects/FlightSearchQuery'
-import { getFlightAirlineDisplayNameByCode, getFlightAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
-import { formatFlightAirportLabel, getFlightCityAirportCodes, normalizeFlightAirportForApi } from '@/app/stores/models/flights/flightConstants'
+import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
+import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
+import { getFlightDetailsPlannerAirlineDisplayNameByCode, getFlightDetailsPlannerAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
+import { formatFlightAirportLabel, getFlightDetailsPlannerCityAirportCodes, normalizeFlightAirportForApi } from '@/app/stores/models/flights/flightConstants'
 import type {
-  FlightDailyLowestPriceResponse,
-  FlightDailyLowestPricesRequest,
-  FlightDailyLowestPricesResponse,
+  FlightDailyLowestPricePlannerResponse,
+  FlightDailyLowestPricesPlannerRequest,
+  FlightDailyLowestPricesPlannerResponse,
 } from '@/microservices/flight/objects/FlightDailyLowestPrices'
 
 export type FlightSortMode = 'price' | 'departureTime'
@@ -19,7 +19,7 @@ export type FlightResultsRoute = {
 }
 
 export type DisplayFlight = {
-  flight: FlightResponse
+  flight: FlightPlannerResponse
   airlineName: string
   airlineLogoPath: string | null
   departureAirportName: string
@@ -52,11 +52,11 @@ export function useFlightResultsState({
   onLoadDailyLowestPrices,
 }: {
   route: FlightResultsRoute
-  searchedFlights: FlightResponse[]
+  searchedFlights: FlightPlannerResponse[]
   hasSearchedFlights: boolean
   theme: 'outbound' | 'return' | 'single'
-  onSearchFlights: (payload: FlightSearchQuery) => Promise<FlightResponse[]>
-  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesRequest) => Promise<FlightDailyLowestPricesResponse>
+  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>
+  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>
 }) {
   const [selectedAirline, setSelectedAirline] = useState('all')
   const [selectedTimeRange, setSelectedTimeRange] = useState('all')
@@ -65,7 +65,7 @@ export function useFlightResultsState({
   const [selectedCabin, setSelectedCabin] = useState('all')
   const [sortMode, setSortMode] = useState<FlightSortMode>('price')
   const [dateWindowOffset, setDateWindowOffset] = useState(-3)
-  const [dailyLowestPrices, setDailyLowestPrices] = useState<FlightDailyLowestPriceResponse[]>([])
+  const [dailyLowestPrices, setDailyLowestPrices] = useState<FlightDailyLowestPricePlannerResponse[]>([])
 
   useEffect(() => {
     setSelectedAirline('all')
@@ -83,12 +83,12 @@ export function useFlightResultsState({
   )
 
   const departureAirportOptions = useMemo(
-    () => getFlightCityAirportCodes(route.departureAirport),
+    () => getFlightDetailsPlannerCityAirportCodes(route.departureAirport),
     [route.departureAirport],
   )
 
   const arrivalAirportOptions = useMemo(
-    () => getFlightCityAirportCodes(route.arrivalAirport),
+    () => getFlightDetailsPlannerCityAirportCodes(route.arrivalAirport),
     [route.arrivalAirport],
   )
 
@@ -209,12 +209,12 @@ export function formatCabinLabel(value: string): string {
   return cabinLabelByClass[normalizeCabinClass(value)] ?? value
 }
 
-export function getAirlineDisplayName(flight: FlightResponse): string {
-  return getFlightAirlineDisplayNameByCode(flight.airlineCode, flight.airlineName)
+export function getAirlineDisplayName(flight: FlightPlannerResponse): string {
+  return getFlightDetailsPlannerAirlineDisplayNameByCode(flight.airlineCode, flight.airlineName)
 }
 
-export function getAirlineLogoPath(flight: FlightResponse): string | null {
-  return getFlightAirlineLogoPathByCode(flight.airlineCode, flight.airlineLogoPath)
+export function getAirlineLogoPath(flight: FlightPlannerResponse): string | null {
+  return getFlightDetailsPlannerAirlineLogoPathByCode(flight.airlineCode, flight.airlineLogoPath)
 }
 
 export function formatRouteDate(date: string): string {
@@ -230,9 +230,9 @@ export function formatRouteDate(date: string): string {
 }
 
 async function loadDailyLowestPricesFromSearch(
-  request: FlightDailyLowestPricesRequest,
-  onSearchFlights: (payload: FlightSearchQuery) => Promise<FlightResponse[]>,
-): Promise<FlightDailyLowestPricesResponse> {
+  request: FlightDailyLowestPricesPlannerRequest,
+  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>,
+): Promise<FlightDailyLowestPricesPlannerResponse> {
   const start = parseSearchDate(request.startDate)
   const prices = await Promise.all(
     Array.from({ length: request.days }, async (_, index) => {
@@ -262,9 +262,9 @@ async function loadDailyLowestPricesFromSearch(
 }
 
 async function loadDailyLowestPricesAcrossAirportCodes(
-  request: FlightDailyLowestPricesRequest,
-  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesRequest) => Promise<FlightDailyLowestPricesResponse>,
-): Promise<FlightDailyLowestPricesResponse> {
+  request: FlightDailyLowestPricesPlannerRequest,
+  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>,
+): Promise<FlightDailyLowestPricesPlannerResponse> {
   const departureAirportOptions = expandAirportSearchValues(request.departureAirport)
   const arrivalAirportOptions = expandAirportSearchValues(request.arrivalAirport)
 
@@ -284,7 +284,7 @@ async function loadDailyLowestPricesAcrossAirportCodes(
     ),
   )
 
-  const pricesByDate = new Map<string, FlightDailyLowestPriceResponse>()
+  const pricesByDate = new Map<string, FlightDailyLowestPricePlannerResponse>()
   responses.flatMap(response => response.prices).forEach(price => {
     const currentPrice = pricesByDate.get(price.date)
     const nextAmount = price.lowestPrice === null ? null : Number(price.lowestPrice)
@@ -303,7 +303,7 @@ function expandAirportSearchValues(value: string | undefined): string[] {
     return []
   }
 
-  const airportCodes = getFlightCityAirportCodes(value)
+  const airportCodes = getFlightDetailsPlannerCityAirportCodes(value)
   if (airportCodes.length > 0) {
     return airportCodes
   }
@@ -311,7 +311,7 @@ function expandAirportSearchValues(value: string | undefined): string[] {
   return [normalizeFlightAirportForApi(value) ?? value]
 }
 
-function toDisplayFlight(flight: FlightResponse, selectedCabin: string): DisplayFlight {
+function toDisplayFlight(flight: FlightPlannerResponse, selectedCabin: string): DisplayFlight {
   const selectedInventory =
     selectedCabin === 'all'
       ? [...flight.cabinInventories].sort((left, right) => Number(left.unitPrice) - Number(right.unitPrice))[0]
@@ -356,7 +356,7 @@ function formatDateInput(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-function buildEmptyDateWindow(startDate: string, days: number): FlightDailyLowestPriceResponse[] {
+function buildEmptyDateWindow(startDate: string, days: number): FlightDailyLowestPricePlannerResponse[] {
   const start = parseSearchDate(startDate)
   return Array.from({ length: days }, (_, index) => {
     const date = new Date(start)

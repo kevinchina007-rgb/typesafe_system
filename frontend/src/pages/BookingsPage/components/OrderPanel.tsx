@@ -1,5 +1,5 @@
 import { formatFlightAirportLabel, formatFlightRouteCity } from '@/app/stores/models/flights/flightConstants'
-import { getFlightAirlineDisplayNameByCode, getFlightAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
+import { getFlightDetailsPlannerAirlineDisplayNameByCode, getFlightDetailsPlannerAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
 import { formatIsoDateTime, localizeBookingKind, localizePaymentMethod, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import type { OrderLineItemResponse, OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { OrderLineItemDetails } from '@/pages/BookingsPage/components/OrderLineItemDetails'
@@ -60,6 +60,20 @@ export function OrderPanel({
             {visibleOrders.map(order =>
               orderCategory === 'flightOrders' ? (
                 <FlightOrderCard
+                  key={order.orderId}
+                  currentLanguage={currentLanguage}
+                  isBusy={isBusy}
+                  order={order}
+                  reviews={reviews}
+                  travelers={travelers}
+                  translate={translate}
+                  onCancelOrder={onCancelOrder}
+                  onDeleteReview={onDeleteReview}
+                  onOpenOrderCancellationFeedback={onOpenOrderCancellationFeedback}
+                  onOpenPayment={onOpenPayment}
+                />
+              ) : orderCategory === 'hotelOrders' ? (
+                <HotelOrderCard
                   key={order.orderId}
                   currentLanguage={currentLanguage}
                   isBusy={isBusy}
@@ -266,6 +280,137 @@ function FlightOrderCard({
   )
 }
 
+function HotelOrderCard({
+  currentLanguage,
+  isBusy,
+  order,
+  reviews,
+  travelers,
+  translate,
+  onCancelOrder,
+  onDeleteReview,
+  onOpenOrderCancellationFeedback,
+  onOpenPayment,
+}: {
+  currentLanguage: OrderPanelProps['currentLanguage']
+  isBusy: boolean
+  order: OrderResponse
+  reviews: ReviewResponse[]
+  travelers: TravelerResponse[]
+  translate: OrderPanelProps['translate']
+} & ReviewHandlers & PaymentHandlers) {
+  const hotelItem = (order.orderLineItems ?? []).find(orderLineItem => orderLineItem.hotelDetails || parseHotelSnapshot(orderLineItem.summaryLabel))
+  const displayHotel = hotelItem ? buildHotelOrderDisplay(hotelItem) : null
+  const existingReview = hotelItem ? findOrderItemReview(reviews, hotelItem.orderItemId) : null
+  const isPayable = isOrderPayable(order.status)
+  const isPaid = isOrderPaid(order.status)
+  const isRefunded = isOrderRefunded(order.status)
+
+  if (!displayHotel || !hotelItem) {
+    return (
+      <li className="border border-slate-200 bg-white p-5 text-slate-500 shadow-sm shadow-slate-200/40">
+        {translate('bookings.empty')}
+      </li>
+    )
+  }
+
+  return (
+    <li className="relative border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/40">
+      <span className="absolute right-6 top-5 text-xs font-medium text-slate-400">{formatIsoDateTime(order.createdAt, translate('booking.notYet'))}</span>
+
+      <div className="grid gap-6 pr-28">
+        <div className="grid gap-5 lg:grid-cols-[1.25fr_0.9fr]">
+          <div className="grid gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex min-h-9 items-center justify-center border border-cyan-200 bg-cyan-50 px-3 text-sm font-black text-cyan-700">酒店订单</span>
+              <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">{displayHotel.roomTypeName || '未填写房型'}</span>
+            </div>
+
+            <div className="grid gap-2">
+              <h3 className="m-0 text-4xl font-black tracking-normal text-slate-950">{displayHotel.hotelName || '未填写酒店名称'}</h3>
+              <p className="m-0 text-base font-medium text-slate-600">{displayHotel.hotelLocation || '未填写酒店地点'}</p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <HotelInfoBlock label={translate('booking.hotel.roomType')} value={displayHotel.roomTypeName || '未填写房型'} />
+              <HotelInfoBlock
+                label={translate('booking.hotel.guests')}
+                value={
+                  displayHotel.guestTravelerIds.length > 0
+                    ? displayHotel.guestTravelerIds.map(travelerId => formatTravelerIdentity(travelers, travelerId)).join('、')
+                    : '0'
+                }
+              />
+              <HotelInfoBlock label={translate('booking.hotel.stay')} value={`${displayHotel.checkInDate} → ${displayHotel.checkOutDate}`} />
+              <HotelInfoBlock label={translate('booking.hotel.roomCount')} value={`${displayHotel.roomCount} 间房`} />
+            </div>
+          </div>
+
+          <div className="grid gap-4 border border-slate-200 bg-slate-50 p-4">
+            <div className="grid gap-2">
+              <span className="text-sm font-semibold text-slate-500">订单状态</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <strong className="text-3xl font-black text-slate-950">{`${order.totalPrice} ${order.orderCurrency}`}</strong>
+                {isPayable ? (
+                  <span className="inline-flex min-h-11 items-center border border-amber-200 bg-amber-50 px-4 text-lg font-black text-amber-700">待支付</span>
+                ) : isRefunded ? (
+                  <span className="inline-flex min-h-11 items-center border border-sky-200 bg-sky-50 px-4 text-lg font-black text-sky-700">已退款</span>
+                ) : isPaid ? (
+                  <span className="inline-flex min-h-11 items-center border border-emerald-200 bg-emerald-50 px-4 text-lg font-black text-emerald-700">{translate('bookings.paid')}</span>
+                ) : (
+                  <span className="inline-flex min-h-11 items-center border border-slate-200 bg-slate-50 px-4 text-lg font-black text-slate-600">{mapBackendStatusToProductLabel(order.status, 'zh')}</span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-2 text-sm leading-6 text-slate-600">
+              <p className="m-0">{`${translate('booking.reference')}: ${order.orderId}`}</p>
+              <p className="m-0">{`${translate('booking.createdAt')}: ${formatIsoDateTime(order.createdAt, translate('booking.notYet'))}`}</p>
+              <p className="m-0">{`${translate('booking.paidAt')}: ${formatIsoDateTime(order.paidAt, translate('booking.notYet'))}`}</p>
+            </div>
+          </div>
+        </div>
+
+        <ul className="grid gap-3 border-t border-slate-200 pt-4">
+          {(order.orderLineItems ?? []).map(orderLineItem => {
+            const existingReviewForLineItem = findOrderItemReview(reviews, orderLineItem.orderItemId)
+            return (
+              <li key={orderLineItem.orderItemId} className="grid gap-3">
+                <OrderLineItemDetails currentLanguage={currentLanguage} orderLineItem={orderLineItem} existingReview={existingReviewForLineItem} travelers={travelers} translate={translate} />
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        {isPayable ? (
+          <>
+            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={() => onOpenPayment(order)}>
+              {translate('bookings.pay')}
+            </button>
+            <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void onCancelOrder(order.orderId)}>
+              {translate('bookings.cancel')}
+            </button>
+          </>
+        ) : null}
+        <button
+          type="button"
+          className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
+          disabled={isBusy}
+          onClick={() => void onOpenOrderCancellationFeedback(order.orderId)}
+        >
+          申请退款及向客服反馈
+        </button>
+        {existingReview?.canDelete ? (
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void onDeleteReview(existingReview.reviewId)}>
+            {translate('reviews.delete')}
+          </button>
+        ) : null}
+      </div>
+    </li>
+  )
+}
 function OrderItemFeedbackActions({
   isBusy,
   order,
@@ -300,7 +445,6 @@ function OrderItemFeedbackActions({
     </div>
   )
 }
-
 function OrderPaymentActions({
   isBusy,
   order,
@@ -369,6 +513,15 @@ function FlightTravelerBadges({ travelerIds, travelers }: { travelerIds: string[
   )
 }
 
+function HotelInfoBlock({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="grid gap-1 border border-cyan-100 bg-cyan-50/40 p-3">
+      <span className="text-sm font-semibold text-cyan-700">{label}</span>
+      <strong className="break-words text-lg font-black text-slate-950">{value}</strong>
+    </div>
+  )
+}
+
 function OrderMeta({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid gap-1">
@@ -389,6 +542,19 @@ type FlightSnapshotSummary = {
   arrivalTime?: string
   cabinClass?: string
   travelerIds?: string[]
+}
+
+type HotelSnapshotSummary = {
+  hotelId?: string
+  hotelName?: string
+  hotelLocation?: string
+  roomTypeId?: string
+  roomTypeName?: string
+  roomName?: string
+  checkInDate?: string
+  checkOutDate?: string
+  guestTravelerIds?: string[]
+  roomCount?: number
 }
 
 function parseFlightSnapshot(summaryLabel: string): FlightSnapshotSummary | null {
@@ -415,6 +581,29 @@ function parseFlightSnapshot(summaryLabel: string): FlightSnapshotSummary | null
   }
 }
 
+function parseHotelSnapshot(summaryLabel: string): HotelSnapshotSummary | null {
+  if (!summaryLabel.trim().startsWith('{')) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(summaryLabel) as Record<string, unknown>
+    return {
+      hotelId: getStringField(parsed, 'hotelId'),
+      hotelName: getStringField(parsed, 'hotelName'),
+      hotelLocation: getStringField(parsed, 'hotelLocation') ?? getStringField(parsed, 'location'),
+      roomTypeId: getStringField(parsed, 'roomTypeId'),
+      roomTypeName: getStringField(parsed, 'roomTypeName') ?? getStringField(parsed, 'roomName'),
+      checkInDate: getStringField(parsed, 'checkInDate'),
+      checkOutDate: getStringField(parsed, 'checkOutDate'),
+      guestTravelerIds: getStringArrayField(parsed, 'guestTravelerIds'),
+      roomCount: getNumberField(parsed, 'roomCount'),
+    }
+  } catch {
+    return null
+  }
+}
+
 function buildFlightOrderDisplay(orderLineItem: OrderLineItemResponse) {
   const snapshot = parseFlightSnapshot(orderLineItem.summaryLabel)
   const flightDetails = orderLineItem.flightDetails
@@ -423,9 +612,9 @@ function buildFlightOrderDisplay(orderLineItem: OrderLineItemResponse) {
   const airlineCode = flightDetails?.airlineCode ?? snapshot?.airlineCode ?? 'MU'
 
   return {
-    airlineName: getFlightAirlineDisplayNameByCode(airlineCode, flightDetails?.airlineName ?? snapshot?.airlineName ?? '航空公司'),
+    airlineName: getFlightDetailsPlannerAirlineDisplayNameByCode(airlineCode, flightDetails?.airlineName ?? snapshot?.airlineName ?? '航空公司'),
     airlineCode,
-    airlineLogoPath: getFlightAirlineLogoPathByCode(airlineCode, `/images/airlines/${airlineCode}.svg`),
+    airlineLogoPath: getFlightDetailsPlannerAirlineLogoPathByCode(airlineCode, `/images/airlines/${airlineCode}.svg`),
     flightNumber: flightDetails?.flightNumber ?? snapshot?.flightNumber ?? snapshot?.flightId ?? '',
     departureAirport,
     arrivalAirport,
@@ -438,6 +627,22 @@ function buildFlightOrderDisplay(orderLineItem: OrderLineItemResponse) {
   }
 }
 
+function buildHotelOrderDisplay(orderLineItem: OrderLineItemResponse) {
+  const snapshot = parseHotelSnapshot(orderLineItem.summaryLabel)
+  const hotelDetails = orderLineItem.hotelDetails
+
+  return {
+    hotelId: hotelDetails?.hotelId ?? snapshot?.hotelId ?? '',
+    hotelName: hotelDetails?.hotelName ?? snapshot?.hotelName ?? '',
+    hotelLocation: hotelDetails?.location ?? snapshot?.hotelLocation ?? '',
+    roomTypeName: hotelDetails?.roomTypeName ?? snapshot?.roomTypeName ?? snapshot?.roomName ?? '',
+    checkInDate: hotelDetails?.checkInDate ?? snapshot?.checkInDate ?? '',
+    checkOutDate: hotelDetails?.checkOutDate ?? snapshot?.checkOutDate ?? '',
+    guestTravelerIds: hotelDetails?.guestTravelerIds ?? snapshot?.guestTravelerIds ?? [],
+    roomCount: hotelDetails?.roomCount ?? snapshot?.roomCount ?? 0,
+  }
+}
+
 function getStringField(record: Record<string, unknown>, key: string) {
   const value = record[key]
   return typeof value === 'string' && value.trim() ? value : undefined
@@ -446,6 +651,11 @@ function getStringField(record: Record<string, unknown>, key: string) {
 function getStringArrayField(record: Record<string, unknown>, key: string) {
   const value = record[key]
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0) : []
+}
+
+function getNumberField(record: Record<string, unknown>, key: string) {
+  const value = record[key]
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0
 }
 
 function formatFlightClock(value: string) {
