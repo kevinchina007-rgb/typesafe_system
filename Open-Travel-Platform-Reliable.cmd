@@ -2,11 +2,12 @@
 setlocal
 title Typesafe Travel Platform Launcher
 
-set "JAVA_HOME=C:\typesafe\tools\jdk-22"
-set "SBT_HOME=C:\typesafe\sbt"
-set "NODE_HOME=C:\typesafe\tools\nodejs"
-set "NPM_CONFIG_PREFIX=C:\typesafe\npm-global"
-set "PATH=C:\typesafe\Git\cmd;C:\typesafe\sbt\bin;C:\typesafe\tools\jdk-22\bin;C:\typesafe\tools\nodejs;C:\typesafe\npm-global;C:\typesafe\tools\postgresql-18\bin;%PATH%"
+for %%I in ("%~dp0.") do set "REPO_ROOT=%%~fI"
+
+if defined JAVA_HOME set "PATH=%JAVA_HOME%\bin;%PATH%"
+if defined SBT_HOME set "PATH=%SBT_HOME%\bin;%PATH%"
+if defined NODE_HOME set "PATH=%NODE_HOME%;%PATH%"
+if defined NPM_CONFIG_PREFIX set "PATH=%NPM_CONFIG_PREFIX%;%PATH%"
 
 echo Starting Typesafe Travel Platform...
 echo.

@@ -158,7 +158,7 @@ for ($attempt = 0; $attempt -lt 90; $attempt++) {
     Write-Host "[travel-platform-production] backend ready at http://127.0.0.1:$BackendPort"
     Write-Host "[travel-platform-production] public frontend origin: $publicFrontendOrigin"
     Write-Host "[travel-platform-production] public backend origin: $publicBackendOrigin"
-    Write-Host "[travel-platform-production] deploy Caddy with E:\\typesafe\\template\\deploy\\Caddyfile"
+    Write-Host "[travel-platform-production] deploy Caddy with .\deploy\Caddyfile"
     Write-LauncherLog "ready localBackend=http://127.0.0.1:$BackendPort publicFrontend=$publicFrontendOrigin publicBackend=$publicBackendOrigin"
     exit 0
   }

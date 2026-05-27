@@ -1,6 +1,20 @@
 @echo off
 setlocal
-set "SBT_HOME=C:\Users\X1\tools\sbt\1.10.0\sbt"
-set "JAVA_HOME=C:\Users\X1\.jdks\openjdk-25.0.2"
-set "PATH=%JAVA_HOME%\bin;%PATH%"
-call "C:\Users\X1\tools\sbt\1.10.0\sbt\bin\sbt.bat" %*
+if defined JAVA_HOME (
+  if exist "%JAVA_HOME%\bin" set "PATH=%JAVA_HOME%\bin;%PATH%"
+)
+
+if defined SBT_HOME (
+  if exist "%SBT_HOME%\bin\sbt.bat" (
+    call "%SBT_HOME%\bin\sbt.bat" %*
+    exit /b %errorlevel%
+  )
+)
+
+if exist "%~dp0..\tools\sbt\bin\sbt.bat" (
+  call "%~dp0..\tools\sbt\bin\sbt.bat" %*
+  exit /b %errorlevel%
+)
+
+echo sbt was not found. Set SBT_HOME or install sbt on PATH.
+exit /b 1

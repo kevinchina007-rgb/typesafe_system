@@ -24,7 +24,7 @@ This keeps the application same-origin in production, which simplifies session c
 
 ## Environment
 
-Copy [E:\typesafe\template\deploy\.env.production.example](E:/typesafe/template/deploy/.env.production.example) into a real environment file and set:
+Copy [./deploy/.env.production.example](./deploy/.env.production.example) into a real environment file and set:
 
 - `TRAVEL_PUBLIC_HOST`
 - `TRAVEL_DB_PASSWORD`
@@ -40,7 +40,7 @@ $env:TRAVEL_PUBLIC_HOST='your-domain.example.com'
 $env:TRAVEL_DB_PASSWORD='replace-with-a-strong-password'
 $env:TRAVEL_PAYMENT_LINK_SECRET='replace-with-a-long-random-secret'
 $env:TRAVEL_SESSION_COOKIE_DOMAIN='your-domain.example.com'
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'E:\typesafe\template\scripts\start-travel-platform-production.ps1'
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File '.\scripts\start-travel-platform-production.ps1'
 ```
 
 This will:
@@ -51,7 +51,7 @@ This will:
 
 ## Start Caddy
 
-Use [E:\typesafe\template\deploy\Caddyfile](E:/typesafe/template/deploy/Caddyfile) and expose:
+Use [./deploy/Caddyfile](./deploy/Caddyfile) and expose:
 
 - `80/tcp`
 - `443/tcp`
@@ -61,7 +61,7 @@ Minimal example:
 ```powershell
 $env:TRAVEL_PUBLIC_HOST='your-domain.example.com'
 $env:TRAVEL_ACME_EMAIL='ops@your-domain.example.com'
-caddy run --config E:\typesafe\template\deploy\Caddyfile
+caddy run --config .\deploy\Caddyfile
 ```
 
 ## Result

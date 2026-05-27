@@ -98,10 +98,10 @@ You can override the JDBC settings with:
 Use the project-local JDK 21 before running any `sbt` command:
 
 ```powershell
-$env:JAVA_HOME='E:\typesafe\template\backend\.jdks\temurin-21-unpacked\jdk-21.0.10+7'
+cd .\backend
+$env:JAVA_HOME = '.\.jdks\temurin-21-unpacked\jdk-21.0.10+7'
 $env:Path="$env:JAVA_HOME\bin;$env:Path"
 $env:TRAVEL_REPOSITORY_MODE='database'
-cd E:\typesafe\template\backend
 sbt test
 sbt run
 ```
@@ -111,19 +111,19 @@ You can also use the bundled PowerShell scripts:
 Foreground start:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File E:\typesafe\template\backend\scripts\start-backend.ps1 -RepositoryMode database
+powershell -NoProfile -ExecutionPolicy Bypass -File .\backend\scripts\start-backend.ps1 -RepositoryMode database
 ```
 
 Background start without going through `cmd start` window-title syntax:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File E:\typesafe\template\backend\scripts\start-backend-background.ps1 -RepositoryMode database
+powershell -NoProfile -ExecutionPolicy Bypass -File .\backend\scripts\start-backend-background.ps1 -RepositoryMode database
 ```
 
 ## Run Frontend
 
 ```powershell
-cd E:\typesafe\template\frontend
+cd .\frontend
 npm install
 npm run dev
 ```

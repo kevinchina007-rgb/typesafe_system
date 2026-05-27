@@ -95,13 +95,15 @@ function Get-PgAdminSavedPassword {
     return $null
   }
 
-  $script = @'
+  $cryptoPath = (Join-Path $workspaceRoot 'postgresql\pgAdmin 4\web\pgadmin\utils\crypto.py').Replace('\', '/')
+  $pgAdminDbPath = (Join-Path $env:APPDATA 'pgAdmin\pgadmin4.db').Replace('\', '/')
+  $script = @"
 import sqlite3, importlib.util, keyring
-crypto_path = r'E:\typesafe\postgresql\pgAdmin 4\web\pgadmin\utils\crypto.py'
+crypto_path = r'$cryptoPath'
 spec = importlib.util.spec_from_file_location('pgadmin_crypto', crypto_path)
 crypto = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(crypto)
-conn = sqlite3.connect(r'C:\Users\X1\AppData\Roaming\pgAdmin\pgadmin4.db')
+conn = sqlite3.connect(r'$pgAdminDbPath')
 cur = conn.cursor()
 master_key = keyring.get_password('pgAdmin4', 'pgadmin4-master-password')
 cur.execute("SELECT password FROM server WHERE host = 'localhost' AND port = 5432 ORDER BY id LIMIT 1")
@@ -111,7 +113,7 @@ if not master_key or not row or not row[0]:
 else:
     server_password = bytes.fromhex(row[0])
     print(crypto.decrypt(server_password, master_key).decode())
-'@
+"@
 
   try {
     $savedPassword = ($script | & $pgAdminPython - 2>$null | Out-String).Trim()
@@ -324,9 +326,9 @@ $npmCommand = Get-CommandPath -Candidates @(
   'C:\Program Files\nodejs\npm.cmd'
 ) -DisplayName 'npm.cmd'
 $sbtCommand = Get-CommandPath -Candidates @(
+  (Join-Path $workspaceRoot 'bin\sbt.cmd'),
   'sbt',
-  'sbt.bat',
-  'C:\typesafe\sbt\bin\sbt.bat'
+  'sbt.bat'
 ) -DisplayName 'sbt'
 $pythonCommand = Get-CommandPath -Candidates @(
   'python',
