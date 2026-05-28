@@ -3,9 +3,9 @@ import { formatIsoDateTime, localizeTrainSeatClass, mapBackendStatusToProductLab
 import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
 import {
   quoteTrainSegmentAmount,
-  renderTrainStopSummary,
+  renderTrainSearchSegmentSummary,
   renderTrainTravelerOptionLabel,
-  resolveTrainStationCodes,
+  resolveTrainSearchSegment,
 } from '@/app/stores/models/train-booking-model'
 
 type TrainResultsSectionProps = {
@@ -35,6 +35,15 @@ function formatStopTimeLabel(stop: TrainResponse['stops'][number] | null | undef
   return formatIsoDateTime(stop?.departureTime ?? stop?.arrivalTime ?? null, '-')
 }
 
+function getDestinationStationLabel(trainResponse: TrainResponse, searchFromStation: string, searchToStation: string): string {
+  const routeSegment = resolveTrainSearchSegment(trainResponse, searchFromStation, searchToStation)
+  if (!routeSegment) {
+    return '到达'
+  }
+  const terminalStop = trainResponse.stops[trainResponse.stops.length - 1] ?? null
+  return terminalStop && routeSegment.toStop.stopId === terminalStop.stopId ? '到达' : '经停'
+}
+
 export function TrainResultsSection({
   currentLanguage,
   isBusy,
@@ -53,10 +62,13 @@ export function TrainResultsSection({
     <div className="grid gap-4">
       {trainResponses.length > 0 ? (
         trainResponses.map(trainResponse => {
-          const departureStop = trainResponse.stops[0] ?? null
-          const arrivalStop = trainResponse.stops[trainResponse.stops.length - 1] ?? null
-          const viaStops = trainResponse.stops.slice(1, -1)
-          const resolvedStationCodes = resolveTrainStationCodes(trainResponse, searchFromStation, searchToStation)
+          const routeSegment = resolveTrainSearchSegment(trainResponse, searchFromStation, searchToStation)
+          const departureStop = routeSegment?.fromStop ?? trainResponse.stops[0] ?? null
+          const arrivalStop = routeSegment?.toStop ?? trainResponse.stops[trainResponse.stops.length - 1] ?? null
+          const segmentStops = routeSegment?.segmentStops ?? trainResponse.stops
+          const viaStops = segmentStops.slice(1, -1)
+          const resolvedRouteSummary = renderTrainSearchSegmentSummary(trainResponse, searchFromStation, searchToStation)
+          const destinationLabel = getDestinationStationLabel(trainResponse, searchFromStation, searchToStation)
 
           return (
             <article key={trainResponse.trainId} className="grid gap-5 border border-sky-100 bg-white p-5 text-slate-950 shadow-sm shadow-sky-100/40">
@@ -68,7 +80,7 @@ export function TrainResultsSection({
                     </span>
                     <strong className="text-2xl font-black text-slate-950">{trainResponse.trainNumber}</strong>
                   </div>
-                  <p className="text-sm leading-6 text-slate-600">{renderTrainStopSummary(trainResponse)}</p>
+                  <p className="text-sm leading-6 text-slate-600">{resolvedRouteSummary}</p>
                   <ResourceReviewSummaryLoader
                     currentLanguage={currentLanguage}
                     isBusy={isBusy}
@@ -94,7 +106,7 @@ export function TrainResultsSection({
                 </div>
                 <div className="hidden xl:grid place-items-center text-3xl font-black text-slate-300">→</div>
                 <div className="grid gap-2 border border-violet-100 bg-violet-50/60 p-4">
-                  <span className="text-sm font-medium text-violet-700">到达</span>
+                  <span className="text-sm font-medium text-violet-700">{destinationLabel}</span>
                   <strong className="text-2xl font-black text-slate-950">{arrivalStop?.stationName ?? '--'}</strong>
                   <p className="text-sm text-slate-600">{formatStopTimeLabel(arrivalStop)}</p>
                 </div>
@@ -115,7 +127,7 @@ export function TrainResultsSection({
 
               <div className="grid gap-3">
                 {trainResponse.seatInventories.map(seatInventory => {
-                  const quote = resolvedStationCodes
+                  const quote = routeSegment
                     ? quoteTrainSegmentAmount(trainResponse, searchFromStation, searchToStation, seatInventory.seatClass)
                     : null
 
@@ -142,7 +154,7 @@ export function TrainResultsSection({
                             onRequireLogin()
                             return
                           }
-                          if (!quote || !resolvedStationCodes) {
+                          if (!quote || !routeSegment) {
                             throw new Error('train_station_not_found')
                           }
 
@@ -155,8 +167,8 @@ export function TrainResultsSection({
                           await onBookTrain({
                             trainId: trainResponse.trainId,
                             travelerIds: selectedTravelerIds,
-                            fromStationCode: resolvedStationCodes.fromStationCode,
-                            toStationCode: resolvedStationCodes.toStationCode,
+                            fromStationCode: routeSegment.fromStop.stationCode,
+                            toStationCode: routeSegment.toStop.stationCode,
                             seatClass: seatInventory.seatClass,
                             seatPreference: String(formData.get('seatPreference') ?? '').trim() || null,
                             orderCurrency: quote.currency,
@@ -188,9 +200,7 @@ export function TrainResultsSection({
                         </div>
 
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                          <div className="text-sm text-slate-500">
-                            {searchFromStation && searchToStation ? `${searchFromStation} → ${searchToStation}` : '--'}
-                          </div>
+                          <div className="text-sm text-slate-500">{searchFromStation && searchToStation ? `${searchFromStation} → ${searchToStation}` : '--'}</div>
                           <button
                             className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-slate-950 hover:bg-slate-950 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                             type="submit"

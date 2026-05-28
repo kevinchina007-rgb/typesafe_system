@@ -1,5 +1,7 @@
-﻿import { useTrainSearchState } from '@/pages/TrainsPage/components/hooks/useTrainSearchState'
-import { applyTrainQuickDatePreset, formatTrainPriceInsight, formatTrainRecommendation, trainHotRoutes, trainPopularStations, trainRecentSearches } from '@/app/stores/models/train-booking-model'
+import { useMemo, useState } from 'react'
+
+import { useTrainSearchState } from '@/pages/TrainsPage/components/hooks/useTrainSearchState'
+import { formatTrainRecommendation, sortTrainResponses, type TrainSortMode } from '@/app/stores/models/train-booking-model'
 import { TrainFilterBar } from '@/pages/TrainsPage/components/sections/TrainFilterBar'
 import { TrainPageHero } from '@/pages/TrainsPage/components/sections/TrainPageHero'
 import { TrainResultsSection } from '@/pages/TrainsPage/components/sections/TrainResultsSection'
@@ -18,89 +20,50 @@ export function TrainsPanel({
   onLoadReviewSummary,
   onLoadReviews,
 }: TrainsPanelProps) {
+  const [trainSortMode, setTrainSortMode] = useState<TrainSortMode>('highSpeedPriority')
   const {
     trainResponses,
     hasSearchedTrains,
-    tripType,
     searchDate,
-    returnDate,
     searchFromStation,
     searchToStation,
-    passengerCount,
-    seatPreference,
-    trainTypePreference,
-    selectedQuickDatePreset,
     setTrainResponses,
     setHasSearchedTrains,
-    setTripType,
     setSearchDate,
-    setReturnDate,
     setSearchFromStation,
     setSearchToStation,
-    setPassengerCount,
-    setSeatPreference,
-    setTrainTypePreference,
-    setSelectedQuickDatePreset,
   } = useTrainSearchState()
+
+  const sortedTrainResponses = useMemo(
+    () => sortTrainResponses(trainResponses, searchFromStation, searchToStation, trainSortMode),
+    [searchFromStation, searchToStation, trainResponses, trainSortMode],
+  )
 
   return (
     <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
       <TrainPageHero eyebrow={translate('trains.title')} title={translate('trains.searchModuleTitle')} description={translate('trains.description')} />
 
       <TrainSearchCard
-        earliestDepartureHint={translate('trains.earliestDepartureValue')}
-        hotRoutes={trainHotRoutes}
         isBusy={isBusy}
-        lowestPriceHint={formatTrainPriceInsight(trainResponses, translate)}
-        passengerCount={passengerCount}
-        recentSearches={trainRecentSearches}
-        popularStations={trainPopularStations}
-        returnDate={returnDate}
         searchDate={searchDate}
         searchFromStation={searchFromStation}
         searchToStation={searchToStation}
-        seatPreference={seatPreference}
-        selectedQuickDatePreset={selectedQuickDatePreset}
-        trainTypePreference={trainTypePreference}
         translate={translate}
-        tripType={tripType}
-        onTripTypeChange={setTripType}
         onSearchDateChange={setSearchDate}
-        onReturnDateChange={setReturnDate}
         onSearchFromStationChange={setSearchFromStation}
         onSearchToStationChange={setSearchToStation}
-        onPassengerCountChange={setPassengerCount}
-        onSeatPreferenceChange={setSeatPreference}
-        onTrainTypePreferenceChange={setTrainTypePreference}
-        onSelectQuickDatePreset={preset => {
-          setSelectedQuickDatePreset(preset)
-          const nextDate = applyTrainQuickDatePreset(preset)
-          setSearchDate(nextDate)
-          if (tripType === 'roundTrip') {
-            setReturnDate(applyTrainQuickDatePreset('nextWeek', new Date(nextDate)))
-          }
-        }}
-        onSelectRoute={route => {
-          setSearchFromStation(route.departureLabel)
-          setSearchToStation(route.arrivalLabel)
-        }}
         onSearch={async () => {
           const nextTrains = await onSearchTrains({
             fromStation: searchFromStation,
             toStation: searchToStation,
             date: searchDate,
-            returnDate,
-            tripType,
-            passengerCount,
-            seatPreference,
-            trainTypePreference,
           })
           setHasSearchedTrains(true)
           setTrainResponses(nextTrains)
         }}
       />
 
-      <TrainFilterBar translate={translate} />
+      {hasSearchedTrains ? <TrainFilterBar currentSortMode={trainSortMode} translate={translate} onSortModeChange={setTrainSortMode} /> : null}
 
       {isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('trains.guest')}</p> : null}
 
@@ -111,7 +74,7 @@ export function TrainsPanel({
           isGuestMode={isGuestMode}
           searchFromStation={searchFromStation}
           searchToStation={searchToStation}
-          trainResponses={trainResponses}
+          trainResponses={sortedTrainResponses}
           travelers={travelers}
           translate={translate}
           onRequireLogin={onRequireLogin}

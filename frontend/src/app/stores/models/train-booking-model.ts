@@ -4,6 +4,13 @@ export type TrainTripType = 'oneWay' | 'roundTrip'
 export type TrainQuickDatePreset = 'today' | 'tomorrow' | 'weekend' | 'nextWeek'
 export type TrainSeatPreference = 'Business' | 'FirstClass' | 'SecondClass' | 'SoftSleeper' | 'HardSleeper' | 'NoSeat'
 export type TrainTypePreference = 'HighSpeed' | 'Bullet' | 'Regular'
+export type TrainSortMode = 'highSpeedPriority' | 'lowPricePriority' | 'departureTimeEarly'
+
+export type TrainSearchSegment = {
+  fromStop: TrainResponse['stops'][number]
+  toStop: TrainResponse['stops'][number]
+  segmentStops: TrainResponse['stops']
+}
 
 export type TrainsPanelProps = {
   currentLanguage: AppLanguage
@@ -65,7 +72,6 @@ export const trainSeatPreferences: TrainSeatPreference[] = [
   'NoSeat',
 ]
 export const trainTypePreferences: TrainTypePreference[] = ['HighSpeed', 'Bullet', 'Regular']
-export const trainFilterOptions = ['departureTime', 'arrivalTime', 'duration', 'seatClass', 'availability', 'directOnly'] as const
 
 export function renderTrainTravelerOptionLabel(traveler: TravelerResponse): string {
   return `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
@@ -73,10 +79,6 @@ export function renderTrainTravelerOptionLabel(traveler: TravelerResponse): stri
 
 function normalizeTrainStationInput(value: string): string {
   return value.trim()
-}
-
-function normalizeTrainStationCode(value: string): string {
-  return value.trim().toUpperCase()
 }
 
 export function findTrainStopByQuery(train: TrainResponse, stationQuery: string) {
@@ -93,6 +95,14 @@ export function findTrainStopByQuery(train: TrainResponse, stationQuery: string)
       return stopCode === normalizedQuery || stopName === trimmedQuery || stopName.toUpperCase() === normalizedQuery
     }) ?? null
   )
+}
+
+function findTrainStopIndexByQuery(train: TrainResponse, stationQuery: string): number {
+  const stop = findTrainStopByQuery(train, stationQuery)
+  if (!stop) {
+    return -1
+  }
+  return train.stops.findIndex(item => item.stopId === stop.stopId)
 }
 
 export function resolveTrainStationCodes(
@@ -113,23 +123,40 @@ export function resolveTrainStationCodes(
   }
 }
 
+export function resolveTrainSearchSegment(
+  train: TrainResponse,
+  fromStationQuery: string,
+  toStationQuery: string,
+): TrainSearchSegment | null {
+  const fromIndex = findTrainStopIndexByQuery(train, fromStationQuery)
+  const toIndex = findTrainStopIndexByQuery(train, toStationQuery)
+
+  if (fromIndex < 0 || toIndex < 0 || fromIndex >= toIndex) {
+    return null
+  }
+
+  const fromStop = train.stops[fromIndex]
+  const toStop = train.stops[toIndex]
+  return {
+    fromStop,
+    toStop,
+    segmentStops: train.stops.slice(fromIndex, toIndex + 1),
+  }
+}
+
 export function quoteTrainSegmentAmount(
   train: TrainResponse,
   fromStationCode: string,
   toStationCode: string,
   seatClass: string,
 ): { amount: string; currency: string } | null {
-  const fromStop = findTrainStopByQuery(train, fromStationCode)
-  const toStop = findTrainStopByQuery(train, toStationCode)
+  const routeSegment = resolveTrainSearchSegment(train, fromStationCode, toStationCode)
   const normalizedSeatClass = seatClass.trim().toLowerCase()
-  const fromIndex = fromStop ? train.stops.findIndex(stop => stop.stationCode.trim().toUpperCase() === normalizeTrainStationCode(fromStop.stationCode)) : -1
-  const toIndex = toStop ? train.stops.findIndex(stop => stop.stationCode.trim().toUpperCase() === normalizeTrainStationCode(toStop.stationCode)) : -1
-
-  if (fromIndex < 0 || toIndex < 0 || fromIndex >= toIndex) {
+  if (!routeSegment) {
     return null
   }
 
-  const pathStops = train.stops.slice(fromIndex, toIndex + 1)
+  const pathStops = routeSegment.segmentStops
   const matchingSegmentPrices = pathStops.slice(0, -1).map((currentStop, index) =>
     train.segmentPrices.find(
       segmentPrice =>
@@ -156,6 +183,86 @@ export function quoteTrainSegmentAmount(
 
 export function renderTrainStopSummary(train: TrainResponse): string {
   return train.stops.map(stop => stop.stationName).join(' → ')
+}
+
+export function renderTrainSearchSegmentSummary(train: TrainResponse, fromStationQuery: string, toStationQuery: string): string {
+  const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
+  if (!routeSegment) {
+    return renderTrainStopSummary(train)
+  }
+  return routeSegment.segmentStops.map(stop => stop.stationName).join(' → ')
+}
+
+function getTrainPriorityScore(trainNumber: string): number {
+  const firstChar = trainNumber.trim().toUpperCase().charAt(0)
+  if (firstChar === 'G') {
+    return 0
+  }
+  if (firstChar === 'D' || firstChar === 'C') {
+    return 1
+  }
+  return 2
+}
+
+function getTrainRouteLowestPrice(train: TrainResponse, fromStationQuery: string, toStationQuery: string): number {
+  const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
+  if (!routeSegment) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  const routeQuotes = train.seatInventories
+    .map(inventory => quoteTrainSegmentAmount(train, fromStationQuery, toStationQuery, inventory.seatClass))
+    .filter((quote): quote is { amount: string; currency: string } => quote !== null)
+    .map(quote => Number(quote.amount))
+
+  if (routeQuotes.length === 0) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  return Math.min(...routeQuotes)
+}
+
+function getTrainRouteDepartureTimestamp(train: TrainResponse, fromStationQuery: string, toStationQuery: string): number {
+  const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
+  const departureValue = routeSegment?.fromStop.departureTime ?? routeSegment?.fromStop.arrivalTime ?? null
+  if (!departureValue) {
+    return Number.POSITIVE_INFINITY
+  }
+  const timestamp = Date.parse(departureValue)
+  return Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp
+}
+
+export function sortTrainResponses(
+  trainResponses: TrainResponse[],
+  fromStationQuery: string,
+  toStationQuery: string,
+  sortMode: TrainSortMode,
+): TrainResponse[] {
+  return [...trainResponses].sort((left, right) => {
+    switch (sortMode) {
+      case 'highSpeedPriority': {
+        const priorityDiff = getTrainPriorityScore(left.trainNumber) - getTrainPriorityScore(right.trainNumber)
+        if (priorityDiff !== 0) {
+          return priorityDiff
+        }
+        return left.trainNumber.localeCompare(right.trainNumber)
+      }
+      case 'lowPricePriority': {
+        const priceDiff = getTrainRouteLowestPrice(left, fromStationQuery, toStationQuery) - getTrainRouteLowestPrice(right, fromStationQuery, toStationQuery)
+        if (priceDiff !== 0) {
+          return priceDiff
+        }
+        return left.trainNumber.localeCompare(right.trainNumber)
+      }
+      case 'departureTimeEarly': {
+        const departureDiff = getTrainRouteDepartureTimestamp(left, fromStationQuery, toStationQuery) - getTrainRouteDepartureTimestamp(right, fromStationQuery, toStationQuery)
+        if (departureDiff !== 0) {
+          return departureDiff
+        }
+        return left.trainNumber.localeCompare(right.trainNumber)
+      }
+    }
+  })
 }
 
 export function applyTrainQuickDatePreset(preset: TrainQuickDatePreset, today = new Date()) {
