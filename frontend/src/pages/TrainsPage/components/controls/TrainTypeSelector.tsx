@@ -1,5 +1,4 @@
-import type { TrainTypePreference } from '@/app/stores/models/train-booking-model'
-﻿import { trainTypePreferences } from '@/app/stores/models/train-booking-model'
+import { trainTypePreferences, type TrainTypePreference } from '@/app/stores/models/train-booking-model'
 
 type TrainTypeSelectorProps = {
   value: TrainTypePreference
@@ -15,7 +14,7 @@ export function TrainTypeSelector({ value, translate, onChange }: TrainTypeSelec
   }
 
   return (
-    <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
+    <label className="grid gap-2 text-sm font-medium text-slate-600">
       <span>{translate('trains.trainTypePreference')}</span>
       <select value={value} onChange={event => onChange(event.target.value as TrainTypePreference)}>
         {trainTypePreferences.map(option => (

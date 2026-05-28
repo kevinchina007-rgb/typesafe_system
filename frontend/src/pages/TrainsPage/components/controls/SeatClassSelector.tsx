@@ -1,5 +1,4 @@
-import type { TrainSeatPreference } from '@/app/stores/models/train-booking-model'
-﻿import { trainSeatPreferences } from '@/app/stores/models/train-booking-model'
+import { trainSeatPreferences, type TrainSeatPreference } from '@/app/stores/models/train-booking-model'
 
 type SeatClassSelectorProps = {
   value: TrainSeatPreference
@@ -18,7 +17,7 @@ export function SeatClassSelector({ value, translate, onChange }: SeatClassSelec
   }
 
   return (
-    <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
+    <label className="grid gap-2 text-sm font-medium text-slate-600">
       <span>{translate('trains.seatPreference')}</span>
       <select value={value} onChange={event => onChange(event.target.value as TrainSeatPreference)}>
         {trainSeatPreferences.map(option => (

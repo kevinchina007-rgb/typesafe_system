@@ -1,8 +1,8 @@
-import type { TrainQuickDatePreset, TrainSeatPreference, TrainTripType, TrainTypePreference } from '@/app/stores/models/train-booking-model'
-﻿import { create } from 'zustand'
+import { create } from 'zustand'
 
-import type { TrainResponse } from '@/lib/mvp-types/index'
+import type { TrainQuickDatePreset, TrainSeatPreference, TrainTripType, TrainTypePreference } from '@/app/stores/models/train-booking-model'
 import { defaultTrainSearchState } from '@/app/stores/models/train-booking-model'
+import type { TrainResponse } from '@/lib/mvp-types/index'
 
 type TrainSearchStore = {
   trainResponses: TrainResponse[]
@@ -68,6 +68,7 @@ export function getTrainSearchSnap() {
     trainTypePreference,
     selectedQuickDatePreset,
   } = useTrainSearchStore.getState()
+
   return {
     trainResponses,
     hasSearchedTrains,

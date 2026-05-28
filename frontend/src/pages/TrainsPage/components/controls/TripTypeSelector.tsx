@@ -10,7 +10,7 @@ const tripTypeOptions: TrainTripType[] = ['oneWay', 'roundTrip']
 
 export function TripTypeSelector({ value, translate, onChange }: TripTypeSelectorProps) {
   return (
-    <div className="resource-trip-type-selector" role="tablist" aria-label={translate('trains.tripType')}>
+    <div className="flex flex-wrap items-center gap-3" role="tablist" aria-label={translate('trains.tripType')}>
       {tripTypeOptions.map(option => (
         <button
           key={option}

@@ -1,5 +1,5 @@
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
-﻿import { useState } from 'react'
+import { useState } from 'react'
 
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
 import { TrainsPanel } from '@/pages/TrainsPage/components/TrainsPanel'

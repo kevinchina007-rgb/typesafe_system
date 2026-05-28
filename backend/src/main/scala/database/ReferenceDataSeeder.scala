@@ -20,6 +20,7 @@ object ReferenceDataSeeder:
       airlineManagerCount <- sql"select count(*) from airline_managers".query[Long].unique.transact(transactor)
       _ <- if airlineCount == 0 then seedFlights(transactor) else IO.unit
       _ <- seedHotelDemoData(transactor)
+      _ <- TrainReferenceDataSeeder.seedIfNeeded(transactor)
       _ <- if airlineManagerCount == 0 then seedAirlineManagers(transactor) else IO.unit
     yield ()
 

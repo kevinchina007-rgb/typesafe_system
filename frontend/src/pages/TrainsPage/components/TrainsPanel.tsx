@@ -45,7 +45,7 @@ export function TrainsPanel({
 
   return (
     <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
-      <TrainPageHero title={translate('trains.title')} description={translate('trains.description')} />
+      <TrainPageHero eyebrow={translate('trains.title')} title={translate('trains.searchModuleTitle')} description={translate('trains.description')} />
 
       <TrainSearchCard
         earliestDepartureHint={translate('trains.earliestDepartureValue')}

@@ -37,10 +37,10 @@ export type TrainsPanelProps = {
 
 export const defaultTrainSearchState = {
   tripType: 'oneWay' as TrainTripType,
-  date: '2026-04-05',
-  returnDate: '2026-04-07',
-  fromStation: '上海虹桥',
-  toStation: '南京南',
+  date: '2026-06-01',
+  returnDate: '2026-06-03',
+  fromStation: '北京南',
+  toStation: '上海虹桥',
   passengerCount: 1,
   seatPreference: 'SecondClass' as TrainSeatPreference,
   trainTypePreference: 'HighSpeed' as TrainTypePreference,
@@ -48,14 +48,14 @@ export const defaultTrainSearchState = {
 }
 
 export const trainHotRoutes = [
-  { id: 'shanghai-nanjing', departureLabel: '上海', arrivalLabel: '南京' },
-  { id: 'beijing-tianjin', departureLabel: '北京', arrivalLabel: '天津' },
-  { id: 'guangzhou-shenzhen', departureLabel: '广州', arrivalLabel: '深圳' },
-  { id: 'hangzhou-shanghai', departureLabel: '杭州', arrivalLabel: '上海' },
+  { id: 'beijing-shanghai', departureLabel: '北京南', arrivalLabel: '上海虹桥' },
+  { id: 'shanghai-nanjing', departureLabel: '上海虹桥', arrivalLabel: '南京南' },
+  { id: 'guangzhou-shenzhen', departureLabel: '广州南', arrivalLabel: '深圳北' },
+  { id: 'chengdu-changsha', departureLabel: '成都东', arrivalLabel: '长沙南' },
 ]
 
-export const trainRecentSearches = ['上海虹桥', '南京南', '杭州东', '深圳北']
-export const trainPopularStations = ['上海虹桥', '北京南', '广州南', '成都东', '杭州东']
+export const trainRecentSearches = ['北京南', '上海虹桥', '南京南', '广州南']
+export const trainPopularStations = ['北京南', '上海虹桥', '广州南', '成都东', '长沙南']
 export const trainSeatPreferences: TrainSeatPreference[] = [
   'Business',
   'FirstClass',
@@ -71,17 +71,59 @@ export function renderTrainTravelerOptionLabel(traveler: TravelerResponse): stri
   return `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
 }
 
+function normalizeTrainStationInput(value: string): string {
+  return value.trim()
+}
+
+function normalizeTrainStationCode(value: string): string {
+  return value.trim().toUpperCase()
+}
+
+export function findTrainStopByQuery(train: TrainResponse, stationQuery: string) {
+  const trimmedQuery = normalizeTrainStationInput(stationQuery)
+  if (!trimmedQuery) {
+    return null
+  }
+
+  const normalizedQuery = trimmedQuery.toUpperCase()
+  return (
+    train.stops.find(stop => {
+      const stopCode = stop.stationCode.trim().toUpperCase()
+      const stopName = stop.stationName.trim()
+      return stopCode === normalizedQuery || stopName === trimmedQuery || stopName.toUpperCase() === normalizedQuery
+    }) ?? null
+  )
+}
+
+export function resolveTrainStationCodes(
+  train: TrainResponse,
+  fromStationQuery: string,
+  toStationQuery: string,
+): { fromStationCode: string; toStationCode: string } | null {
+  const fromStop = findTrainStopByQuery(train, fromStationQuery)
+  const toStop = findTrainStopByQuery(train, toStationQuery)
+
+  if (!fromStop || !toStop) {
+    return null
+  }
+
+  return {
+    fromStationCode: fromStop.stationCode,
+    toStationCode: toStop.stationCode,
+  }
+}
+
 export function quoteTrainSegmentAmount(
   train: TrainResponse,
   fromStationCode: string,
   toStationCode: string,
   seatClass: string,
 ): { amount: string; currency: string } | null {
-  const normalizedFrom = fromStationCode.trim().toUpperCase()
-  const normalizedTo = toStationCode.trim().toUpperCase()
+  const fromStop = findTrainStopByQuery(train, fromStationCode)
+  const toStop = findTrainStopByQuery(train, toStationCode)
   const normalizedSeatClass = seatClass.trim().toLowerCase()
-  const fromIndex = train.stops.findIndex(stop => stop.stationCode.toUpperCase() === normalizedFrom)
-  const toIndex = train.stops.findIndex(stop => stop.stationCode.toUpperCase() === normalizedTo)
+  const fromIndex = fromStop ? train.stops.findIndex(stop => stop.stationCode.trim().toUpperCase() === normalizeTrainStationCode(fromStop.stationCode)) : -1
+  const toIndex = toStop ? train.stops.findIndex(stop => stop.stationCode.trim().toUpperCase() === normalizeTrainStationCode(toStop.stationCode)) : -1
 
   if (fromIndex < 0 || toIndex < 0 || fromIndex >= toIndex) {
     return null
@@ -113,7 +155,7 @@ export function quoteTrainSegmentAmount(
 }
 
 export function renderTrainStopSummary(train: TrainResponse): string {
-  return train.stops.map(stop => stop.stationCode).join(' → ')
+  return train.stops.map(stop => stop.stationName).join(' → ')
 }
 
 export function applyTrainQuickDatePreset(preset: TrainQuickDatePreset, today = new Date()) {
