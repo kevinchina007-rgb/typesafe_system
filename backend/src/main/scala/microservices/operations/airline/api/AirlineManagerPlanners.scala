@@ -14,11 +14,17 @@ import scala.util.Try
 object RegisterAirlineManagerPlanner extends ConnectionApiPlan[RegisterAirlineManagerPlannerRequest, ManagerSessionPlannerResponse]:
   override val name: String = "RegisterAirlineManagerPlanner"
   override def plan(input: RegisterAirlineManagerPlannerRequest, connection: Connection): IO[ManagerSessionPlannerResponse] =
+    val now = Instant.now()
+    val airlineId = s"airline-${UUID.randomUUID().toString.take(12)}"
+    val managerId = s"manager-${UUID.randomUUID().toString.take(12)}"
     for
       email <- IO.fromEither(EmailAddress.create(input.email))
+      _ <- validateRegisterAirline(input)
       passwordHash <- hashPasswordForLoginEmail(input.password, email)
-      response <- AirlineManagerPlainSql.registerAirline(connection, input, passwordHash, Instant.now())
-    yield response
+      _ <- AirlineManagerPlainSql.insertAirline(connection, airlineId, input.airlineName, input.airlineCode, now)
+      _ <- AirlineManagerPlainSql.insertAirlineManager(connection, managerId, airlineId, input.email, input.displayName, now)
+      _ <- AirlineManagerPlainSql.insertAirlineManagerCredential(connection, managerId, input.email, passwordHash, now)
+    yield ManagerSessionPlannerResponse(managerId, "Airline", input.email, input.displayName, "Active", airlineId, None, now.toString)
 
 object ListManagerFlightsPlanner extends ConnectionApiPlan[ManagerFlightsPlannerRequest, ManagerFlightListPlannerResponse]:
   override val name: String = "ListManagerFlightsPlanner"
@@ -77,6 +83,15 @@ object ToggleManagerFlightStatusPlanner extends ConnectionApiPlan[ToggleManagerF
 
 private def parseFlightTime(value: String, fieldName: String): Either[Throwable, OffsetDateTime] =
   Try(OffsetDateTime.parse(value.trim)).toEither.left.map(_ => new IllegalArgumentException(s"$fieldName must be an ISO offset date-time"))
+
+private def validateRegisterAirline(input: RegisterAirlineManagerPlannerRequest): IO[Unit] =
+  IO {
+    require(input.email.trim.nonEmpty, "email is required")
+    require(input.displayName.trim.nonEmpty, "displayName is required")
+    require(input.airlineName.trim.nonEmpty, "airlineName is required")
+    require(input.airlineCode.trim.nonEmpty, "airlineCode is required")
+    require(input.password.nonEmpty, "password is required")
+  }
 
 private def validateCreateFlight(input: CreateManagerFlightPlannerRequest, departureTime: OffsetDateTime, arrivalTime: OffsetDateTime): IO[Unit] =
   IO {

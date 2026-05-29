@@ -11,16 +11,6 @@ import java.time.Instant
 import java.util.UUID
 
 object ManagerPlannerPlainSql:
-  def registerAirline(connection: Connection, input: RegisterAirlineManagerPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
-    IO.blocking {
-      val airlineId = s"airline-${UUID.randomUUID().toString.take(12)}"
-      val managerId = s"manager-${UUID.randomUUID().toString.take(12)}"
-      insertAirline(connection, airlineId, input.airlineName, input.airlineCode, now)
-      insertManager(connection, "airline_managers", managerId, Some(airlineId), input.email, input.displayName, now)
-      insertManagerCredential(connection, "Airline", managerId, input.email, passwordHash, now)
-      ManagerSessionPlannerResponse(managerId, "Airline", input.email, input.displayName, "Active", airlineId, None, now.toString)
-    }
-
   def registerHotel(connection: Connection, input: RegisterHotelManagerPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
     IO.blocking {
       val hotelId = s"hotel-${UUID.randomUUID().toString.take(12)}"
@@ -140,16 +130,6 @@ object ManagerPlannerPlainSql:
         statement.setString(5, "Requested")
         statement.executeUpdate()
       }
-    }
-
-  private def insertAirline(connection: Connection, airlineId: String, name: String, code: String, now: Instant): Unit =
-    PlainSqlSupport.withStatement(connection, "insert into airlines(airline_id, name, code, status, created_at) values (?, ?, ?, ?, ?)") { statement =>
-      statement.setString(1, airlineId)
-      statement.setString(2, name)
-      statement.setString(3, code)
-      statement.setString(4, "Active")
-      statement.setTimestamp(5, Timestamp.from(now))
-      statement.executeUpdate()
     }
 
   private def insertManager(connection: Connection, table: String, managerId: String, scopeId: Option[String], email: String, displayName: String, now: Instant): Unit =
