@@ -316,59 +316,6 @@ object ManagerPlannerPlainSql:
       readAirlineManagerSession(connection, input.managerId, now)
     }
 
-  def createFlight(connection: Connection, input: CreateManagerFlightPlannerRequest, now: Instant): IO[ManagerFlightPlannerResponse] =
-    IO.blocking {
-      val airlineId = findScopeId(connection, "airline_managers", "airline_id", input.managerId)
-      val flightId = s"flight-${UUID.randomUUID().toString.take(12)}"
-      val economyActualPrice = calculateActualCabinPrice(input.economyCabin)
-      val premiumEconomyActualPrice = calculateActualCabinPrice(input.premiumEconomyCabin)
-      val businessActualPrice = calculateActualCabinPrice(input.businessCabin)
-      val firstActualPrice = calculateActualCabinPrice(input.firstCabin)
-      val basePrice = List(economyActualPrice, premiumEconomyActualPrice, businessActualPrice, firstActualPrice).min.bigDecimal
-      PlainSqlSupport.withStatement(connection, "insert into flights(flight_id, airline_id, flight_number, departure_airport, arrival_airport, departure_time, arrival_time, status, base_price_amount, base_price_currency, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
-        statement.setString(1, flightId)
-        statement.setString(2, airlineId)
-        statement.setString(3, input.flightNumber)
-        statement.setString(4, input.departureAirport)
-        statement.setString(5, input.arrivalAirport)
-        statement.setObject(6, OffsetDateTime.parse(input.departureTime))
-        statement.setObject(7, OffsetDateTime.parse(input.arrivalTime))
-        statement.setString(8, "OpenForBooking")
-        statement.setBigDecimal(9, basePrice)
-        statement.setString(10, input.currency)
-        statement.setTimestamp(11, Timestamp.from(now))
-        statement.executeUpdate()
-      }
-      insertCabin(connection, flightId, "ECONOMY", input.economyCabin.seatCount, economyActualPrice, input.currency)
-      insertCabin(connection, flightId, "PREMIUM_ECONOMY", input.premiumEconomyCabin.seatCount, premiumEconomyActualPrice, input.currency)
-      insertCabin(connection, flightId, "BUSINESS", input.businessCabin.seatCount, businessActualPrice, input.currency)
-      insertCabin(connection, flightId, "FIRST", input.firstCabin.seatCount, firstActualPrice, input.currency)
-      readCreatedFlight(connection, flightId)
-    }
-
-  def toggleFlightStatus(connection: Connection, input: ToggleManagerFlightStatusPlannerRequest): IO[ManagerFlightPlannerResponse] =
-    IO.blocking {
-      requireManagedFlight(connection, input.managerId, input.flightId)
-      val currentStatus = PlainSqlSupport.withStatement(connection, "select status from flights where flight_id = ?") { statement =>
-        statement.setString(1, input.flightId)
-        val resultSet = statement.executeQuery()
-        try if resultSet.next() then resultSet.getString("status") else throw new IllegalArgumentException(s"Flight '${input.flightId}' was not found")
-        finally resultSet.close()
-      }
-      val nextStatus = if currentStatus == "OpenForBooking" then "ClosedForBooking" else "OpenForBooking"
-      PlainSqlSupport.withStatement(connection, "update flights set status = ? where flight_id = ?") { statement =>
-        statement.setString(1, nextStatus)
-        statement.setString(2, input.flightId)
-        statement.executeUpdate()
-      }
-      PlainSqlSupport.withStatement(connection, "update flight_cabin_inventories set status = ? where flight_id = ?") { statement =>
-        statement.setString(1, if nextStatus == "OpenForBooking" then "Open" else "Closed")
-        statement.setString(2, input.flightId)
-        statement.executeUpdate()
-      }
-      readCreatedFlight(connection, input.flightId)
-    }
-
   def updateRequestedRefundDecision(connection: Connection, orderId: String, refundStatus: String, approved: Boolean, now: Instant): IO[Unit] =
     IO.blocking {
       PlainSqlSupport.withStatement(connection, "update order_refunds set refund_status = ?, approved_at = ?, settled_at = ? where order_id = ? and refund_status = ?") { statement =>
@@ -414,24 +361,6 @@ object ManagerPlannerPlainSql:
       statement.setTimestamp(7, Timestamp.from(now))
       statement.setTimestamp(8, Timestamp.from(now))
       statement.setTimestamp(9, Timestamp.from(now))
-      statement.executeUpdate()
-    }
-
-  private def calculateActualCabinPrice(cabin: ManagerCabinPricingPlannerInput): BigDecimal =
-    val price = BigDecimal(cabin.originalPrice)
-    val rate = BigDecimal(cabin.discountRate)
-    val actualPrice = if cabin.discounted then price * rate / BigDecimal(10) else price
-    actualPrice.setScale(2, BigDecimal.RoundingMode.HALF_UP)
-
-  private def insertCabin(connection: Connection, flightId: String, cabinClass: String, seats: Int, price: BigDecimal, currency: String): Unit =
-    PlainSqlSupport.withStatement(connection, "insert into flight_cabin_inventories(inventory_id, flight_id, cabin_class, available_seats, unit_price_amount, unit_price_currency, status) values (?, ?, ?, ?, ?, ?, ?)") { statement =>
-      statement.setString(1, s"cabin-${UUID.randomUUID().toString.take(12)}")
-      statement.setString(2, flightId)
-      statement.setString(3, cabinClass)
-      statement.setInt(4, seats)
-      statement.setBigDecimal(5, price.bigDecimal)
-      statement.setString(6, currency)
-      statement.setString(7, "Open")
       statement.executeUpdate()
     }
 
