@@ -1,23 +1,13 @@
 package com.typesafe.travel.persistence.operations
 
 import cats.effect.IO
-import com.typesafe.travel.auth.domain.{AuthManagerType, CredentialStatus, hashPasswordForLoginEmail}
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.persistence.PlainSqlSupport
-import com.typesafe.travel.shared.kernel.EmailAddress
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
-import java.util.UUID
 
 object ManagerPlannerPlainSql:
-  def registerSiteAdmin(connection: Connection, input: RegisterSiteAdminPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
-    IO.blocking {
-      val managerId = s"site-admin-${UUID.randomUUID().toString.take(12)}"
-      insertManagerCredential(connection, "SiteAdmin", managerId, input.email, passwordHash, now)
-      ManagerSessionPlannerResponse(managerId, "SiteAdmin", input.email, input.displayName, "Active", "site-admin", None, now.toString)
-    }
-
   def listTasks(connection: Connection, input: ManagerTasksPlannerRequest): IO[ManagerBookingTaskListPlannerResponse] =
     IO.blocking {
       val kindFilter = itemKindFor(input.managerType)
@@ -98,20 +88,6 @@ object ManagerPlannerPlainSql:
         statement.setString(5, "Requested")
         statement.executeUpdate()
       }
-    }
-
-  private def insertManagerCredential(connection: Connection, managerType: String, managerId: String, email: String, passwordHash: String, now: Instant): Unit =
-    PlainSqlSupport.withStatement(connection, "insert into manager_credentials(credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at, password_updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
-      statement.setString(1, s"credential-${UUID.randomUUID().toString.take(12)}")
-      statement.setString(2, managerType)
-      statement.setString(3, managerId)
-      statement.setString(4, email)
-      statement.setString(5, passwordHash)
-      statement.setString(6, CredentialStatus.Active.toString)
-      statement.setTimestamp(7, Timestamp.from(now))
-      statement.setTimestamp(8, Timestamp.from(now))
-      statement.setTimestamp(9, Timestamp.from(now))
-      statement.executeUpdate()
     }
 
   private def readTask(resultSet: ResultSet): ManagerBookingTaskPlannerResponse =
