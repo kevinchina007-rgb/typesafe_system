@@ -33,7 +33,14 @@ object ListManagerFlightOrdersPlanner extends ConnectionApiPlan[ManagerFlightOrd
 object UpdateAirlineManagerProfilePlanner extends ConnectionApiPlan[UpdateAirlineManagerProfilePlannerRequest, ManagerSessionPlannerResponse]:
   override val name: String = "UpdateAirlineManagerProfilePlanner"
   override def plan(input: UpdateAirlineManagerProfilePlannerRequest, connection: Connection): IO[ManagerSessionPlannerResponse] =
-    AirlineManagerPlainSql.updateAirlineProfile(connection, input, Instant.now())
+    val now = Instant.now()
+    for
+      _ <- validateUpdateAirlineProfile(input)
+      airlineId <- AirlineManagerPlainSql.findAirlineIdForManager(connection, input.managerId)
+      _ <- AirlineManagerPlainSql.updateAirlineManagerDisplayName(connection, input.managerId, input.displayName)
+      _ <- AirlineManagerPlainSql.updateAirlineProfile(connection, airlineId, input.airlineName, input.airlineCode, input.logoAssetPath)
+      session <- AirlineManagerPlainSql.readAirlineManagerSession(connection, input.managerId, now)
+    yield session
 
 object CreateManagerFlightPlanner extends ConnectionApiPlan[CreateManagerFlightPlannerRequest, ManagerFlightPlannerResponse]:
   override val name: String = "CreateManagerFlightPlanner"
@@ -80,6 +87,14 @@ private def validateCreateFlight(input: CreateManagerFlightPlannerRequest, depar
     require(input.currency.trim.nonEmpty, "currency is required")
     require(arrivalTime.isAfter(departureTime), "arrivalTime must be after departureTime")
     List(input.economyCabin, input.premiumEconomyCabin, input.businessCabin, input.firstCabin).foreach(validateCabin)
+  }
+
+private def validateUpdateAirlineProfile(input: UpdateAirlineManagerProfilePlannerRequest): IO[Unit] =
+  IO {
+    require(input.managerId.trim.nonEmpty, "managerId is required")
+    require(input.displayName.trim.nonEmpty, "displayName is required")
+    require(input.airlineName.trim.nonEmpty, "airlineName is required")
+    require(input.airlineCode.trim.nonEmpty, "airlineCode is required")
   }
 
 private def validateCabin(cabin: ManagerCabinPricingPlannerInput): Unit =

@@ -175,24 +175,6 @@ object ManagerPlannerPlainSql:
       }
     }
 
-  def updateAirlineProfile(connection: Connection, input: UpdateAirlineManagerProfilePlannerRequest, now: Instant): IO[ManagerSessionPlannerResponse] =
-    IO.blocking {
-      val airlineId = findScopeId(connection, "airline_managers", "airline_id", input.managerId)
-      PlainSqlSupport.withStatement(connection, "update airline_managers set display_name = ? where manager_id = ?") { statement =>
-        statement.setString(1, input.displayName.trim)
-        statement.setString(2, input.managerId)
-        statement.executeUpdate()
-      }
-      PlainSqlSupport.withStatement(connection, "update airlines set name = ?, code = ?, logo_asset_path = ? where airline_id = ?") { statement =>
-        statement.setString(1, input.airlineName.trim)
-        statement.setString(2, input.airlineCode.trim)
-        statement.setString(3, input.logoAssetPath.map(_.trim).filter(_.nonEmpty).orNull)
-        statement.setString(4, airlineId)
-        statement.executeUpdate()
-      }
-      readAirlineManagerSession(connection, input.managerId, now)
-    }
-
   def updateRequestedRefundDecision(connection: Connection, orderId: String, refundStatus: String, approved: Boolean, now: Instant): IO[Unit] =
     IO.blocking {
       PlainSqlSupport.withStatement(connection, "update order_refunds set refund_status = ?, approved_at = ?, settled_at = ? where order_id = ? and refund_status = ?") { statement =>
@@ -247,34 +229,6 @@ object ManagerPlannerPlainSql:
       val resultSet = statement.executeQuery()
       try if resultSet.next() then resultSet.getString(column) else throw new IllegalArgumentException(s"Manager '$managerId' was not found")
       finally resultSet.close()
-    }
-
-  private def readAirlineManagerSession(connection: Connection, managerId: String, fallbackCreatedAt: Instant): ManagerSessionPlannerResponse =
-    PlainSqlSupport.withStatement(
-      connection,
-      """
-        select m.manager_id, m.email, m.display_name, m.status, m.airline_id, a.logo_asset_path, m.created_at
-        from airline_managers m
-        join airlines a on a.airline_id = m.airline_id
-        where m.manager_id = ?
-      """
-    ) { statement =>
-      statement.setString(1, managerId)
-      val resultSet = statement.executeQuery()
-      try
-        if resultSet.next() then
-          ManagerSessionPlannerResponse(
-            managerId = resultSet.getString("manager_id"),
-            managerType = "Airline",
-            email = resultSet.getString("email"),
-            displayName = resultSet.getString("display_name"),
-            status = resultSet.getString("status"),
-            scopeId = resultSet.getString("airline_id"),
-            logoAssetPath = Option(resultSet.getString("logo_asset_path")).map(_.trim).filter(_.nonEmpty),
-            createdAt = Option(resultSet.getTimestamp("created_at")).map(_.toInstant.toString).getOrElse(fallbackCreatedAt.toString)
-          )
-        else throw new IllegalArgumentException(s"Manager '$managerId' was not found")
-        finally resultSet.close()
     }
 
   private def readHotelManagerSession(connection: Connection, managerId: String, fallbackCreatedAt: Instant): ManagerSessionPlannerResponse =
