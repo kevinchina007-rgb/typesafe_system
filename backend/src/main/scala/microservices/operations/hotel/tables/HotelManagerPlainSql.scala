@@ -4,7 +4,7 @@ import cats.effect.IO
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.persistence.PlainSqlSupport
 
-import java.sql.{Connection, Date, ResultSet}
+import java.sql.{Connection, Date, ResultSet, Timestamp}
 import java.time.{Instant, LocalDate}
 import java.util.UUID
 
@@ -12,11 +12,25 @@ object HotelManagerPlainSql:
   def registerHotel(connection: Connection, input: RegisterHotelManagerPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
     ManagerPlannerPlainSql.registerHotel(connection, input, passwordHash, now)
 
-  def updateHotelProfile(connection: Connection, input: UpdateHotelManagerProfilePlannerRequest, now: Instant): IO[ManagerSessionPlannerResponse] =
-    ManagerPlannerPlainSql.updateHotelProfile(connection, input, now)
-
   def listHotels(connection: Connection, input: ManagerScopedPlannerRequest): IO[ManagerHotelListPlannerResponse] =
-    ManagerPlannerPlainSql.listHotels(connection, input)
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          select h.hotel_id, h.name, h.location, h.status, h.created_at
+          from hotel_managers m
+          join hotels h on h.hotel_id = m.hotel_id
+          where m.manager_id = ?
+        """
+      ) { statement =>
+        statement.setString(1, input.managerId)
+        ManagerHotelListPlannerResponse(
+          PlainSqlSupport.queryList(statement) { resultSet =>
+            readHotelBlocking(connection, resultSet.getString("hotel_id"))
+          }
+        )
+      }
+    }
 
   def findHotelIdForManager(connection: Connection, managerId: String): IO[String] =
     IO.blocking {
@@ -24,6 +38,66 @@ object HotelManagerPlainSql:
         statement.setString(1, managerId)
         val resultSet = statement.executeQuery()
         try if resultSet.next() then resultSet.getString("hotel_id") else throw new IllegalArgumentException(s"Manager '$managerId' was not found")
+        finally resultSet.close()
+      }
+    }
+
+  def updateHotelManagerProfile(connection: Connection, managerId: String, email: String, displayName: String): IO[Unit] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(connection, "update hotel_managers set email = ?, display_name = ? where manager_id = ?") { statement =>
+        statement.setString(1, email.trim)
+        statement.setString(2, displayName.trim)
+        statement.setString(3, managerId)
+        statement.executeUpdate()
+      }
+    }
+
+  def updateHotelProfile(connection: Connection, hotelId: String, hotelName: String, hotelLocation: String): IO[Unit] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(connection, "update hotels set name = ?, location = ? where hotel_id = ?") { statement =>
+        statement.setString(1, hotelName.trim)
+        statement.setString(2, hotelLocation.trim)
+        statement.setString(3, hotelId)
+        statement.executeUpdate()
+      }
+    }
+
+  def updateHotelCredentialEmail(connection: Connection, managerId: String, email: String, now: Instant): IO[Unit] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(connection, "update manager_credentials set login_email = ?, updated_at = ? where manager_type = ? and manager_id = ?") { statement =>
+        statement.setString(1, email.trim)
+        statement.setTimestamp(2, Timestamp.from(now))
+        statement.setString(3, "Hotel")
+        statement.setString(4, managerId)
+        statement.executeUpdate()
+      }
+    }
+
+  def readHotelManagerSession(connection: Connection, managerId: String, fallbackCreatedAt: Instant): IO[ManagerSessionPlannerResponse] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          select m.manager_id, m.email, m.display_name, m.status, m.hotel_id, m.created_at
+          from hotel_managers m
+          where m.manager_id = ?
+        """
+      ) { statement =>
+        statement.setString(1, managerId)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then
+            ManagerSessionPlannerResponse(
+              managerId = resultSet.getString("manager_id"),
+              managerType = "Hotel",
+              email = resultSet.getString("email"),
+              displayName = resultSet.getString("display_name"),
+              status = resultSet.getString("status"),
+              scopeId = resultSet.getString("hotel_id"),
+              logoAssetPath = None,
+              createdAt = Option(resultSet.getTimestamp("created_at")).map(_.toInstant).getOrElse(fallbackCreatedAt).toString
+            )
+          else throw new IllegalStateException(s"Hotel manager '$managerId' could not be read")
         finally resultSet.close()
       }
     }
@@ -59,22 +133,25 @@ object HotelManagerPlainSql:
 
   def readHotel(connection: Connection, hotelId: String): IO[ManagerHotelPlannerResponse] =
     IO.blocking {
-      PlainSqlSupport.withStatement(connection, "select hotel_id, name, location, status, created_at from hotels where hotel_id = ?") { statement =>
-        statement.setString(1, hotelId)
-        val resultSet = statement.executeQuery()
-        try
-          if resultSet.next() then
-            ManagerHotelPlannerResponse(
-              hotelId = resultSet.getString("hotel_id"),
-              hotelName = resultSet.getString("name"),
-              location = resultSet.getString("location"),
-              status = resultSet.getString("status"),
-              createdAt = resultSet.getTimestamp("created_at").toInstant.toString,
-              roomTypes = listRoomTypes(connection, hotelId)
-            )
-          else throw new IllegalStateException(s"Hotel '$hotelId' could not be read")
-        finally resultSet.close()
-      }
+      readHotelBlocking(connection, hotelId)
+    }
+
+  private def readHotelBlocking(connection: Connection, hotelId: String): ManagerHotelPlannerResponse =
+    PlainSqlSupport.withStatement(connection, "select hotel_id, name, location, status, created_at from hotels where hotel_id = ?") { statement =>
+      statement.setString(1, hotelId)
+      val resultSet = statement.executeQuery()
+      try
+        if resultSet.next() then
+          ManagerHotelPlannerResponse(
+            hotelId = resultSet.getString("hotel_id"),
+            hotelName = resultSet.getString("name"),
+            location = resultSet.getString("location"),
+            status = resultSet.getString("status"),
+            createdAt = resultSet.getTimestamp("created_at").toInstant.toString,
+            roomTypes = listRoomTypes(connection, hotelId)
+          )
+        else throw new IllegalStateException(s"Hotel '$hotelId' could not be read")
+      finally resultSet.close()
     }
 
   private def listRoomTypes(connection: Connection, hotelId: String): List[ManagerHotelRoomTypePlannerResponse] =
