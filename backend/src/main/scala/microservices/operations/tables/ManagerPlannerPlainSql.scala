@@ -11,21 +11,6 @@ import java.time.Instant
 import java.util.UUID
 
 object ManagerPlannerPlainSql:
-  def registerAttraction(connection: Connection, input: RegisterAttractionManagerPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
-    IO.blocking {
-      val managerId = s"attraction-manager-${UUID.randomUUID().toString.take(12)}"
-      PlainSqlSupport.withStatement(connection, "insert into attraction_managers(manager_id, email, display_name, status, created_at) values (?, ?, ?, ?, ?)") { statement =>
-        statement.setString(1, managerId)
-        statement.setString(2, input.email.trim)
-        statement.setString(3, input.displayName.trim)
-        statement.setString(4, "Active")
-        statement.setTimestamp(5, Timestamp.from(now))
-        statement.executeUpdate()
-      }
-      insertManagerCredential(connection, "Attraction", managerId, input.email.trim, passwordHash, now)
-      ManagerSessionPlannerResponse(managerId, "Attraction", input.email.trim, input.displayName.trim, "Active", managerId, None, now.toString)
-    }
-
   def registerSiteAdmin(connection: Connection, input: RegisterSiteAdminPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
     IO.blocking {
       val managerId = s"site-admin-${UUID.randomUUID().toString.take(12)}"
