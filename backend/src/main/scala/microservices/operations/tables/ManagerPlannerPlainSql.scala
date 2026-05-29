@@ -11,23 +11,6 @@ import java.time.Instant
 import java.util.UUID
 
 object ManagerPlannerPlainSql:
-  def registerHotel(connection: Connection, input: RegisterHotelManagerPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
-    IO.blocking {
-      val hotelId = s"hotel-${UUID.randomUUID().toString.take(12)}"
-      val managerId = s"manager-${UUID.randomUUID().toString.take(12)}"
-      PlainSqlSupport.withStatement(connection, "insert into hotels(hotel_id, name, location, status, created_at) values (?, ?, ?, ?, ?)") { statement =>
-        statement.setString(1, hotelId)
-        statement.setString(2, input.hotelName)
-        statement.setString(3, input.location)
-        statement.setString(4, "Open")
-        statement.setTimestamp(5, Timestamp.from(now))
-        statement.executeUpdate()
-      }
-      insertManager(connection, "hotel_managers", managerId, Some(hotelId), input.email, input.displayName, now)
-      insertManagerCredential(connection, "Hotel", managerId, input.email, passwordHash, now)
-      ManagerSessionPlannerResponse(managerId, "Hotel", input.email, input.displayName, "Active", hotelId, None, now.toString)
-    }
-
   def registerAttraction(connection: Connection, input: RegisterAttractionManagerPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
     IO.blocking {
       val managerId = s"attraction-manager-${UUID.randomUUID().toString.take(12)}"
@@ -130,18 +113,6 @@ object ManagerPlannerPlainSql:
         statement.setString(5, "Requested")
         statement.executeUpdate()
       }
-    }
-
-  private def insertManager(connection: Connection, table: String, managerId: String, scopeId: Option[String], email: String, displayName: String, now: Instant): Unit =
-    val scopeColumn = if table == "hotel_managers" then "hotel_id" else "airline_id"
-    PlainSqlSupport.withStatement(connection, s"insert into $table(manager_id, $scopeColumn, email, display_name, status, created_at) values (?, ?, ?, ?, ?, ?)") { statement =>
-      statement.setString(1, managerId)
-      statement.setString(2, scopeId.orNull)
-      statement.setString(3, email)
-      statement.setString(4, displayName)
-      statement.setString(5, "Active")
-      statement.setTimestamp(6, Timestamp.from(now))
-      statement.executeUpdate()
     }
 
   private def insertManagerCredential(connection: Connection, managerType: String, managerId: String, email: String, passwordHash: String, now: Instant): Unit =

@@ -13,11 +13,17 @@ import java.util.UUID
 object RegisterHotelManagerPlanner extends ConnectionApiPlan[RegisterHotelManagerPlannerRequest, ManagerSessionPlannerResponse]:
   override val name: String = "RegisterHotelManagerPlanner"
   override def plan(input: RegisterHotelManagerPlannerRequest, connection: Connection): IO[ManagerSessionPlannerResponse] =
+    val now = Instant.now()
+    val hotelId = s"hotel-${UUID.randomUUID().toString.take(12)}"
+    val managerId = s"manager-${UUID.randomUUID().toString.take(12)}"
     for
       email <- IO.fromEither(EmailAddress.create(input.email))
+      _ <- validateRegisterHotel(input)
       passwordHash <- hashPasswordForLoginEmail(input.password, email)
-      response <- HotelManagerPlainSql.registerHotel(connection, input, passwordHash, Instant.now())
-    yield response
+      _ <- HotelManagerPlainSql.insertHotel(connection, hotelId, input.hotelName, input.location, now)
+      _ <- HotelManagerPlainSql.insertHotelManager(connection, managerId, hotelId, input.email, input.displayName, now)
+      _ <- HotelManagerPlainSql.insertHotelManagerCredential(connection, managerId, input.email, passwordHash, now)
+    yield ManagerSessionPlannerResponse(managerId, "Hotel", input.email, input.displayName, "Active", hotelId, None, now.toString)
 
 object ListManagerHotelsPlanner extends ConnectionApiPlan[ManagerScopedPlannerRequest, ManagerHotelListPlannerResponse]:
   override val name: String = "ListManagerHotelsPlanner"
@@ -39,6 +45,15 @@ object CreateManagerRoomTypePlanner extends ConnectionApiPlan[CreateManagerRoomT
       }
       hotel <- HotelManagerPlainSql.readHotel(connection, hotelId)
     yield hotel
+
+private def validateRegisterHotel(input: RegisterHotelManagerPlannerRequest): IO[Unit] =
+  IO {
+    require(input.email.trim.nonEmpty, "email is required")
+    require(input.displayName.trim.nonEmpty, "displayName is required")
+    require(input.hotelName.trim.nonEmpty, "hotelName is required")
+    require(input.location.trim.nonEmpty, "location is required")
+    require(input.password.nonEmpty, "password is required")
+  }
 
 private def validateRoomType(input: CreateManagerRoomTypePlannerRequest, startDate: LocalDate, endDate: LocalDate): IO[Unit] =
   IO {
