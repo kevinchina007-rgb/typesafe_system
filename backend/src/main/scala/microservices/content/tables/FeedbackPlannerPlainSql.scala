@@ -51,19 +51,40 @@ object FeedbackPlannerPlainSql:
         FeedbackManagerType.fromText(managerType) == FeedbackManagerType.Airline ||
         FeedbackManagerType.fromText(managerType) == FeedbackManagerType.Train ||
         FeedbackManagerType.fromText(managerType) == FeedbackManagerType.Attraction =>
-        val scopeField = managerScopeFieldFor(FeedbackManagerType.fromText(managerType)).getOrElse("hotelId")
-        IO.blocking {
-          queryThreads(
-            connection,
-            selectThreadSql +
-              s"""
-                 join order_line_items li on li.order_id = ft.order_id and li.order_item_id = ft.order_item_id
-                 where ft.kind = ? and ft.manager_type = ? and li.snapshot_json::jsonb ->> '$scopeField' = ?
-                 order by ft.updated_at desc
-               """,
-            List(FeedbackThreadKind.ServiceReview.toString, FeedbackManagerType.fromText(managerType).toString, scope)
-          )
-        }
+        FeedbackManagerType.fromText(managerType) match
+          case FeedbackManagerType.Airline =>
+            IO.blocking {
+              queryThreads(
+                connection,
+                selectThreadSql +
+                  """
+                     join order_line_items li on li.order_id = ft.order_id and li.order_item_id = ft.order_item_id
+                     join airlines a on a.airline_id = ?
+                     where ft.kind = ? and ft.manager_type = ?
+                       and (
+                         li.snapshot_json::jsonb ->> 'airlineId' = ?
+                         or li.snapshot_json::jsonb ->> 'airlineCode' = a.code
+                         or li.flight_id in (select flight_id from flights where airline_id = ?)
+                       )
+                     order by ft.updated_at desc
+                   """,
+                List(scope, FeedbackThreadKind.ServiceReview.toString, FeedbackManagerType.Airline.toString, scope, scope)
+              )
+            }
+          case managerKind =>
+            val scopeField = managerScopeFieldFor(managerKind).getOrElse("hotelId")
+            IO.blocking {
+              queryThreads(
+                connection,
+                selectThreadSql +
+                  s"""
+                     join order_line_items li on li.order_id = ft.order_id and li.order_item_id = ft.order_item_id
+                     where ft.kind = ? and ft.manager_type = ? and li.snapshot_json::jsonb ->> '$scopeField' = ?
+                     order by ft.updated_at desc
+                   """,
+                List(FeedbackThreadKind.ServiceReview.toString, managerKind.toString, scope)
+              )
+            }
       case _ =>
         IO.blocking {
           queryThreads(connection, selectThreadSql + " where ft.kind = ? and ft.manager_type = ? order by ft.updated_at desc", List(FeedbackThreadKind.ServiceReview.toString, managerType))

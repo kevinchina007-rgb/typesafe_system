@@ -10,13 +10,13 @@ import { uploadAdvertisementImage } from '@/microservices/advertising/api/Upload
 import { listAttractions, getAttraction } from '@/microservices/attraction/api/AttractionPlanners'
 import { getHealth, signupUser, loginUserWithPassword, logoutUser, getCurrentUserSession, changeUserPassword, listUserSessions, logoutCurrentUserSession, logoutOtherUserSessions } from '@/microservices/auth/api/AuthPlanners'
 import { loginManagerAuth, logoutManagerAuth, getCurrentManagerSession, changeManagerPassword, listManagerSessions, logoutCurrentManagerSession, logoutOtherManagerSessions } from '@/microservices/auth/api/ManagerAuthPlanners'
-import { listBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost } from '@/microservices/content/api/BlogPlanners'
+import { listBlogPosts, listShortBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, saveBlogDraft, publishBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost, likeBlogComment, unlikeBlogComment, favoriteBlogPost, unfavoriteBlogPost, followBlogUser, blockBlogUser, listBlogNotifications, getBlogProfile, updateBlogProfilePrivacy, listBlogFollowers, listBlogFollowing } from '@/microservices/content/api/BlogPlanners'
 import { listExploreSuggestions, searchExplore } from '@/microservices/content/api/ExplorePlanners'
 import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedbackThreads, listSiteAdminFeedbackThreads, sendFeedbackMessage, createOrderCancellationMessage, handleOrderCancellationRequest, markFeedbackThreadRead, escalateFeedbackThread } from '@/microservices/content/api/FeedbackPlanners'
 import { listMyReviews, listReviewsByResource, getReviewResourceSummary, getReviewEligibility, createReview, updateReview, uploadReviewImage, deleteReview } from '@/microservices/content/api/ReviewPlanners'
 import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
 import { searchHotelsPlanner, getHotelDetailsPlanner } from '@/microservices/hotel/api'
-import { createUser, loginUser, getUser, uploadUserAvatar } from '@/microservices/identity/api/UserQueryPlanners'
+import { createUser, loginUser, getUser, uploadUserAvatar, updateUserProfile } from '@/microservices/identity/api/UserQueryPlanners'
 import { registerAirlineManager, registerHotelManager, registerSiteAdmin, registerRailwayManager, registerAttractionManager, listManagedAttractions, createAttraction, createAttractionTicketType, createAttractionTicketSession, createAttractionTicketRule, listManagedTrains, createTrainJourney, createManagerRoomType, listManagedHotels, listManagerTasks, batchConfirmManagerBookingItems, batchRejectManagerBookingItems, listManagerFlights, listManagerFlightOrders, listManagerRefundTasks, updateAirlineManagerProfile, updateHotelManagerProfile, createManagerFlight, toggleManagerFlightStatus, confirmManagerBookingItem, rejectManagerBookingItem } from '@/microservices/operations/api/ManagerPlanners'
 import { createPaymentLink } from '@/microservices/order/api/FindOrderPaymentPlanner'
 import { createOrder, addTrainItemToOrder, addAttractionItemToOrder, createHotelOrder, getOrder, listOrders, payOrder, cancelOrder, requestRefund, approveRefund, rejectRefund } from '@/microservices/order/api/OrderPlanners'
@@ -56,12 +56,15 @@ export const travelMvpApiClient = {
   logoutCurrentManagerSession,
   logoutOtherManagerSessions,
   listBlogPosts,
+  listShortBlogPosts,
   listBlogSuggestions,
   uploadBlogImage,
   getBlogPost,
   listBlogModerationPosts,
   approveBlogPost,
   rejectBlogPost,
+  saveBlogDraft,
+  publishBlogPost,
   createBlogPost,
   updateBlogPost,
   archiveBlogPost,
@@ -69,6 +72,17 @@ export const travelMvpApiClient = {
   deleteBlogComment,
   likeBlogPost,
   unlikeBlogPost,
+  likeBlogComment,
+  unlikeBlogComment,
+  favoriteBlogPost,
+  unfavoriteBlogPost,
+  followBlogUser,
+  blockBlogUser,
+  listBlogNotifications,
+  getBlogProfile,
+  updateBlogProfilePrivacy,
+  listBlogFollowers,
+  listBlogFollowing,
   listExploreSuggestions,
   searchExplore,
   ensureOrderCancellationThread,
@@ -98,6 +112,7 @@ export const travelMvpApiClient = {
   loginUser,
   getUser,
   uploadUserAvatar,
+  updateUserProfile,
   registerAirlineManager,
   registerHotelManager,
   registerSiteAdmin,

@@ -335,8 +335,7 @@ def module(moduleName: String) =
     .settings(
       name := moduleName,
       Compile / unmanagedSourceDirectories ++= Seq(
-        moduleSourceDir(moduleName) / "objects",
-        moduleSourceDir(moduleName) / "utils"
+        moduleSourceDir(moduleName) / "objects"
       ),
       Test / unmanagedSourceDirectories += backendTestRoot / moduleName
     )

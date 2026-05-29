@@ -37,7 +37,11 @@ object MigrationPlan:
     loadMigrationStep(24, "flight_demo_schedule_refresh", "V24__flight_demo_schedule_refresh.sql"),
     loadMigrationStep(25, "feedback_structured_messages", "V25__feedback_structured_messages.sql"),
     loadMigrationStep(26, "clear_feedback_chat_history", "V26__clear_feedback_chat_history.sql"),
-    loadMigrationStep(27, "traveler_profile_service_details", "V27__traveler_profile_service_details.sql")
+    loadMigrationStep(27, "traveler_profile_service_details", "V27__traveler_profile_service_details.sql"),
+    loadMigrationStep(28, "short_blog_community", "V28__short_blog_community.sql"),
+    loadMigrationStep(29, "short_blog_demo_population", "V29__short_blog_demo_population.sql"),
+    loadMigrationStep(30, "blog_favorites", "V30__blog_favorites.sql"),
+    loadMigrationStep(31, "blog_profile_privacy", "V31__blog_profile_privacy.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

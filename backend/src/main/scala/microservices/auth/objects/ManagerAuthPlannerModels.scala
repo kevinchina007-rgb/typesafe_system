@@ -28,6 +28,7 @@ final case class CurrentManagerPlannerResponse(
     displayName: String,
     status: String,
     scopeId: String,
+    logoAssetPath: Option[String],
     createdAt: Instant,
     expiresAt: Instant
 )

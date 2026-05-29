@@ -872,7 +872,7 @@ function ManagerFlightCard({
         >
           {isOpenForBooking ? '可预订' : isClosedForBooking ? '不可预订' : mapBackendStatusToProductLabel(flight.status, currentLanguage)}
         </button>
-        <span className="text-sm text-slate-500">{`${formatFlightRouteCity(flight.departureAirport)} →${formatFlightRouteCity(flight.arrivalAirport)}`}</span>
+        <span className="text-sm text-slate-500">{`${formatFlightRouteCity(flight.departureAirport)} -> ${formatFlightRouteCity(flight.arrivalAirport)}`}</span>
       </div>
     </article>
   )

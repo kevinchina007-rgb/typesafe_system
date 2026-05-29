@@ -1,8 +1,7 @@
 ﻿import type { ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
-import type { AppLanguage, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
-import { formatTravelerReference, localizeAccountStatus, localizeMembershipLevel } from '@/lib/presenters/view-models'
+import type { UserResponse } from '@/lib/mvp-types/index'
 import { getPasswordValidationMessage } from '@/pages/shared/auth/passwordValidation'
 import { AvatarUploader } from './AvatarUploader'
 
@@ -10,12 +9,10 @@ type AccountEntryMode = 'register' | 'login'
 
 type UserPanelProps = {
   account: UserResponse | null
-  currentLanguage: AppLanguage
   accountEntryMode: AccountEntryMode
   isBusy: boolean
   isGuestMode: boolean
   loginEmailDraft: string
-  travelers: TravelerResponse[]
   translate: (translationKey: string) => string
   onChangeAccountEntryMode: (accountEntryMode: AccountEntryMode) => void
   onChangeLoginEmailDraft: (email: string) => void
@@ -27,9 +24,10 @@ type UserPanelProps = {
   }) => Promise<void>
   onLoginAccount: (payload: { email: string; password: string }) => Promise<void>
   onUploadAvatar: (avatarFile: File) => Promise<void>
+  onUseDefaultAvatar: (avatarUrl: string) => Promise<void>
+  onUpdateProfile: (payload: { nickname: string; phone: string }) => Promise<void>
   onAvatarValidationError: (message: string) => void
   onValidationError: (message: string) => void
-  onRefreshAccount: () => Promise<void>
   onChangePassword: (payload: { currentPassword: string; newPassword: string }) => Promise<void>
   onLogoutCurrentSession: () => void
   onLogout: () => void
@@ -51,10 +49,6 @@ const labelClassName = 'grid gap-2 text-sm font-medium text-slate-700'
 const inputClassName =
   'min-h-11 border border-slate-300 bg-white px-3 py-2 text-slate-950 outline-none transition placeholder:text-slate-400 focus:border-black focus:ring-2 focus:ring-slate-200'
 
-function scrollToSection(sectionId: string) {
-  document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-}
-
 function SectionHeader({ eyebrow, title, actions }: { eyebrow: string; title: string; actions?: ReactNode }) {
   return (
     <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
@@ -63,15 +57,6 @@ function SectionHeader({ eyebrow, title, actions }: { eyebrow: string; title: st
         <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950 md:text-3xl">{title}</h2>
       </div>
       {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
-    </div>
-  )
-}
-
-function StatBlock({ label, value }: { label: string; value: ReactNode }) {
-  return (
-    <div className="grid gap-1 border border-slate-200 bg-slate-50 p-4">
-      <span className="text-sm text-slate-500">{label}</span>
-      <strong className="text-xl font-bold text-slate-950">{value}</strong>
     </div>
   )
 }
@@ -87,21 +72,20 @@ function DetailField({ label, children }: { label: string; children: ReactNode }
 
 export function UserPanel({
   account,
-  currentLanguage,
   accountEntryMode,
   isBusy,
   isGuestMode,
   loginEmailDraft,
-  travelers,
   translate,
   onChangeAccountEntryMode,
   onChangeLoginEmailDraft,
   onRegisterAccount,
   onLoginAccount,
   onUploadAvatar,
+  onUseDefaultAvatar,
+  onUpdateProfile,
   onAvatarValidationError,
   onValidationError,
-  onRefreshAccount,
   onChangePassword,
   onLogoutCurrentSession,
   onLogout,
@@ -109,13 +93,10 @@ export function UserPanel({
   const registerFormRef = useRef<HTMLFormElement>(null)
   const loginFormRef = useRef<HTMLFormElement>(null)
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [isProfileEditing, setIsProfileEditing] = useState(false)
+  const [profileDraft, setProfileDraft] = useState({ nickname: account?.nickname ?? '', phone: account?.phone ?? '' })
   const [loginPasswordDraft, setLoginPasswordDraft] = useState('')
   const [isLoginFormWritable, setIsLoginFormWritable] = useState(false)
-  const defaultTraveler =
-    account?.defaultTravelerProfileId
-      ? travelers.find(traveler => traveler.travelerId === account.defaultTravelerProfileId) ?? null
-      : null
-
   function clearAccountEntryForms() {
     registerFormRef.current?.reset()
     loginFormRef.current?.reset()
@@ -138,6 +119,10 @@ export function UserPanel({
     const resetTimers = [50, 250, 800].map(delay => window.setTimeout(clearAccountEntryForms, delay))
     return () => resetTimers.forEach(timerId => window.clearTimeout(timerId))
   }, [accountEntryMode, isGuestMode])
+
+  useEffect(() => {
+    setProfileDraft({ nickname: account?.nickname ?? '', phone: account?.phone ?? '' })
+  }, [account?.nickname, account?.phone])
 
   if (isGuestMode) {
     return (
@@ -281,87 +266,98 @@ export function UserPanel({
   }
 
   return (
-    <section className="grid gap-4">
+    <section className="mx-auto grid w-full gap-4 lg:w-3/4">
       <section className={heroCardClassName}>
-        <div className="grid gap-5 lg:grid-cols-[minmax(18rem,22rem)_minmax(0,1fr)]">
+        <div className="grid gap-6 lg:grid-cols-[7rem_minmax(0,1fr)]">
           <AvatarUploader
             account={account!}
             isBusy={isBusy}
             translate={translate}
             onUploadAvatar={onUploadAvatar}
+            onUseDefaultAvatar={onUseDefaultAvatar}
             onValidationError={onAvatarValidationError}
           />
 
           <div className="grid gap-4">
-            <SectionHeader
-              eyebrow={translate('account.heroEyebrow')}
-              title={account?.nickname ?? translate('account.profileTitle')}
-              actions={
-                <>
-                  <button className={primaryButtonClassName} type="button" disabled={isBusy} onClick={onLogoutCurrentSession}>
-                    {translate('account.logoutCurrentSession')}
-                  </button>
-                  <button className={secondaryButtonClassName} type="button" disabled={isBusy} onClick={() => scrollToSection('account-profile-section')}>
-                    {translate('account.editProfile')}
-                  </button>
-                </>
-              }
-            />
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <StatBlock label={translate('account.status')} value={localizeAccountStatus(account!.status, currentLanguage)} />
-              <StatBlock label={translate('account.membership')} value={localizeMembershipLevel(account!.membershipLevel, currentLanguage)} />
-              <StatBlock label={translate('account.points')} value={account!.points} />
-              <StatBlock label={translate('account.primaryTraveler')} value={formatTravelerReference(defaultTraveler)} />
+            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+              <div className="grid gap-4 md:grid-cols-2">
+                <DetailField label={translate('account.nickname')}>{account!.nickname}</DetailField>
+                <DetailField label={translate('account.email')}>{account!.email}</DetailField>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <button className={secondaryButtonClassName} type="button" disabled={isBusy} onClick={() => setIsProfileEditing(editing => !editing)}>
+                  {translate('account.editProfile')}
+                </button>
+                <button className={primaryButtonClassName} type="button" disabled={isBusy} onClick={onLogoutCurrentSession}>
+                  {translate('account.logoutCurrentSession')}
+                </button>
+              </div>
             </div>
+
+            {isProfileEditing ? (
+              <form
+                className="grid gap-4 border border-slate-200 bg-slate-50 p-4"
+                onSubmit={async event => {
+                  event.preventDefault()
+                  if (!profileDraft.nickname.trim()) {
+                    onValidationError('昵称不能为空。')
+                    return
+                  }
+                  await onUpdateProfile({
+                    nickname: profileDraft.nickname.trim(),
+                    phone: account!.phone,
+                  })
+                  setIsProfileEditing(false)
+                }}
+              >
+                <label className={labelClassName}>
+                  {translate('account.nickname')}
+                  <input
+                    className={inputClassName}
+                    value={profileDraft.nickname}
+                    onChange={event => setProfileDraft(current => ({ ...current, nickname: event.target.value }))}
+                  />
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <button className={primaryButtonClassName} type="submit" disabled={isBusy}>
+                    {translate('account.saveProfile')}
+                  </button>
+                  <button
+                    className={secondaryButtonClassName}
+                    type="button"
+                    disabled={isBusy}
+                    onClick={() => {
+                      setProfileDraft({ nickname: account?.nickname ?? '', phone: account?.phone ?? '' })
+                      setIsProfileEditing(false)
+                    }}
+                  >
+                    {translate('account.cancelEdit')}
+                  </button>
+                </div>
+              </form>
+            ) : null}
           </div>
-        </div>
-      </section>
-
-      <section id="account-actions-section" className={cardClassName}>
-        <SectionHeader eyebrow={translate('account.operationsEyebrow')} title={translate('account.operationsTitle')} />
-
-        <div className="flex flex-wrap items-center gap-3">
-          <button className={primaryButtonClassName} type="button" disabled={isBusy} onClick={onLogoutCurrentSession}>
-            {translate('account.logoutCurrentSession')}
-          </button>
-          <button className={secondaryButtonClassName} type="button" disabled={isBusy} onClick={() => void onRefreshAccount()}>
-            {translate('account.refresh')}
-          </button>
-          <button className={secondaryButtonClassName} type="button" disabled={isBusy} onClick={onLogout}>
-            {translate('account.logout')}
-          </button>
-        </div>
-      </section>
-
-      <section id="account-profile-section" className={cardClassName}>
-        <SectionHeader eyebrow={translate('account.profileEyebrow')} title={translate('account.profileTitle')} />
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <DetailField label={translate('account.nickname')}>{account!.nickname}</DetailField>
-          <DetailField label={translate('account.email')}>{account!.email}</DetailField>
-          <DetailField label={translate('account.phone')}>{account!.phone}</DetailField>
-          <DetailField label={translate('account.status')}>{localizeAccountStatus(account!.status, currentLanguage)}</DetailField>
-          <DetailField label={translate('account.membership')}>{localizeMembershipLevel(account!.membershipLevel, currentLanguage)}</DetailField>
-          <DetailField label={translate('account.points')}>{account!.points}</DetailField>
-          <DetailField label={translate('account.primaryTraveler')}>{formatTravelerReference(defaultTraveler)}</DetailField>
-          <DetailField label={translate('account.createdAt')}>{new Date(account!.createdAt).toLocaleString()}</DetailField>
         </div>
       </section>
 
       <section className={cardClassName}>
         <SectionHeader
           eyebrow={translate('account.security')}
-          title={translate('account.changePassword')}
+          title={translate('account.accountSecurity')}
           actions={
-            <button
-              className={secondaryButtonClassName}
-              type="button"
-              disabled={isBusy}
-              onClick={() => setIsChangePasswordOpen(open => !open)}
-            >
-              {translate(isChangePasswordOpen ? 'account.hideChangePassword' : 'account.showChangePassword')}
-            </button>
+            <>
+              <button
+                className={secondaryButtonClassName}
+                type="button"
+                disabled={isBusy}
+                onClick={() => setIsChangePasswordOpen(open => !open)}
+              >
+                {translate(isChangePasswordOpen ? 'account.hideChangePassword' : 'account.showChangePassword')}
+              </button>
+              <button className={secondaryButtonClassName} type="button" disabled={isBusy} onClick={onLogout}>
+                {translate('account.logout')}
+              </button>
+            </>
           }
         />
 

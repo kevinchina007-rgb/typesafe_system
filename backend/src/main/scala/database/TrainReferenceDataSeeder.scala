@@ -1,4 +1,4 @@
-﻿package com.typesafe.travel.persistence
+package com.typesafe.travel.persistence
 
 import cats.effect.IO
 import cats.syntax.all.*
@@ -87,11 +87,11 @@ object TrainReferenceDataSeeder:
       trainNumber = "G1001",
       saleStartsAt = "2026-05-18T00:00:00Z",
       stops = List(
-        TrainStopSeed("BJS", "鍖椾含鍗?, None, Some("2026-06-01T02:00:00Z")),
-        TrainStopSeed("TJS", "澶╂触鍗?, Some("2026-06-01T02:28:00Z"), Some("2026-06-01T02:31:00Z")),
-        TrainStopSeed("JNW", "娴庡崡瑗?, Some("2026-06-01T04:10:00Z"), Some("2026-06-01T04:13:00Z")),
-        TrainStopSeed("NJS", "鍗椾含鍗?, Some("2026-06-01T07:10:00Z"), Some("2026-06-01T07:13:00Z")),
-        TrainStopSeed("SHH", "涓婃捣铏规ˉ", Some("2026-06-01T09:05:00Z"), None)
+        TrainStopSeed("BJS", "北京南", None, Some("2026-06-01T02:00:00Z")),
+        TrainStopSeed("TJS", "天津南", Some("2026-06-01T02:28:00Z"), Some("2026-06-01T02:31:00Z")),
+        TrainStopSeed("JNW", "济南西", Some("2026-06-01T04:10:00Z"), Some("2026-06-01T04:13:00Z")),
+        TrainStopSeed("NJS", "南京南", Some("2026-06-01T07:10:00Z"), Some("2026-06-01T07:13:00Z")),
+        TrainStopSeed("SHH", "上海虹桥", Some("2026-06-01T09:05:00Z"), None)
       ),
       seatInventories = defaultSeatInventories,
       segmentPrices = List(
@@ -119,11 +119,11 @@ object TrainReferenceDataSeeder:
       trainNumber = "G1002",
       saleStartsAt = "2026-05-18T00:00:00Z",
       stops = List(
-        TrainStopSeed("SHH", "涓婃捣铏规ˉ", None, Some("2026-06-01T01:00:00Z")),
-        TrainStopSeed("SZB", "鑻忓窞鍖?, Some("2026-06-01T01:23:00Z"), Some("2026-06-01T01:26:00Z")),
-        TrainStopSeed("HZD", "鏉窞涓?, Some("2026-06-01T02:05:00Z"), Some("2026-06-01T02:08:00Z")),
-        TrainStopSeed("NGB", "瀹佹尝", Some("2026-06-01T03:40:00Z"), Some("2026-06-01T03:43:00Z")),
-        TrainStopSeed("WZS", "娓╁窞鍗?, Some("2026-06-01T05:30:00Z"), None)
+        TrainStopSeed("SHH", "上海虹桥", None, Some("2026-06-01T01:00:00Z")),
+        TrainStopSeed("SZB", "苏州北", Some("2026-06-01T01:23:00Z"), Some("2026-06-01T01:26:00Z")),
+        TrainStopSeed("HZD", "杭州东", Some("2026-06-01T02:05:00Z"), Some("2026-06-01T02:08:00Z")),
+        TrainStopSeed("NGB", "宁波", Some("2026-06-01T03:40:00Z"), Some("2026-06-01T03:43:00Z")),
+        TrainStopSeed("WZS", "温州南", Some("2026-06-01T05:30:00Z"), None)
       ),
       seatInventories = defaultSeatInventories,
       segmentPrices = List(
@@ -151,9 +151,9 @@ object TrainReferenceDataSeeder:
       trainNumber = "G1003",
       saleStartsAt = "2026-05-18T00:00:00Z",
       stops = List(
-        TrainStopSeed("GZQ", "骞垮窞鍗?, None, Some("2026-06-01T02:00:00Z")),
-        TrainStopSeed("SZN", "娣卞湷鍖?, Some("2026-06-01T02:34:00Z"), Some("2026-06-01T02:37:00Z")),
-        TrainStopSeed("XMN", "鍘﹂棬鍖?, Some("2026-06-01T05:10:00Z"), None)
+        TrainStopSeed("GZQ", "广州南", None, Some("2026-06-01T02:00:00Z")),
+        TrainStopSeed("SZN", "深圳北", Some("2026-06-01T02:34:00Z"), Some("2026-06-01T02:37:00Z")),
+        TrainStopSeed("XMN", "厦门北", Some("2026-06-01T05:10:00Z"), None)
       ),
       seatInventories = defaultSeatInventories,
       segmentPrices = List(
@@ -173,10 +173,10 @@ object TrainReferenceDataSeeder:
       trainNumber = "G1004",
       saleStartsAt = "2026-05-18T00:00:00Z",
       stops = List(
-        TrainStopSeed("CDD", "鎴愰兘涓?, None, Some("2026-06-01T00:20:00Z")),
-        TrainStopSeed("CQB", "閲嶅簡鍖?, Some("2026-06-01T01:34:00Z"), Some("2026-06-01T01:37:00Z")),
-        TrainStopSeed("WUH", "姝︽眽", Some("2026-06-01T04:20:00Z"), Some("2026-06-01T04:23:00Z")),
-        TrainStopSeed("CSN", "闀挎矙鍗?, Some("2026-06-01T06:25:00Z"), None)
+        TrainStopSeed("CDD", "成都东", None, Some("2026-06-01T00:20:00Z")),
+        TrainStopSeed("CQB", "重庆北", Some("2026-06-01T01:34:00Z"), Some("2026-06-01T01:37:00Z")),
+        TrainStopSeed("WUH", "武汉", Some("2026-06-01T04:20:00Z"), Some("2026-06-01T04:23:00Z")),
+        TrainStopSeed("CSN", "长沙南", Some("2026-06-01T06:25:00Z"), None)
       ),
       seatInventories = defaultSeatInventories,
       segmentPrices = List(
@@ -200,10 +200,10 @@ object TrainReferenceDataSeeder:
       trainNumber = "G1005",
       saleStartsAt = "2026-05-18T00:00:00Z",
       stops = List(
-        TrainStopSeed("BJS", "鍖椾含鍗?, None, Some("2026-06-01T03:00:00Z")),
-        TrainStopSeed("ZZD", "閮戝窞涓?, Some("2026-06-01T05:35:00Z"), Some("2026-06-01T05:38:00Z")),
-        TrainStopSeed("WUH", "姝︽眽", Some("2026-06-01T07:55:00Z"), Some("2026-06-01T07:58:00Z")),
-        TrainStopSeed("GZQ", "骞垮窞鍗?, Some("2026-06-01T12:10:00Z"), None)
+        TrainStopSeed("BJS", "北京南", None, Some("2026-06-01T03:00:00Z")),
+        TrainStopSeed("ZZD", "郑州东", Some("2026-06-01T05:35:00Z"), Some("2026-06-01T05:38:00Z")),
+        TrainStopSeed("WUH", "武汉", Some("2026-06-01T07:55:00Z"), Some("2026-06-01T07:58:00Z")),
+        TrainStopSeed("GZQ", "广州南", Some("2026-06-01T12:10:00Z"), None)
       ),
       seatInventories = defaultSeatInventories,
       segmentPrices = List(
@@ -252,7 +252,7 @@ object TrainReferenceDataSeeder:
     for
       _ <- sql"""
         insert into railway_managers (manager_id, operator_code, email, display_name, status, created_at)
-  private val DemoManagerDisplayName = "哼哼306"
+        values ($DemoManagerId, $DemoManagerOperatorCode, $DemoManagerEmail, $DemoManagerDisplayName, ${"Active"}, cast($seededAtValue as timestamptz))
         on conflict (manager_id) do update set
           operator_code = excluded.operator_code,
           email = excluded.email,

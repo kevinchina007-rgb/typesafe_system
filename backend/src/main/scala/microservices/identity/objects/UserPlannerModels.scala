@@ -23,6 +23,11 @@ object UploadUserAvatarPlannerRequest:
   given sourceEncoder: Encoder[UploadUserAvatarPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[UploadUserAvatarPlannerRequest] = deriveDecoder
 
+final case class UpdateUserProfilePlannerRequest(userId: String, nickname: String, phone: String)
+object UpdateUserProfilePlannerRequest:
+  given sourceEncoder: Encoder[UpdateUserProfilePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[UpdateUserProfilePlannerRequest] = deriveDecoder
+
 final case class UserPlannerResponse(
     userId: String,
     email: String,

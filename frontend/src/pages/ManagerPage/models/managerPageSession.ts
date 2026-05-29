@@ -8,6 +8,7 @@ export function toLegacyManagerSession(session: CurrentManagerSessionResponse): 
     displayName: session.displayName,
     status: session.status,
     scopeId: session.scopeId,
+    logoAssetPath: session.logoAssetPath,
     createdAt: session.createdAt,
   }
 }

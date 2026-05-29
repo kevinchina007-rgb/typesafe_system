@@ -1,7 +1,7 @@
 ﻿import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import { useEffect, useState } from 'react'
 
-import { setCurrentUserTravelers, useUserStore } from '@/app/stores/user-store'
+import { setCurrentUserTravelers } from '@/app/stores/user-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { AppLanguage, AppViewKey, CurrentManagerSessionResponse, UserResponse } from '@/lib/mvp-types/index'
 import { usePageActions } from '@/pages/shared/usePageActions'
@@ -34,7 +34,6 @@ export function AccountPage({
 }: AccountPageProps) {
   const [accountEntryMode, setAccountEntryMode] = useState<AccountEntryMode>(requestedEntryMode)
   const [loginEmailDraft, setLoginEmailDraft] = useState('')
-  const userTravelers = useUserStore(state => state.userTravelers)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
 
   useEffect(() => {
@@ -62,12 +61,10 @@ export function AccountPage({
   return (
     <UserPanel
       account={signedInUser}
-      currentLanguage={currentLanguage}
       accountEntryMode={accountEntryMode}
       isBusy={isBusy}
       isGuestMode={signedInUser === null}
       loginEmailDraft={loginEmailDraft}
-      travelers={userTravelers}
       translate={translate}
       onChangeAccountEntryMode={setAccountEntryMode}
       onChangeLoginEmailDraft={setLoginEmailDraft}
@@ -97,22 +94,33 @@ export function AccountPage({
           onSignedInUserChange(updatedAccount)
         }, translate('account.avatarUpload'), translate('notice.avatarUploaded'))
       }}
+      onUseDefaultAvatar={async avatarUrl => {
+        if (!signedInUser) {
+          throw new Error(translate('error.loginRequired'))
+        }
+        await runPageAction(async () => {
+          const updatedAccount = await travelMvpApiClient.uploadUserAvatar(signedInUser.userId, avatarUrl)
+          onSignedInUserChange(updatedAccount)
+        }, translate('account.changeAvatar'), translate('notice.avatarUploaded'))
+      }}
+      onUpdateProfile={async payload => {
+        if (!signedInUser) {
+          throw new Error(translate('error.loginRequired'))
+        }
+        await runPageAction(async () => {
+          const updatedAccount = await travelMvpApiClient.updateUserProfile({
+            userId: signedInUser.userId,
+            nickname: payload.nickname,
+            phone: payload.phone,
+          })
+          onSignedInUserChange(updatedAccount)
+        }, translate('account.editProfile'), translate('notice.actionSuccess'))
+      }}
       onAvatarValidationError={message => {
         onShowNotice('error', translate('error.friendly.default'), message)
       }}
       onValidationError={message => {
         onShowNotice('error', translate('error.friendly.default'), message)
-      }}
-      onRefreshAccount={async () => {
-        if (!signedInUser) {
-          return
-        }
-        await runPageAction(async () => {
-          const refreshedAccount = await travelMvpApiClient.getUser(signedInUser.userId)
-          const refreshedTravelers = await travelMvpApiClient.listTravelers(signedInUser.userId)
-          onSignedInUserChange(refreshedAccount)
-          setCurrentUserTravelers(refreshedTravelers.travelers)
-        }, translate('account.refresh'), translate('notice.actionSuccess'))
       }}
       onChangePassword={async payload => {
         await runPageAction(async () => {

@@ -7,7 +7,7 @@ import com.typesafe.travel.auth.domain.*
 import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.flight.api.{BookFlightPlanner, FlightDailyLowestPricesPlanner, FlightSuggestionsPlanner, GetFlightDetailsPlanner, SearchFlightsPlanner}
 import com.typesafe.travel.hotel.api.{BookHotelPlanner, GetHotelDetailsPlanner, HotelSuggestionsPlanner, SearchHotelsPlanner}
-import com.typesafe.travel.identity.domain.{CreateUserPlanner, GetUserPlanner, LoginUserPlanner, UploadUserAvatarPlanner}
+import com.typesafe.travel.identity.domain.{CreateUserPlanner, GetUserPlanner, LoginUserPlanner, UpdateUserProfilePlanner, UploadUserAvatarPlanner}
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.tourgroup.domain.*
@@ -58,6 +58,8 @@ object PlannerDefinitions:
         WithConnection(GetBlogPostPlanner),
         WithConnection(CreateBlogPostPlanner),
         WithConnection(UpdateBlogPostPlanner),
+        WithConnection(SaveBlogDraftPlanner),
+        WithConnection(PublishBlogPostPlanner),
         WithConnection(ApproveBlogPostPlanner),
         WithConnection(RejectBlogPostPlanner),
         WithConnection(ArchiveBlogPostPlanner),
@@ -65,6 +67,17 @@ object PlannerDefinitions:
         WithConnection(DeleteBlogCommentPlanner),
         WithConnection(LikeBlogPostPlanner),
         WithConnection(UnlikeBlogPostPlanner),
+        WithConnection(LikeBlogCommentPlanner),
+        WithConnection(UnlikeBlogCommentPlanner),
+        WithConnection(FavoriteBlogPostPlanner),
+        WithConnection(UnfavoriteBlogPostPlanner),
+        WithConnection(FollowBlogUserPlanner),
+        WithConnection(BlockBlogUserPlanner),
+        WithConnection(ListBlogNotificationsPlanner),
+        WithConnection(GetBlogProfilePlanner),
+        WithConnection(UpdateBlogProfilePrivacyPlanner),
+        WithConnection(ListBlogFollowersPlanner),
+        WithConnection(ListBlogFollowingPlanner),
         WithConnection(ListMyReviewsPlanner),
         WithConnection(ListReviewsByResourcePlanner),
         WithConnection(GetReviewSummaryPlanner),
@@ -87,6 +100,7 @@ object PlannerDefinitions:
         WithConnection(LoginUserPlanner),
         WithConnection(GetUserPlanner),
         WithConnection(UploadUserAvatarPlanner),
+        WithConnection(UpdateUserProfilePlanner),
         WithConnection(ManagerLoginPlanner),
         WithConnection(CurrentManagerPlanner),
         WithConnection(ManagerLogoutPlanner),

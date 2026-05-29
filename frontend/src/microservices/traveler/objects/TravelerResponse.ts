@@ -17,6 +17,7 @@ export type TravelerResponse = {
   birthDate: string
   travelerType: string
   status: string
+  isHidden: boolean
   isDefault: boolean
   basicInfo: TravelerBasicInfo
   documentInfo: TravelerDocumentInfo

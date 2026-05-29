@@ -66,6 +66,19 @@ object UserPlannerPlainSql:
       readById(connection, request.userId)
     }
 
+  def updateProfile(connection: Connection, request: UpdateUserProfilePlannerRequest): IO[UserPlannerResponse] =
+    IO.blocking {
+      val statement = connection.prepareStatement("update users set nickname = ?, phone = ? where user_id = ?")
+      try
+        statement.setString(1, request.nickname)
+        statement.setString(2, request.phone)
+        statement.setString(3, request.userId)
+        val updatedRows = statement.executeUpdate()
+        if updatedRows == 0 then throw new IllegalArgumentException(s"User '${request.userId}' was not found")
+      finally statement.close()
+      readById(connection, request.userId)
+    }
+
   private def readById(connection: Connection, userId: String): UserPlannerResponse =
     val statement = connection.prepareStatement(selectUserSql + " where user_id = ?")
     try

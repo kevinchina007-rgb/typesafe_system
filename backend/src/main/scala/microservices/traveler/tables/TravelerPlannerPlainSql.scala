@@ -72,15 +72,6 @@ object TravelerPlannerPlainSql:
       travelerProfile
     }
 
-  def deleteById(connection: Connection, travelerId: TravelerId): IO[Unit] =
-    IO.blocking {
-      PlainSqlSupport.withStatement(connection, "delete from traveler_profiles where traveler_id = ?") { statement =>
-        statement.setString(1, travelerId.value)
-        statement.executeUpdate()
-      }
-      ()
-    }
-
   def updateUserDefaultTraveler(connection: Connection, ownerUserId: UserId, travelerId: Option[TravelerId]): IO[Unit] =
     IO.blocking {
       PlainSqlSupport.withStatement(connection, "update users set default_traveler_id = ? where user_id = ?") { statement =>
@@ -149,12 +140,12 @@ object TravelerPlannerPlainSql:
       travelerPreferences = DatabaseCodecs.decodeTravelerPreferences(resultSet.getString("preferences_json")).fold(throw _, identity),
       travelerProfileStatus = TravelerProfileStatus.fromText(resultSet.getString("status")),
       isDefaultTravelerProfile = resultSet.getBoolean("is_default"),
-      travelerGender = readOptionalString(resultSet, "gender").getOrElse("unspecified"),
-      travelerNationality = readOptionalString(resultSet, "nationality").getOrElse("China"),
+      travelerGender = readOptionalString(resultSet, "gender").getOrElse("未填写"),
+      travelerNationality = readOptionalString(resultSet, "nationality").getOrElse("中国"),
       travelerDocumentExpiryDate = Option(resultSet.getDate("document_expiry_date")).map(_.toLocalDate),
       travelerEmail = readOptionalString(resultSet, "email"),
       quietSeatPreferred = resultSet.getBoolean("quiet_seat_preferred"),
-      assistanceType = readOptionalString(resultSet, "assistance_type").getOrElse("none"),
+      assistanceType = readOptionalString(resultSet, "assistance_type").getOrElse("无"),
       specialRequirementNote = readOptionalString(resultSet, "special_requirement_note"),
       hasLargeLuggage = resultSet.getBoolean("has_large_luggage"),
       luggageNote = readOptionalString(resultSet, "luggage_note")

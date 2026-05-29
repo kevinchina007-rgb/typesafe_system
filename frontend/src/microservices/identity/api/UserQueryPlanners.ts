@@ -10,12 +10,19 @@ export const loginUser = (payload: { email: string }): Promise<UserResponse> =>
 export const getUser = (userId: string): Promise<UserResponse> =>
   executeJsonApiRequest('/GetUserPlanner', 'POST', { userId })
 
-export const uploadUserAvatar = async (userId: string, avatarFile: File): Promise<UserResponse> => {
+export const uploadUserAvatar = async (userId: string, avatarFile: File | string): Promise<UserResponse> => {
+  if (typeof avatarFile === 'string') {
+    return executeJsonApiRequest('/UploadUserAvatarPlanner', 'POST', { userId, publicUrl: avatarFile })
+  }
+
   const publicUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
     reader.onload = () => resolve(String(reader.result))
-    reader.onerror = () => reject(reader.error ?? new Error('头像读取失败'))
+    reader.onerror = () => reject(reader.error ?? new Error('??????'))
     reader.readAsDataURL(avatarFile)
   })
   return executeJsonApiRequest('/UploadUserAvatarPlanner', 'POST', { userId, publicUrl })
 }
+
+export const updateUserProfile = (payload: { userId: string; nickname: string; phone: string }): Promise<UserResponse> =>
+  executeJsonApiRequest('/UpdateUserProfilePlanner', 'POST', payload)

@@ -23,7 +23,7 @@ object ManagerScopedPlannerRequest:
   given sourceEncoder: Encoder[ManagerScopedPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[ManagerScopedPlannerRequest] = deriveDecoder
 
-final case class ManagerSessionPlannerResponse(managerId: String, managerType: String, email: String, displayName: String, status: String, scopeId: String, createdAt: String)
+final case class ManagerSessionPlannerResponse(managerId: String, managerType: String, email: String, displayName: String, status: String, scopeId: String, logoAssetPath: Option[String], createdAt: String)
 object ManagerSessionPlannerResponse:
   given sourceEncoder: Encoder[ManagerSessionPlannerResponse] = deriveEncoder
   given sourceDecoder: Decoder[ManagerSessionPlannerResponse] = deriveDecoder

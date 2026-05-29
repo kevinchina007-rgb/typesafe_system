@@ -57,7 +57,6 @@ export const topNavItems: TopNavItem[] = [
   { key: 'community', titleKey: 'topnav.community', icon: 'blog', defaultViewKey: 'blog' },
   { key: 'smartPlanner', titleKey: 'topnav.smartPlanner', icon: 'planner', defaultViewKey: 'smartPlanner' },
   { key: 'customerFeedback', titleKey: 'topnav.customerFeedback', icon: 'review', defaultViewKey: 'customerFeedback' },
-  { key: 'userCenter', titleKey: 'topnav.userCenter', icon: 'account', defaultViewKey: 'account' },
   { key: 'managerCenter', titleKey: 'topnav.managerCenter', icon: 'account', defaultViewKey: 'manager' },
   { key: 'managerWorkspace', titleKey: 'topnav.managerWorkspace', icon: 'operations', defaultViewKey: 'managerWorkspace' },
   { key: 'managerCreateFlight', titleKey: 'topnav.managerCreateFlight', icon: 'flight', defaultViewKey: 'managerCreateFlight' },
@@ -401,7 +400,6 @@ export function getVisibleTopNavItems(params: {
       item.key === 'booking' ||
       item.key === 'community' ||
       item.key === 'smartPlanner' ||
-      item.key === 'userCenter' ||
       item.key === 'managerCenter'
     )
   }).map(item => ({

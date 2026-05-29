@@ -30,3 +30,13 @@ object UploadUserAvatarPlanner extends ConnectionApiPlan[UploadUserAvatarPlanner
 
   override def plan(input: UploadUserAvatarPlannerRequest, connection: Connection): IO[UserPlannerResponse] =
     UserPlannerPlainSql.uploadAvatar(connection, input)
+
+object UpdateUserProfilePlanner extends ConnectionApiPlan[UpdateUserProfilePlannerRequest, UserPlannerResponse]:
+  override val name: String = "UpdateUserProfilePlanner"
+
+  override def plan(input: UpdateUserProfilePlannerRequest, connection: Connection): IO[UserPlannerResponse] =
+    val normalizedNickname = input.nickname.trim
+    val normalizedPhone = input.phone.trim
+    if normalizedNickname.isEmpty then IO.raiseError(new IllegalArgumentException("昵称不能为空"))
+    else if normalizedPhone.isEmpty then IO.raiseError(new IllegalArgumentException("手机号不能为空"))
+    else UserPlannerPlainSql.updateProfile(connection, input.copy(nickname = normalizedNickname, phone = normalizedPhone))

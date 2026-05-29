@@ -30,7 +30,7 @@ object ManagerPlannerPlainSql:
       insertAirline(connection, airlineId, input.airlineName, input.airlineCode, now)
       insertManager(connection, "airline_managers", managerId, Some(airlineId), input.email, input.displayName, now)
       insertManagerCredential(connection, "Airline", managerId, input.email, passwordHash, now)
-      ManagerSessionPlannerResponse(managerId, "Airline", input.email, input.displayName, "Active", airlineId, now.toString)
+      ManagerSessionPlannerResponse(managerId, "Airline", input.email, input.displayName, "Active", airlineId, None, now.toString)
     }
 
   def registerHotel(connection: Connection, input: RegisterHotelManagerPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
@@ -47,7 +47,7 @@ object ManagerPlannerPlainSql:
       }
       insertManager(connection, "hotel_managers", managerId, Some(hotelId), input.email, input.displayName, now)
       insertManagerCredential(connection, "Hotel", managerId, input.email, passwordHash, now)
-      ManagerSessionPlannerResponse(managerId, "Hotel", input.email, input.displayName, "Active", hotelId, now.toString)
+      ManagerSessionPlannerResponse(managerId, "Hotel", input.email, input.displayName, "Active", hotelId, None, now.toString)
     }
 
   def updateHotelProfile(connection: Connection, input: UpdateHotelManagerProfilePlannerRequest, now: Instant): IO[ManagerSessionPlannerResponse] =
@@ -87,14 +87,14 @@ object ManagerPlannerPlainSql:
         statement.executeUpdate()
       }
       insertManagerCredential(connection, "Attraction", managerId, input.email.trim, passwordHash, now)
-      ManagerSessionPlannerResponse(managerId, "Attraction", input.email.trim, input.displayName.trim, "Active", managerId, now.toString)
+      ManagerSessionPlannerResponse(managerId, "Attraction", input.email.trim, input.displayName.trim, "Active", managerId, None, now.toString)
     }
 
   def registerSiteAdmin(connection: Connection, input: RegisterSiteAdminPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
     IO.blocking {
       val managerId = s"site-admin-${UUID.randomUUID().toString.take(12)}"
       insertManagerCredential(connection, "SiteAdmin", managerId, input.email, passwordHash, now)
-      ManagerSessionPlannerResponse(managerId, "SiteAdmin", input.email, input.displayName, "Active", "site-admin", now.toString)
+      ManagerSessionPlannerResponse(managerId, "SiteAdmin", input.email, input.displayName, "Active", "site-admin", None, now.toString)
     }
 
   def listTasks(connection: Connection, input: ManagerTasksPlannerRequest): IO[ManagerBookingTaskListPlannerResponse] =
@@ -485,8 +485,9 @@ object ManagerPlannerPlainSql:
     PlainSqlSupport.withStatement(
       connection,
       """
-        select m.manager_id, m.email, m.display_name, m.status, m.airline_id, m.created_at
+        select m.manager_id, m.email, m.display_name, m.status, m.airline_id, a.logo_asset_path, m.created_at
         from airline_managers m
+        join airlines a on a.airline_id = m.airline_id
         where m.manager_id = ?
       """
     ) { statement =>
@@ -501,6 +502,7 @@ object ManagerPlannerPlainSql:
             displayName = resultSet.getString("display_name"),
             status = resultSet.getString("status"),
             scopeId = resultSet.getString("airline_id"),
+            logoAssetPath = Option(resultSet.getString("logo_asset_path")).map(_.trim).filter(_.nonEmpty),
             createdAt = Option(resultSet.getTimestamp("created_at")).map(_.toInstant.toString).getOrElse(fallbackCreatedAt.toString)
           )
         else throw new IllegalArgumentException(s"Manager '$managerId' was not found")
@@ -527,6 +529,7 @@ object ManagerPlannerPlainSql:
             displayName = resultSet.getString("display_name"),
             status = resultSet.getString("status"),
             scopeId = resultSet.getString("hotel_id"),
+            logoAssetPath = None,
             createdAt = Option(resultSet.getTimestamp("created_at")).map(_.toInstant).getOrElse(fallbackCreatedAt).toString
           )
         else

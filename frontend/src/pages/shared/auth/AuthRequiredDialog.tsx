@@ -31,7 +31,15 @@ export function AuthRequiredDialog({
         <div className="flex items-start justify-between gap-6">
           <div>
             <p className="text-sm font-semibold text-slate-500">{translate('authRequired.eyebrow')}</p>
-            <h3 className="mt-2 text-3xl font-bold text-slate-950">{title}</h3>
+            <div className="mt-2 flex items-center gap-3">
+              <h3 className="text-3xl font-bold text-slate-950">{title}</h3>
+              <img
+                src="/images/fly-bara-login.png"
+                alt=""
+                className="h-16 w-16 object-contain"
+                aria-hidden="true"
+              />
+            </div>
           </div>
           <button
             type="button"

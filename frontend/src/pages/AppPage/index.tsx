@@ -275,6 +275,7 @@ export function MvpApp() {
     if (
       isUserOnlyMode &&
       (normalizedViewKey === 'manager' ||
+        normalizedViewKey === 'account' ||
         normalizedViewKey === 'managerWorkspace' ||
         normalizedViewKey === 'managerCreateFlight' ||
         normalizedViewKey === 'managerFlightManagement' ||
@@ -284,7 +285,7 @@ export function MvpApp() {
         normalizedViewKey === 'siteAdminBlogAudit' ||
         normalizedViewKey === 'siteAdminAdvertisingReview')
     ) {
-      setAppView('account')
+      setAppView('overview')
     }
   }, [hasResolvedPrincipalState, isUserOnlyMode, normalizedViewKey])
 
@@ -321,6 +322,17 @@ export function MvpApp() {
       description,
       technicalMessage,
     })
+  }
+
+  async function runHeaderAccountAction(action: () => Promise<void>, successMessage?: string) {
+    try {
+      await action()
+      if (successMessage) {
+        showNotice('success', translate('notice.actionSuccess'), successMessage)
+      }
+    } catch (error) {
+      showNotice('error', translate('error.friendly.default'), error instanceof Error ? error.message : String(error))
+    }
   }
 
   function renderCurrentPage() {
@@ -541,6 +553,48 @@ export function MvpApp() {
           submenuItemsByTopNav,
           currentViewKey: normalizedViewKey,
           onSelectView: setAppView,
+          onUploadUserAvatar: avatarFile =>
+            runHeaderAccountAction(async () => {
+              if (!signedInUserResponse) {
+                throw new Error(translate('error.loginRequired'))
+              }
+              const updatedAccount = await travelMvpApiClient.uploadUserAvatar(signedInUserResponse.userId, avatarFile)
+              setCurrentUserSession(updatedAccount)
+            }, translate('notice.avatarUploaded')),
+          onUseDefaultUserAvatar: avatarUrl =>
+            runHeaderAccountAction(async () => {
+              if (!signedInUserResponse) {
+                throw new Error(translate('error.loginRequired'))
+              }
+              const updatedAccount = await travelMvpApiClient.uploadUserAvatar(signedInUserResponse.userId, avatarUrl)
+              setCurrentUserSession(updatedAccount)
+            }, translate('notice.avatarUploaded')),
+          onUpdateUserProfile: payload =>
+            runHeaderAccountAction(async () => {
+              if (!signedInUserResponse) {
+                throw new Error(translate('error.loginRequired'))
+              }
+              const updatedAccount = await travelMvpApiClient.updateUserProfile({
+                userId: signedInUserResponse.userId,
+                nickname: payload.nickname,
+                phone: payload.phone,
+              })
+              setCurrentUserSession(updatedAccount)
+            }, translate('notice.actionSuccess')),
+          onChangeUserPassword: payload =>
+            runHeaderAccountAction(async () => {
+              await travelMvpApiClient.changeUserPassword(payload)
+            }, translate('notice.passwordChanged')),
+          onLogoutUser: () => {
+            void runHeaderAccountAction(async () => {
+              await travelMvpApiClient.logoutUser()
+              setCurrentUserSession(null)
+              setAppView('overview')
+            }, translate('notice.logoutSuccess'))
+          },
+          onValidationError: message => {
+            showNotice('error', translate('error.friendly.default'), message)
+          },
           translate,
         }}
       >

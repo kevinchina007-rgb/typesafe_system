@@ -25,7 +25,7 @@ export const listTravelers = (userId: string): Promise<TravelerListResponse> =>
     ownerUserId: userId,
   })
 
-export const deleteTraveler = (userId: string, travelerId: string): Promise<{ deleted: boolean }> =>
+export const deleteTraveler = (userId: string, travelerId: string): Promise<{ deleted: boolean; hidden: boolean }> =>
   executeJsonApiRequest('/DeleteTravelerPlanner', 'POST', {
     actingUserId: userId,
     ownerUserId: userId,

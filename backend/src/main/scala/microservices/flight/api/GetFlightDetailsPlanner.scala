@@ -19,4 +19,4 @@ object GetFlightDetailsPlanner extends ConnectionApiPlan[FlightDetailsRequest, F
         case None => IO.raiseError(new IllegalArgumentException(s"Flight '${input.flightId}' was not found"))
       }
       cabins <- GetFlightDetailsPlannerPlainSql.listCabins(connection, row.flightId)
-    yield FlightPlannerResponseBuilder.toFlightResponse(row, cabins, Instant.now())
+    yield buildFlightPlannerResponse(row, cabins, Instant.now())

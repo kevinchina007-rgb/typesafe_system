@@ -93,7 +93,8 @@ object ListTravelersPlanner extends ConnectionApiPlan[ListTravelersPlannerReques
     for
       ownerUserId <- requireActor(input.actingUserId, input.ownerUserId)
       travelers <- TravelerPlannerPlainSql.listByOwner(connection, ownerUserId)
-    yield TravelerListPlannerResponse(travelers.map(travelerPlannerResponseFromDomain))
+      visibleTravelers = travelers.filterNot(_.travelerProfileStatus == TravelerProfileStatus.Archived)
+    yield TravelerListPlannerResponse(visibleTravelers.map(travelerPlannerResponseFromDomain))
 
 object DeleteTravelerPlanner extends ConnectionApiPlan[DeleteTravelerPlannerRequest, TravelerDeletedPlannerResponse]:
   override val name: String = "DeleteTravelerPlanner"
@@ -105,10 +106,11 @@ object DeleteTravelerPlanner extends ConnectionApiPlan[DeleteTravelerPlannerRequ
       traveler <- TravelerPlannerPlainSql.findById(connection, travelerId).flatMap(_.liftTo[IO](TravelerError.TravelerProfileWasNotFound(travelerId)))
       _ <- ensureTravelerProfileOwnedBy(traveler, ownerUserId).liftTo[IO]
       existingProfiles <- TravelerPlannerPlainSql.listByOwner(connection, ownerUserId)
-      _ <- TravelerPlannerPlainSql.deleteById(connection, travelerId)
-      remainingProfiles = existingProfiles.filterNot(_.travelerId == travelerId)
+      visibleRemainingProfiles = existingProfiles.filter(profile =>
+        profile.travelerId != travelerId && profile.travelerProfileStatus != TravelerProfileStatus.Archived
+      )
       _ <- if traveler.isDefaultTravelerProfile then
-        remainingProfiles match
+        visibleRemainingProfiles match
           case nextDefault :: rest =>
             for
               promoted <- markTravelerProfileAsDefault(nextDefault).liftTo[IO]
@@ -119,7 +121,9 @@ object DeleteTravelerPlanner extends ConnectionApiPlan[DeleteTravelerPlannerRequ
           case Nil =>
             TravelerPlannerPlainSql.updateUserDefaultTraveler(connection, ownerUserId, None)
       else IO.unit
-    yield TravelerDeletedPlannerResponse(deleted = true)
+      archived <- archiveTravelerProfile(clearTravelerProfileDefault(traveler)).liftTo[IO]
+      _ <- TravelerPlannerPlainSql.save(connection, archived)
+    yield TravelerDeletedPlannerResponse(deleted = true, hidden = true)
 
 private final case class ParsedTravelerInput(
     fullName: PersonName,
@@ -152,12 +156,12 @@ private def parseTravelerInput(input: TravelerProfileInput): IO[ParsedTravelerIn
     documentNumber <- DocumentNumber.create(input.documentNumber).liftTo[IO]
     phone <- ContactNumber.create(input.phone).liftTo[IO]
     birthDate <- IO.delay(LocalDate.parse(input.birthDate)).flatMap(date => BirthDate.create(date, LocalDate.now()).liftTo[IO])
-    basicInfo = input.basicInfo.getOrElse(TravelerBasicInfo(input.fullName, "unspecified", input.birthDate, "China"))
+    basicInfo = input.basicInfo.getOrElse(TravelerBasicInfo(input.fullName, "未填写", input.birthDate, "中国"))
     documentInfo = input.documentInfo.getOrElse(TravelerDocumentInfo(input.documentType, input.documentNumber, None))
     contactInfo = input.contactInfo.getOrElse(TravelerContactInfo(input.phone, None))
     preferenceInfo = input.preferenceInfo.getOrElse(TravelerPreferenceInfo(input.seatPreference, input.mealPreference, quietSeatPreferred = false))
     specialRequirementInfo = input.specialRequirementInfo.getOrElse(
-      TravelerSpecialRequirementInfo("none", input.accessibilityRequestNotes, hasLargeLuggage = false, None)
+      TravelerSpecialRequirementInfo("无", input.accessibilityRequestNotes, hasLargeLuggage = false, None)
     )
     documentExpiryDate <- documentInfo.documentExpiryDate match
       case Some(value) if value.trim.nonEmpty => IO.delay(Some(LocalDate.parse(value)))
@@ -182,12 +186,12 @@ private def parseTravelerInput(input: TravelerProfileInput): IO[ParsedTravelerIn
     birthDate = birthDate,
     preferences = preferences,
     emergencyContact = emergencyContact,
-    gender = normalizeOptionalText(basicInfo.gender, "unspecified"),
-    nationality = normalizeOptionalText(basicInfo.nationality, "China"),
+    gender = normalizeOptionalText(basicInfo.gender, "未填写"),
+    nationality = normalizeOptionalText(basicInfo.nationality, "中国"),
     documentExpiryDate = documentExpiryDate,
     email = contactInfo.email.map(_.trim).filter(_.nonEmpty),
     quietSeatPreferred = preferenceInfo.quietSeatPreferred,
-    assistanceType = normalizeOptionalText(specialRequirementInfo.assistanceType, "none"),
+    assistanceType = normalizeOptionalText(specialRequirementInfo.assistanceType, "无"),
     specialRequirementNote = specialRequirementInfo.requirementNote.map(_.trim).filter(_.nonEmpty),
     hasLargeLuggage = specialRequirementInfo.hasLargeLuggage,
     luggageNote = specialRequirementInfo.luggageNote.map(_.trim).filter(_.nonEmpty)
@@ -204,7 +208,9 @@ private def ensureDocumentAvailable(
     currentTravelerId: Option[TravelerId]
 ): IO[Unit] =
   TravelerPlannerPlainSql.findByDocument(connection, documentType, documentNumber).flatMap { matches =>
-    val conflicts = matches.filterNot(profile => currentTravelerId.contains(profile.travelerId))
+    val conflicts = matches
+      .filterNot(profile => currentTravelerId.contains(profile.travelerId))
+      .filterNot(_.travelerProfileStatus == TravelerProfileStatus.Archived)
     if conflicts.isEmpty then IO.unit
     else IO.raiseError(TravelerError.TravelerDocumentNumberAlreadyExists(documentNumber))
   }

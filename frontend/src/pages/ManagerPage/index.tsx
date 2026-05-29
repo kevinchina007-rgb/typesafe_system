@@ -913,6 +913,7 @@ export function ManagerPage({
                 displayName: nextSession.displayName,
                 status: nextSession.status,
                 scopeId: nextSession.scopeId,
+                logoAssetPath: nextSession.logoAssetPath,
               })
             }
             await reloadManagedFlights(currentSupplierManagerSession.managerId)

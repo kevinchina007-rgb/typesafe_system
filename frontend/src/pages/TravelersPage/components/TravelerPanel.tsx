@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 
 import type { AppLanguage, TravelerResponse } from '@/lib/mvp-types/index'
 import { deriveTravelerTypeLabelFromBirthDate, localizeDocumentType } from '@/lib/presenters/view-models'
@@ -68,22 +68,55 @@ const fieldClassName = 'h-12 w-full border-2 border-slate-300 bg-white px-3 text
 const textareaClassName = 'min-h-24 w-full border-2 border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none focus:border-pink-500'
 const buttonClassName = 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55'
 
+function normalizeDocumentType(value: string): string {
+  const normalized = value.trim().toLowerCase()
+  if (normalized.includes('identity')) return 'identity-card'
+  if (normalized.includes('residence')) return 'residence-permit'
+  if (normalized.includes('other')) return 'other'
+  return 'passport'
+}
+
+function normalizeSeatPreference(value: string): string {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'window') return 'window'
+  if (normalized === 'aisle') return 'aisle'
+  if (normalized === 'middle') return 'middle'
+  return 'none'
+}
+
+function normalizeMealPreference(value: string): string {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === 'vegetarian') return 'vegetarian'
+  if (normalized === 'vegan') return 'vegan'
+  if (normalized === 'halal') return 'halal'
+  if (normalized === 'kosher') return 'kosher'
+  if (normalized === 'childmeal' || normalized === 'child_meal') return 'childMeal'
+  if (normalized === 'nopreference' || normalized === 'no_preference' || normalized === 'none') return 'none'
+  return 'standard'
+}
+
+function normalizeAssistanceType(value: string | null | undefined): string {
+  const normalized = (value ?? '').trim()
+  if (!normalized || normalized.toLowerCase() === 'none') return '无'
+  return normalized
+}
+
 function createTravelerFormDraft(traveler: TravelerResponse): TravelerFormDraft {
   return {
     travelerId: traveler.travelerId,
     fullName: traveler.basicInfo?.fullName ?? traveler.fullName,
     gender: traveler.basicInfo?.gender ?? '未填写',
     nationality: traveler.basicInfo?.nationality ?? '中国',
-    documentType: traveler.documentInfo?.documentType ?? traveler.documentType,
+    documentType: normalizeDocumentType(traveler.documentInfo?.documentType ?? traveler.documentType),
     documentNumber: traveler.documentInfo?.documentNumber ?? traveler.documentNumber,
     documentExpiryDate: traveler.documentInfo?.documentExpiryDate ?? '',
     phone: traveler.contactInfo?.phone ?? traveler.phone,
     email: traveler.contactInfo?.email ?? '',
     birthDate: traveler.basicInfo?.birthDate ?? traveler.birthDate,
-    seatPreference: traveler.preferenceInfo?.seatPreference ?? 'none',
-    mealPreference: traveler.preferenceInfo?.mealPreference ?? 'standard',
+    seatPreference: normalizeSeatPreference(traveler.preferenceInfo?.seatPreference ?? 'none'),
+    mealPreference: normalizeMealPreference(traveler.preferenceInfo?.mealPreference ?? 'standard'),
     quietSeatPreferred: traveler.preferenceInfo?.quietSeatPreferred ?? false,
-    assistanceType: traveler.specialRequirementInfo?.assistanceType ?? '无',
+    assistanceType: normalizeAssistanceType(traveler.specialRequirementInfo?.assistanceType),
     requirementNote: traveler.specialRequirementInfo?.requirementNote ?? '',
     hasLargeLuggage: traveler.specialRequirementInfo?.hasLargeLuggage ?? false,
     luggageNote: traveler.specialRequirementInfo?.luggageNote ?? '',
@@ -162,12 +195,16 @@ function labelForMeal(value: string): string {
     Vegetarian: '素食餐',
     Vegan: '纯素餐',
     Halal: '清真餐',
+    Kosher: '犹太餐',
     ChildMeal: '儿童餐',
     NoPreference: '无要求',
     standard: '标准餐',
     vegetarian: '素食餐',
     vegan: '纯素餐',
     halal: '清真餐',
+    kosher: '犹太餐',
+    childMeal: '儿童餐',
+    none: '无要求',
   }
   return labels[value] ?? value
 }
@@ -193,6 +230,7 @@ export function TravelerPanel({
   onReloadTravelers,
 }: TravelerPanelProps) {
   const todayInputValue = new Date().toISOString().slice(0, 10)
+  const formRef = useRef<HTMLFormElement | null>(null)
   const [travelerFormDraft, setTravelerFormDraft] = useState<TravelerFormDraft>(emptyTravelerFormDraft)
 
   const derivedTravelerTypeLabel = useMemo(
@@ -209,6 +247,11 @@ export function TravelerPanel({
     }))
   }
 
+  function beginEditTraveler(traveler: TravelerResponse) {
+    setTravelerFormDraft(createTravelerFormDraft(traveler))
+    window.requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
   return (
     <section className="mx-auto grid w-full max-w-6xl gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -221,12 +264,11 @@ export function TravelerPanel({
       </div>
 
       <form
+        ref={formRef}
         className="grid gap-6 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50"
         onSubmit={async event => {
           event.preventDefault()
-          if (!travelerFormDraft.birthDate || travelerFormDraft.birthDate > todayInputValue) {
-            return
-          }
+          if (!travelerFormDraft.birthDate || travelerFormDraft.birthDate > todayInputValue) return
 
           if (travelerFormDraft.travelerId) {
             await onUpdateTraveler(travelerFormDraft)
@@ -321,6 +363,9 @@ export function TravelerPanel({
                 <option value="vegetarian">{translate('travelers.meal.vegetarian')}</option>
                 <option value="vegan">{translate('travelers.meal.vegan')}</option>
                 <option value="halal">{translate('travelers.meal.halal')}</option>
+                <option value="kosher">犹太餐</option>
+                <option value="childMeal">儿童餐</option>
+                <option value="none">无要求</option>
               </select>
             </FormField>
             <label className="flex min-h-12 items-center gap-3 self-end border-2 border-slate-300 px-3 text-base font-bold text-slate-700">
@@ -393,6 +438,7 @@ export function TravelerPanel({
                   <p className="m-0 text-sm text-slate-600">{`${localizeDocumentType(traveler.documentType, currentLanguage)} ${traveler.documentNumber}`}</p>
                   <p className="m-0 text-sm text-slate-600">{`${deriveTravelerTypeLabelFromBirthDate(traveler.birthDate, currentLanguage)} / ${traveler.basicInfo?.gender ?? '未填写'} / ${traveler.basicInfo?.nationality ?? '中国'}`}</p>
                   <p className="m-0 text-sm text-slate-600">{`${labelForPreference(traveler.preferenceInfo?.seatPreference ?? 'none')} / ${labelForMeal(traveler.preferenceInfo?.mealPreference ?? 'standard')}`}</p>
+                  {traveler.serviceSummary?.requirementLabel ? <p className="m-0 text-sm text-slate-600">{traveler.serviceSummary.requirementLabel}</p> : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">
@@ -400,7 +446,7 @@ export function TravelerPanel({
                   </span>
                   {!isGuestMode ? (
                     <>
-                      <button type="button" className={buttonClassName} onClick={() => setTravelerFormDraft(createTravelerFormDraft(traveler))}>
+                      <button type="button" className={buttonClassName} onClick={() => beginEditTraveler(traveler)}>
                         {translate('travelers.edit')}
                       </button>
                       <button type="button" className={buttonClassName} disabled={isBusy} onClick={() => void onDeleteTraveler(traveler.travelerId)}>

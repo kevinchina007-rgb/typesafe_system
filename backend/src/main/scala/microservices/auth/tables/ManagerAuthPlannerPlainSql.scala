@@ -15,12 +15,16 @@ object ManagerAuthPlannerPlainSql:
       val managerType = normalizeManagerType(input.managerType)
       val managerTable = tableFor(managerType)
       val scopeColumn = scopeColumnFor(managerType)
+      val logoSelect = if managerType == "Airline" then "a.logo_asset_path as logo_asset_path" else "null as logo_asset_path"
+      val logoJoin = if managerType == "Airline" then "left join airlines a on a.airline_id = m.airline_id" else ""
       PlainSqlSupport.withStatement(
         connection,
         s"""
-          select c.password_hash, m.manager_id, m.email, m.display_name, m.status, m.created_at, m.$scopeColumn as scope_id
+          select c.password_hash, m.manager_id, m.email, m.display_name, m.status, m.created_at, m.$scopeColumn as scope_id,
+                 $logoSelect
           from manager_credentials c
           join $managerTable m on m.manager_id = c.manager_id
+          $logoJoin
           where c.manager_type = ? and c.login_email = ? and c.status = ?
         """
       ) { statement =>
@@ -45,9 +49,11 @@ object ManagerAuthPlannerPlainSql:
         connection,
         """
           select s.session_id, s.manager_type, s.expires_at, m.manager_id, m.email, m.display_name, m.status, m.created_at,
-                 coalesce(am.airline_id, hm.hotel_id, atm.manager_id) as scope_id
+                 coalesce(am.airline_id, hm.hotel_id, atm.manager_id) as scope_id,
+                 aa.logo_asset_path as logo_asset_path
           from auth_sessions s
           left join airline_managers am on s.manager_type = 'Airline' and am.manager_id = s.actor_id
+          left join airlines aa on aa.airline_id = am.airline_id
           left join hotel_managers hm on s.manager_type = 'Hotel' and hm.manager_id = s.actor_id
           left join attraction_managers atm on s.manager_type = 'Attraction' and atm.manager_id = s.actor_id
           left join (
@@ -177,6 +183,7 @@ object ManagerAuthPlannerPlainSql:
       displayName = resultSet.getString("display_name"),
       status = resultSet.getString("status"),
       scopeId = Option(resultSet.getString("scope_id")).getOrElse("site-admin"),
+      logoAssetPath = Option(resultSet.getString("logo_asset_path")).map(_.trim).filter(_.nonEmpty),
       createdAt = resultSet.getTimestamp("created_at").toInstant,
       expiresAt = expiresAt
     )

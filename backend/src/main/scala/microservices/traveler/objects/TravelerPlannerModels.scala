@@ -140,6 +140,7 @@ final case class TravelerPlannerResponse(
     birthDate: String,
     travelerType: String,
     status: String,
+    isHidden: Boolean,
     isDefault: Boolean,
     basicInfo: TravelerBasicInfo,
     documentInfo: TravelerDocumentInfo,
@@ -162,7 +163,8 @@ object TravelerListPlannerResponse:
   given sourceDecoder: Decoder[TravelerListPlannerResponse] = deriveDecoder
 
 final case class TravelerDeletedPlannerResponse(
-    deleted: Boolean
+    deleted: Boolean,
+    hidden: Boolean
 )
 
 object TravelerDeletedPlannerResponse:

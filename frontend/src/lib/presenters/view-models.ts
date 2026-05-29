@@ -556,8 +556,16 @@ export function toBackendAssetUrl(relativeAssetUrl: string | null | undefined): 
     return ''
   }
 
-  if (normalizedAssetUrl.startsWith('http://') || normalizedAssetUrl.startsWith('https://')) {
+  if (
+    normalizedAssetUrl.startsWith('http://') ||
+    normalizedAssetUrl.startsWith('https://') ||
+    normalizedAssetUrl.startsWith('data:image/')
+  ) {
     return normalizedAssetUrl
+  }
+
+  if (normalizedAssetUrl.startsWith('/images/') || normalizedAssetUrl.startsWith('images/')) {
+    return normalizedAssetUrl.startsWith('/') ? normalizedAssetUrl : `/${normalizedAssetUrl}`
   }
 
   const normalizedPath = normalizedAssetUrl.startsWith('/') ? normalizedAssetUrl : `/${normalizedAssetUrl}`

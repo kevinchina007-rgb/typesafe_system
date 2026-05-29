@@ -289,7 +289,7 @@ def travelerPlannerResponseFromDomain(travelerProfile: TravelerProfile): Travele
       specialRequirementInfo.requirementNote,
       Option.when(specialRequirementInfo.hasLargeLuggage)("大件行李"),
       specialRequirementInfo.luggageNote
-    ).flatten.mkString("；")
+    ).flatten.mkString("，")
   val serviceSummary = TravelerServiceSummary(
     age = age,
     documentLabel = s"${documentInfo.documentType} ${documentInfo.documentNumber}",
@@ -308,6 +308,7 @@ def travelerPlannerResponseFromDomain(travelerProfile: TravelerProfile): Travele
     birthDate = travelerProfile.travelerBirthDate.value.toString,
     travelerType = travelerProfile.travelerType.toString,
     status = travelerProfile.travelerProfileStatus.toString,
+    isHidden = travelerProfile.travelerProfileStatus == TravelerProfileStatus.Archived,
     isDefault = travelerProfile.isDefaultTravelerProfile,
     basicInfo = basicInfo,
     documentInfo = documentInfo,

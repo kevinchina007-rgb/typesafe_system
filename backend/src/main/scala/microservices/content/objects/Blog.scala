@@ -15,6 +15,8 @@ object BlogPostStatus:
   val Published: BlogPostStatus = BlogPostStatus("Published")
   val Rejected: BlogPostStatus = BlogPostStatus("Rejected")
   val Archived: BlogPostStatus = BlogPostStatus("Archived")
+  val Hidden: BlogPostStatus = BlogPostStatus("Hidden")
+  val Deleted: BlogPostStatus = BlogPostStatus("Deleted")
   given sourceEncoder: Encoder[BlogPostStatus] = Encoder.encodeString.contramap(_.toString)
   given sourceDecoder: Decoder[BlogPostStatus] = Decoder.decodeString.map(fromText)
 
@@ -24,6 +26,8 @@ object BlogPostStatus:
       case "rejected" => Rejected
       case "draft" => Draft
       case "archived" => Archived
+      case "hidden" => Hidden
+      case "deleted" => Deleted
       case _ => Published
 
 final case class BlogCommentStatus(value: String):
