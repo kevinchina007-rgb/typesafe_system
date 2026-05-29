@@ -3,7 +3,7 @@ package com.typesafe.travel.operations.domain
 import cats.effect.IO
 import cats.syntax.all.*
 import com.typesafe.travel.api.routes.ConnectionApiPlan
-import com.typesafe.travel.persistence.operations.ManagerPlannerPlainSql
+import com.typesafe.travel.persistence.operations.{ManagerBookingTaskPlannerPlainSql, ManagerRefundTaskPlannerPlainSql}
 
 import java.sql.Connection
 import java.time.Instant
@@ -11,7 +11,7 @@ import java.time.Instant
 object ListManagerTasksPlanner extends ConnectionApiPlan[ManagerTasksPlannerRequest, ManagerBookingTaskListPlannerResponse]:
   override val name: String = "ListManagerTasksPlanner"
   override def plan(input: ManagerTasksPlannerRequest, connection: Connection): IO[ManagerBookingTaskListPlannerResponse] =
-    ManagerPlannerPlainSql.listTasks(connection, input)
+    ManagerBookingTaskPlannerPlainSql.listTasks(connection, input)
 
 object BatchConfirmManagerTasksPlanner extends ConnectionApiPlan[ManagerBatchDecisionPlannerRequest, ManagerBatchDecisionPlannerResponse]:
   override val name: String = "BatchConfirmManagerTasksPlanner"
@@ -26,7 +26,7 @@ object BatchRejectManagerTasksPlanner extends ConnectionApiPlan[ManagerBatchDeci
 object ListManagerRefundTasksPlanner extends ConnectionApiPlan[ManagerScopedPlannerRequest, ManagerRefundTaskListPlannerResponse]:
   override val name: String = "ListManagerRefundTasksPlanner"
   override def plan(input: ManagerScopedPlannerRequest, connection: Connection): IO[ManagerRefundTaskListPlannerResponse] =
-    ManagerPlannerPlainSql.listRefundTasks(connection, input)
+    ManagerRefundTaskPlannerPlainSql.listRefundTasks(connection, input)
 
 object ConfirmManagerBookingItemPlanner extends ConnectionApiPlan[ManagerDecisionPlannerRequest, ManagerBatchDecisionPlannerResponse]:
   override val name: String = "ConfirmManagerBookingItemPlanner"
@@ -57,7 +57,7 @@ private def updateRefundDecision(
     now: Instant
 ): IO[ManagerBatchDecisionPlannerResponse] =
   for
-    _ <- ManagerPlannerPlainSql.updateRequestedRefundDecision(connection, orderId, refundStatus, approved, now)
+    _ <- ManagerRefundTaskPlannerPlainSql.updateRequestedRefundDecision(connection, orderId, refundStatus, approved, now)
   yield ManagerBatchDecisionPlannerResponse(1, List(orderId), action)
 
 private def updateSupplierReviewDecisions(
@@ -73,7 +73,7 @@ private def updateSupplierReviewDecisions(
   for
     ids <- validateOrderItemIds(orderItemIds)
     _ <- ids.traverse_(orderItemId =>
-      ManagerPlannerPlainSql.updateSupplierReviewDecision(
+      ManagerBookingTaskPlannerPlainSql.updateSupplierReviewDecision(
         connection = connection,
         managerId = managerId,
         orderItemId = orderItemId,
