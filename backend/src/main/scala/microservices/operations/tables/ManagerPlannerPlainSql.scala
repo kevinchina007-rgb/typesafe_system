@@ -117,16 +117,25 @@ object ManagerPlannerPlainSql:
       }
     }
 
-  def batchDecision(connection: Connection, input: ManagerBatchDecisionPlannerRequest, action: String, now: Instant): IO[ManagerBatchDecisionPlannerResponse] =
+  def updateSupplierReviewDecision(
+      connection: Connection,
+      managerId: String,
+      orderItemId: String,
+      supplierReviewStatus: String,
+      reviewDecision: String,
+      reason: Option[String],
+      now: Instant
+  ): IO[Unit] =
     IO.blocking {
-      input.orderItemIds.foreach(orderItemId => updateDecision(connection, input.managerId, orderItemId, action, input.reason.orElse(input.note), now))
-      ManagerBatchDecisionPlannerResponse(input.orderItemIds.size, input.orderItemIds, action)
-    }
-
-  def decision(connection: Connection, input: ManagerDecisionPlannerRequest, action: String, now: Instant): IO[ManagerBatchDecisionPlannerResponse] =
-    IO.blocking {
-      updateDecision(connection, input.managerId, input.orderItemId, action, input.reason.orElse(input.note), now)
-      ManagerBatchDecisionPlannerResponse(1, List(input.orderItemId), action)
+      PlainSqlSupport.withStatement(connection, "update order_line_items set supplier_review_status = ?, review_decision = ?, review_reason = ?, reviewed_at = ?, reviewed_by_manager_id = ? where order_item_id = ?") { statement =>
+        statement.setString(1, supplierReviewStatus)
+        statement.setString(2, reviewDecision)
+        statement.setString(3, reason.orNull)
+        statement.setTimestamp(4, Timestamp.from(now))
+        statement.setString(5, managerId)
+        statement.setString(6, orderItemId)
+        statement.executeUpdate()
+      }
     }
 
   def listFlights(connection: Connection, input: ManagerFlightsPlannerRequest): IO[ManagerFlightListPlannerResponse] =
@@ -439,19 +448,6 @@ object ManagerPlannerPlainSql:
       statement.setTimestamp(7, Timestamp.from(now))
       statement.setTimestamp(8, Timestamp.from(now))
       statement.setTimestamp(9, Timestamp.from(now))
-      statement.executeUpdate()
-    }
-
-  private def updateDecision(connection: Connection, managerId: String, orderItemId: String, action: String, reason: Option[String], now: Instant): Unit =
-    val status = if action == "confirm" then "SupplierConfirmed" else "SupplierRejected"
-    val decision = if action == "confirm" then "Confirm" else "Reject"
-    PlainSqlSupport.withStatement(connection, "update order_line_items set supplier_review_status = ?, review_decision = ?, review_reason = ?, reviewed_at = ?, reviewed_by_manager_id = ? where order_item_id = ?") { statement =>
-      statement.setString(1, status)
-      statement.setString(2, decision)
-      statement.setString(3, reason.orNull)
-      statement.setTimestamp(4, Timestamp.from(now))
-      statement.setString(5, managerId)
-      statement.setString(6, orderItemId)
       statement.executeUpdate()
     }
 
