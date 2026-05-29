@@ -7,7 +7,7 @@ import com.typesafe.travel.persistence.PlainSqlSupport
 import com.typesafe.travel.shared.kernel.EmailAddress
 import io.circe.parser.decode
 
-import java.sql.{Connection, Date, ResultSet, Timestamp}
+import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.{Instant, LocalDate, OffsetDateTime}
 import java.util.UUID
 
@@ -367,38 +367,6 @@ object ManagerPlannerPlainSql:
         statement.executeUpdate()
       }
       readCreatedFlight(connection, input.flightId)
-    }
-
-  def createRoomType(connection: Connection, input: CreateManagerRoomTypePlannerRequest): IO[ManagerHotelPlannerResponse] =
-    IO.blocking {
-      val hotelId = findScopeId(connection, "hotel_managers", "hotel_id", input.managerId)
-      val roomTypeId = s"room-type-${UUID.randomUUID().toString.take(12)}"
-      PlainSqlSupport.withStatement(connection, "insert into hotel_room_types(room_type_id, hotel_id, name, capacity, bed_type, base_price_amount, base_price_currency, status) values (?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
-        statement.setString(1, roomTypeId)
-        statement.setString(2, hotelId)
-        statement.setString(3, input.roomTypeName)
-        statement.setInt(4, input.capacity)
-        statement.setString(5, input.bedType)
-        statement.setBigDecimal(6, BigDecimal(input.nightlyPrice).bigDecimal)
-        statement.setString(7, input.currency)
-        statement.setString(8, "OpenForBooking")
-        statement.executeUpdate()
-      }
-      val start = LocalDate.parse(input.inventoryStartDate)
-      val end = LocalDate.parse(input.inventoryEndDate)
-      Iterator.iterate(start)(_.plusDays(1)).takeWhile(!_.isAfter(end)).foreach { date =>
-        PlainSqlSupport.withStatement(connection, "insert into hotel_room_inventories(inventory_id, room_type_id, inventory_date, available_rooms, unit_price_amount, unit_price_currency, status) values (?, ?, ?, ?, ?, ?, ?)") { statement =>
-          statement.setString(1, s"room-inv-${UUID.randomUUID().toString.take(12)}")
-          statement.setString(2, roomTypeId)
-          statement.setDate(3, Date.valueOf(date))
-          statement.setInt(4, input.availableRooms)
-          statement.setBigDecimal(5, BigDecimal(input.nightlyPrice).bigDecimal)
-          statement.setString(6, input.currency)
-          statement.setString(7, "Available")
-          statement.executeUpdate()
-        }
-      }
-      readHotelById(connection, hotelId)
     }
 
   def updateRequestedRefundDecision(connection: Connection, orderId: String, refundStatus: String, approved: Boolean, now: Instant): IO[Unit] =
