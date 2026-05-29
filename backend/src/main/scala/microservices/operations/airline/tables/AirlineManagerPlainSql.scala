@@ -3,20 +3,138 @@ package com.typesafe.travel.persistence.operations
 import cats.effect.IO
 import com.typesafe.travel.operations.domain.*
 import com.typesafe.travel.persistence.PlainSqlSupport
+import io.circe.parser.decode
 
 import java.sql.{Connection, ResultSet, Timestamp}
-import java.time.{Instant, OffsetDateTime}
+import java.time.{Instant, LocalDate, OffsetDateTime}
 import java.util.UUID
 
 object AirlineManagerPlainSql:
+  private final case class ManagerFlightCabinRow(flight: ManagerFlightPlannerResponse, cabinInventory: Option[ManagerCabinInventoryPlannerResponse])
+  private final case class ManagerFlightOrderRow(
+      orderId: String,
+      orderItemId: String,
+      buyerUserId: String,
+      buyerNickname: String,
+      cabinClass: String,
+      orderStatus: String,
+      orderCreatedAt: String,
+      travelerIds: List[String]
+  )
+
   def registerAirline(connection: Connection, input: RegisterAirlineManagerPlannerRequest, passwordHash: String, now: Instant): IO[ManagerSessionPlannerResponse] =
     ManagerPlannerPlainSql.registerAirline(connection, input, passwordHash, now)
 
   def listFlights(connection: Connection, input: ManagerFlightsPlannerRequest): IO[ManagerFlightListPlannerResponse] =
-    ManagerPlannerPlainSql.listFlights(connection, input)
+    IO.blocking {
+      val filters = scala.collection.mutable.ListBuffer.empty[String]
+      val parameters = scala.collection.mutable.ListBuffer[AnyRef](input.managerId)
+
+      input.departureAirports.map(_.filter(_.trim.nonEmpty).map(_.trim.toUpperCase)).filter(_.nonEmpty).foreach { airports =>
+        filters += s"f.departure_airport in (${airports.map(_ => "?").mkString(", ")})"
+        parameters ++= airports
+      }
+
+      input.arrivalAirports.map(_.filter(_.trim.nonEmpty).map(_.trim.toUpperCase)).filter(_.nonEmpty).foreach { airports =>
+        filters += s"f.arrival_airport in (${airports.map(_ => "?").mkString(", ")})"
+        parameters ++= airports
+      }
+
+      input.departureDate.map(_.trim).filter(_.nonEmpty).foreach { departureDate =>
+        filters += "cast(f.departure_time as date) = cast(? as date)"
+        parameters += departureDate
+      }
+
+      input.timeRange.map(_.trim).filter(value => value.nonEmpty && value != "all").foreach { timeRange =>
+        val parts = timeRange.split("-").toList
+        if parts.size == 2 then
+          filters += "cast(f.departure_time as time) between cast(? as time) and cast(? as time)"
+          parameters += parts.head
+          parameters += parts(1)
+      }
+
+      val extraWhere = if filters.isEmpty then "" else filters.mkString(" and ", " and ", "")
+      val sortDirection = input.sortDirection.map(_.trim.toLowerCase).filter(_ == "desc").map(_ => "desc").getOrElse("asc")
+      PlainSqlSupport.withStatement(
+        connection,
+        s"""
+          select f.flight_id, f.airline_id, a.name as airline_name, a.code as airline_code, f.flight_number,
+                 f.departure_airport, f.arrival_airport, f.departure_time, f.arrival_time, f.status,
+                 f.base_price_amount, f.base_price_currency, f.created_at,
+                 ci.inventory_id, ci.cabin_class, ci.available_seats, ci.unit_price_amount,
+                 ci.unit_price_currency, ci.status as cabin_inventory_status
+          from airline_managers m
+          join airlines a on a.airline_id = m.airline_id
+          join flights f on f.airline_id = a.airline_id
+          left join flight_cabin_inventories ci on ci.flight_id = f.flight_id
+          where m.manager_id = ?
+          $extraWhere
+          order by
+            f.departure_time $sortDirection,
+            f.flight_id,
+            case upper(ci.cabin_class)
+              when 'ECONOMY' then 1
+              when 'PREMIUM_ECONOMY' then 2
+              when 'BUSINESS' then 3
+              when 'FIRST' then 4
+              else 5
+            end,
+            ci.inventory_id
+          limit 800
+        """
+      ) { statement =>
+        parameters.zipWithIndex.foreach { case (parameter, index) =>
+          statement.setObject(index + 1, parameter)
+        }
+        val rows = PlainSqlSupport.queryList(statement)(readFlightWithOptionalCabin)
+        val orderedFlightIds = rows.map(_.flight.flightId).distinct
+        val flightsById = rows.groupMap(_.flight.flightId)(_.flight).view.mapValues(_.head).toMap
+        val inventoriesByFlightId = rows.groupMap(_.flight.flightId)(_.cabinInventory).view.mapValues(_.flatten).toMap
+        ManagerFlightListPlannerResponse(
+          orderedFlightIds.flatMap(flightId => flightsById.get(flightId).map(_.copy(cabinInventories = inventoriesByFlightId.getOrElse(flightId, Nil))))
+        )
+      }
+    }
 
   def listFlightOrders(connection: Connection, input: ManagerFlightOrdersPlannerRequest): IO[ManagerFlightOrderListPlannerResponse] =
-    ManagerPlannerPlainSql.listFlightOrders(connection, input)
+    IO.blocking {
+      requireManagedFlightBlocking(connection, input.managerId, input.flightId)
+      val rows = PlainSqlSupport.withStatement(
+        connection,
+        """
+          select o.order_id, o.buyer_user_id, u.nickname as buyer_nickname, o.status as order_status, o.created_at,
+                 li.order_item_id, li.cabin_class, li.traveler_ids_json, li.snapshot_json
+          from order_line_items li
+          join orders o on o.order_id = li.order_id
+          join users u on u.user_id = o.buyer_user_id
+          where lower(li.item_kind) = lower(?)
+            and (li.flight_id = ? or li.snapshot_json::jsonb ->> 'flightId' = ?)
+          order by o.created_at desc, li.order_item_id
+        """
+      ) { statement =>
+        statement.setString(1, "Flight")
+        statement.setString(2, input.flightId)
+        statement.setString(3, input.flightId)
+        PlainSqlSupport.queryList(statement)(readManagerFlightOrderRow)
+      }
+      val travelerIds = rows.flatMap(_.travelerIds).distinct
+      val travelersById = listTravelersByIds(connection, travelerIds).map(traveler => traveler.travelerId -> traveler).toMap
+      ManagerFlightOrderListPlannerResponse(
+        rows.map(row =>
+          ManagerFlightOrderPlannerResponse(
+            orderId = row.orderId,
+            orderItemId = row.orderItemId,
+            buyerUserId = row.buyerUserId,
+            buyerNickname = row.buyerNickname,
+            cabinClass = row.cabinClass,
+            orderStatus = row.orderStatus,
+            orderCreatedAt = row.orderCreatedAt,
+            travelerIds = row.travelerIds,
+            travelers = row.travelerIds.flatMap(travelersById.get)
+          )
+        )
+      )
+    }
 
   def updateAirlineProfile(connection: Connection, input: UpdateAirlineManagerProfilePlannerRequest, now: Instant): IO[ManagerSessionPlannerResponse] =
     ManagerPlannerPlainSql.updateAirlineProfile(connection, input, now)
@@ -74,23 +192,7 @@ object AirlineManagerPlainSql:
 
   def requireManagedFlight(connection: Connection, managerId: String, flightId: String): IO[Unit] =
     IO.blocking {
-      PlainSqlSupport.withStatement(
-        connection,
-        """
-          select 1
-          from airline_managers m
-          join flights f on f.airline_id = m.airline_id
-          where m.manager_id = ? and f.flight_id = ?
-          limit 1
-        """
-      ) { statement =>
-        statement.setString(1, managerId)
-        statement.setString(2, flightId)
-        val resultSet = statement.executeQuery()
-        try
-          if !resultSet.next() then throw new IllegalArgumentException(s"Flight '$flightId' does not belong to manager '$managerId'")
-        finally resultSet.close()
-      }
+      requireManagedFlightBlocking(connection, managerId, flightId)
     }
 
   def findFlightStatus(connection: Connection, flightId: String): IO[String] =
@@ -196,3 +298,152 @@ object AirlineManagerPlainSql:
       status = status,
       isBookable = status == "Open" && availableSeats > 0
     )
+
+  private def readFlightWithOptionalCabin(resultSet: ResultSet): ManagerFlightCabinRow =
+    val inventoryId = resultSet.getString("inventory_id")
+    ManagerFlightCabinRow(
+      flight = readFlightWithoutCabins(resultSet),
+      cabinInventory =
+        Option(inventoryId).map { id =>
+          val status = resultSet.getString("cabin_inventory_status")
+          val availableSeats = resultSet.getInt("available_seats")
+          ManagerCabinInventoryPlannerResponse(
+            inventoryId = id,
+            cabinClass = resultSet.getString("cabin_class"),
+            availableSeats = availableSeats,
+            unitPrice = resultSet.getBigDecimal("unit_price_amount").toString,
+            currency = resultSet.getString("unit_price_currency"),
+            status = status,
+            isBookable = status == "Open" && availableSeats > 0
+          )
+        }
+    )
+
+  private def readManagerFlightOrderRow(resultSet: ResultSet): ManagerFlightOrderRow =
+    val snapshotJson = Option(resultSet.getString("snapshot_json"))
+    val typedTravelerIds = Option(resultSet.getString("traveler_ids_json")).flatMap(parseStringListJson).getOrElse(Nil)
+    val snapshotTravelerIds = snapshotJson.flatMap(json => extractStringListField(json, "travelerIds")).getOrElse(Nil)
+    ManagerFlightOrderRow(
+      orderId = resultSet.getString("order_id"),
+      orderItemId = resultSet.getString("order_item_id"),
+      buyerUserId = resultSet.getString("buyer_user_id"),
+      buyerNickname = resultSet.getString("buyer_nickname"),
+      cabinClass = Option(resultSet.getString("cabin_class"))
+        .filter(_.trim.nonEmpty)
+        .orElse(snapshotJson.flatMap(json => extractStringField(json, "cabinClass")))
+        .getOrElse("ECONOMY"),
+      orderStatus = resultSet.getString("order_status"),
+      orderCreatedAt = resultSet.getTimestamp("created_at").toInstant.toString,
+      travelerIds = if typedTravelerIds.nonEmpty then typedTravelerIds else snapshotTravelerIds
+    )
+
+  private def listTravelersByIds(connection: Connection, travelerIds: List[String]): List[ManagerFlightOrderTravelerPlannerResponse] =
+    if travelerIds.isEmpty then Nil
+    else
+      PlainSqlSupport.withStatement(
+        connection,
+        s"""
+          select traveler_id, full_name, birth_date, document_type, document_number, phone,
+                 gender, nationality, document_expiry_date, email, preferences_json,
+                 quiet_seat_preferred, assistance_type, special_requirement_note,
+                 has_large_luggage, luggage_note
+          from traveler_profiles
+          where traveler_id in (${travelerIds.map(_ => "?").mkString(", ")})
+          order by full_name, traveler_id
+        """
+      ) { statement =>
+        travelerIds.zipWithIndex.foreach { case (travelerId, index) => statement.setString(index + 1, travelerId) }
+        PlainSqlSupport.queryList(statement) { resultSet =>
+          val fullName = resultSet.getString("full_name")
+          val birthDate = resultSet.getDate("birth_date").toLocalDate
+          val documentType = resultSet.getString("document_type")
+          val documentNumber = resultSet.getString("document_number")
+          val phone = resultSet.getString("phone")
+          val preferences = com.typesafe.travel.persistence.codecs.DatabaseCodecs
+            .decodeTravelerPreferences(resultSet.getString("preferences_json"))
+            .fold(throw _, identity)
+          val basicInfo = ManagerTravelerBasicInfo(
+            fullName = fullName,
+            gender = readOptionalString(resultSet, "gender").getOrElse("unspecified"),
+            birthDate = birthDate.toString,
+            nationality = readOptionalString(resultSet, "nationality").getOrElse("China")
+          )
+          val documentInfo = ManagerTravelerDocumentInfo(
+            documentType = documentType,
+            documentNumber = documentNumber,
+            documentExpiryDate = Option(resultSet.getDate("document_expiry_date")).map(_.toLocalDate.toString)
+          )
+          val contactInfo = ManagerTravelerContactInfo(
+            phone = phone,
+            email = readOptionalString(resultSet, "email")
+          )
+          val preferenceInfo = ManagerTravelerPreferenceInfo(
+            seatPreference = preferences.travelerSeatPreference.toString,
+            mealPreference = preferences.travelerMealPreference.toString,
+            quietSeatPreferred = resultSet.getBoolean("quiet_seat_preferred")
+          )
+          val specialRequirementInfo = ManagerTravelerSpecialRequirementInfo(
+            assistanceType = readOptionalString(resultSet, "assistance_type").getOrElse("none"),
+            requirementNote = readOptionalString(resultSet, "special_requirement_note").orElse(preferences.accessibilityRequestNotes),
+            hasLargeLuggage = resultSet.getBoolean("has_large_luggage"),
+            luggageNote = readOptionalString(resultSet, "luggage_note")
+          )
+          val requirementLabel =
+            List(
+              Option.when(specialRequirementInfo.assistanceType != "none")(specialRequirementInfo.assistanceType),
+              specialRequirementInfo.requirementNote,
+              Option.when(specialRequirementInfo.hasLargeLuggage)("largeLuggage"),
+              specialRequirementInfo.luggageNote
+            ).flatten.mkString(" / ")
+          val serviceSummary = ManagerTravelerServiceSummary(
+            age = Some(java.time.Period.between(birthDate, LocalDate.now()).getYears),
+            documentLabel = s"$documentType $documentNumber",
+            contactLabel = List(Some(phone), contactInfo.email).flatten.mkString(" / "),
+            preferenceLabel = List(preferenceInfo.seatPreference, preferenceInfo.mealPreference, Option.when(preferenceInfo.quietSeatPreferred)("quietSeat").getOrElse("")).filter(_.nonEmpty).mkString(" / "),
+            requirementLabel = if requirementLabel.nonEmpty then requirementLabel else "none",
+            warningLevel = if specialRequirementInfo.assistanceType != "none" || specialRequirementInfo.requirementNote.exists(_.trim.nonEmpty) then "attention" else "normal"
+          )
+          ManagerFlightOrderTravelerPlannerResponse(
+            travelerId = resultSet.getString("traveler_id"),
+            fullName = fullName,
+            documentNumber = documentNumber,
+            basicInfo = basicInfo,
+            documentInfo = documentInfo,
+            contactInfo = contactInfo,
+            preferenceInfo = preferenceInfo,
+            specialRequirementInfo = specialRequirementInfo,
+            serviceSummary = serviceSummary
+          )
+        }
+      }
+
+  private def requireManagedFlightBlocking(connection: Connection, managerId: String, flightId: String): Unit =
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select 1
+        from airline_managers m
+        join flights f on f.airline_id = m.airline_id
+        where m.manager_id = ? and f.flight_id = ?
+        limit 1
+      """
+    ) { statement =>
+      statement.setString(1, managerId)
+      statement.setString(2, flightId)
+      val resultSet = statement.executeQuery()
+      try
+        if !resultSet.next() then throw new IllegalArgumentException(s"Flight '$flightId' does not belong to manager '$managerId'")
+      finally resultSet.close()
+    }
+
+  private def readOptionalString(resultSet: ResultSet, columnName: String): Option[String] =
+    Option(resultSet.getString(columnName)).map(_.trim).filter(_.nonEmpty)
+
+  private def parseStringListJson(jsonText: String): Option[List[String]] =
+    decode[List[String]](jsonText).toOption.map(_.filter(_.trim.nonEmpty))
+
+  private def extractStringField(snapshotJson: String, fieldName: String): Option[String] =
+    decode[io.circe.Json](snapshotJson).toOption.flatMap(_.hcursor.get[String](fieldName).toOption).filter(_.trim.nonEmpty)
+
+  private def extractStringListField(snapshotJson: String, fieldName: String): Option[List[String]] =
+    decode[io.circe.Json](snapshotJson).toOption.flatMap(_.hcursor.get[List[String]](fieldName).toOption).map(_.filter(_.trim.nonEmpty))
