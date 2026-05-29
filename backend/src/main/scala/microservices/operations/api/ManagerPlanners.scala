@@ -41,12 +41,24 @@ object RejectManagerBookingItemPlanner extends ConnectionApiPlan[ManagerDecision
 object ApproveManagerRefundPlanner extends ConnectionApiPlan[ManagerScopedPlannerRequest, ManagerBatchDecisionPlannerResponse]:
   override val name: String = "ApproveManagerRefundPlanner"
   override def plan(input: ManagerScopedPlannerRequest, connection: Connection): IO[ManagerBatchDecisionPlannerResponse] =
-    ManagerPlannerPlainSql.refundDecision(connection, input.managerId, "approve", Instant.now())
+    updateRefundDecision(connection, input.managerId, "approve", "Settled", approved = true, Instant.now())
 
 object RejectManagerRefundPlanner extends ConnectionApiPlan[ManagerScopedPlannerRequest, ManagerBatchDecisionPlannerResponse]:
   override val name: String = "RejectManagerRefundPlanner"
   override def plan(input: ManagerScopedPlannerRequest, connection: Connection): IO[ManagerBatchDecisionPlannerResponse] =
-    ManagerPlannerPlainSql.refundDecision(connection, input.managerId, "reject", Instant.now())
+    updateRefundDecision(connection, input.managerId, "reject", "Rejected", approved = false, Instant.now())
+
+private def updateRefundDecision(
+    connection: Connection,
+    orderId: String,
+    action: String,
+    refundStatus: String,
+    approved: Boolean,
+    now: Instant
+): IO[ManagerBatchDecisionPlannerResponse] =
+  for
+    _ <- ManagerPlannerPlainSql.updateRequestedRefundDecision(connection, orderId, refundStatus, approved, now)
+  yield ManagerBatchDecisionPlannerResponse(1, List(orderId), action)
 
 private def updateSupplierReviewDecisions(
     connection: Connection,

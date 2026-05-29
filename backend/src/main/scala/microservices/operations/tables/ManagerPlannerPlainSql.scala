@@ -401,18 +401,16 @@ object ManagerPlannerPlainSql:
       readHotelById(connection, hotelId)
     }
 
-  def refundDecision(connection: Connection, orderId: String, action: String, now: Instant): IO[ManagerBatchDecisionPlannerResponse] =
+  def updateRequestedRefundDecision(connection: Connection, orderId: String, refundStatus: String, approved: Boolean, now: Instant): IO[Unit] =
     IO.blocking {
-      val status = if action == "approve" then "Settled" else "Rejected"
       PlainSqlSupport.withStatement(connection, "update order_refunds set refund_status = ?, approved_at = ?, settled_at = ? where order_id = ? and refund_status = ?") { statement =>
-        statement.setString(1, status)
-        statement.setTimestamp(2, if action == "approve" then Timestamp.from(now) else null)
-        statement.setTimestamp(3, if action == "approve" then Timestamp.from(now) else null)
+        statement.setString(1, refundStatus)
+        statement.setTimestamp(2, if approved then Timestamp.from(now) else null)
+        statement.setTimestamp(3, if approved then Timestamp.from(now) else null)
         statement.setString(4, orderId)
         statement.setString(5, "Requested")
         statement.executeUpdate()
       }
-      ManagerBatchDecisionPlannerResponse(1, List(orderId), action)
     }
 
   private def insertAirline(connection: Connection, airlineId: String, name: String, code: String, now: Instant): Unit =
