@@ -1,25 +1,9 @@
 import { useEffect, useState } from 'react'
 
-import type { OrderResponse, PaymentLinkResponse, TravelerResponse } from '@/lib/mvp-types/index'
-import { formatTravelerIdentity } from '@/pages/BookingsPage/components/orderViewModel'
-
-type PaymentMethodValue = 'alipay' | 'wechat-pay' | 'nailong-pay'
-
-type PaymentModalProps = {
-  isOpen: boolean
-  order: OrderResponse | null
-  travelers: TravelerResponse[]
-  isBusy: boolean
-  onClose: () => void
-  onCreatePaymentLink: (payload: { orderId: string; paymentMethod: PaymentMethodValue }) => Promise<PaymentLinkResponse>
-  onConfirmPayment: (payload: { orderId: string; paymentMethod: PaymentMethodValue; travelerIds?: string[] }) => Promise<void>
-}
-
-const paymentMethodOptions: Array<{ value: PaymentMethodValue; label: string }> = [
-  { value: 'alipay', label: '支付宝' },
-  { value: 'wechat-pay', label: '微信支付' },
-  { value: 'nailong-pay', label: '奶龙支付' },
-]
+import type { PaymentLinkResponse } from '@/lib/mvp-types/index'
+import { formatTravelerIdentity, getFlightDetailsPlannerOrderTravelerIds, isFlightOrder, isOrderPaid, paymentMethodOptions, type PaymentMethodValue } from '@/pages/BookingsPage/functions'
+import type { PaymentModalProps } from '@/pages/BookingsPage/objects'
+import { SelectionCard } from '@/pages/BookingsPage/components/payment/SelectionCard'
 
 export function PaymentModal({
   isOpen,
@@ -51,8 +35,9 @@ export function PaymentModal({
   }
 
   const activeOrder = order
+  const isFlightPaymentOrder = isFlightOrder(activeOrder)
   const flightTravelerIds = getFlightDetailsPlannerOrderTravelerIds(order)
-  const needsTravelerSelection = isFlightOrder(order) && !isOrderPaid(order.status)
+  const needsTravelerSelection = isFlightPaymentOrder && !isOrderPaid(order.status)
   const selectedPaymentTravelerId = needsTravelerSelection ? selectedTravelerId : flightTravelerIds[0] ?? ''
   const canConfirmPayment = !!selectedPaymentMethod && (!needsTravelerSelection || !!selectedTravelerId)
   const paymentQrLabel = selectedPaymentMethod ? paymentMethodOptions.find(option => option.value === selectedPaymentMethod)?.label ?? '支付二维码' : '支付二维码'
@@ -103,7 +88,7 @@ export function PaymentModal({
                     ))}
                   </div>
                 ) : (
-                  <p className="m-0 border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-500">当前账号还没有出行人，请先到账号页添加出行人。</p>
+                  <p className="m-0 border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-500">当前账号还没有出行人，请先到账户页添加出行人。</p>
                 )}
               </div>
             ) : selectedPaymentTravelerId ? (
@@ -202,7 +187,7 @@ export function PaymentModal({
                     ? onConfirmPayment({
                         orderId: order.orderId,
                         paymentMethod: selectedPaymentMethod,
-                        travelerIds: selectedPaymentTravelerId ? [selectedPaymentTravelerId] : undefined,
+                        travelerIds: isFlightPaymentOrder && selectedPaymentTravelerId ? [selectedPaymentTravelerId] : undefined,
                       })
                     : Promise.resolve())
                 }
@@ -215,78 +200,4 @@ export function PaymentModal({
       </div>
     </div>
   )
-}
-
-function SelectionCard({
-  name,
-  value,
-  checked,
-  label,
-  marker,
-  onChange,
-}: {
-  name: string
-  value: string
-  checked: boolean
-  label: string
-  marker: string
-  onChange: () => void
-}) {
-  return (
-    <label
-      className={`flex cursor-pointer items-center gap-4 border px-4 py-4 text-base font-semibold transition ${
-        checked ? 'border-sky-500 bg-sky-50 text-slate-950' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'
-      }`}
-    >
-      <input type="radio" name={name} value={value} checked={checked} onChange={onChange} />
-      <span className="inline-flex h-11 w-11 items-center justify-center border border-slate-300 bg-slate-50 text-lg font-black text-slate-700">{marker}</span>
-      <span className="truncate">{label}</span>
-    </label>
-  )
-}
-
-function isFlightOrder(order: OrderResponse) {
-  return order.orderType.toLowerCase().includes('flight') || (order.orderLineItems ?? []).some(orderLineItem => orderLineItem.flightDetails || hasFlightSnapshot(orderLineItem.summaryLabel))
-}
-
-function isOrderPaid(status: string) {
-  return status === 'Confirmed' || status === 'Paid' || status === 'Booked'
-}
-
-function getFlightDetailsPlannerOrderTravelerIds(order: OrderResponse) {
-  const flightItem = (order.orderLineItems ?? []).find(orderLineItem => orderLineItem.flightDetails || hasFlightSnapshot(orderLineItem.summaryLabel))
-  if (!flightItem) {
-    return []
-  }
-  return flightItem.flightDetails?.travelerIds ?? parseFlightSnapshot(flightItem.summaryLabel)?.travelerIds ?? []
-}
-
-function hasFlightSnapshot(summaryLabel: string) {
-  const snapshot = parseFlightSnapshot(summaryLabel)
-  return !!snapshot && (!!snapshot.airlineName || !!snapshot.flightNumber || !!snapshot.flightId || !!snapshot.cabinClass || snapshot.travelerIds.length > 0)
-}
-
-function parseFlightSnapshot(summaryLabel: string): { airlineName?: string; flightNumber?: string; flightId?: string; cabinClass?: string; travelerIds: string[] } | null {
-  if (!summaryLabel.trim().startsWith('{')) {
-    return null
-  }
-
-  try {
-    const parsed = JSON.parse(summaryLabel) as {
-      airlineName?: unknown
-      flightNumber?: unknown
-      flightId?: unknown
-      cabinClass?: unknown
-      travelerIds?: unknown
-    }
-    return {
-      airlineName: typeof parsed.airlineName === 'string' ? parsed.airlineName : undefined,
-      flightNumber: typeof parsed.flightNumber === 'string' ? parsed.flightNumber : undefined,
-      flightId: typeof parsed.flightId === 'string' ? parsed.flightId : undefined,
-      cabinClass: typeof parsed.cabinClass === 'string' ? parsed.cabinClass : undefined,
-      travelerIds: Array.isArray(parsed.travelerIds) ? parsed.travelerIds.filter((value): value is string => typeof value === 'string' && value.trim().length > 0) : [],
-    }
-  } catch {
-    return null
-  }
 }

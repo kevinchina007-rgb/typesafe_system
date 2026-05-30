@@ -1,29 +1,7 @@
-import type { AppLanguage, HotelPlannerResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, localizeBedType, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
 import { renderHotelTravelerOptionLabel } from '@/app/stores/models/hotel-booking-model'
-
-type HotelResultsSectionProps = {
-  currentLanguage: AppLanguage
-  hotelResponses: HotelPlannerResponse[]
-  isBusy: boolean
-  isGuestMode: boolean
-  defaultRoomCount: number
-  searchCheckInDate: string
-  searchCheckOutDate: string
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onRequireLogin: () => void
-  onBookHotel: (payload: {
-    roomTypeId: string
-    guestTravelerIds: string[]
-    checkInDate: string
-    checkOutDate: string
-    roomCount: number
-  }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
-}
+import type { HotelResultsSectionProps } from '@/pages/HotelsPage/objects'
 
 export function HotelResultsSection({
   currentLanguage,

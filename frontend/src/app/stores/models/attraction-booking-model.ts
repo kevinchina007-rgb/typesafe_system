@@ -1,35 +1,8 @@
-﻿import type { AppLanguage, AttractionResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { AttractionResponse, TravelerResponse } from '@/lib/mvp-types/index'
 
 export type AttractionQuickDatePreset = 'today' | 'tomorrow' | 'weekend' | 'holiday'
 export type AttractionTypePreference = 'Nature' | 'Museum' | 'ThemePark' | 'Performance' | 'DayTour'
 export type AttractionSortPreference = 'Popular' | 'Rating' | 'Price'
-
-export type AttractionsPanelProps = {
-  currentLanguage: AppLanguage
-  isBusy: boolean
-  isGuestMode: boolean
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onRequireLogin: () => void
-  onSearchAttractions: (payload: {
-    city?: string
-    keyword?: string
-    useDate?: string
-    travelerCount?: number
-    attractionType?: AttractionTypePreference
-    sortPreference?: AttractionSortPreference
-  }) => Promise<AttractionResponse[]>
-  onBookAttraction: (payload: {
-    attractionId: string
-    ticketTypeId: string
-    sessionId?: string | null
-    travelerIds: string[]
-    useDate: string
-    orderCurrency: string
-  }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
-}
 
 export const defaultAttractionSearchState = {
   city: '上海',
@@ -81,3 +54,4 @@ export function formatAttractionInsight(attractions: AttractionResponse[], trans
   }
   return translate('attractions.insightValue').replace('{name}', attractions[0].attractionName)
 }
+

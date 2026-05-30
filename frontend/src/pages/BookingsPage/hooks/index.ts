@@ -1,0 +1,1 @@
+export { useBookingsPageController } from './useBookingsPageController'

@@ -1,17 +1,11 @@
-import type { AttractionTypePreference } from '@/app/stores/models/attraction-booking-model'
-﻿import { attractionTypeOptions } from '@/app/stores/models/attraction-booking-model'
-
-type AttractionTypeSelectorProps = {
-  value: AttractionTypePreference
-  translate: (translationKey: string) => string
-  onChange: (value: AttractionTypePreference) => void
-}
+import { attractionTypeOptions } from '@/app/stores/models/attraction-booking-model'
+import type { AttractionTypeSelectorProps } from '../../objects'
 
 export function AttractionTypeSelector({ value, translate, onChange }: AttractionTypeSelectorProps) {
   return (
-    <label className="grid gap-2 text-sm font-medium text-slate-600 grid gap-2">
+    <label className="grid gap-2 text-sm font-medium text-slate-600">
       <span>{translate('attractions.attractionType')}</span>
-      <select value={value} onChange={event => onChange(event.target.value as AttractionTypePreference)}>
+      <select value={value} onChange={event => onChange(event.target.value as AttractionTypeSelectorProps['value'])}>
         {attractionTypeOptions.map(option => (
           <option key={option} value={option}>
             {translate(`attractions.attractionType.${option}`)}
@@ -21,3 +15,4 @@ export function AttractionTypeSelector({ value, translate, onChange }: Attractio
     </label>
   )
 }
+

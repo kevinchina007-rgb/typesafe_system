@@ -45,13 +45,15 @@ object OrderPlannerPlainSql:
   def pay(connection: Connection, input: PayOrderPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
     IO.blocking {
       if input.paymentSucceeded then
-        input.travelerIds.foreach(updateFlightTravelerSelection(connection, input.orderId, _))
         val order = findRequired(connection, input.orderId)
+        if order.orderLineItems.exists(_.orderItemKind == "Flight") then
+          input.travelerIds.foreach(updateFlightTravelerSelection(connection, input.orderId, _))
+        val resolvedOrderTotalAmount = resolveOrderTotalAmount(connection, input.orderId, BigDecimal(order.totalPrice))
         val paymentId = s"payment-${UUID.randomUUID().toString.take(12)}"
         PlainSqlSupport.withStatement(connection, "insert into order_payments(payment_id, order_id, payment_amount, payment_currency, payment_method, payment_status, authorized_at, created_at, captured_at, metadata_json) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
           statement.setString(1, paymentId)
           statement.setString(2, input.orderId)
-          statement.setBigDecimal(3, BigDecimal(order.totalPrice).bigDecimal)
+          statement.setBigDecimal(3, resolvedOrderTotalAmount.bigDecimal)
           statement.setString(4, order.orderCurrency)
           statement.setString(5, input.paymentMethod)
           statement.setString(6, "Captured")
@@ -61,6 +63,7 @@ object OrderPlannerPlainSql:
           statement.setString(10, "{}")
           statement.executeUpdate()
         }
+        refreshOrderTotals(connection, input.orderId, resolvedOrderTotalAmount)
         PlainSqlSupport.withStatement(connection, "update orders set status = ?, paid_at = ?, confirmed_at = ? where order_id = ?") { statement =>
           statement.setString(1, "Confirmed")
           statement.setTimestamp(2, Timestamp.from(now))
@@ -172,18 +175,25 @@ object OrderPlannerPlainSql:
 
   private def readOrder(connection: Connection, resultSet: ResultSet): OrderPlannerResponse =
     val orderId = resultSet.getString("order_id")
+    val storedTotalPrice = resultSet.getBigDecimal("total_price_amount")
+    val resolvedTotalPrice = resolveOrderTotalAmount(connection, orderId, BigDecimal(storedTotalPrice))
     val payments = readPayments(connection, orderId)
     val refunds = readRefunds(connection, orderId)
+    val capturedAmount = payments.filter(_.paymentStatus == "Captured").map(p => BigDecimal(p.paymentAmount)).sum
+    val resolvedCapturedAmount =
+      if capturedAmount > BigDecimal(0) then capturedAmount
+      else if resultSet.getString("status") == "Confirmed" then resolvedTotalPrice
+      else capturedAmount
     OrderPlannerResponse(
       orderId = orderId,
       buyerUserId = resultSet.getString("buyer_user_id"),
       orderType = resultSet.getString("order_type"),
       status = resultSet.getString("status"),
       orderCurrency = resultSet.getString("currency"),
-      totalPrice = resultSet.getBigDecimal("total_price_amount").toString,
-      totalCapturedAmount = payments.filter(_.paymentStatus == "Captured").map(p => BigDecimal(p.paymentAmount)).sum.toString,
+      totalPrice = resolvedTotalPrice.toString,
+      totalCapturedAmount = resolvedCapturedAmount.toString,
       totalSettledRefundAmount = refunds.filter(_.refundStatus == "Settled").map(r => BigDecimal(r.refundAmount)).sum.toString,
-      remainingRefundableAmount = resultSet.getBigDecimal("remaining_refundable_amount").toString,
+      remainingRefundableAmount = resolvedTotalPrice.toString,
       createdAt = resultSet.getTimestamp("created_at").toInstant.toString,
       paidAt = Option(resultSet.getTimestamp("paid_at")).map(_.toInstant.toString),
       confirmedAt = Option(resultSet.getTimestamp("confirmed_at")).map(_.toInstant.toString),
@@ -199,10 +209,17 @@ object OrderPlannerPlainSql:
       connection,
       """
         select li.order_item_id, li.item_kind, li.item_status, li.supplier_review_status, li.booked_amount, li.booked_currency, li.snapshot_json,
-               li.room_type_id, rt.name as room_type_name, rt.hotel_id, h.name as hotel_name, h.location as hotel_location
+               li.room_type_id, rt.name as room_type_name, rt.hotel_id, h.name as hotel_name, h.location as hotel_location,
+               li.train_id, li.train_from_stop_id, li.train_to_stop_id, li.train_seat_inventory_id, li.seat_class, li.traveler_ids_json, li.unit_amount, li.unit_currency,
+               t.train_number,
+               fs.station_code as train_from_station_code, fs.station_name as train_from_station_name, fs.departure_time as train_departure_time,
+               ts.station_code as train_to_station_code, ts.station_name as train_to_station_name, ts.arrival_time as train_arrival_time
         from order_line_items li
         left join hotel_room_types rt on rt.room_type_id = li.room_type_id
         left join hotels h on h.hotel_id = rt.hotel_id
+        left join trains t on t.train_id = li.train_id
+        left join train_stops fs on fs.stop_id = li.train_from_stop_id
+        left join train_stops ts on ts.stop_id = li.train_to_stop_id
         where li.order_id = ?
         order by li.sort_index
       """
@@ -210,18 +227,39 @@ object OrderPlannerPlainSql:
       statement.setString(1, orderId)
       PlainSqlSupport.queryList(statement) { resultSet =>
         val itemKind = resultSet.getString("item_kind")
+        val travelerIdsJson = Option(resultSet.getString("traveler_ids_json")).flatMap(value => parse(value).toOption).getOrElse(Json.arr())
+        val travelerCount = travelerIdsJson.asArray.map(_.size).getOrElse(0)
+        val trainPricing =
+          if itemKind == "Train" then resolveTrainPricing(resultSet.getString("train_id"), resultSet.getString("train_from_stop_id"), resultSet.getString("train_to_stop_id"), resultSet.getString("seat_class"), travelerCount, connection)
+          else None
+        val bookedAmount =
+          if itemKind == "Train" then trainPricing.map(_.totalPrice).getOrElse(resultSet.getBigDecimal("booked_amount"))
+          else resultSet.getBigDecimal("booked_amount")
         OrderLineItemPlannerResponse(
           orderItemId = resultSet.getString("order_item_id"),
           orderItemKind = itemKind,
           orderItemStatus = resultSet.getString("item_status"),
           supplierReviewStatus = resultSet.getString("supplier_review_status"),
-          bookedAmount = resultSet.getBigDecimal("booked_amount").toString,
+          bookedAmount = bookedAmount.toString,
           bookedCurrency = resultSet.getString("booked_currency"),
           summaryLabel =
             if itemKind == "Hotel" then enrichHotelSummaryLabel(resultSet)
+            else if itemKind == "Train" then enrichTrainSummaryLabel(resultSet, trainPricing)
             else Option(resultSet.getString("snapshot_json")).getOrElse(itemKind)
         )
-      }
+    }
+  }
+
+  private def resolveOrderTotalAmount(connection: Connection, orderId: String, fallbackAmount: BigDecimal): BigDecimal =
+    val lineItemAmount = readLineItems(connection, orderId).map(lineItem => BigDecimal(lineItem.bookedAmount)).sum
+    if lineItemAmount > BigDecimal(0) then lineItemAmount else fallbackAmount
+
+  private def refreshOrderTotals(connection: Connection, orderId: String, totalAmount: BigDecimal): Unit =
+    PlainSqlSupport.withStatement(connection, "update orders set total_price_amount = ?, remaining_refundable_amount = ? where order_id = ?") { statement =>
+      statement.setBigDecimal(1, totalAmount.bigDecimal)
+      statement.setBigDecimal(2, totalAmount.bigDecimal)
+      statement.setString(3, orderId)
+      statement.executeUpdate()
     }
 
   private def readPayments(connection: Connection, orderId: String): List[PaymentPlannerResponse] =
@@ -270,6 +308,75 @@ object OrderPlannerPlainSql:
         withRoomTypeName
       }
       .noSpaces
+
+  private def enrichTrainSummaryLabel(resultSet: ResultSet, trainPricing: Option[TrainOrderPricing]): String =
+    val snapshotJson = Option(resultSet.getString("snapshot_json")).getOrElse("{}")
+    val baseJson = parse(snapshotJson).getOrElse(Json.obj())
+    val travelerIdsJson = Option(resultSet.getString("traveler_ids_json")).flatMap(value => parse(value).toOption).getOrElse(Json.arr())
+    val resolvedPricing = trainPricing.getOrElse(
+      TrainOrderPricing(
+        unitPrice = Option(resultSet.getBigDecimal("unit_amount")).getOrElse(resultSet.getBigDecimal("booked_amount")),
+        totalPrice = resultSet.getBigDecimal("booked_amount"),
+        currency = Option(resultSet.getString("unit_currency")).orElse(Option(resultSet.getString("booked_currency"))).getOrElse("CNY")
+      )
+    )
+    baseJson
+      .mapObject { jsonObject =>
+        val withTrainId = addStringField(jsonObject, "trainId", resultSet.getString("train_id"))
+        val withTrainNumber = addStringField(withTrainId, "trainNumber", resultSet.getString("train_number"))
+        val withFromStationCode = addStringField(withTrainNumber, "departureStationCode", resultSet.getString("train_from_station_code"))
+        val withFromStationName = addStringField(withFromStationCode, "departureStation", resultSet.getString("train_from_station_name"))
+        val withToStationCode = addStringField(withFromStationName, "arrivalStationCode", resultSet.getString("train_to_station_code"))
+        val withToStationName = addStringField(withToStationCode, "arrivalStation", resultSet.getString("train_to_station_name"))
+        val withDepartureTime = addStringField(withToStationName, "departureTime", Option(resultSet.getTimestamp("train_departure_time")).map(_.toInstant.toString).orNull)
+        val withArrivalTime = addStringField(withDepartureTime, "arrivalTime", Option(resultSet.getTimestamp("train_arrival_time")).map(_.toInstant.toString).orNull)
+        val withSeatClass = addStringField(withArrivalTime, "seatClass", resultSet.getString("seat_class"))
+        val withTravelerIds = withSeatClass.add("travelerIds", travelerIdsJson)
+        val withUnitPrice = addStringField(withTravelerIds, "unitPrice", resolvedPricing.unitPrice.toString)
+        val withCurrency = addStringField(withUnitPrice, "currency", resolvedPricing.currency)
+        val withTotalPrice = addStringField(withCurrency, "totalPrice", resolvedPricing.totalPrice.toString)
+        withTotalPrice
+      }
+      .noSpaces
+
+  private final case class TrainOrderPricing(unitPrice: BigDecimal, totalPrice: BigDecimal, currency: String)
+
+  private def resolveTrainPricing(trainId: String, fromStopId: String, toStopId: String, seatClass: String, travelerCount: Int, connection: Connection): Option[TrainOrderPricing] =
+    if List(trainId, fromStopId, toStopId, seatClass).exists(value => value == null || value.trim.isEmpty) then None
+    else
+      val orderedStops = PlainSqlSupport.withStatement(connection, "select stop_id, sequence_no from train_stops where train_id = ? order by sequence_no asc") { statement =>
+        statement.setString(1, trainId)
+        PlainSqlSupport.queryList(statement) { resultSet =>
+          (resultSet.getString("stop_id"), resultSet.getInt("sequence_no"))
+        }
+      }.sortBy(_._2)
+
+      val fromSequenceNo = orderedStops.collectFirst { case (stopId, sequenceNo) if stopId == fromStopId => sequenceNo }.getOrElse(return None)
+      val toSequenceNo = orderedStops.collectFirst { case (stopId, sequenceNo) if stopId == toStopId => sequenceNo }.getOrElse(return None)
+      if toSequenceNo <= fromSequenceNo then None
+      else
+        val routeStops = orderedStops.filter { case (_, sequenceNo) => sequenceNo >= fromSequenceNo && sequenceNo <= toSequenceNo }
+        val segmentPriceByStopPair = PlainSqlSupport.withStatement(
+          connection,
+          "select from_stop_id, to_stop_id, amount, currency from train_segment_prices where train_id = ? and seat_class = ?"
+        ) { statement =>
+          statement.setString(1, trainId)
+          statement.setString(2, seatClass)
+          PlainSqlSupport.queryList(statement) { resultSet =>
+            ((resultSet.getString("from_stop_id"), resultSet.getString("to_stop_id")), (BigDecimal(resultSet.getBigDecimal("amount")), resultSet.getString("currency")))
+          }.toMap
+        }
+
+        val routeSegmentPrices = routeStops.sliding(2).toList.flatMap {
+          case List((leftStopId, _), (rightStopId, _)) => segmentPriceByStopPair.get((leftStopId, rightStopId))
+          case _ => Nil
+        }
+
+        if routeSegmentPrices.isEmpty || routeSegmentPrices.size != routeStops.size - 1 then None
+        else
+          val unitPrice = routeSegmentPrices.foldLeft(BigDecimal(0)) { case (acc, (segmentPrice, _)) => acc + segmentPrice }
+          val currency = routeSegmentPrices.headOption.map(_._2).getOrElse("CNY")
+          Some(TrainOrderPricing(unitPrice = unitPrice, totalPrice = unitPrice * BigDecimal(travelerCount.max(1)), currency = currency))
 
   private def addStringField(jsonObject: io.circe.JsonObject, fieldName: String, fieldValue: String | Null): io.circe.JsonObject =
     Option(fieldValue).map(_.trim).filter(_.nonEmpty) match

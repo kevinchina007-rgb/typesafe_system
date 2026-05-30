@@ -1,67 +1,92 @@
-import { useCallback, useState } from 'react'
-
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
-import { FlightsPanel } from '@/pages/FlightsPage/components/FlightsPanel'
-import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { AppLanguage, AppViewKey, UserResponse } from '@/lib/mvp-types/index'
-import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
-import { usePageActions } from '@/pages/shared/usePageActions'
-import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
+import { FlightBookingWindowDialog, FlightResultsSection, FlightSearchCard } from './components'
+import { buildLateBookingNotice } from './functions'
+import { useFlightsPageController } from './hooks'
+import type { FlightsPageProps } from './objects'
 
-type FlightsPageProps = {
-  currentLanguage: AppLanguage
-  signedInUser: UserResponse | null
-  translate: (translationKey: string) => string
-  onNavigate: (viewKey: AppViewKey) => void
-  onShowNotice: PageNoticeHandler
-}
-
-export function FlightsPage({
-  currentLanguage,
-  signedInUser,
-  translate,
-  onNavigate,
-  onShowNotice,
-}: FlightsPageProps) {
-  const { travelers } = useSignedInTravelers(signedInUser)
-  const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
-  const loadDailyLowestPrices = useCallback(
-    (payload: Parameters<typeof travelMvpApiClient.flightDailyLowestPricesPlanner>[0]) =>
-      travelMvpApiClient.flightDailyLowestPricesPlanner(payload),
-    [],
-  )
+export function FlightsPage(props: FlightsPageProps) {
+  const {
+    searchState,
+    flightResponses,
+    flightResultGroups,
+    hasSearchedFlights,
+    travelers,
+    isBusy,
+    isAuthDialogOpen,
+    lateBookingFlight,
+    signedInUserId,
+    isGuestMode,
+    openAuthDialog,
+    closeAuthDialog,
+    openLateBookingReview,
+    closeLateBookingReview,
+    updateSearchState,
+    updateTripType,
+    updateMultiCitySegment,
+    addMultiCitySegment,
+    removeMultiCitySegment,
+    submitSearch,
+    searchFlights,
+    loadDailyLowestPrices,
+    bookFlight,
+  } = useFlightsPageController(props)
+  const { translate, onNavigate } = props
 
   return (
     <>
-      <FlightsPanel
-        isBusy={isBusy}
-        isGuestMode={signedInUser === null}
-        signedInUserId={signedInUser?.userId ?? null}
-        travelers={travelers}
+      <section className="mx-auto flex min-h-[calc(100vh-11rem)] w-full max-w-7xl flex-col bg-white text-slate-950">
+        <FlightSearchCard
+          tripType={searchState.tripType}
+          departureAirport={searchState.departureAirport}
+          arrivalAirport={searchState.arrivalAirport}
+          departureDate={searchState.departureDate}
+          returnDate={searchState.returnDate}
+          multiCitySegments={searchState.multiCitySegments}
+          translate={translate}
+          onTripTypeChange={updateTripType}
+          onDepartureAirportChange={value => updateSearchState('departureAirport', value)}
+          onArrivalAirportChange={value => updateSearchState('arrivalAirport', value)}
+          onDepartureDateChange={value => updateSearchState('departureDate', value)}
+          onReturnDateChange={value => updateSearchState('returnDate', value)}
+          onMultiCitySegmentChange={updateMultiCitySegment}
+          onAddMultiCitySegment={addMultiCitySegment}
+          onRemoveMultiCitySegment={removeMultiCitySegment}
+          onSwapRoute={() => {
+            updateSearchState('departureAirport', searchState.arrivalAirport)
+            updateSearchState('arrivalAirport', searchState.departureAirport)
+          }}
+          showSubmitButton={!hasSearchedFlights}
+          onSubmit={() => void submitSearch()}
+        />
+
+        <FlightResultsSection
+          searchState={searchState}
+          flightResponses={flightResponses}
+          flightResultGroups={flightResultGroups}
+          hasSearchedFlights={hasSearchedFlights}
+          isBusy={isBusy}
+          isGuestMode={isGuestMode}
+          signedInUserId={signedInUserId}
+          travelers={travelers}
+          translate={translate}
+          onRequireLogin={openAuthDialog}
+          onBookFlight={bookFlight}
+          onSearchFlights={searchFlights}
+          onLoadDailyLowestPrices={loadDailyLowestPrices}
+          onDepartureDateChange={value => updateSearchState('departureDate', value)}
+          onReturnDateChange={value => updateSearchState('returnDate', value)}
+          onMultiCitySegmentChange={updateMultiCitySegment}
+          onRequireLateBookingReview={openLateBookingReview}
+          getLateBookingNotice={flightResponse => buildLateBookingNotice(flightResponse, translate)}
+        />
+
+        <div className="mt-auto h-36 border-2 border-dashed border-slate-200 bg-white" aria-label="horizontal-ad-slot" />
+      </section>
+
+      <FlightBookingWindowDialog
+        flight={lateBookingFlight}
         translate={translate}
-        onRequireLogin={() => setIsAuthDialogOpen(true)}
-        onSearchFlights={async payload => {
-          const flightListResponse = await travelMvpApiClient.searchFlightsPlanner(payload)
-          return flightListResponse.flights
-        }}
-        onLoadDailyLowestPrices={loadDailyLowestPrices}
-        onValidationError={message => onShowNotice('error', translate('error.friendly.default'), message)}
-        onBookFlight={async payload => {
-          if (!signedInUser) {
-            setIsAuthDialogOpen(true)
-            return
-          }
-          await runPageAction(async () => {
-            await travelMvpApiClient.bookFlightPlanner({
-              userId: payload.userId,
-              flightId: payload.flightId,
-              travelerIds: payload.travelerIds,
-              cabinClass: payload.cabinClass,
-            })
-            onNavigate('bookings')
-          }, translate('flights.bookNow'), translate('notice.bookingCreated'))
-        }}
+        onClose={closeLateBookingReview}
       />
 
       <AuthRequiredDialog
@@ -69,9 +94,9 @@ export function FlightsPage({
         title={translate('authRequired.bookingTitle')}
         description={translate('authRequired.bookingDescription')}
         translate={translate}
-        onClose={() => setIsAuthDialogOpen(false)}
+        onClose={closeAuthDialog}
         onConfirm={() => {
-          setIsAuthDialogOpen(false)
+          closeAuthDialog()
           onNavigate('account')
         }}
       />

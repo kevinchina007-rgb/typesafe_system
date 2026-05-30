@@ -1,12 +1,9 @@
-﻿import { attractionFilterOptions } from '@/app/stores/models/attraction-booking-model'
-
-type AttractionFilterBarProps = {
-  translate: (translationKey: string) => string
-}
+import { attractionFilterOptions } from '@/app/stores/models/attraction-booking-model'
+import type { AttractionFilterBarProps } from '../../objects'
 
 export function AttractionFilterBar({ translate }: AttractionFilterBarProps) {
   return (
-    <section className="flex flex-wrap items-center gap-3 grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
+    <section className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
       <p className="text-sm font-bold text-slate-500">{translate('attractions.filterTitle')}</p>
       <div className="flex flex-wrap items-center gap-3">
         {attractionFilterOptions.map(filterKey => (
@@ -18,3 +15,4 @@ export function AttractionFilterBar({ translate }: AttractionFilterBarProps) {
     </section>
   )
 }
+

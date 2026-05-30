@@ -1,4 +1,4 @@
-﻿import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainResponse, TravelerResponse } from '@/lib/mvp-types/index'
+﻿import type { TrainResponse, TravelerResponse } from '@/lib/mvp-types/index'
 
 export type TrainTripType = 'oneWay' | 'roundTrip'
 export type TrainQuickDatePreset = 'today' | 'tomorrow' | 'weekend' | 'nextWeek'
@@ -10,36 +10,6 @@ export type TrainSearchSegment = {
   fromStop: TrainResponse['stops'][number]
   toStop: TrainResponse['stops'][number]
   segmentStops: TrainResponse['stops']
-}
-
-export type TrainsPanelProps = {
-  currentLanguage: AppLanguage
-  isBusy: boolean
-  isGuestMode: boolean
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onRequireLogin: () => void
-  onSearchTrains: (payload: {
-    fromStation?: string
-    toStation?: string
-    date?: string
-    returnDate?: string
-    tripType?: TrainTripType
-    passengerCount?: number
-    seatPreference?: TrainSeatPreference
-    trainTypePreference?: TrainTypePreference
-  }) => Promise<TrainResponse[]>
-  onBookTrain: (payload: {
-    trainId: string
-    travelerIds: string[]
-    fromStationCode: string
-    toStationCode: string
-    seatClass: string
-    seatPreference?: string | null
-    orderCurrency: string
-  }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
 export const defaultTrainSearchState = {

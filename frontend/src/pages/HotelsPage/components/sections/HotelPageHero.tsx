@@ -1,7 +1,4 @@
-﻿type HotelPageHeroProps = {
-  title: string
-  description: string
-}
+import type { HotelPageHeroProps } from '@/pages/HotelsPage/objects'
 
 export function HotelPageHero({ title, description }: HotelPageHeroProps) {
   return (

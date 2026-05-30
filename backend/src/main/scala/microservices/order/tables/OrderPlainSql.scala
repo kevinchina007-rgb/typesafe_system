@@ -423,7 +423,7 @@ object OrderPlainSql:
     statement.setString(6, row.travelerId)
     statement.setInt(7, row.fromStopSequenceNo)
     statement.setInt(8, row.toStopSequenceNo)
-    statement.setString(9, row.carriageNo)
+    statement.setInt(9, row.carriageNo)
     statement.setString(10, row.seatNo)
     statement.setString(11, row.seatLabel)
     statement.setString(12, row.seatPositionType)
@@ -671,7 +671,7 @@ final case class TrainSeatAllocationInsertRow(
     travelerId: String,
     fromStopSequenceNo: Int,
     toStopSequenceNo: Int,
-    carriageNo: String,
+    carriageNo: Int,
     seatNo: String,
     seatLabel: String,
     seatPositionType: String,

@@ -49,6 +49,7 @@ export function TopNavBar({
   isOverlay = false,
 }: TopNavBarProps) {
   const popoverRef = useRef<HTMLDivElement | null>(null)
+  const [hoveredTopNav, setHoveredTopNav] = useState<TopNavKey | null>(null)
   const [isUserPopoverOpen, setIsUserPopoverOpen] = useState(false)
   const [isProfileEditing, setIsProfileEditing] = useState(false)
   const [isPasswordEditing, setIsPasswordEditing] = useState(false)
@@ -81,8 +82,8 @@ export function TopNavBar({
 
   return (
     <header className={isOverlay
-      ? 'absolute inset-x-0 top-0 z-20 flex h-28 items-center justify-between px-8 text-white md:px-14'
-      : 'z-20 flex h-28 items-center justify-between border-b border-slate-950 bg-white px-6 text-slate-950 shadow-none md:px-14'
+      ? 'absolute inset-x-0 top-0 z-40 flex h-28 items-center justify-between px-8 text-white md:px-14'
+      : 'relative z-40 flex h-28 items-center justify-between border-b border-slate-950 bg-white px-6 text-slate-950 shadow-none md:px-14'
     }>
       <div className="grid min-w-0">
         <img className="h-18 w-auto max-w-[24rem] object-contain object-left md:h-20 md:max-w-[26rem]" src="/images/fly-pig-logo.png" alt="fly pig" />
@@ -93,7 +94,14 @@ export function TopNavBar({
         aria-label={translate('topnav.aria')}
       >
         {items.map(item => (
-          <div key={item.key} className="group relative">
+          <div
+            key={item.key}
+            className="relative"
+            onMouseEnter={() => setHoveredTopNav(item.key)}
+            onMouseLeave={() => {
+              setHoveredTopNav(current => (current === item.key ? null : current))
+            }}
+          >
             <TopNavButton
               badgeCount={item.badgeCount}
               icon={item.icon}
@@ -105,10 +113,16 @@ export function TopNavBar({
             />
             {(submenuItemsByTopNav[item.key]?.length ?? 0) > 1 ? (
               <>
-                <div className="absolute left-1/2 top-full z-30 hidden h-3 min-w-48 -translate-x-1/2 group-hover:block" />
-                <div className={isOverlay
-                  ? 'absolute left-1/2 top-[calc(100%+0.65rem)] z-30 hidden min-w-48 -translate-x-1/2 bg-white/95 py-4 shadow-xl backdrop-blur-xl group-hover:grid'
-                  : 'absolute left-1/2 top-[calc(100%+0.65rem)] z-30 hidden min-w-48 -translate-x-1/2 bg-black py-4 shadow-xl group-hover:grid'
+                <div className={hoveredTopNav === item.key
+                  ? 'absolute left-1/2 top-full z-50 h-3 min-w-48 -translate-x-1/2'
+                  : 'hidden'
+                } />
+                <div className={hoveredTopNav === item.key
+                  ? (isOverlay
+                      ? 'absolute left-1/2 top-[calc(100%+0.65rem)] z-50 min-w-48 -translate-x-1/2 bg-white/95 py-4 shadow-xl backdrop-blur-xl'
+                      : 'absolute left-1/2 top-[calc(100%+0.65rem)] z-50 min-w-48 -translate-x-1/2 bg-black py-4 shadow-xl'
+                    )
+                  : 'hidden'
                 }>
                   {submenuItemsByTopNav[item.key].map(submenuItem => (
                     <button

@@ -1,8 +1,4 @@
-﻿type DateSelectorProps = {
-  value: string
-  translate: (translationKey: string) => string
-  onChange: (value: string) => void
-}
+import type { DateSelectorProps } from '../../objects'
 
 export function DateSelector({ value, translate, onChange }: DateSelectorProps) {
   return (
@@ -12,3 +8,4 @@ export function DateSelector({ value, translate, onChange }: DateSelectorProps) 
     </label>
   )
 }
+

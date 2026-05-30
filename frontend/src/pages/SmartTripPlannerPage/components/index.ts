@@ -1,0 +1,2 @@
+export { SmartTripPlannerPageShell } from './SmartTripPlannerPageShell'
+

@@ -152,7 +152,7 @@ def generateTrainSeats(
           rowNo = TrainSeatRowNo.create(rowNo).fold(throw _, identity),
           seatCode = column.code,
           seatNo = seatNo,
-          seatLabel = s"$carriageNo-$seatNo",
+          seatLabel = formatTrainSeatLabel(carriageNo, seatNo),
           seatPositionType = column.positionType,
           seatStatus = TrainSeatStatus.Available
         )
@@ -346,3 +346,6 @@ private def trainSeatsAreAdjacent(candidateSeats: Vector[TrainSeat]): Boolean =
         case Vector(leftSeat, rightSeat) => rightSeat.seatCode.headOption.exists(_.toInt - leftSeat.seatCode.headOption.getOrElse('A').toInt == 1) || rightSeat.seatCode.compareTo(leftSeat.seatCode) == 1
         case _ => true
       }
+
+private def formatTrainSeatLabel(carriageNo: Int, seatNo: String): String =
+  f"$carriageNo%02d车 $seatNo"

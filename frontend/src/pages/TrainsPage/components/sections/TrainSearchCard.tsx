@@ -1,14 +1,4 @@
-type TrainSearchCardProps = {
-  isBusy: boolean
-  searchDate: string
-  searchFromStation: string
-  searchToStation: string
-  translate: (translationKey: string) => string
-  onSearchDateChange: (searchDate: string) => void
-  onSearchFromStationChange: (searchFromStation: string) => void
-  onSearchToStationChange: (searchToStation: string) => void
-  onSearch: () => Promise<void>
-}
+import type { TrainSearchCardProps } from '@/pages/TrainsPage/objects'
 
 export function TrainSearchCard({
   isBusy,

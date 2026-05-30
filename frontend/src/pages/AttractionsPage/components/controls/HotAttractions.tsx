@@ -1,10 +1,4 @@
-﻿export type HotAttraction = string
-
-type HotAttractionsProps = {
-  items: HotAttraction[]
-  translate: (translationKey: string) => string
-  onSelect: (value: string) => void
-}
+import type { HotAttractionsProps } from '../../objects'
 
 export function HotAttractions({ items, translate, onSelect }: HotAttractionsProps) {
   return (
@@ -20,3 +14,4 @@ export function HotAttractions({ items, translate, onSelect }: HotAttractionsPro
     </div>
   )
 }
+

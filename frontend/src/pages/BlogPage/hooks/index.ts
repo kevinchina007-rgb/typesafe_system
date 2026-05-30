@@ -1,0 +1,1 @@
+export { useBlogPageController } from './useBlogPageController'

@@ -2,46 +2,22 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
-import { getFlightDetailsPlannerAirlineDisplayNameByCode, getFlightDetailsPlannerAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
-import { formatFlightAirportLabel, getFlightDetailsPlannerCityAirportCodes, normalizeFlightAirportForApi } from '@/app/stores/models/flights/flightConstants'
-import type {
-  FlightDailyLowestPricePlannerResponse,
-  FlightDailyLowestPricesPlannerRequest,
-  FlightDailyLowestPricesPlannerResponse,
-} from '@/microservices/flight/objects/FlightDailyLowestPrices'
-
-export type FlightSortMode = 'price' | 'departureTime'
-
-export type FlightResultsRoute = {
-  departureAirport: string
-  arrivalAirport: string
-  departureDate: string
-}
-
-export type DisplayFlight = {
-  flight: FlightPlannerResponse
-  airlineName: string
-  airlineLogoPath: string | null
-  departureAirportName: string
-  arrivalAirportName: string
-  displayCabinClass: string
-  displayCabinLabel: string
-  displayPrice: number
-  displayCurrency: string
-  isDisplayCabinBookable: boolean
-  priceTone: 'lowest' | 'discount' | 'standard'
-}
-
-const cabinLabelByClass: Record<string, string> = {
-  ECONOMY: '经济舱',
-  PREMIUM_ECONOMY: '超级经济舱',
-  BUSINESS: '商务舱',
-  FIRST: '头等舱',
-}
-
-const cabinOrder = ['ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS', 'FIRST']
-
-export const departureTimeWindows = ['00:00-03:59', '04:00-07:59', '08:00-11:59', '12:00-15:59', '16:00-19:59', '20:00-23:59']
+import type { FlightDailyLowestPricePlannerResponse, FlightDailyLowestPricesPlannerRequest, FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
+import {
+  buildEmptyDateWindow,
+  cabinOrder,
+  formatAirportName,
+  formatCabinLabel,
+  formatRouteDate,
+  loadDailyLowestPricesAcrossAirportCodes,
+  loadDailyLowestPricesFromSearch,
+  normalizeCabinClass,
+  parseSearchDate,
+  unique,
+  formatDateInput,
+  toDisplayFlight,
+} from '@/pages/FlightsPage/functions'
+import type { FlightResultsRoute, FlightSortMode } from '@/pages/FlightsPage/objects'
 
 export function useFlightResultsState({
   route,
@@ -78,18 +54,18 @@ export function useFlightResultsState({
   }, [theme])
 
   const airlineOptions = useMemo(
-    () => unique(searchedFlights.map(flight => getAirlineDisplayName(flight))),
+    () => unique(searchedFlights.map(flight => flight.airlineName || flight.airlineCode)),
     [searchedFlights],
   )
 
   const departureAirportOptions = useMemo(
-    () => getFlightDetailsPlannerCityAirportCodes(route.departureAirport),
-    [route.departureAirport],
+    () => unique(searchedFlights.map(flight => flight.departureAirport)),
+    [searchedFlights],
   )
 
   const arrivalAirportOptions = useMemo(
-    () => getFlightDetailsPlannerCityAirportCodes(route.arrivalAirport),
-    [route.arrivalAirport],
+    () => unique(searchedFlights.map(flight => flight.arrivalAirport)),
+    [searchedFlights],
   )
 
   const cabinOptions = useMemo(
@@ -101,7 +77,7 @@ export function useFlightResultsState({
   const displayFlights = useMemo(() => {
     const filtered = searchedFlights.filter(flight => {
       const departureHour = new Date(flight.departureTime).getHours()
-      const matchesAirline = selectedAirline === 'all' || getAirlineDisplayName(flight) === selectedAirline
+      const matchesAirline = selectedAirline === 'all' || (flight.airlineName || flight.airlineCode) === selectedAirline
       const matchesDepartureAirport = selectedDepartureAirport === 'all' || flight.departureAirport === selectedDepartureAirport
       const matchesArrivalAirport = selectedArrivalAirport === 'all' || flight.arrivalAirport === selectedArrivalAirport
       const matchesCabin =
@@ -150,8 +126,8 @@ export function useFlightResultsState({
 
     let isCurrent = true
     const request = {
-      departureAirport: normalizeFlightAirportForApi(route.departureAirport) ?? route.departureAirport,
-      arrivalAirport: normalizeFlightAirportForApi(route.arrivalAirport) ?? route.arrivalAirport,
+      departureAirport: route.departureAirport,
+      arrivalAirport: route.arrivalAirport,
       startDate: dateWindowStart,
       days: 7,
     }
@@ -165,7 +141,7 @@ export function useFlightResultsState({
       })
       .catch(() => {
         if (isCurrent) {
-          setDailyLowestPrices([])
+          setDailyLowestPrices([]) 
         }
       })
 
@@ -199,172 +175,4 @@ export function useFlightResultsState({
     formatCabinLabel,
     formatRouteDate,
   }
-}
-
-export function formatAirportName(value: string): string {
-  return formatFlightAirportLabel(value)
-}
-
-export function formatCabinLabel(value: string): string {
-  return cabinLabelByClass[normalizeCabinClass(value)] ?? value
-}
-
-export function getAirlineDisplayName(flight: FlightPlannerResponse): string {
-  return getFlightDetailsPlannerAirlineDisplayNameByCode(flight.airlineCode, flight.airlineName)
-}
-
-export function getAirlineLogoPath(flight: FlightPlannerResponse): string | null {
-  return getFlightDetailsPlannerAirlineLogoPathByCode(flight.airlineCode, flight.airlineLogoPath)
-}
-
-export function formatRouteDate(date: string): string {
-  if (!date) {
-    return ''
-  }
-
-  return new Date(`${date}T00:00:00`).toLocaleDateString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    weekday: 'short',
-  })
-}
-
-async function loadDailyLowestPricesFromSearch(
-  request: FlightDailyLowestPricesPlannerRequest,
-  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>,
-): Promise<FlightDailyLowestPricesPlannerResponse> {
-  const start = parseSearchDate(request.startDate)
-  const prices = await Promise.all(
-    Array.from({ length: request.days }, async (_, index) => {
-      const date = new Date(start)
-      date.setDate(start.getDate() + index)
-      const dateText = formatDateInput(date)
-      const flights = await onSearchFlights({
-        departureAirport: request.departureAirport,
-        arrivalAirport: request.arrivalAirport,
-        date: dateText,
-      })
-      const priceValues = flights
-        .flatMap(flight => flight.cabinInventories)
-        .map(cabin => Number(cabin.unitPrice))
-        .filter(Number.isFinite)
-      const lowestPrice = priceValues.length > 0 ? Math.min(...priceValues) : null
-
-      return {
-        date: dateText,
-        lowestPrice: lowestPrice === null ? null : String(lowestPrice),
-        currency: lowestPrice === null ? null : 'CNY',
-      }
-    }),
-  )
-
-  return { prices }
-}
-
-async function loadDailyLowestPricesAcrossAirportCodes(
-  request: FlightDailyLowestPricesPlannerRequest,
-  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>,
-): Promise<FlightDailyLowestPricesPlannerResponse> {
-  const departureAirportOptions = expandAirportSearchValues(request.departureAirport)
-  const arrivalAirportOptions = expandAirportSearchValues(request.arrivalAirport)
-
-  if (departureAirportOptions.length <= 1 && arrivalAirportOptions.length <= 1) {
-    return onLoadDailyLowestPrices(request)
-  }
-
-  const responses = await Promise.all(
-    departureAirportOptions.flatMap(departureAirport =>
-      arrivalAirportOptions.map(arrivalAirport =>
-        onLoadDailyLowestPrices({
-          ...request,
-          departureAirport,
-          arrivalAirport,
-        }),
-      ),
-    ),
-  )
-
-  const pricesByDate = new Map<string, FlightDailyLowestPricePlannerResponse>()
-  responses.flatMap(response => response.prices).forEach(price => {
-    const currentPrice = pricesByDate.get(price.date)
-    const nextAmount = price.lowestPrice === null ? null : Number(price.lowestPrice)
-    const currentAmount = currentPrice?.lowestPrice === null || currentPrice?.lowestPrice === undefined ? null : Number(currentPrice.lowestPrice)
-
-    if (!currentPrice || (nextAmount !== null && (currentAmount === null || nextAmount < currentAmount))) {
-      pricesByDate.set(price.date, price)
-    }
-  })
-
-  return { prices: [...pricesByDate.values()].sort((left, right) => left.date.localeCompare(right.date)) }
-}
-
-function expandAirportSearchValues(value: string | undefined): string[] {
-  if (!value) {
-    return []
-  }
-
-  const airportCodes = getFlightDetailsPlannerCityAirportCodes(value)
-  if (airportCodes.length > 0) {
-    return airportCodes
-  }
-
-  return [normalizeFlightAirportForApi(value) ?? value]
-}
-
-function toDisplayFlight(flight: FlightPlannerResponse, selectedCabin: string): DisplayFlight {
-  const selectedInventory =
-    selectedCabin === 'all'
-      ? [...flight.cabinInventories].sort((left, right) => Number(left.unitPrice) - Number(right.unitPrice))[0]
-      : flight.cabinInventories.find(cabin => normalizeCabinClass(cabin.cabinClass) === selectedCabin)
-  const cabinClass = normalizeCabinClass(selectedInventory?.cabinClass ?? 'ECONOMY')
-  const price = Number(selectedInventory?.unitPrice ?? flight.basePrice)
-
-  return {
-    flight,
-    airlineName: getAirlineDisplayName(flight),
-    airlineLogoPath: getAirlineLogoPath(flight),
-    departureAirportName: formatAirportName(flight.departureAirport),
-    arrivalAirportName: formatAirportName(flight.arrivalAirport),
-    displayCabinClass: cabinClass,
-    displayCabinLabel: formatCabinLabel(cabinClass),
-    displayPrice: price,
-    displayCurrency: selectedInventory?.currency ?? flight.currency,
-    isDisplayCabinBookable: Boolean(selectedInventory?.isBookable),
-    priceTone: 'standard',
-  }
-}
-
-function normalizeCabinClass(value: string): string {
-  return value.trim().replace('-', '_').toUpperCase()
-}
-
-function unique(values: string[]): string[] {
-  return [...new Set(values.filter(Boolean))]
-}
-
-function parseSearchDate(value: string): Date {
-  if (!value) {
-    return new Date()
-  }
-  return new Date(`${value}T00:00:00`)
-}
-
-function formatDateInput(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function buildEmptyDateWindow(startDate: string, days: number): FlightDailyLowestPricePlannerResponse[] {
-  const start = parseSearchDate(startDate)
-  return Array.from({ length: days }, (_, index) => {
-    const date = new Date(start)
-    date.setDate(start.getDate() + index)
-    return {
-      date: formatDateInput(date),
-      lowestPrice: null,
-      currency: null,
-    }
-  })
 }

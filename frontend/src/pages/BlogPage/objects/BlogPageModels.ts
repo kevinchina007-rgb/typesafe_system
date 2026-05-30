@@ -1,0 +1,100 @@
+import type { AppLanguage, UserResponse } from '@/lib/mvp-types/index'
+import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
+import type { BlogNotificationResponse } from '@/microservices/content/objects/BlogNotificationResponse'
+import type { BlogPostResponse } from '@/microservices/content/objects/BlogPostResponse'
+import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
+import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/content/objects/BlogProfileResponse'
+import type { ContentImageResponse } from '@/microservices/content/objects/ContentImageResponse'
+
+export type BlogPageProps = {
+  currentLanguage: AppLanguage
+  signedInUser: UserResponse | null
+  translate: (translationKey: string) => string
+  onShowNotice: PageNoticeHandler
+}
+
+export type BlogTab = 'home' | 'publish' | 'notifications' | 'mine'
+export type MineTab = 'published' | 'favorites'
+export type NotificationFilter = 'comments' | 'likes' | 'followers'
+export type ProfileRelationTab = 'followers' | 'following'
+
+export type BlogDraft = {
+  postId: string
+  title: string
+  summary: string
+  coverText: string
+  content: string
+  travelCities: string[]
+  images: ContentImageResponse[]
+  tags: BlogTagResponse[]
+}
+
+export type BlogPageController = {
+  isBusy: boolean
+  activeTab: BlogTab
+  mineTab: MineTab
+  notificationFilter: NotificationFilter
+  posts: BlogPostSummaryResponse[]
+  myPosts: BlogPostSummaryResponse[]
+  favoritePosts: BlogPostSummaryResponse[]
+  drafts: BlogPostSummaryResponse[]
+  notifications: BlogNotificationResponse[]
+  profile: BlogProfileResponse | null
+  viewedProfile: BlogProfileResponse | null
+  viewedProfilePosts: BlogPostSummaryResponse[]
+  profileRelationTab: ProfileRelationTab | null
+  profileRelationUsers: BlogProfileUserResponse[]
+  profileOverlayOpen: boolean
+  profileSettingsOpen: boolean
+  query: string
+  selectedTag: BlogTagResponse | null
+  selectedCities: string[]
+  draft: BlogDraft
+  selectedPost: BlogPostResponse | null
+  selectedImageIndex: number
+  commentDraft: string
+  followedAuthors: Set<string>
+  selectedTagLabel: string
+  selectedCityLabel: string
+  selectedImages: NonNullable<BlogPostResponse['post']['images']>
+  selectedImage: NonNullable<BlogPostResponse['post']['images']>[number] | null
+  selectedPostCities: string[]
+  selectedPostTags: BlogTagResponse[]
+  currentProfile: BlogProfileResponse | null
+  isOwnProfile: boolean
+  profileRelationsHidden: boolean
+  displayedMinePosts: BlogPostSummaryResponse[]
+  filteredNotifications: BlogNotificationResponse[]
+  setActiveTab: (tab: BlogTab) => void
+  setMineTab: (tab: MineTab) => void
+  setNotificationFilter: (filter: NotificationFilter) => void
+  setQuery: (query: string) => void
+  setSelectedTag: (tag: BlogTagResponse | null) => void
+  setSelectedCities: (cities: string[]) => void
+  setDraft: (draft: BlogDraft | ((current: BlogDraft) => BlogDraft)) => void
+  setSelectedPost: (post: BlogPostResponse | null) => void
+  setSelectedImageIndex: (index: number | ((current: number) => number)) => void
+  setCommentDraft: (draft: string) => void
+  setProfileSettingsOpen: (open: boolean | ((current: boolean) => boolean)) => void
+  toggleCity: (city: string) => void
+  toggleDraftCity: (city: string) => void
+  toggleDraftTag: (tag: BlogTagResponse) => void
+  reloadHome: () => Promise<void>
+  reloadMine: () => Promise<void>
+  openPost: (postId: string) => Promise<void>
+  openProfile: (profileUserId: string) => Promise<void>
+  closeProfileOverlay: () => void
+  openProfileRelation: (nextTab: ProfileRelationTab) => Promise<void>
+  updateProfilePrivacy: (hideRelations: boolean) => Promise<void>
+  saveDraft: (status: 'draft' | 'publish') => Promise<void>
+  likePost: (post: BlogPostSummaryResponse) => Promise<void>
+  favoritePost: (post: BlogPostSummaryResponse) => Promise<void>
+  followAuthor: (post: BlogPostSummaryResponse) => Promise<void>
+  submitComment: () => Promise<void>
+  likeComment: (comment: BlogPostResponse['comments'][number]) => Promise<void>
+  handleImages: (files: FileList | null) => Promise<void>
+  uploadDraftImage: (imageFile: File) => Promise<ContentImageResponse>
+  removeDraftImage: (imageId: string) => void
+  setProfileRelationTab: (tab: ProfileRelationTab | null) => void
+  setProfileRelationUsers: (users: BlogProfileUserResponse[]) => void
+}

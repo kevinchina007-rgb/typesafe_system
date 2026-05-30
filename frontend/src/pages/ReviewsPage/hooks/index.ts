@@ -1,0 +1,2 @@
+export { useReviewsPageController } from './useReviewsPageController'
+

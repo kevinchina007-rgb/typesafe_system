@@ -1,35 +1,7 @@
-import type { AppLanguage, HotelPlannerResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { HotelPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
 
 export type HotelQuickDatePreset = 'tonight' | 'weekend' | 'nextWeek' | 'holiday'
 export type HotelPreference = 'Economy' | 'Luxury' | 'Homestay' | 'Family' | 'Business'
-
-export type HotelsPanelProps = {
-  currentLanguage: AppLanguage
-  isBusy: boolean
-  isGuestMode: boolean
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onRequireLogin: () => void
-  onValidationError: (message: string) => void
-  onSearchHotels: (payload: {
-    location?: string
-    checkInDate?: string
-    checkOutDate?: string
-    roomCount?: number
-    guestCount?: number
-    hotelPreference?: HotelPreference
-    nearbyPreference?: string
-  }) => Promise<HotelPlannerResponse[]>
-  onBookHotel: (payload: {
-    roomTypeId: string
-    guestTravelerIds: string[]
-    checkInDate: string
-    checkOutDate: string
-    roomCount: number
-  }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
-}
 
 export const defaultHotelSearchState = {
   location: '杭州',

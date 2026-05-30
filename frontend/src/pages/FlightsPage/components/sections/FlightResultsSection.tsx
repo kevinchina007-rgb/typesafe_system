@@ -1,46 +1,13 @@
 import { useEffect, useMemo, useState, type FocusEvent, type FormEvent, type ReactNode } from 'react'
 
-import type { TravelerResponse } from '@/lib/mvp-types/index'
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
-import type { FlightResultGroup, FlightSearchState } from '@/app/stores/models/flights'
-import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightPlannerRequest'
-import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
-import type { FlightDailyLowestPricesPlannerRequest, FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
+import type { FlightSearchState } from '@/app/stores/models/flights'
 import { formatFlightRouteCity } from '@/app/stores/models/flights/flightConstants'
-import {
-  departureTimeWindows,
-  type DisplayFlight,
-  type FlightResultsRoute,
-  type FlightSortMode,
-  useFlightResultsState,
-} from '@/pages/FlightsPage/components/hooks/useFlightResultsState'
+import { departureTimeWindows } from '@/pages/FlightsPage/functions'
+import { useFlightResultsState } from '@/pages/FlightsPage/components/hooks/useFlightResultsState'
+import type { DisplayFlight, FlightResultsRoute, FlightResultsSectionProps, FlightSortMode } from '../../objects'
 
 type RoundTripLeg = 'outbound' | 'return'
-
-type FlightResultsSectionProps = {
-  searchState: FlightSearchState
-  flightResponses: FlightPlannerResponse[]
-  flightResultGroups: FlightResultGroup[]
-  hasSearchedFlights: boolean
-  isBusy: boolean
-  isGuestMode: boolean
-  signedInUserId: string | null
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onRequireLogin: () => void
-  onBookFlight: (payload: BookFlightPlannerRequest) => Promise<void>
-  onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>
-  onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>
-  onDepartureDateChange: (value: string) => void
-  onReturnDateChange: (value: string) => void
-  onMultiCitySegmentChange: (
-    segmentId: string,
-    key: 'departureAirport' | 'arrivalAirport' | 'departureDate' | 'arrivalDate',
-    value: string,
-  ) => void
-  onRequireLateBookingReview: (flightResponse: FlightPlannerResponse) => void
-  getLateBookingNotice: (flightResponse: FlightPlannerResponse) => string
-}
 
 const legTheme = {
   outbound: {

@@ -3,20 +3,7 @@ import { Search } from 'lucide-react'
 import { HotDestinations } from '@/pages/HotelsPage/components/controls/HotDestinations'
 import { DateRangeSelector } from '@/pages/HotelsPage/components/controls/DateRangeSelector'
 import { DestinationSelector } from '@/pages/HotelsPage/components/controls/DestinationSelector'
-
-type HotelSearchCardProps = {
-  isBusy: boolean
-  searchLocation: string
-  searchCheckInDate: string
-  searchCheckOutDate: string
-  hotDestinations: string[]
-  translate: (translationKey: string) => string
-  onSearchLocationChange: (value: string) => void
-  onSearchCheckInDateChange: (value: string) => void
-  onSearchCheckOutDateChange: (value: string) => void
-  onSelectDestination: (value: string) => void
-  onSearch: () => void
-}
+import type { HotelSearchCardProps } from '@/pages/HotelsPage/objects'
 
 export function HotelSearchCard({
   isBusy,

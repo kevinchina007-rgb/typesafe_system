@@ -1,14 +1,5 @@
 import { HotelPreferenceSelector } from '@/pages/HotelsPage/components/controls/HotelPreferenceSelector'
-import type { HotelPreference } from '@/app/stores/models/hotel-booking-model'
-
-type HotelFilterBarProps = {
-  hotelPreference: HotelPreference
-  nearbyPreference: string
-  isBusy: boolean
-  translate: (translationKey: string) => string
-  onHotelPreferenceChange: (value: HotelPreference) => void
-  onNearbyPreferenceChange: (value: string) => void
-}
+import type { HotelFilterBarProps } from '@/pages/HotelsPage/objects'
 
 export function HotelFilterBar({
   hotelPreference,

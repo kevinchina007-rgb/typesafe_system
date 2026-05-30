@@ -1,8 +1,4 @@
-type TrainPageHeroProps = {
-  eyebrow: string
-  title: string
-  description: string
-}
+import type { TrainPageHeroProps } from '@/pages/TrainsPage/objects'
 
 export function TrainPageHero({ eyebrow, title, description }: TrainPageHeroProps) {
   return (

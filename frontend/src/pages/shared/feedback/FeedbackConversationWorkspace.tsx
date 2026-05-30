@@ -5,7 +5,7 @@ import type { FeedbackManagerType } from '@/microservices/content/objects/Feedba
 import type { FeedbackMessageResponse } from '@/microservices/content/objects/FeedbackMessageResponse'
 import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
 import type { OrderCancellationRequestStatus } from '@/microservices/content/objects/OrderCancellationRequestPayload'
-import type { OrderCategory } from '@/pages/BookingsPage/components/orderViewModel'
+import type { OrderCategory } from '@/pages/BookingsPage/objects'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 
 type CancellationOrderOption = {
@@ -295,7 +295,7 @@ export function FeedbackConversationWorkspace({
     [activeThreadId, threads],
   )
   const cancellationOrderTitleById = useMemo(
-    () => new Map(cancellationOrders.map(order => [order.orderId, order.title])),
+    () => new Map(cancellationOrders.map(order => [order.orderId, order.title || order.orderId])),
     [cancellationOrders],
   )
   const activeIdentity = activeThread
@@ -519,7 +519,7 @@ export function FeedbackConversationWorkspace({
                         <option value="">请选择订单</option>
                         {visibleCancellationOrders.map(order => (
                           <option key={order.orderId} value={order.orderId}>
-                            {order.title}
+                            {order.title || order.orderId}
                           </option>
                         ))}
                       </select>

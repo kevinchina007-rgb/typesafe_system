@@ -5,16 +5,7 @@ import {
   formatHotelDateLabel,
   formatHotelWeekdayLabel,
 } from '@/app/stores/models/hotel-booking-model'
-
-type HotelDatePriceStripProps = {
-  dateWindowStart: string
-  selectedDate: string
-  lowestPrice: number | null
-  isBusy: boolean
-  onPrevious: () => void
-  onNext: () => void
-  onDateSelect: (date: string) => void
-}
+import type { HotelDatePriceStripProps } from '@/pages/HotelsPage/objects'
 
 export function HotelDatePriceStrip({
   dateWindowStart,

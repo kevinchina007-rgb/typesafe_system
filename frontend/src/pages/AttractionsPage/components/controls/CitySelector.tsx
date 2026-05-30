@@ -1,9 +1,4 @@
-﻿type CitySelectorProps = {
-  value: string
-  translate: (translationKey: string) => string
-  suggestions: string[]
-  onChange: (value: string) => void
-}
+import type { CitySelectorProps } from '../../objects'
 
 export function CitySelector({ value, translate, suggestions, onChange }: CitySelectorProps) {
   return (
@@ -18,3 +13,4 @@ export function CitySelector({ value, translate, suggestions, onChange }: CitySe
     </label>
   )
 }
+

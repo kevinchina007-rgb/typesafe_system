@@ -1,10 +1,4 @@
-import type { TrainSortMode } from '@/app/stores/models/train-booking-model'
-
-type TrainFilterBarProps = {
-  currentSortMode: TrainSortMode
-  translate: (translationKey: string) => string
-  onSortModeChange: (sortMode: TrainSortMode) => void
-}
+import type { TrainFilterBarProps, TrainSortMode } from '@/pages/TrainsPage/objects'
 
 const sortModes: Array<{ mode: TrainSortMode; labelKey: string }> = [
   { mode: 'highSpeedPriority', labelKey: 'trains.sort.highSpeedPriority' },

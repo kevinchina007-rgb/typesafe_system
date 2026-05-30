@@ -1,106 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, TourGroupDetailsResponse, TourGroupSummaryResponse, TrainResponse, HotelPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { GroupPlanItemResponse, TourGroupDetailsResponse, TourGroupSummaryResponse } from '@/lib/mvp-types/index'
 import { CreateTourGroupDialog } from '@/pages/TourGroupsPage/components/CreateTourGroupDialog'
 import { TourGroupDetail } from '@/pages/TourGroupsPage/components/TourGroupDetail'
 import { TourGroupList } from '@/pages/TourGroupsPage/components/TourGroupList'
 import { TourGroupSelectionDialog } from '@/pages/TourGroupsPage/components/TourGroupSelectionDialog'
-
-type TourGroupsPanelProps = {
-  currentLanguage: AppLanguage
-  isBusy: boolean
-  signedInUser: UserResponse | null
-  travelers: TravelerResponse[]
-  translate: (translationKey: string) => string
-  onListGroups: () => Promise<TourGroupSummaryResponse[]>
-  onLoadGroupDetails: (groupId: string) => Promise<TourGroupDetailsResponse>
-  onCreateGroup: (payload: {
-    organizerUserId: string
-    title: string
-    description: string
-    destination: string
-    startDate: string
-    endDate: string
-    capacity: number
-  }) => Promise<TourGroupDetailsResponse>
-  onJoinGroup: (groupId: string, payload: { userId: string }) => Promise<TourGroupDetailsResponse>
-  onAddMembershipTraveler: (groupId: string, payload: { userId: string; travelerId: string }) => Promise<TourGroupDetailsResponse>
-  onCreatePlanItem: (groupId: string, payload: {
-    organizerUserId: string
-    itemType: string
-    title: string
-    description: string
-    scheduledAt: string
-    endsAt?: string | null
-    sequenceNo: number
-  }) => Promise<TourGroupDetailsResponse>
-  onCreatePlanOption: (planItemId: string, groupId: string, payload: {
-    organizerUserId: string
-    resourceType: string
-    resourceId: string
-    resourceVariantCode?: string | null
-    resourceContext?: string | null
-    label: string
-    description: string
-    defaultQuantity: number
-  }) => Promise<TourGroupDetailsResponse>
-  onCreateSelection: (planItemId: string, groupId: string, payload: {
-    userId: string
-    optionId: string
-    quantity: number
-    travelerIds: string[]
-  }) => Promise<TourGroupDetailsResponse>
-  onSubmitSelection: (selectionId: string, payload: { userId: string }) => Promise<TourGroupDetailsResponse>
-  onConfirmSelection: (selectionId: string, payload: { organizerUserId: string; reviewNote?: string | null }) => Promise<TourGroupDetailsResponse>
-  onRejectSelection: (selectionId: string, payload: { organizerUserId: string; reviewNote: string }) => Promise<TourGroupDetailsResponse>
-  onBatchConfirmSelections: (payload: {
-    organizerUserId: string
-    selectionIds: string[]
-    reviewNote?: string | null
-  }) => Promise<TourGroupDetailsResponse>
-  onBatchRejectSelections: (payload: {
-    organizerUserId: string
-    selectionIds: string[]
-    reviewNote: string
-  }) => Promise<TourGroupDetailsResponse>
-  onBatchPaySelections: (payload: {
-    userId: string
-    selectionIds: string[]
-    paymentMethod: string
-  }) => Promise<{ group: TourGroupDetailsResponse; orders: import('@/lib/mvp-types/index').OrderResponse[] }>
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
-  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
-  onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
-  onOpenBookings: () => Promise<void>
-  onLoadChatSettings: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupChatSettingsResponse>
-  onUpdateChatSettings: (groupId: string, payload: { allowMemberDirectChat: boolean }) => Promise<import('@/lib/mvp-types/index').TourGroupChatSettingsResponse>
-  onLoadConversations: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupConversationListResponse>
-  onSearchConversations: (groupId: string, query: string) => Promise<import('@/lib/mvp-types/index').TourGroupConversationSummaryResponse[]>
-  onSearchMessages: (groupId: string, query: string) => Promise<import('@/lib/mvp-types/index').TourGroupMessageSearchResultResponse[]>
-  onGetOrCreateDirectConversation: (groupId: string, payload: { targetUserId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupConversationSummaryResponse>
-  onLoadMessages: (conversationId: string) => Promise<import('@/lib/mvp-types/index').TourGroupMessageResponse[]>
-  onSendMessage: (conversationId: string, payload: {
-    messageType?: string
-    content: string
-    replyToMessageId?: string | null
-    attachments?: import('@/lib/mvp-types/index').TourGroupUploadedAttachmentResponse[]
-  }) => Promise<import('@/lib/mvp-types/index').TourGroupMessageResponse[]>
-  onUploadAttachment: (groupId: string, conversationId: string, attachmentFile: File) => Promise<import('@/lib/mvp-types/index').TourGroupUploadedAttachmentResponse>
-  onMarkConversationRead: (conversationId: string) => Promise<import('@/lib/mvp-types/index').TourGroupConversationSummaryResponse>
-  onEditMessage: (messageId: string, payload: { content: string }) => Promise<import('@/lib/mvp-types/index').TourGroupMessageResponse[]>
-  onDeleteMessage: (messageId: string) => Promise<import('@/lib/mvp-types/index').TourGroupMessageResponse[]>
-  onRecallMessage: (messageId: string) => Promise<import('@/lib/mvp-types/index').TourGroupMessageResponse[]>
-  onAddReaction: (messageId: string, reactionType: string) => Promise<import('@/lib/mvp-types/index').TourGroupMessageResponse[]>
-  onRemoveReaction: (messageId: string, reactionType: string) => Promise<import('@/lib/mvp-types/index').TourGroupMessageResponse[]>
-  onUpdateMuteState: (conversationId: string, muted: boolean) => Promise<import('@/lib/mvp-types/index').TourGroupConversationSummaryResponse>
-  onUpdateArchiveState: (conversationId: string, archived: boolean) => Promise<import('@/lib/mvp-types/index').TourGroupConversationSummaryResponse>
-}
-
-function syncGroupSummary(groups: TourGroupSummaryResponse[], details: TourGroupDetailsResponse): TourGroupSummaryResponse[] {
-  const nextGroups = groups.filter(group => group.groupId !== details.group.groupId)
-  return [details.group, ...nextGroups].sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-}
+import type { TourGroupsPanelCommonProps } from '../objects'
+import {
+  findNewestSelection,
+  getActiveMembership,
+  getMembershipTravelerIds,
+  getSelectionDialogOptions,
+  getSelectionDialogTravelers,
+  pickCreatedPlanItem,
+  pickInitialActivePlanItem,
+  syncGroupSummary,
+} from '../functions'
 
 export function TourGroupsPanel({
   currentLanguage,
@@ -144,7 +59,7 @@ export function TourGroupsPanel({
   onRemoveReaction,
   onUpdateMuteState,
   onUpdateArchiveState,
-}: TourGroupsPanelProps) {
+}: TourGroupsPanelCommonProps) {
   const [groupSummaries, setGroupSummaries] = useState<TourGroupSummaryResponse[]>([])
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [selectedGroupDetails, setSelectedGroupDetails] = useState<TourGroupDetailsResponse | null>(null)
@@ -175,40 +90,28 @@ export function TourGroupsPanel({
     })()
   }, [onLoadGroupDetails, selectedGroupId])
 
-  const activeMembership = useMemo(() => {
-    if (!selectedGroupDetails || !signedInUser) {
-      return null
-    }
-    return (
-      selectedGroupDetails.memberships.find(
-        membership => membership.userId === signedInUser.userId && membership.status === 'Active',
-      ) ?? null
-    )
-  }, [selectedGroupDetails, signedInUser])
+  const activeMembership = useMemo(() => getActiveMembership(selectedGroupDetails, signedInUser), [selectedGroupDetails, signedInUser])
 
-  const membershipTravelerIds = new Set(
-    activeMembership
-      ? selectedGroupDetails?.membershipTravelers
-          .filter(row => row.membershipId === activeMembership.membershipId && row.status === 'Active')
-          .map(row => row.travelerId) ?? []
-      : [],
+  const membershipTravelerIds = useMemo(
+    () => getMembershipTravelerIds(selectedGroupDetails, activeMembership?.membershipId),
+    [activeMembership?.membershipId, selectedGroupDetails],
   )
 
-  const selectionDialogOptions =
-    selectionPlanItem && selectedGroupDetails
-      ? selectedGroupDetails.planOptions.filter(option => option.planItemId === selectionPlanItem.planItemId)
-      : []
-  const selectionDialogTravelers = travelers.filter(traveler => membershipTravelerIds.has(traveler.travelerId))
+  const selectionDialogOptions = useMemo(
+    () => getSelectionDialogOptions(selectedGroupDetails, selectionPlanItem),
+    [selectedGroupDetails, selectionPlanItem],
+  )
+  const selectionDialogTravelers = useMemo(
+    () => getSelectionDialogTravelers(travelers, membershipTravelerIds),
+    [membershipTravelerIds, travelers],
+  )
 
   function applyUpdatedGroupDetails(details: TourGroupDetailsResponse) {
     setSelectedGroupDetails(details)
     setSelectedGroupId(details.group.groupId)
     setGroupSummaries(currentGroups => syncGroupSummary(currentGroups, details))
     setActiveOrganizerPlanItem(currentPlanItem => {
-      if (currentPlanItem) {
-        return details.planItems.find(planItem => planItem.planItemId === currentPlanItem.planItemId) ?? currentPlanItem
-      }
-      return [...details.planItems].sort((left, right) => left.sequenceNo - right.sequenceNo)[0] ?? null
+      return pickInitialActivePlanItem(details, currentPlanItem)
     })
   }
 
@@ -232,9 +135,7 @@ export function TourGroupsPanel({
 
     if (submitAfterCreate) {
       const membershipId = activeMembership?.membershipId
-      const newestSelection = [...createdDetails.selections]
-        .filter(selection => selection.planItemId === planItemId && selection.optionId === payload.optionId && selection.membershipId === membershipId)
-        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0]
+      const newestSelection = findNewestSelection(createdDetails, planItemId, payload.optionId, membershipId)
 
       if (newestSelection) {
         nextDetails = await onSubmitSelection(newestSelection.selectionId, { userId: signedInUser.userId })
@@ -313,11 +214,7 @@ export function TourGroupsPanel({
                   ...payload,
                 })
                 applyUpdatedGroupDetails(details)
-                const createdPlanItem =
-                  details.planItems
-                    .filter(planItem => !previousPlanItemIds.has(planItem.planItemId))
-                    .sort((left, right) => left.sequenceNo - right.sequenceNo)
-                    .at(-1) ?? null
+                const createdPlanItem = pickCreatedPlanItem(details, previousPlanItemIds)
                 if (createdPlanItem) {
                   setActiveOrganizerPlanItem(createdPlanItem)
                 }

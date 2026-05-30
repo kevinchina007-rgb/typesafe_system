@@ -1,8 +1,4 @@
-﻿type AttractionKeywordInputProps = {
-  value: string
-  translate: (translationKey: string) => string
-  onChange: (value: string) => void
-}
+import type { AttractionKeywordInputProps } from '../../objects'
 
 export function AttractionKeywordInput({ value, translate, onChange }: AttractionKeywordInputProps) {
   return (
@@ -12,3 +8,4 @@ export function AttractionKeywordInput({ value, translate, onChange }: Attractio
     </label>
   )
 }
+

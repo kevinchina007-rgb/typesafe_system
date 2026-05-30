@@ -1,36 +1,11 @@
 import type { ChangeEventHandler, ReactNode } from 'react'
 import { ArrowLeftRight } from 'lucide-react'
 
-import { flightCityOptions, type TripType } from '@/app/stores/models/flights'
-import type { FlightSearchSegment } from '@/app/stores/models/flights/flightTypes'
+import { flightCityOptions } from '@/app/stores/models/flights'
 import { TripTypeSelector } from '@/pages/FlightsPage/components/controls/TripTypeSelector'
 import { useMultiCitySearchRows } from '@/pages/FlightsPage/components/hooks/useMultiCitySearchRows'
 import { useRoundTripSearchRows } from '@/pages/FlightsPage/components/hooks/useRoundTripSearchRows'
-
-type FlightSearchCardProps = {
-  tripType: TripType
-  departureAirport: string
-  arrivalAirport: string
-  departureDate: string
-  returnDate: string
-  multiCitySegments: FlightSearchSegment[]
-  translate: (translationKey: string) => string
-  onTripTypeChange: (value: TripType) => void
-  onDepartureAirportChange: (value: string) => void
-  onArrivalAirportChange: (value: string) => void
-  onDepartureDateChange: (value: string) => void
-  onReturnDateChange: (value: string) => void
-  onMultiCitySegmentChange: (
-    segmentId: string,
-    key: 'departureAirport' | 'arrivalAirport' | 'departureDate' | 'arrivalDate',
-    value: string,
-  ) => void
-  onAddMultiCitySegment: () => void
-  onRemoveMultiCitySegment: (segmentId: string) => void
-  onSwapRoute: () => void
-  showSubmitButton: boolean
-  onSubmit: () => void
-}
+import type { FlightSearchCardProps } from '../../objects'
 
 export function FlightSearchCard({
   tripType,

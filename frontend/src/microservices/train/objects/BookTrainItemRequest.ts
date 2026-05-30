@@ -1,4 +1,5 @@
-﻿export type BookTrainItemRequest = {
+export type BookTrainItemRequest = {
+  userId: string
   trainId: string
   travelerIds: string[]
   fromStationCode: string
@@ -6,6 +7,7 @@
   seatClass: string
   seatPreference?: string | null
 }
+
 export const bookTrainItemRequestFromJson = (json: string): BookTrainItemRequest =>
   JSON.parse(json) as BookTrainItemRequest
 
