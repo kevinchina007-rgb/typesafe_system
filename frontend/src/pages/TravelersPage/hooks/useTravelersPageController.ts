@@ -4,7 +4,7 @@ import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import type { TravelerResponse } from '@/lib/mvp-types/index'
 import type { TravelersPageController, TravelersPageProps } from '../objects'
-import { buildTravelerPayload } from '../functions'
+import { buildTravelerPayload, createTravelerFormDraft } from '../functions'
 
 export function useTravelersPageController({
   currentLanguage,
@@ -65,6 +65,19 @@ export function useTravelersPageController({
         await travelMvpApiClient.updateTraveler(signedInUser.userId, travelerId, buildTravelerPayload(payload))
         await Promise.all([reloadCurrentUser(), reloadTravelers()])
       }, translate('travelers.saveEdit'), translate('notice.travelerSaved'))
+    },
+    onSetDefaultTraveler: async traveler => {
+      if (!signedInUser) {
+        throw new Error(translate('error.loginRequired'))
+      }
+      await runPageAction(async () => {
+        const payload = buildTravelerPayload({
+          ...createTravelerFormDraft(traveler),
+          isDefaultTraveler: true,
+        })
+        await travelMvpApiClient.updateTraveler(signedInUser.userId, traveler.travelerId, payload)
+        await Promise.all([reloadCurrentUser(), reloadTravelers()])
+      }, translate('travelers.primaryToggle'), translate('notice.travelerSaved'))
     },
     onDeleteTraveler: async travelerId => {
       if (!signedInUser) {

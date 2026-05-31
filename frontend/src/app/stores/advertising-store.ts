@@ -9,13 +9,15 @@ import type { AdvertisementSlotAssignmentRequest } from '@/microservices/adverti
 import type { CreateAdvertisementRequest } from '@/microservices/advertising/objects/CreateAdvertisementRequest'
 import type { UpdateAdvertisementRequest } from '@/microservices/advertising/objects/UpdateAdvertisementRequest'
 
-type AdvertisingPlacementKey = 'hotelBooking' | 'attractionBooking'
+type AdvertisingPlacementKey = 'flightBooking' | 'hotelBooking' | 'trainBooking' | 'attractionBooking'
 
 type AdvertisingState = {
   ownerAdvertisements: AdvertisementResponse[]
   pendingReviewAdvertisements: AdvertisementResponse[]
   reviewedAdvertisements: AdvertisementResponse[]
+  flightBookingAdvertisements: AdvertisementResponse[]
   hotelBookingAdvertisements: AdvertisementResponse[]
+  trainBookingAdvertisements: AdvertisementResponse[]
   attractionBookingAdvertisements: AdvertisementResponse[]
   isLoading: boolean
 }
@@ -94,6 +96,8 @@ function replaceAdvertisementSlot(
 }
 
 function toPlacementValue(placement: AdvertisingPlacementKey) {
+  if (placement === 'flightBooking') return 'FlightBookingPage'
+  if (placement === 'trainBooking') return 'TrainBookingPage'
   return placement === 'hotelBooking' ? 'HotelBookingPage' : 'AttractionBookingPage'
 }
 
@@ -109,7 +113,9 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   ownerAdvertisements: [],
   pendingReviewAdvertisements: [],
   reviewedAdvertisements: [],
+  flightBookingAdvertisements: [],
   hotelBookingAdvertisements: [],
+  trainBookingAdvertisements: [],
   attractionBookingAdvertisements: [],
   isLoading: false,
   loadOwnerAdvertisements: async () => {
@@ -152,8 +158,12 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   loadDeliverableAdvertisements: async placement => {
     const response = await travelMvpApiClient.listDeliverableAdvertisements(toPlacementValue(placement))
     const advertisements = sortAdvertisements(response.advertisements)
-    if (placement === 'hotelBooking') {
+    if (placement === 'flightBooking') {
+      set({ flightBookingAdvertisements: advertisements })
+    } else if (placement === 'hotelBooking') {
       set({ hotelBookingAdvertisements: advertisements })
+    } else if (placement === 'trainBooking') {
+      set({ trainBookingAdvertisements: advertisements })
     } else {
       set({ attractionBookingAdvertisements: advertisements })
     }
@@ -211,7 +221,9 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     set(state => ({
       ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
       reviewedAdvertisements: upsertAdvertisement(state.reviewedAdvertisements, advertisement),
+      flightBookingAdvertisements: removeAdvertisement(state.flightBookingAdvertisements, advertisementId),
       hotelBookingAdvertisements: removeAdvertisement(state.hotelBookingAdvertisements, advertisementId),
+      trainBookingAdvertisements: removeAdvertisement(state.trainBookingAdvertisements, advertisementId),
       attractionBookingAdvertisements: removeAdvertisement(state.attractionBookingAdvertisements, advertisementId),
     }))
     return advertisement
@@ -222,10 +234,18 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
       pendingReviewAdvertisements: removeAdvertisement(state.pendingReviewAdvertisements, advertisementId),
       reviewedAdvertisements: upsertAdvertisement(state.reviewedAdvertisements, advertisement),
       ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
+      flightBookingAdvertisements:
+        advertisement.placement === 'FlightBookingPage' && advertisementIsDeliverable(advertisement)
+          ? upsertAdvertisement(state.flightBookingAdvertisements, advertisement)
+          : state.flightBookingAdvertisements,
       hotelBookingAdvertisements:
         advertisement.placement === 'HotelBookingPage' && advertisementIsDeliverable(advertisement)
           ? upsertAdvertisement(state.hotelBookingAdvertisements, advertisement)
           : state.hotelBookingAdvertisements,
+      trainBookingAdvertisements:
+        advertisement.placement === 'TrainBookingPage' && advertisementIsDeliverable(advertisement)
+          ? upsertAdvertisement(state.trainBookingAdvertisements, advertisement)
+          : state.trainBookingAdvertisements,
       attractionBookingAdvertisements:
         advertisement.placement === 'AttractionBookingPage' && advertisementIsDeliverable(advertisement)
           ? upsertAdvertisement(state.attractionBookingAdvertisements, advertisement)
@@ -239,7 +259,9 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
       pendingReviewAdvertisements: removeAdvertisement(state.pendingReviewAdvertisements, advertisementId),
       reviewedAdvertisements: upsertAdvertisement(state.reviewedAdvertisements, advertisement),
       ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
+      flightBookingAdvertisements: removeAdvertisement(state.flightBookingAdvertisements, advertisementId),
       hotelBookingAdvertisements: removeAdvertisement(state.hotelBookingAdvertisements, advertisementId),
+      trainBookingAdvertisements: removeAdvertisement(state.trainBookingAdvertisements, advertisementId),
       attractionBookingAdvertisements: removeAdvertisement(state.attractionBookingAdvertisements, advertisementId),
     }))
     return advertisement
@@ -248,7 +270,13 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     const advertisement = await travelMvpApiClient.assignAdvertisementSlot(advertisementId, payload)
     set(state => {
       const deliverableTargetKey =
-        advertisement.placement === 'HotelBookingPage' ? 'hotelBookingAdvertisements' : 'attractionBookingAdvertisements'
+        advertisement.placement === 'FlightBookingPage'
+          ? 'flightBookingAdvertisements'
+          : advertisement.placement === 'HotelBookingPage'
+            ? 'hotelBookingAdvertisements'
+            : advertisement.placement === 'TrainBookingPage'
+              ? 'trainBookingAdvertisements'
+              : 'attractionBookingAdvertisements'
       const nextDeliverables = replaceAdvertisementSlot(
         state[deliverableTargetKey],
         advertisement,
@@ -258,8 +286,12 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
         ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
         pendingReviewAdvertisements: removeAdvertisement(state.pendingReviewAdvertisements, advertisementId),
         reviewedAdvertisements: replaceAdvertisementSlot(upsertAdvertisement(state.reviewedAdvertisements, advertisement), advertisement),
+        flightBookingAdvertisements:
+          deliverableTargetKey === 'flightBookingAdvertisements' ? nextDeliverables : state.flightBookingAdvertisements,
         hotelBookingAdvertisements:
           deliverableTargetKey === 'hotelBookingAdvertisements' ? nextDeliverables : state.hotelBookingAdvertisements,
+        trainBookingAdvertisements:
+          deliverableTargetKey === 'trainBookingAdvertisements' ? nextDeliverables : state.trainBookingAdvertisements,
         attractionBookingAdvertisements:
           deliverableTargetKey === 'attractionBookingAdvertisements' ? nextDeliverables : state.attractionBookingAdvertisements,
       }
@@ -269,9 +301,12 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
 }))
 
 export function useDeliverableAdvertisements(placement: AdvertisingPlacementKey) {
-  return useAdvertisingStore(state =>
-    placement === 'hotelBooking' ? state.hotelBookingAdvertisements : state.attractionBookingAdvertisements,
-  )
+  return useAdvertisingStore(state => {
+    if (placement === 'flightBooking') return state.flightBookingAdvertisements
+    if (placement === 'hotelBooking') return state.hotelBookingAdvertisements
+    if (placement === 'trainBooking') return state.trainBookingAdvertisements
+    return state.attractionBookingAdvertisements
+  })
 }
 
 export function getAdvertisingSnap() {

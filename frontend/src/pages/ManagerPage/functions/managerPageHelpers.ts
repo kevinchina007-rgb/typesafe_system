@@ -54,7 +54,34 @@ export const managerBusinessEntries: Array<{
     accentClassName: 'bg-emerald-500',
     imageSrc: '/images/home-hero-candidates/04_澶у北_鐟炲＋Oeschinensee_婀栧厜鎶婂北鑹茶交杞绘敹钘?jpg',
   },
-]
+].map((entry): {
+  managerType: Exclude<LoginManagerType, 'siteAdmin'>
+  titleKey: string
+  shortTitle: string
+  accentClassName: string
+  imageSrc: string
+} => {
+  if (entry.managerType === 'hotel') {
+    return {
+      ...entry,
+      managerType: entry.managerType as Exclude<LoginManagerType, 'siteAdmin'>,
+      imageSrc: '/images/home-hero-candidates/09_白昼都市_日本东京_在白昼的楼宇间重新出发.jpg',
+    }
+  }
+
+  if (entry.managerType === 'attraction') {
+    return {
+      ...entry,
+      managerType: entry.managerType as Exclude<LoginManagerType, 'siteAdmin'>,
+      imageSrc: '/images/home-hero-candidates/04_大山_瑞士Oeschinensee_湖光把山色轻轻收藏.jpg',
+    }
+  }
+
+  return {
+    ...entry,
+    managerType: entry.managerType as Exclude<LoginManagerType, 'siteAdmin'>,
+  }
+})
 
 export function getManagerEntryTitle(managerType: LoginManagerType, translate: (translationKey: string) => string) {
   if (managerType === 'airline') return translate('manager.type.airline')
@@ -124,7 +151,13 @@ export function toActiveSection(currentViewKey: AppViewKey) {
   if (currentViewKey === 'managerFeedback') return 'feedback'
   if (currentViewKey === 'managerAdvertising') return 'advertising'
   if (currentViewKey === 'siteAdminBlogAudit') return 'blogAudit'
-  if (currentViewKey === 'siteAdminAdvertisingReview') return 'advertisingReview'
+  if (
+    currentViewKey === 'siteAdminAdvertisingReview' ||
+    currentViewKey === 'siteAdminHotelAdvertisingReview' ||
+    currentViewKey === 'siteAdminTrainAdvertisingReview' ||
+    currentViewKey === 'siteAdminAttractionAdvertisingReview'
+  ) return 'advertisingReview'
+  if (currentViewKey === 'siteAdminFeedback') return 'siteAdminFeedback'
   return 'workspace'
 }
 

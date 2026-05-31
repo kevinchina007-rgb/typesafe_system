@@ -10,21 +10,23 @@ import java.util.UUID
 object AdvertisementPlainSql:
   private val selectAdvertisementsSql: String =
     """
-      select advertisement_id, owner_manager_id, owner_type, owner_display_name,
+      select advertisement_id, owner_manager_id, owner_type, owner_display_name, advertisement_kind,
              target_resource_type, target_resource_id, resource_summary_title, landing_target,
              placement, audience, title, subtitle, description, image_url, cta_label,
-             review_status, delivery_status, priority, slot_index, start_at, end_at, rejection_note, created_at, updated_at
+             review_status, delivery_status, priority, slot_index, creative_json, creative_width, creative_height,
+             start_at, end_at, rejection_note, created_at, updated_at
       from advertisements
     """
 
   private val insertAdvertisementSql: String =
     """
       insert into advertisements(
-        advertisement_id, owner_manager_id, owner_type, owner_display_name,
+        advertisement_id, owner_manager_id, owner_type, owner_display_name, advertisement_kind,
         target_resource_type, target_resource_id, resource_summary_title, landing_target,
         placement, audience, title, subtitle, description, image_url, cta_label,
-        review_status, delivery_status, priority, slot_index, start_at, end_at, rejection_note, created_at, updated_at
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        review_status, delivery_status, priority, slot_index, creative_json, creative_width, creative_height,
+        start_at, end_at, rejection_note, created_at, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
   private val updateAdvertisementSql: String =
@@ -32,7 +34,8 @@ object AdvertisementPlainSql:
       update advertisements
       set target_resource_type = ?, target_resource_id = ?, resource_summary_title = ?, landing_target = ?,
           placement = ?, audience = ?, title = ?, subtitle = ?, description = ?, image_url = ?, cta_label = ?,
-          review_status = ?, delivery_status = ?, priority = ?, slot_index = ?, start_at = ?, end_at = ?,
+          review_status = ?, delivery_status = ?, priority = ?, slot_index = ?, advertisement_kind = ?,
+          creative_json = ?, creative_width = ?, creative_height = ?, start_at = ?, end_at = ?,
           rejection_note = ?, updated_at = ?
       where advertisement_id = ? and owner_manager_id = ? and owner_type = ?
     """
@@ -269,26 +272,30 @@ object AdvertisementPlainSql:
     statement.setString(2, request.ownerManagerId)
     statement.setString(3, ownerType)
     statement.setString(4, request.ownerDisplayName)
-    statement.setString(5, targetResourceType)
-    statement.setString(6, request.targetResourceId)
-    statement.setString(7, resourceSummaryTitle)
-    statement.setString(8, landingTarget)
-    statement.setString(9, placement)
-    statement.setString(10, AdvertisementAudience.BookingUser.toString)
-    statement.setString(11, request.title)
-    statement.setString(12, request.subtitle)
-    statement.setString(13, request.description)
-    statement.setString(14, request.imageUrl.map(_.trim).filter(_.nonEmpty).orNull)
-    statement.setString(15, request.ctaLabel)
-    statement.setString(16, AdvertisementReviewStatus.Draft.toString)
-    statement.setString(17, AdvertisementDeliveryStatus.Scheduled.toString)
-    statement.setInt(18, request.priority)
-    statement.setObject(19, null)
-    statement.setTimestamp(20, Timestamp.from(Instant.parse(request.startAt)))
-    statement.setTimestamp(21, Timestamp.from(Instant.parse(request.endAt)))
-    statement.setString(22, null)
-    statement.setTimestamp(23, Timestamp.from(createdAt))
-    statement.setTimestamp(24, Timestamp.from(createdAt))
+    statement.setString(5, normalizeAdvertisementKind(request.advertisementKind))
+    statement.setString(6, targetResourceType)
+    statement.setString(7, request.targetResourceId)
+    statement.setString(8, resourceSummaryTitle)
+    statement.setString(9, landingTarget)
+    statement.setString(10, placement)
+    statement.setString(11, AdvertisementAudience.BookingUser.toString)
+    statement.setString(12, request.title)
+    statement.setString(13, request.subtitle)
+    statement.setString(14, request.description)
+    statement.setString(15, request.imageUrl.map(_.trim).filter(_.nonEmpty).orNull)
+    statement.setString(16, request.ctaLabel)
+    statement.setString(17, AdvertisementReviewStatus.Draft.toString)
+    statement.setString(18, AdvertisementDeliveryStatus.Scheduled.toString)
+    statement.setInt(19, request.priority)
+    statement.setObject(20, null)
+    statement.setString(21, request.creativeJson.map(_.trim).filter(_.nonEmpty).orNull)
+    statement.setInt(22, request.creativeWidth.getOrElse(960))
+    statement.setInt(23, request.creativeHeight.getOrElse(240))
+    statement.setTimestamp(24, Timestamp.from(Instant.parse(request.startAt)))
+    statement.setTimestamp(25, Timestamp.from(Instant.parse(request.endAt)))
+    statement.setString(26, null)
+    statement.setTimestamp(27, Timestamp.from(createdAt))
+    statement.setTimestamp(28, Timestamp.from(createdAt))
 
   private def bindUpdate(statement: PreparedStatement, request: UpdateAdvertisementRequest, updatedAt: Instant): Unit =
     val ownerType = AdvertisementOwnerType.fromText(request.ownerType).toString
@@ -311,13 +318,17 @@ object AdvertisementPlainSql:
     statement.setString(13, AdvertisementDeliveryStatus.Scheduled.toString)
     statement.setInt(14, request.priority)
     statement.setObject(15, null)
-    statement.setTimestamp(16, Timestamp.from(Instant.parse(request.startAt)))
-    statement.setTimestamp(17, Timestamp.from(Instant.parse(request.endAt)))
-    statement.setString(18, null)
-    statement.setTimestamp(19, Timestamp.from(updatedAt))
-    statement.setString(20, request.advertisementId)
-    statement.setString(21, request.ownerManagerId)
-    statement.setString(22, ownerType)
+    statement.setString(16, normalizeAdvertisementKind(request.advertisementKind))
+    statement.setString(17, request.creativeJson.map(_.trim).filter(_.nonEmpty).orNull)
+    statement.setInt(18, request.creativeWidth.getOrElse(960))
+    statement.setInt(19, request.creativeHeight.getOrElse(240))
+    statement.setTimestamp(20, Timestamp.from(Instant.parse(request.startAt)))
+    statement.setTimestamp(21, Timestamp.from(Instant.parse(request.endAt)))
+    statement.setString(22, null)
+    statement.setTimestamp(23, Timestamp.from(updatedAt))
+    statement.setString(24, request.advertisementId)
+    statement.setString(25, request.ownerManagerId)
+    statement.setString(26, ownerType)
 
   private def updateOwnerStatus(
       connection: Connection,
@@ -422,6 +433,7 @@ object AdvertisementPlainSql:
       ownerManagerId = resultSet.getString("owner_manager_id"),
       ownerType = resultSet.getString("owner_type"),
       ownerDisplayName = resultSet.getString("owner_display_name"),
+      advertisementKind = resultSet.getString("advertisement_kind"),
       targetResourceType = resultSet.getString("target_resource_type"),
       targetResourceId = resultSet.getString("target_resource_id"),
       resourceSummaryTitle = resultSet.getString("resource_summary_title"),
@@ -437,6 +449,9 @@ object AdvertisementPlainSql:
       deliveryStatus = resultSet.getString("delivery_status"),
       priority = resultSet.getInt("priority"),
       slotIndex = Option(resultSet.getObject("slot_index")).map(_.asInstanceOf[Number].intValue()),
+      creativeJson = Option(resultSet.getString("creative_json")),
+      creativeWidth = resultSet.getInt("creative_width"),
+      creativeHeight = resultSet.getInt("creative_height"),
       startAt = resultSet.getTimestamp("start_at").toInstant.toString,
       endAt = resultSet.getTimestamp("end_at").toInstant.toString,
       rejectionNote = Option(resultSet.getString("rejection_note")),
@@ -470,8 +485,15 @@ object AdvertisementPlainSql:
 
   private def defaultLandingTarget(targetResourceType: String, targetResourceId: String): String =
     targetResourceType match
+      case "Flight" => s"/flights/$targetResourceId"
       case "Attraction" => s"/attractions/$targetResourceId"
+      case "Train" => s"/trains/$targetResourceId"
       case _ => s"/hotels/$targetResourceId"
+
+  private def normalizeAdvertisementKind(value: Option[String]): String =
+    value.map(_.trim).filter(_.nonEmpty).map(_.toLowerCase) match
+      case Some("companypromotion") | Some("company") => "CompanyPromotion"
+      case _ => "ResourcePromotion"
 
   private def extensionFromFileName(fileName: String): String =
     fileName.lastIndexOf('.') match

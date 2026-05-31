@@ -301,6 +301,55 @@ export function useManagerPageController({
     ]
   }, [activeManagerType, currentManagerSession?.scopeId, currentManagerSession?.displayName, managedHotelPlannerResponses])
 
+  const flightAdvertisementOptions = useMemo(() => {
+    if (activeManagerType !== 'airline') {
+      return []
+    }
+
+    if (managedFlightPlannerResponses.length > 0) {
+      return managedFlightPlannerResponses.map(flight => ({
+        value: flight.flightId,
+        label: `${flight.flightNumber} ${flight.departureAirport}-${flight.arrivalAirport}`,
+      }))
+    }
+
+    if (!currentManagerSession) {
+      return []
+    }
+
+    return [
+      {
+        value: currentManagerSession.scopeId,
+        label: currentManagerSession.displayName,
+      },
+    ]
+  }, [activeManagerType, currentManagerSession?.scopeId, currentManagerSession?.displayName, managedFlightPlannerResponses])
+
+  const trainAdvertisementOptions = useMemo(() => {
+    if (activeManagerType !== 'train') {
+      return []
+    }
+
+    const managedTrains = currentTrainAdminSession?.managedTrains ?? []
+    if (managedTrains.length > 0) {
+      return managedTrains.map(train => ({
+        value: train.trainId,
+        label: train.trainNumber,
+      }))
+    }
+
+    if (!currentManagerSession) {
+      return []
+    }
+
+    return [
+      {
+        value: currentManagerSession.scopeId,
+        label: currentManagerSession.displayName,
+      },
+    ]
+  }, [activeManagerType, currentManagerSession?.scopeId, currentManagerSession?.displayName, currentTrainAdminSession?.managedTrains])
+
   const attractionAdvertisementOptions = useMemo(
     () =>
       (currentAttractionAdminSession?.managedAttractions ?? []).map(attraction => ({
@@ -310,8 +359,16 @@ export function useManagerPageController({
     [currentAttractionAdminSession?.managedAttractions],
   )
 
+  const advertisementResourceOptions = useMemo(() => {
+    if (activeManagerType === 'airline') return flightAdvertisementOptions
+    if (activeManagerType === 'hotel') return hotelAdvertisementOptions
+    if (activeManagerType === 'train') return trainAdvertisementOptions
+    if (activeManagerType === 'attraction') return attractionAdvertisementOptions
+    return []
+  }, [activeManagerType, attractionAdvertisementOptions, flightAdvertisementOptions, hotelAdvertisementOptions, trainAdvertisementOptions])
+
   const isSiteAdmin = activeManagerType === 'siteAdmin'
-  const canSubmitAdvertisements = activeManagerType === 'hotel' || activeManagerType === 'attraction'
+  const canSubmitAdvertisements = activeManagerType === 'airline' || activeManagerType === 'hotel' || activeManagerType === 'train' || activeManagerType === 'attraction'
   const shouldShowWorkspace =
     !isSiteAdmin &&
     (activeSection === 'workspace' || (activeManagerType === 'airline' && activeSection === 'feedback')) &&
@@ -319,7 +376,7 @@ export function useManagerPageController({
   const shouldShowFeedback = !isSiteAdmin && activeSection === 'feedback' && activeManagerType !== 'airline'
   const shouldShowAdvertising = !isSiteAdmin && activeSection === 'advertising' && canSubmitAdvertisements
   const shouldShowHotelProfile = !isSiteAdmin && currentViewKey === 'managerProfile' && activeManagerType === 'hotel'
-  const shouldShowSiteAdminPanel = isSiteAdmin && (activeSection === 'blogAudit' || activeSection === 'advertisingReview')
+  const shouldShowSiteAdminPanel = isSiteAdmin && (activeSection === 'blogAudit' || activeSection === 'advertisingReview' || activeSection === 'siteAdminFeedback')
 
   async function runAction(action: () => Promise<void>, actionLabel: string, successLabel?: string) {
     await runPageAction(action, actionLabel, successLabel ?? translate('notice.actionSuccess'))
@@ -642,6 +699,7 @@ export function useManagerPageController({
     managerRefundTaskResponses,
     hotelAdvertisementOptions,
     attractionAdvertisementOptions,
+    advertisementResourceOptions,
     isSiteAdmin,
     canSubmitAdvertisements,
     shouldShowWorkspace,

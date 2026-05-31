@@ -19,6 +19,7 @@ object RegisterSiteAdminPlanner extends ConnectionApiPlan[RegisterSiteAdminPlann
       email <- IO.fromEither(EmailAddress.create(input.email))
       _ <- validateRegisterSiteAdmin(input)
       passwordHash <- hashPasswordForLoginEmail(input.password, email)
+      _ <- SiteAdminManagerPlainSql.insertSiteAdminManager(connection, managerId, input.email, input.displayName, now)
       _ <- SiteAdminManagerPlainSql.insertSiteAdminCredential(connection, managerId, input.email, passwordHash, now)
     yield ManagerSessionPlannerResponse(managerId, "SiteAdmin", input.email, input.displayName, "Active", "site-admin", None, now.toString)
 

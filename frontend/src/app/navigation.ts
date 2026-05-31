@@ -19,6 +19,7 @@ export type TopNavKey =
   | 'managerAdvertising'
   | 'siteAdminBlogAudit'
   | 'siteAdminAdvertisingReview'
+  | 'siteAdminFeedback'
 
 export type NavSectionKey = 'workspace' | 'booking' | 'travelManagement' | 'community' | 'userCenter' | 'managerCenter'
 
@@ -66,6 +67,7 @@ export const topNavItems: TopNavItem[] = [
   { key: 'managerAdvertising', titleKey: 'topnav.managerAdvertising', icon: 'orders', defaultViewKey: 'managerAdvertising' },
   { key: 'siteAdminBlogAudit', titleKey: 'topnav.siteAdminBlogAudit', icon: 'blog', defaultViewKey: 'siteAdminBlogAudit' },
   { key: 'siteAdminAdvertisingReview', titleKey: 'topnav.siteAdminAdvertisingReview', icon: 'orders', defaultViewKey: 'siteAdminAdvertisingReview' },
+  { key: 'siteAdminFeedback', titleKey: 'topnav.customerFeedback', icon: 'review', defaultViewKey: 'siteAdminFeedback' },
 ]
 
 export const appRoutes: RouteMeta[] = [
@@ -237,6 +239,15 @@ export const appRoutes: RouteMeta[] = [
     supportsGuests: true,
   },
   {
+    viewKey: 'siteAdminLogin',
+    titleKey: 'manager.siteAdmin.login',
+    descriptionKey: 'manager.siteAdmin.title',
+    section: 'managerCenter',
+    topNav: 'managerCenter',
+    icon: 'account',
+    sortOrder: 11,
+  },
+  {
     viewKey: 'managerWorkspace',
     titleKey: 'nav.managerWorkspace',
     descriptionKey: 'manager.centerDescription',
@@ -301,12 +312,48 @@ export const appRoutes: RouteMeta[] = [
   },
   {
     viewKey: 'siteAdminAdvertisingReview',
-    titleKey: 'nav.siteAdminAdvertisingReview',
+    titleKey: 'nav.siteAdminFlightAdvertisingReview',
     descriptionKey: 'advertising.reviewDescription',
     section: 'managerCenter',
     topNav: 'siteAdminAdvertisingReview',
     icon: 'orders',
     sortOrder: 45,
+  },
+  {
+    viewKey: 'siteAdminHotelAdvertisingReview',
+    titleKey: 'nav.siteAdminHotelAdvertisingReview',
+    descriptionKey: 'advertising.reviewDescription',
+    section: 'managerCenter',
+    topNav: 'siteAdminAdvertisingReview',
+    icon: 'hotel',
+    sortOrder: 46,
+  },
+  {
+    viewKey: 'siteAdminTrainAdvertisingReview',
+    titleKey: 'nav.siteAdminTrainAdvertisingReview',
+    descriptionKey: 'advertising.reviewDescription',
+    section: 'managerCenter',
+    topNav: 'siteAdminAdvertisingReview',
+    icon: 'train',
+    sortOrder: 47,
+  },
+  {
+    viewKey: 'siteAdminAttractionAdvertisingReview',
+    titleKey: 'nav.siteAdminAttractionAdvertisingReview',
+    descriptionKey: 'advertising.reviewDescription',
+    section: 'managerCenter',
+    topNav: 'siteAdminAdvertisingReview',
+    icon: 'attraction',
+    sortOrder: 48,
+  },
+  {
+    viewKey: 'siteAdminFeedback',
+    titleKey: 'nav.customerFeedback',
+    descriptionKey: 'feedback.title',
+    section: 'managerCenter',
+    topNav: 'siteAdminFeedback',
+    icon: 'review',
+    sortOrder: 50,
   },
 ]
 
@@ -339,7 +386,24 @@ function isRouteVisible(params: {
   }
 
   if (isManagerOnlyMode) {
-    return route.viewKey === 'manager'
+    if (signedInManager.managerType === 'SiteAdmin') {
+      return (
+        route.viewKey === 'siteAdminBlogAudit' ||
+        route.viewKey === 'siteAdminAdvertisingReview' ||
+        route.viewKey === 'siteAdminHotelAdvertisingReview' ||
+        route.viewKey === 'siteAdminTrainAdvertisingReview' ||
+        route.viewKey === 'siteAdminAttractionAdvertisingReview' ||
+        route.viewKey === 'siteAdminFeedback'
+      )
+    }
+
+    return (
+      route.viewKey === 'managerWorkspace' ||
+      route.viewKey === 'managerCreateFlight' ||
+      route.viewKey === 'managerFlightManagement' ||
+      route.viewKey === 'managerFeedback' ||
+      route.viewKey === 'managerAdvertising'
+    )
   }
 
   return true
@@ -363,7 +427,8 @@ export function getVisibleTopNavItems(params: {
         item.key !== 'managerProfile' &&
         item.key !== 'managerAdvertising' &&
         item.key !== 'siteAdminBlogAudit' &&
-        item.key !== 'siteAdminAdvertisingReview'
+        item.key !== 'siteAdminAdvertisingReview' &&
+        item.key !== 'siteAdminFeedback'
       )
     }
 
@@ -371,7 +436,8 @@ export function getVisibleTopNavItems(params: {
       if (signedInManager.managerType === 'SiteAdmin') {
         return (
           item.key === 'siteAdminBlogAudit' ||
-          item.key === 'siteAdminAdvertisingReview'
+          item.key === 'siteAdminAdvertisingReview' ||
+          item.key === 'siteAdminFeedback'
         )
       }
 
@@ -380,18 +446,18 @@ export function getVisibleTopNavItems(params: {
           item.key === 'managerCreateFlight' ||
           item.key === 'managerFlightManagement' ||
           item.key === 'managerFeedback' ||
-          item.key === 'managerProfile'
+          item.key === 'managerAdvertising'
         )
       }
 
       if (signedInManager.managerType === 'Hotel' || signedInManager.managerType === 'Attraction') {
         if (signedInManager.managerType === 'Hotel') {
-          return item.key === 'managerWorkspace' || item.key === 'managerFeedback' || item.key === 'managerAdvertising' || item.key === 'managerProfile'
+          return item.key === 'managerWorkspace' || item.key === 'managerFeedback' || item.key === 'managerAdvertising'
         }
         return item.key === 'managerWorkspace' || item.key === 'managerFeedback' || item.key === 'managerAdvertising'
       }
 
-      return item.key === 'managerWorkspace' || item.key === 'managerFeedback'
+      return item.key === 'managerWorkspace' || item.key === 'managerFeedback' || item.key === 'managerAdvertising'
     }
 
     return (

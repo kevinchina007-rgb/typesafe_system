@@ -1,5 +1,3 @@
-begin;
-
 delete from train_seat_allocations
 where train_id in (
   select train_id
@@ -44,5 +42,3 @@ where train_id in (
 
 delete from trains
 where train_number like 'G%';
-
-commit;

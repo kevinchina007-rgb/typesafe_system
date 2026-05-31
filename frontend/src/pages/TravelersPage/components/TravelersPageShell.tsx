@@ -16,6 +16,7 @@ export function TravelersPageShell({ controller }: TravelersPageShellProps) {
         translate={controller.translate}
         onCreateTraveler={controller.onCreateTraveler}
         onUpdateTraveler={controller.onUpdateTraveler}
+        onSetDefaultTraveler={controller.onSetDefaultTraveler}
         onDeleteTraveler={controller.onDeleteTraveler}
         onReloadTravelers={controller.onReloadTravelers}
       />

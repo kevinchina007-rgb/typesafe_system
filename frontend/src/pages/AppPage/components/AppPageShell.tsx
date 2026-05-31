@@ -43,7 +43,7 @@ function renderCurrentPage(controller: ReturnType<typeof useAppPageController>) 
   if (normalizedViewKey === 'flightOrders' || normalizedViewKey === 'hotelOrders' || normalizedViewKey === 'trainOrders' || normalizedViewKey === 'attractionOrders') {
     return <BookingsPage currentLanguage={currentLanguage} orderCategory={normalizedViewKey} isSessionReady={hasResolvedPrincipalState} signedInUser={signedInUserResponse} translate={controller.translate} onNavigate={setAppView} onShowNotice={showNotice} />
   }
-  if (normalizedViewKey === 'manager') {
+  if (normalizedViewKey === 'manager' || normalizedViewKey === 'siteAdminLogin') {
     return <ManagerPage currentLanguage={currentLanguage} currentViewKey={normalizedViewKey} currentManagerSession={signedInManagerSessionResponse} signedInUser={signedInUserResponse} translate={controller.translate} onManagerSessionChange={controller.setCurrentManagerSession} onSignedInUserChange={controller.setCurrentUserSession} onNavigate={setAppView} onShowNotice={showNotice} />
   }
   if (
@@ -54,7 +54,11 @@ function renderCurrentPage(controller: ReturnType<typeof useAppPageController>) 
     normalizedViewKey === 'managerProfile' ||
     normalizedViewKey === 'managerAdvertising' ||
     normalizedViewKey === 'siteAdminBlogAudit' ||
-    normalizedViewKey === 'siteAdminAdvertisingReview'
+    normalizedViewKey === 'siteAdminAdvertisingReview' ||
+    normalizedViewKey === 'siteAdminHotelAdvertisingReview' ||
+    normalizedViewKey === 'siteAdminTrainAdvertisingReview' ||
+    normalizedViewKey === 'siteAdminAttractionAdvertisingReview' ||
+    normalizedViewKey === 'siteAdminFeedback'
   ) {
     return <ManagerPage currentLanguage={currentLanguage} currentViewKey={normalizedViewKey} currentManagerSession={signedInManagerSessionResponse} signedInUser={signedInUserResponse} translate={controller.translate} onManagerSessionChange={controller.setCurrentManagerSession} onSignedInUserChange={controller.setCurrentUserSession} onNavigate={setAppView} onShowNotice={showNotice} />
   }
@@ -74,6 +78,9 @@ export function AppPageShell({ controller }: { controller: AppPageController }) 
         submenuItemsByTopNav: controller.submenuItemsByTopNav,
         currentViewKey: controller.normalizedViewKey,
         onSelectView: controller.setAppView,
+        onLogoClick: () => {
+          controller.setAppView('siteAdminLogin')
+        },
         onUploadUserAvatar: async avatarFile => {
           await controller.runHeaderAccountAction(async () => {
             if (!controller.signedInUserResponse) throw new Error(controller.translate('error.loginRequired'))
@@ -104,11 +111,33 @@ export function AppPageShell({ controller }: { controller: AppPageController }) 
             await travelMvpApiClient.changeUserPassword(payload)
           }, controller.translate('notice.passwordChanged'))
         },
+        onChangeManagerPassword: async payload => {
+          await controller.runHeaderAccountAction(async () => {
+            await travelMvpApiClient.changeManagerPassword(payload)
+          }, controller.translate('notice.passwordChanged'))
+        },
+        onUpdateManagerProfile: async payload => {
+          await controller.runHeaderAccountAction(async () => {
+            if (!controller.signedInManagerSessionResponse) throw new Error(controller.translate('error.loginRequired'))
+            controller.setCurrentManagerSession({
+              ...controller.signedInManagerSessionResponse,
+              displayName: payload.displayName,
+              logoAssetPath: payload.logoAssetPath ?? controller.signedInManagerSessionResponse.logoAssetPath,
+            })
+          }, controller.translate('notice.actionSuccess'))
+        },
         onLogoutUser: () => {
           void controller.runHeaderAccountAction(async () => {
             await travelMvpApiClient.logoutUser()
             controller.setCurrentUserSession(null)
             controller.setAppView('overview')
+          }, controller.translate('notice.logoutSuccess'))
+        },
+        onLogoutManager: () => {
+          void controller.runHeaderAccountAction(async () => {
+            await travelMvpApiClient.logoutManagerAuth()
+            controller.setCurrentManagerSession(null)
+            controller.setAppView('manager')
           }, controller.translate('notice.logoutSuccess'))
         },
         onValidationError: message => {

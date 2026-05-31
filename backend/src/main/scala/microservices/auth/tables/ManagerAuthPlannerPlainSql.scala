@@ -17,10 +17,11 @@ object ManagerAuthPlannerPlainSql:
       val scopeColumn = scopeColumnFor(managerType)
       val logoSelect = if managerType == "Airline" then "a.logo_asset_path as logo_asset_path" else "null as logo_asset_path"
       val logoJoin = if managerType == "Airline" then "left join airlines a on a.airline_id = m.airline_id" else ""
+      val scopeSelect = if managerType == "SiteAdmin" then "'site-admin' as scope_id" else s"m.$scopeColumn as scope_id"
       PlainSqlSupport.withStatement(
         connection,
         s"""
-          select c.password_hash, m.manager_id, m.email, m.display_name, m.status, m.created_at, m.$scopeColumn as scope_id,
+          select c.password_hash, m.manager_id, m.email, m.display_name, m.status, m.created_at, $scopeSelect,
                  $logoSelect
           from manager_credentials c
           join $managerTable m on m.manager_id = c.manager_id
@@ -60,6 +61,7 @@ object ManagerAuthPlannerPlainSql:
             select manager_id, email, display_name, status, created_at from airline_managers
             union all select manager_id, email, display_name, status, created_at from hotel_managers
             union all select manager_id, email, display_name, status, created_at from attraction_managers
+            union all select manager_id, email, display_name, status, created_at from site_admin_managers
           ) m on m.manager_id = s.actor_id
           where s.session_id = ? and s.actor_type = ? and s.status = ? and s.expires_at > ?
         """
@@ -208,10 +210,12 @@ object ManagerAuthPlannerPlainSql:
     managerType match
       case "Hotel" => "hotel_managers"
       case "Attraction" => "attraction_managers"
+      case "SiteAdmin" => "site_admin_managers"
       case _ => "airline_managers"
 
   private def scopeColumnFor(managerType: String): String =
     managerType match
       case "Hotel" => "hotel_id"
       case "Attraction" => "manager_id"
+      case "SiteAdmin" => "manager_id"
       case _ => "airline_id"

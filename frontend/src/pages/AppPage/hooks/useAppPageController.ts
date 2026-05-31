@@ -164,7 +164,11 @@ export function useAppPageController() {
         normalizedViewKey === 'managerProfile' ||
         normalizedViewKey === 'managerAdvertising' ||
         normalizedViewKey === 'siteAdminBlogAudit' ||
-        normalizedViewKey === 'siteAdminAdvertisingReview')
+        normalizedViewKey === 'siteAdminAdvertisingReview' ||
+        normalizedViewKey === 'siteAdminHotelAdvertisingReview' ||
+        normalizedViewKey === 'siteAdminTrainAdvertisingReview' ||
+        normalizedViewKey === 'siteAdminAttractionAdvertisingReview' ||
+        normalizedViewKey === 'siteAdminFeedback')
     ) {
       setAppView('manager')
     }
@@ -181,18 +185,24 @@ export function useAppPageController() {
     if (!hasResolvedPrincipalState) return
     if (isManagerOnlyMode && normalizedViewKey !== 'manager') {
       if (signedInManagerSessionResponse?.managerType === 'SiteAdmin') {
-        if (normalizedViewKey !== 'siteAdminBlogAudit' && normalizedViewKey !== 'siteAdminAdvertisingReview') {
+        if (
+          normalizedViewKey !== 'siteAdminBlogAudit' &&
+          normalizedViewKey !== 'siteAdminAdvertisingReview' &&
+          normalizedViewKey !== 'siteAdminHotelAdvertisingReview' &&
+          normalizedViewKey !== 'siteAdminTrainAdvertisingReview' &&
+          normalizedViewKey !== 'siteAdminAttractionAdvertisingReview' &&
+          normalizedViewKey !== 'siteAdminFeedback'
+        ) {
           setAppView('siteAdminBlogAudit')
         }
       } else if (signedInManagerSessionResponse?.managerType === 'Airline') {
-        if (normalizedViewKey !== 'managerCreateFlight' && normalizedViewKey !== 'managerFlightManagement' && normalizedViewKey !== 'managerFeedback' && normalizedViewKey !== 'managerProfile') {
+        if (normalizedViewKey !== 'managerCreateFlight' && normalizedViewKey !== 'managerFlightManagement' && normalizedViewKey !== 'managerFeedback' && normalizedViewKey !== 'managerAdvertising') {
           setAppView('managerFlightManagement')
         }
       } else if (
         normalizedViewKey !== 'managerWorkspace' &&
         normalizedViewKey !== 'managerFeedback' &&
-        !(normalizedViewKey === 'managerProfile' && signedInManagerSessionResponse?.managerType === 'Hotel') &&
-        !(normalizedViewKey === 'managerAdvertising' && (signedInManagerSessionResponse?.managerType === 'Hotel' || signedInManagerSessionResponse?.managerType === 'Attraction'))
+        normalizedViewKey !== 'managerAdvertising'
       ) {
         setAppView('managerWorkspace')
       }
@@ -212,7 +222,11 @@ export function useAppPageController() {
         normalizedViewKey === 'managerProfile' ||
         normalizedViewKey === 'managerAdvertising' ||
         normalizedViewKey === 'siteAdminBlogAudit' ||
-        normalizedViewKey === 'siteAdminAdvertisingReview')
+        normalizedViewKey === 'siteAdminAdvertisingReview' ||
+        normalizedViewKey === 'siteAdminHotelAdvertisingReview' ||
+        normalizedViewKey === 'siteAdminTrainAdvertisingReview' ||
+        normalizedViewKey === 'siteAdminAttractionAdvertisingReview' ||
+        normalizedViewKey === 'siteAdminFeedback')
     ) {
       setAppView('overview')
     }

@@ -1,6 +1,7 @@
 export type UpdateAdvertisementRequest = {
   ownerManagerId: string
   ownerType: string
+  advertisementKind?: string | null
   title: string
   subtitle: string
   description: string
@@ -11,6 +12,9 @@ export type UpdateAdvertisementRequest = {
   resourceSummaryTitle?: string | null
   landingTarget?: string | null
   placement: string
+  creativeJson?: string | null
+  creativeWidth?: number | null
+  creativeHeight?: number | null
   priority: number
   startAt: string
   endAt: string

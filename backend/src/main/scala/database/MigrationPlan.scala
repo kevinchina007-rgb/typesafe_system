@@ -41,7 +41,13 @@ object MigrationPlan:
     loadMigrationStep(28, "short_blog_community", "V28__short_blog_community.sql"),
     loadMigrationStep(29, "short_blog_demo_population", "V29__short_blog_demo_population.sql"),
     loadMigrationStep(30, "blog_favorites", "V30__blog_favorites.sql"),
-    loadMigrationStep(31, "blog_profile_privacy", "V31__blog_profile_privacy.sql")
+    loadMigrationStep(31, "blog_profile_privacy", "V31__blog_profile_privacy.sql"),
+    loadMigrationStep(32, "train_booking_no_supplier_confirmation", "V32__train_booking_no_supplier_confirmation.sql"),
+    loadMigrationStep(33, "train_seat_label_chinese_high_speed", "V33__train_seat_label_chinese_high_speed.sql"),
+    loadMigrationStep(34, "train_reference_generated_batch_refresh", "V34__train_reference_generated_batch_refresh.sql"),
+    loadMigrationStep(35, "remove_legacy_g_train_seed_rows", "V35__remove_legacy_g_train_seed_rows.sql"),
+    loadMigrationStep(36, "site_admin_managers", "V36__site_admin_managers.sql"),
+    loadMigrationStep(37, "advertising_creative_layout", "V37__advertising_creative_layout.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

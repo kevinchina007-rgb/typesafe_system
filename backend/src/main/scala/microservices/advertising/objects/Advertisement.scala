@@ -20,13 +20,17 @@ final case class AdvertisementOwnerType(value: String):
   override def toString: String = value
 
 object AdvertisementOwnerType:
+  val AirlineManager: AdvertisementOwnerType = AdvertisementOwnerType("Airline")
   val HotelManager: AdvertisementOwnerType = AdvertisementOwnerType("HotelManager")
+  val TrainManager: AdvertisementOwnerType = AdvertisementOwnerType("Train")
   val AttractionManager: AdvertisementOwnerType = AdvertisementOwnerType("AttractionManager")
   given sourceEncoder: Encoder[AdvertisementOwnerType] = Encoder.encodeString.contramap(_.toString)
   given sourceDecoder: Decoder[AdvertisementOwnerType] = Decoder.decodeString.map(fromText)
 
   def fromText(value: String): AdvertisementOwnerType =
     value.trim.toLowerCase match
+      case "airline" | "airlinemanager" => AirlineManager
+      case "train" | "trainmanager" | "railway" | "railwaymanager" => TrainManager
       case "attractionmanager" | "attraction" => AttractionManager
       case _                                     => HotelManager
 
@@ -34,13 +38,17 @@ final case class AdvertisementTargetResourceType(value: String):
   override def toString: String = value
 
 object AdvertisementTargetResourceType:
+  val Flight: AdvertisementTargetResourceType = AdvertisementTargetResourceType("Flight")
   val Hotel: AdvertisementTargetResourceType = AdvertisementTargetResourceType("Hotel")
+  val Train: AdvertisementTargetResourceType = AdvertisementTargetResourceType("Train")
   val Attraction: AdvertisementTargetResourceType = AdvertisementTargetResourceType("Attraction")
   given sourceEncoder: Encoder[AdvertisementTargetResourceType] = Encoder.encodeString.contramap(_.toString)
   given sourceDecoder: Decoder[AdvertisementTargetResourceType] = Decoder.decodeString.map(fromText)
 
   def fromText(value: String): AdvertisementTargetResourceType =
     value.trim.toLowerCase match
+      case "flight"     => Flight
+      case "train"      => Train
       case "attraction" => Attraction
       case _             => Hotel
 
@@ -48,13 +56,17 @@ final case class AdvertisementPlacement(value: String):
   override def toString: String = value
 
 object AdvertisementPlacement:
+  val FlightBookingPage: AdvertisementPlacement = AdvertisementPlacement("FlightBookingPage")
   val HotelBookingPage: AdvertisementPlacement = AdvertisementPlacement("HotelBookingPage")
+  val TrainBookingPage: AdvertisementPlacement = AdvertisementPlacement("TrainBookingPage")
   val AttractionBookingPage: AdvertisementPlacement = AdvertisementPlacement("AttractionBookingPage")
   given sourceEncoder: Encoder[AdvertisementPlacement] = Encoder.encodeString.contramap(_.toString)
   given sourceDecoder: Decoder[AdvertisementPlacement] = Decoder.decodeString.map(fromText)
 
   def fromText(value: String): AdvertisementPlacement =
     value.trim.toLowerCase match
+      case "flightbookingpage"     => FlightBookingPage
+      case "trainbookingpage"      => TrainBookingPage
       case "attractionbookingpage" => AttractionBookingPage
       case _                        => HotelBookingPage
 
@@ -240,7 +252,9 @@ private def validatePlacementMatchesTarget(
     targetResourceType: AdvertisementTargetResourceType
 ): Either[AdvertisementError, Unit] =
   val isValid =
-    (placement == AdvertisementPlacement.HotelBookingPage && targetResourceType == AdvertisementTargetResourceType.Hotel) ||
+    (placement == AdvertisementPlacement.FlightBookingPage && targetResourceType == AdvertisementTargetResourceType.Flight) ||
+      (placement == AdvertisementPlacement.HotelBookingPage && targetResourceType == AdvertisementTargetResourceType.Hotel) ||
+      (placement == AdvertisementPlacement.TrainBookingPage && targetResourceType == AdvertisementTargetResourceType.Train) ||
       (placement == AdvertisementPlacement.AttractionBookingPage && targetResourceType == AdvertisementTargetResourceType.Attraction)
   Either.cond(isValid, (), AdvertisementError.AdvertisementPlacementDidNotMatchTarget(placement, targetResourceType))
 

@@ -41,13 +41,14 @@ export type TravelersPageController = {
   translate: (translationKey: string) => string
   onCreateTraveler: (payload: TravelerProfileInput) => Promise<void>
   onUpdateTraveler: (payload: TravelerFormDraft) => Promise<void>
+  onSetDefaultTraveler: (traveler: TravelerResponse) => Promise<void>
   onDeleteTraveler: (travelerId: string) => Promise<void>
   onReloadTravelers: () => Promise<void>
 }
 
 export type TravelerPanelProps = Pick<
   TravelersPageController,
-  'currentLanguage' | 'isBusy' | 'isGuestMode' | 'travelers' | 'translate' | 'onCreateTraveler' | 'onUpdateTraveler' | 'onDeleteTraveler' | 'onReloadTravelers'
+  'currentLanguage' | 'isBusy' | 'isGuestMode' | 'travelers' | 'translate' | 'onCreateTraveler' | 'onUpdateTraveler' | 'onSetDefaultTraveler' | 'onDeleteTraveler' | 'onReloadTravelers'
 >
 
 export type TravelersPageRegionKey = 'header' | 'form' | 'list'

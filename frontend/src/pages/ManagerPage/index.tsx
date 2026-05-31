@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+
 import type { LoginManagerType, ManagerPageProps } from './objects'
 
 import { AdvertisementSubmissionWorkspace, HotelProfileSection, ManagerAuthCard, ManagerEntryCard } from './components'
@@ -19,8 +21,7 @@ export function ManagerPage(props: ManagerPageProps) {
     currentAttractionAdminSession,
     managerTaskResponses,
     managerRefundTaskResponses,
-    hotelAdvertisementOptions,
-    attractionAdvertisementOptions,
+    advertisementResourceOptions,
     shouldShowWorkspace,
     shouldShowFeedback,
     shouldShowAdvertising,
@@ -41,6 +42,24 @@ export function ManagerPage(props: ManagerPageProps) {
     runAction,
   } = controller
   const { currentLanguage, currentViewKey, translate, onShowNotice, onNavigate, currentManagerSession } = props
+  const advertisingSubmitConfig =
+    activeManagerType === 'airline'
+      ? { placement: 'FlightBookingPage' as const, targetResourceType: 'Flight' as const, resourceView: 'flights' as const }
+      : activeManagerType === 'train'
+        ? { placement: 'TrainBookingPage' as const, targetResourceType: 'Train' as const, resourceView: 'trains' as const }
+        : activeManagerType === 'hotel'
+          ? { placement: 'HotelBookingPage' as const, targetResourceType: 'Hotel' as const, resourceView: 'hotels' as const }
+          : { placement: 'AttractionBookingPage' as const, targetResourceType: 'Attraction' as const, resourceView: 'attractions' as const }
+
+  useEffect(() => {
+    if (currentManagerSession || selectedEntryType) {
+      return
+    }
+
+    if (currentViewKey === 'siteAdminLogin') {
+      selectEntry('siteAdmin', 'login')
+    }
+  }, [currentManagerSession, currentViewKey, selectedEntryType, selectEntry])
 
   if (!currentManagerSession) {
     if (selectedEntryType) {
@@ -74,6 +93,9 @@ export function ManagerPage(props: ManagerPageProps) {
               }, translate('manager.login'))
             }}
             onBack={clearSelectedEntry}
+            hideBack={currentViewKey === 'siteAdminLogin'}
+            eyebrow={currentViewKey === 'siteAdminLogin' ? '未归类入口' : undefined}
+            allowRegister={currentViewKey === 'siteAdminLogin'}
             translate={translate}
           />
         </section>
@@ -345,14 +367,14 @@ export function ManagerPage(props: ManagerPageProps) {
 
       {shouldShowAdvertising ? (
         <AdvertisementSubmissionWorkspace
-          defaultPlacement={activeManagerType === 'hotel' ? 'HotelBookingPage' : 'AttractionBookingPage'}
-          defaultTargetResourceType={activeManagerType === 'hotel' ? 'Hotel' : 'Attraction'}
-          resourceOptions={activeManagerType === 'hotel' ? hotelAdvertisementOptions : attractionAdvertisementOptions}
+          defaultPlacement={advertisingSubmitConfig.placement}
+          defaultTargetResourceType={advertisingSubmitConfig.targetResourceType}
+          resourceOptions={advertisementResourceOptions}
           translate={translate}
           onShowNotice={(kind, title, description) => onShowNotice(kind, title, description)}
           onOpenResource={resourceId => {
             void resourceId
-            onNavigate(activeManagerType === 'hotel' ? 'hotels' : 'attractions')
+            onNavigate(advertisingSubmitConfig.resourceView)
           }}
         />
       ) : null}
@@ -360,7 +382,16 @@ export function ManagerPage(props: ManagerPageProps) {
       {shouldShowSiteAdminPanel ? (
         <SiteAdminPanel
           currentManagerSession={currentManagerSession}
-          section={activeSection === 'advertisingReview' ? 'advertisingReview' : 'blogAudit'}
+          section={activeSection === 'advertisingReview' ? 'advertisingReview' : activeSection === 'siteAdminFeedback' ? 'siteAdminFeedback' : 'blogAudit'}
+          advertisingModule={
+            currentViewKey === 'siteAdminHotelAdvertisingReview'
+              ? 'hotel'
+              : currentViewKey === 'siteAdminTrainAdvertisingReview'
+                ? 'train'
+                : currentViewKey === 'siteAdminAttractionAdvertisingReview'
+                  ? 'attraction'
+                  : 'flight'
+          }
           translate={translate}
         />
       ) : null}

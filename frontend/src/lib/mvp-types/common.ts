@@ -28,6 +28,7 @@ export type AppViewKey =
   | 'tourGroups'
   | 'bookings'
   | 'manager'
+  | 'siteAdminLogin'
   | 'managerWorkspace'
   | 'managerCreateFlight'
   | 'managerFlightManagement'
@@ -36,6 +37,10 @@ export type AppViewKey =
   | 'managerAdvertising'
   | 'siteAdminBlogAudit'
   | 'siteAdminAdvertisingReview'
+  | 'siteAdminHotelAdvertisingReview'
+  | 'siteAdminTrainAdvertisingReview'
+  | 'siteAdminAttractionAdvertisingReview'
+  | 'siteAdminFeedback'
   | 'trainAdmin'
   | 'attractionAdmin'
 

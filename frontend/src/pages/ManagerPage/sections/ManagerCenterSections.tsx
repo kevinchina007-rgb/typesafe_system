@@ -14,6 +14,7 @@ export type ManagerCenterSectionKey =
   | 'advertising'
   | 'blogAudit'
   | 'advertisingReview'
+  | 'siteAdminFeedback'
 
 type SupplierFeedbackSectionProps = {
   title: string
@@ -27,7 +28,8 @@ type SupplierFeedbackSectionProps = {
 }
 
 type SiteAdminPanelProps = {
-  section: 'blogAudit' | 'advertisingReview'
+  section: 'blogAudit' | 'advertisingReview' | 'siteAdminFeedback'
+  advertisingModule: 'flight' | 'hotel' | 'train' | 'attraction'
   currentManagerSession: CurrentManagerSessionResponse | null
   translate: (translationKey: string) => string
 }
@@ -102,10 +104,8 @@ export function SupplierFeedbackSection({
   )
 }
 
-export function SiteAdminPanel({ section, currentManagerSession, translate }: SiteAdminPanelProps) {
-  void currentManagerSession
-
-  const sectionCopyMap: Record<'blogAudit' | 'advertisingReview', { title: string; description: string }> = {
+export function SiteAdminPanel({ section, advertisingModule, currentManagerSession, translate }: SiteAdminPanelProps) {
+  const sectionCopyMap: Record<'blogAudit' | 'advertisingReview' | 'siteAdminFeedback', { title: string; description: string }> = {
     blogAudit: {
       title: translate('manager.siteAdmin.blogAudit'),
       description: translate('manager.siteAdmin.blogAuditDescription'),
@@ -113,6 +113,10 @@ export function SiteAdminPanel({ section, currentManagerSession, translate }: Si
     advertisingReview: {
       title: translate('advertising.reviewTitle'),
       description: translate('advertising.reviewDescription'),
+    },
+    siteAdminFeedback: {
+      title: translate('feedback.title'),
+      description: translate('manager.siteAdmin.userCoordinationDescription'),
     },
   }
 
@@ -131,10 +135,42 @@ export function SiteAdminPanel({ section, currentManagerSession, translate }: Si
 
       {section === 'blogAudit' ? (
         <SiteAdminBlogAuditWorkspace translate={translate} />
+      ) : section === 'advertisingReview' ? (
+        <AdvertisementReviewWorkspace businessModule={advertisingModule} translate={translate} />
       ) : (
-        <AdvertisementReviewWorkspace translate={translate} />
+        <SiteAdminFeedbackWorkspace currentManagerSession={currentManagerSession} translate={translate} />
       )}
     </section>
+  )
+}
+
+function SiteAdminFeedbackWorkspace({ currentManagerSession, translate }: { currentManagerSession: CurrentManagerSessionResponse | null; translate: (translationKey: string) => string }) {
+  const loadSiteAdminThreads = useFeedbackChatStore(state => state.loadSiteAdminThreads)
+  const siteAdminUserThreads = useFeedbackChatStore(state => state.siteAdminUserThreads)
+
+  useEffect(() => {
+    void loadSiteAdminThreads('user')
+  }, [loadSiteAdminThreads])
+
+  return (
+    <FeedbackConversationWorkspace
+      audience="SiteAdmin"
+      audienceDisplayName={currentManagerSession?.displayName ?? translate('manager.siteAdmin.title')}
+      emptyTitle={translate('feedback.title')}
+      emptyDescription={translate('feedback.siteAdminEmpty')}
+      threads={siteAdminUserThreads}
+      translate={translate}
+      unreadCountSelector={thread => thread.unreadBySiteAdmin}
+      onMarkRead={markFeedbackThreadRead}
+      onSendMessage={(threadId, body) =>
+        sendFeedbackMessage({
+          threadId,
+          senderRole: 'SiteAdmin',
+          senderDisplayName: currentManagerSession?.displayName ?? translate('manager.siteAdmin.title'),
+          body,
+        })
+      }
+    />
   )
 }
 

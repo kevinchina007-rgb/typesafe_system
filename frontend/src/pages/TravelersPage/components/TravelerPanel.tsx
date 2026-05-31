@@ -26,6 +26,7 @@ export function TravelerPanel({
   translate,
   onCreateTraveler,
   onUpdateTraveler,
+  onSetDefaultTraveler,
   onDeleteTraveler,
   onReloadTravelers,
 }: TravelerPanelProps) {
@@ -215,13 +216,6 @@ export function TravelerPanel({
           </div>
         </section>
 
-        {!isEditingTraveler ? (
-          <label className="flex items-center gap-2 text-base font-bold text-slate-700">
-            <input type="checkbox" checked={travelerFormDraft.isDefaultTraveler} onChange={event => updateTravelerFormDraft('isDefaultTraveler', event.target.checked)} disabled={isGuestMode || isBusy} />
-            {translate('travelers.primaryToggle')}
-          </label>
-        ) : null}
-
         <button className="inline-flex min-h-12 w-fit items-center justify-center bg-pink-500 px-8 py-3 text-base font-bold text-white transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isGuestMode || isBusy}>
           {isEditingTraveler ? translate('travelers.saveEdit') : translate('travelers.add')}
         </button>
@@ -241,11 +235,17 @@ export function TravelerPanel({
                   {traveler.serviceSummary?.requirementLabel ? <p className="m-0 text-sm text-slate-600">{traveler.serviceSummary.requirementLabel}</p> : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">
-                    {traveler.isDefault ? translate('travelers.primary') : deriveTravelerTypeLabelFromBirthDate(traveler.birthDate, currentLanguage)}
-                  </span>
                   {!isGuestMode ? (
                     <>
+                      {traveler.isDefault ? (
+                        <span className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-50 px-4 py-2 text-sm font-semibold text-pink-700">
+                          {translate('travelers.primary')}
+                        </span>
+                      ) : (
+                        <button type="button" className={buttonClassName} disabled={isBusy} onClick={() => void onSetDefaultTraveler(traveler)}>
+                          {translate('travelers.primaryToggle')}
+                        </button>
+                      )}
                       <button type="button" className={buttonClassName} onClick={() => beginEditTraveler(traveler)}>
                         {translate('travelers.edit')}
                       </button>

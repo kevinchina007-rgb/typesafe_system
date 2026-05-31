@@ -28,6 +28,9 @@ export function ManagerAuthCard({
   onRegister,
   onLogin,
   onBack,
+  hideBack = false,
+  eyebrow,
+  allowRegister = false,
   translate,
 }: ManagerAuthCardProps) {
   const [authMode, setAuthMode] = useState<ManagerAuthMode>(initialAuthMode)
@@ -47,27 +50,31 @@ export function ManagerAuthCard({
   return (
     <article className={managerAuthCardClassName}>
       <div className={managerHeaderClassName}>
-        <p className={managerEyebrowClassName}>{translate('nav.managerCenter')}</p>
+        <p className={managerEyebrowClassName}>{eyebrow ?? translate('nav.managerCenter')}</p>
         <h3 className={managerTitleClassName}>{title}</h3>
       </div>
 
       <div className={managerActionsClassName}>
-        <button type="button" className={managerSecondaryButtonClassName} onClick={onBack}>
-          {translate('manager.backToCategories')}
-        </button>
+        {!hideBack ? (
+          <button type="button" className={managerSecondaryButtonClassName} onClick={onBack}>
+            {translate('manager.backToCategories')}
+          </button>
+        ) : null}
+        {loginManagerType !== 'siteAdmin' || allowRegister ? (
+          <button
+            type="button"
+            className={authMode === 'register' ? managerAuthPrimaryButtonClassName : managerSecondaryButtonClassName}
+            onClick={() => {
+              setAuthMode('register')
+              resetManagerAuthForms()
+            }}
+          >
+            {translate('manager.createAccount')}
+          </button>
+        ) : null}
         <button
           type="button"
-          className={authMode === 'register' ? managerAuthPrimaryButtonClassName : managerSecondaryButtonClassName}
-          onClick={() => {
-            setAuthMode('register')
-            resetManagerAuthForms()
-          }}
-        >
-          {translate('manager.createAccount')}
-        </button>
-        <button
-          type="button"
-          className={authMode === 'login' ? managerAuthPrimaryButtonClassName : managerSecondaryButtonClassName}
+          className={authMode === 'login' || loginManagerType === 'siteAdmin' ? managerAuthPrimaryButtonClassName : managerSecondaryButtonClassName}
           onClick={() => {
             setAuthMode('login')
             resetManagerAuthForms()
@@ -77,7 +84,7 @@ export function ManagerAuthCard({
         </button>
       </div>
 
-      {authMode === 'register' ? (
+      {authMode === 'register' && (loginManagerType !== 'siteAdmin' || allowRegister) ? (
         <form
           ref={registerFormRef}
           className={managerFormGridClassName}

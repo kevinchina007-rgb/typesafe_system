@@ -5,6 +5,7 @@ export type AdvertisementResponse = {
   ownerManagerId: string
   ownerType: string
   ownerDisplayName: string
+  advertisementKind: string
   targetResourceType: string
   targetResourceId: string
   resourceSummaryTitle: string
@@ -20,6 +21,9 @@ export type AdvertisementResponse = {
   deliveryStatus: string
   priority: number
   slotIndex: number | null
+  creativeJson: string | null
+  creativeWidth: number
+  creativeHeight: number
   startAt: string
   endAt: string
   rejectionNote: string | null

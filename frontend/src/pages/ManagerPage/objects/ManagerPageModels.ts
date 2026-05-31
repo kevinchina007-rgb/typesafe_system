@@ -52,12 +52,15 @@ export type ManagerAuthCardProps = {
   onRegister: (payload: Record<string, string>) => Promise<void>
   onLogin: (payload: { managerType: LoginManagerType; email: string; password: string }) => Promise<void>
   onBack: () => void
+  hideBack?: boolean
+  eyebrow?: string
+  allowRegister?: boolean
   translate: (translationKey: string) => string
 }
 
 export type ManagerPageController = {
   activeManagerType: 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin' | null
-  activeSection: 'workspace' | 'feedback' | 'advertising' | 'blogAudit' | 'advertisingReview'
+  activeSection: 'workspace' | 'feedback' | 'advertising' | 'blogAudit' | 'advertisingReview' | 'siteAdminFeedback'
   selectedEntryType: LoginManagerType | null
   selectedEntryAuthMode: ManagerAuthMode
   currentSupplierManagerSession: ManagerSessionResponse | null
@@ -69,6 +72,7 @@ export type ManagerPageController = {
   managerRefundTaskResponses: ManagerRefundTaskResponse[]
   hotelAdvertisementOptions: Array<{ value: string; label: string }>
   attractionAdvertisementOptions: Array<{ value: string; label: string }>
+  advertisementResourceOptions: Array<{ value: string; label: string }>
   isSiteAdmin: boolean
   canSubmitAdvertisements: boolean
   shouldShowWorkspace: boolean

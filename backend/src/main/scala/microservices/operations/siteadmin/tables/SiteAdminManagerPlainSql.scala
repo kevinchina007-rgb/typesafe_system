@@ -10,6 +10,18 @@ import java.time.Instant
 import java.util.UUID
 
 object SiteAdminManagerPlainSql:
+  def insertSiteAdminManager(connection: Connection, managerId: String, email: String, displayName: String, now: Instant): IO[Unit] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(connection, "insert into site_admin_managers(manager_id, email, display_name, status, created_at) values (?, ?, ?, ?, ?)") { statement =>
+        statement.setString(1, managerId)
+        statement.setString(2, email.trim)
+        statement.setString(3, displayName.trim)
+        statement.setString(4, "Active")
+        statement.setTimestamp(5, Timestamp.from(now))
+        statement.executeUpdate()
+      }
+    }
+
   def insertSiteAdminCredential(connection: Connection, managerId: String, email: String, passwordHash: String, now: Instant): IO[Unit] =
     IO.blocking {
       PlainSqlSupport.withStatement(connection, "insert into manager_credentials(credential_id, manager_type, manager_id, login_email, password_hash, status, created_at, updated_at, password_updated_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
