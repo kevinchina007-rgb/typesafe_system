@@ -15,6 +15,7 @@ import {
   isOrderPaid,
   isOrderPayable,
   isOrderRefunded,
+  isFlightOrderLineItem,
 } from '@/pages/BookingsPage/functions'
 
 export function FlightOrderCard({
@@ -40,7 +41,8 @@ export function FlightOrderCard({
   onOpenOrderCancellationFeedback: (orderId: string) => Promise<void>
   onOpenPayment: (order: OrderResponse) => void
 }) {
-  const flightItem = (order.orderLineItems ?? []).find(orderLineItem => orderLineItem.flightDetails || hasFlightSnapshot(orderLineItem.summaryLabel))
+  const flightLineItems = (order.orderLineItems ?? []).filter(orderLineItem => isFlightOrderLineItem(orderLineItem) || hasFlightSnapshot(orderLineItem.summaryLabel))
+  const flightItem = flightLineItems[0] ?? null
   const displayFlight = flightItem ? buildFlightOrderDisplay(flightItem) : null
   const existingReview = flightItem ? findOrderItemReview(reviews, flightItem.orderItemId) : null
   const isPayable = isOrderPayable(order.status)
@@ -110,7 +112,7 @@ export function FlightOrderCard({
         </div>
 
         <ul className="grid gap-3 border-t border-slate-200 pt-4">
-          {(order.orderLineItems ?? []).map(orderLineItem => {
+          {flightLineItems.map(orderLineItem => {
             const existingReview = findOrderItemReview(reviews, orderLineItem.orderItemId)
             return (
               <li key={orderLineItem.orderItemId} className="grid gap-3">

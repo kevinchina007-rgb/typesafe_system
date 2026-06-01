@@ -28,7 +28,7 @@ def moduleSourceDir(moduleName: String) =
   backendSourceRoot / microserviceSourceDirs.getOrElse(moduleName, moduleName)
 
 lazy val commonSettings = Seq(
-  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
+  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Xmax-inlines", "64")
 )
 
 lazy val catsCoreDependency =

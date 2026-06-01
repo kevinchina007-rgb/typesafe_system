@@ -3,8 +3,12 @@ package com.typesafe.travel.train.domain
 import cats.effect.IO
 import com.typesafe.travel.auth.domain.CredentialStatus
 import com.typesafe.travel.shared.kernel.*
+import com.typesafe.travel.persistence.ReferenceDataSeeder
+import com.typesafe.travel.persistence.codecs.DatabaseCodecs
 import com.typesafe.travel.persistence.order.TrainSeatAllocationInsertRow
 import com.typesafe.travel.persistence.PlainSqlSupport
+import com.typesafe.travel.traveler.domain.TravelerPlannerPlainSql
+import doobie.Transactor
 import io.circe.Json
 
 import java.sql.{Connection, ResultSet, Timestamp}
@@ -12,36 +16,92 @@ import java.time.{Duration, Instant, LocalDate}
 import java.util.UUID
 
 object TrainPlannerPlainSql:
-  def suggestions(connection: Connection, input: TrainSuggestionPlannerRequest): IO[TrainSuggestionListPlannerResponse] =
-    IO.blocking {
-      val q = s"%${input.q.trim.toLowerCase}%"
-      PlainSqlSupport.withStatement(
-        connection,
-        """
-          select distinct t.train_id, t.train_number, s1.station_name as from_station, s2.station_name as to_station
-          from trains t
-          join train_stops s1 on s1.train_id = t.train_id
-          join train_stops s2 on s2.train_id = t.train_id and s2.sequence_no > s1.sequence_no
-          where lower(t.train_number) like ? or lower(s1.station_name) like ? or lower(s2.station_name) like ?
-          order by t.train_number
-          limit 10
-        """
-      ) { statement =>
-        statement.setString(1, q)
-        statement.setString(2, q)
-        statement.setString(3, q)
-        TrainSuggestionListPlannerResponse(
-          PlainSqlSupport.queryList(statement) { row =>
-            TrainSuggestionPlannerResponse(
-              resourceType = "train",
-              value = row.getString("train_id"),
-              title = row.getString("train_number"),
-              subtitle = s"${row.getString("from_station")} -> ${row.getString("to_station")}"
-            )
-          }
-        )
-      }
+  private val stationQueryAliases: Map[String, String] = Map(
+    "\u5317\u4eac\u5357" -> "BJS",
+    "\u5929\u6d25\u5357" -> "TJS",
+    "\u6d4e\u5357\u897f" -> "JNW",
+    "\u5357\u4eac\u5357" -> "NJS",
+    "\u4e0a\u6d77\u8679\u6865" -> "SHH",
+    "\u6df1\u5733\u5317" -> "SZN",
+    "\u676d\u5dde\u4e1c" -> "HZD",
+    "\u5b81\u6ce2" -> "NGB",
+    "\u6e29\u5dde\u5357" -> "WZS",
+    "\u798f\u5dde\u5357" -> "FZN",
+    "\u53a6\u95e8\u5317" -> "XMN",
+    "\u6210\u90fd\u4e1c" -> "CDD",
+    "\u91cd\u5e86\u5317" -> "CQB",
+    "\u6b66\u6c49" -> "WUH",
+    "\u957f\u6c99\u5357" -> "CSN",
+    "\u90d1\u5dde\u4e1c" -> "ZZD",
+    "\u5408\u80a5\u5357" -> "HFN"
+  )
+  private val stationQueryReverseAliases: Map[String, String] =
+    stationQueryAliases.map(_.swap)
+
+  private def normalizeTrainStationQuery(query: String): String =
+    val trimmed = query.trim
+    if trimmed.isEmpty then trimmed
+    else stationQueryAliases.getOrElse(trimmed, trimmed)
+
+  private def stationQueryCandidates(query: String): Vector[String] =
+    val trimmed = query.trim
+    if trimmed.isEmpty then Vector.empty
+    else
+      (Vector(trimmed) ++ stationQueryAliases.get(trimmed) ++ stationQueryReverseAliases.get(trimmed)).distinct
+
+  private def stopMatchesQuery(stop: TrainStopPlannerResponse, query: String): Boolean =
+    val stopCode = stop.stationCode.trim.toLowerCase
+    val stopName = stop.stationName.trim.toLowerCase
+    stationQueryCandidates(query).exists { candidate =>
+      val normalizedCandidate = candidate.trim.toLowerCase
+      normalizedCandidate.nonEmpty && (stopCode.contains(normalizedCandidate) || stopName.contains(normalizedCandidate))
     }
+
+  private def trainMatchesSearch(train: TrainPlannerResponse, input: SearchTrainsPlannerRequest): Boolean =
+    val fromOk = input.fromStation.forall(query => train.stops.exists(stop => stopMatchesQuery(stop, query)))
+    if !fromOk then false
+    else
+      val toOk = input.toStation.forall(query => train.stops.exists(stop => stopMatchesQuery(stop, query)))
+      if !toOk then false
+      else
+        (input.fromStation, input.toStation) match
+          case (Some(fromQuery), Some(toQuery)) =>
+            val fromIndex = train.stops.indexWhere(stop => stopMatchesQuery(stop, fromQuery))
+            val toIndex = train.stops.indexWhere(stop => stopMatchesQuery(stop, toQuery))
+            fromIndex >= 0 && toIndex >= 0 && fromIndex < toIndex
+          case _ => true
+
+  def suggestions(connection: Connection, input: TrainSuggestionPlannerRequest): IO[TrainSuggestionListPlannerResponse] =
+    ensureReferenceData(connection) *>
+      IO.blocking {
+        val q = s"%${normalizeTrainStationQuery(input.q).toLowerCase}%"
+        PlainSqlSupport.withStatement(
+          connection,
+          """
+            select distinct t.train_id, t.train_number, s1.station_name as from_station, s2.station_name as to_station
+            from trains t
+            join train_stops s1 on s1.train_id = t.train_id
+            join train_stops s2 on s2.train_id = t.train_id and s2.sequence_no > s1.sequence_no
+            where lower(t.train_number) like ? or lower(s1.station_name) like ? or lower(s2.station_name) like ?
+            order by t.train_number
+            limit 10
+          """
+        ) { statement =>
+          statement.setString(1, q)
+          statement.setString(2, q)
+          statement.setString(3, q)
+          TrainSuggestionListPlannerResponse(
+            PlainSqlSupport.queryList(statement) { row =>
+              TrainSuggestionPlannerResponse(
+                resourceType = "train",
+                value = row.getString("train_id"),
+                title = row.getString("train_number"),
+                subtitle = s"${row.getString("from_station")} -> ${row.getString("to_station")}"
+              )
+            }
+          )
+        }
+      }
 
   def registerManager(connection: Connection, input: RegisterRailwayManagerPlannerRequest, passwordHash: String, now: Instant): IO[TrainAdminSessionPlannerResponse] =
     IO.blocking {
@@ -77,27 +137,16 @@ object TrainPlannerPlainSql:
     }
 
   def listManaged(connection: Connection, input: ListManagedTrainsPlannerRequest, now: Instant): IO[TrainListPlannerResponse] =
-    queryTrains(connection, "where t.manager_id = ? order by t.sale_starts_at, t.train_id", List(input.managerId), now).map(TrainListPlannerResponse.apply)
+    ensureReferenceData(connection) *>
+      queryTrains(connection, "where t.manager_id = ? order by t.sale_starts_at, t.train_id", List(input.managerId), now).map(TrainListPlannerResponse.apply)
 
   def search(connection: Connection, input: SearchTrainsPlannerRequest, now: Instant): IO[TrainListPlannerResponse] =
-    val baseSql =
-      """
-        where (? is null or exists (select 1 from train_stops fs where fs.train_id = t.train_id and (lower(fs.station_name) like lower(?) or lower(fs.station_code) like lower(?))))
-          and (? is null or exists (select 1 from train_stops ts where ts.train_id = t.train_id and (lower(ts.station_name) like lower(?) or lower(ts.station_code) like lower(?))))
-          and (? is null or exists (select 1 from train_stops ds where ds.train_id = t.train_id and cast(coalesce(ds.departure_time, ds.arrival_time) as date) = cast(? as date)))
-        order by t.sale_starts_at, t.train_id
-      """
-    val fromValue = input.fromStation.map(v => s"%${v.trim}%")
-    val toValue = input.toStation.map(v => s"%${v.trim}%")
-    queryTrains(
-      connection,
-      baseSql,
-      List(fromValue.orNull, fromValue.orNull, fromValue.orNull, toValue.orNull, toValue.orNull, toValue.orNull, input.date.orNull, input.date.orNull),
-      now
-    ).map(TrainListPlannerResponse.apply)
+    ensureReferenceData(connection) *>
+      searchTrains(connection, input, now)
 
   def get(connection: Connection, input: TrainByIdPlannerRequest, now: Instant): IO[TrainPlannerResponse] =
-    queryTrains(connection, "where t.train_id = ?", List(input.trainId), now).map(_.headOption.getOrElse(throw new IllegalArgumentException(s"Train '${input.trainId}' was not found")))
+    ensureReferenceData(connection) *>
+      queryTrains(connection, "where t.train_id = ?", List(input.trainId), now).map(_.headOption.getOrElse(throw new IllegalArgumentException(s"Train '${input.trainId}' was not found")))
 
   def create(connection: Connection, input: CreateTrainJourneyPlannerRequest, now: Instant): IO[TrainPlannerResponse] =
     IO.blocking {
@@ -164,9 +213,18 @@ object TrainPlannerPlainSql:
     }
 
   def bookItem(connection: Connection, input: BookTrainItemPlannerRequest, now: Instant): IO[BookTrainItemPlannerResponse] =
-    IO.blocking {
+    ensureReferenceData(connection) *>
+      TravelerPlannerPlainSql.listByOwner(connection, UserId(input.userId)).flatMap { travelers =>
+      IO.blocking {
       val train = readTrain(connection, input.trainId, now)
       val trainJourney = toTrainJourney(train)
+      val currentJourneyWindow = trainJourneyWindow(trainJourney).fold(error => throw new IllegalArgumentException(error.message), identity)
+      val resolvedTravelerIds =
+        if input.travelerIds.nonEmpty then input.travelerIds
+        else
+          travelers.filter(_.isDefaultTravelerProfile).map(_.travelerId.value)
+      if resolvedTravelerIds.isEmpty then
+        throw new IllegalArgumentException("train_traveler_required")
       val orderItemId = s"order-item-${UUID.randomUUID().toString.take(12)}"
       val sortIndex = nextOrderItemSortIndex(connection, input.orderId)
       val fromStop = stopIdByStationCode(connection, input.trainId, input.fromStationCode)
@@ -175,7 +233,7 @@ object TrainPlannerPlainSql:
       val pricing = resolveTrainRoutePricing(connection, input.trainId, fromStop, toStop, input.seatClass)
         .getOrElse(throw new IllegalArgumentException(s"Train '${input.trainId}' is missing a route price from '${input.fromStationCode}' to '${input.toStationCode}' for seat '${input.seatClass}'"))
       val unitPrice = pricing.amount
-      val travelerCount = input.travelerIds.size.max(1)
+      val travelerCount = resolvedTravelerIds.size.max(1)
       val amount = unitPrice * BigDecimal(travelerCount)
       val fromStopPlan = trainJourney.stops.find(_.stationCode.value == input.fromStationCode).getOrElse(
         throw new IllegalArgumentException(s"Train '${input.trainId}' does not contain station '${input.fromStationCode}'")
@@ -186,7 +244,8 @@ object TrainPlannerPlainSql:
       val seatInventoryPlan = trainJourney.seatInventories.find(_.seatClass.value == input.seatClass).getOrElse(
         throw new IllegalArgumentException(s"Train '${input.trainId}' does not have seat inventory '${input.seatClass}'")
       )
-      val travelerIds = input.travelerIds.map(TravelerId.apply).toVector
+      val travelerIds = resolvedTravelerIds.map(TravelerId.apply).toVector
+      ensureTrainTravelerAvailability(connection, travelerIds, currentJourneyWindow, trainJourney)
       val seatAllocationPlan =
         allocateTrainJourneySeats(
           trainJourney,
@@ -215,7 +274,15 @@ object TrainPlannerPlainSql:
         statement.setString(6, "CNY")
         statement.setString(
           7,
-          buildTrainBookingSnapshotJson(train, input, unitPrice, amount, pricing.currency, seatAllocationPlan.assignments)
+          buildTrainBookingSnapshotJson(
+            train,
+            input,
+            unitPrice,
+            amount,
+            pricing.currency,
+            resolvedTravelerIds.toVector,
+            seatAllocationPlan.assignments
+          )
         )
         statement.setInt(8, sortIndex)
         statement.setString(9, "NotSubmitted")
@@ -224,7 +291,7 @@ object TrainPlannerPlainSql:
         statement.setString(12, toStop)
         statement.setString(13, inventoryId)
         statement.setString(14, input.seatClass)
-        statement.setString(15, input.travelerIds.mkString("[\"", "\",\"", "\"]"))
+        statement.setString(15, resolvedTravelerIds.mkString("[\"", "\",\"", "\"]"))
         statement.setBigDecimal(16, unitPrice.bigDecimal)
         statement.setString(17, pricing.currency)
         statement.executeUpdate()
@@ -251,9 +318,41 @@ object TrainPlannerPlainSql:
       }
       updateOrderTotals(connection, input.orderId)
       BookTrainItemPlannerResponse(input.orderId, orderItemId)
+      }
     }
 
   private val selectTrainSql = "select t.train_id, t.manager_id, t.train_number, t.sale_starts_at, t.status, t.created_at from trains t "
+
+  private def searchTrains(connection: Connection, input: SearchTrainsPlannerRequest, now: Instant): IO[TrainListPlannerResponse] =
+    val baseSql =
+      """
+        where (? is null or exists (select 1 from train_stops ds where ds.train_id = t.train_id and cast(coalesce(ds.departure_time, ds.arrival_time) as date) = cast(? as date)))
+        order by t.sale_starts_at, t.train_id
+      """
+    queryTrains(
+      connection,
+      baseSql,
+      List(input.date.orNull, input.date.orNull),
+      now
+    ).flatMap { response =>
+      val filteredResponse = response.filter(train => trainMatchesSearch(train, input))
+      if filteredResponse.nonEmpty then IO.pure(TrainListPlannerResponse(filteredResponse))
+      else
+        ensureReferenceData(connection) *>
+          queryTrains(
+            connection,
+            baseSql,
+            List(input.date.orNull, input.date.orNull),
+            now
+          ).map(response => TrainListPlannerResponse(response.filter(train => trainMatchesSearch(train, input))))
+    }
+
+  private def ensureReferenceData(connection: Connection): IO[Unit] =
+    IO.blocking(
+      ReferenceDataSeeder.seedIfNeeded(
+        Transactor.fromConnection[IO](connection, None)
+      )
+    )
 
   private def queryTrains(connection: Connection, whereSql: String, values: List[String], now: Instant): IO[List[TrainPlannerResponse]] =
     IO.blocking {
@@ -393,14 +492,17 @@ object TrainPlannerPlainSql:
       unitPrice: BigDecimal,
       totalPrice: BigDecimal,
       currency: String,
+      travelerIds: Vector[String],
       seatAssignments: Vector[TrainTravelerSeatAssignment]
   ): String =
     val fromStop = train.stops.find(_.stationCode == input.fromStationCode)
     val toStop = train.stops.find(_.stationCode == input.toStationCode)
+    val fromStopId = fromStop.map(_.stopId).getOrElse(input.fromStationCode)
+    val toStopId = toStop.map(_.stopId).getOrElse(input.toStationCode)
+    val fromStopSequenceNo = fromStop.map(_.sequenceNo)
+    val toStopSequenceNo = toStop.map(_.sequenceNo)
     val departureTime = fromStop.flatMap(_.departureTime).orElse(fromStop.flatMap(_.arrivalTime)).getOrElse("")
     val arrivalTime = toStop.flatMap(_.arrivalTime).orElse(toStop.flatMap(_.departureTime)).getOrElse("")
-    val requestedSeatPreference = input.seatPreference.map(preference => s"\"${preference.trim}\"").getOrElse("null")
-    val travelerIds = input.travelerIds.mkString("[\"", "\",\"", "\"]")
     val seatAssignmentsJson =
       Json.fromValues(
         seatAssignments.map { assignment =>
@@ -413,8 +515,36 @@ object TrainPlannerPlainSql:
             "seatPositionType" -> Json.fromString(assignment.seatPositionType.toString)
           )
         }
-      ).noSpaces
-    s"""{"trainId":"${input.trainId}","trainNumber":"${train.trainNumber}","seatClass":"${input.seatClass}","departureStationCode":"${input.fromStationCode}","departureStation":"${fromStop.map(_.stationName).getOrElse(input.fromStationCode)}","arrivalStationCode":"${input.toStationCode}","arrivalStation":"${toStop.map(_.stationName).getOrElse(input.toStationCode)}","departureTime":${if departureTime.nonEmpty then s"\"$departureTime\"" else "null"},"arrivalTime":${if arrivalTime.nonEmpty then s"\"$arrivalTime\"" else "null"},"requestedSeatPreference":$requestedSeatPreference,"seatAssignments":$seatAssignmentsJson,"travelerIds":$travelerIds,"unitPrice":"$unitPrice","currency":"$currency","totalPrice":"$totalPrice"}"""
+      )
+
+    Json
+      .obj(
+        "trainId" -> Json.fromString(input.trainId),
+        "trainNumber" -> Json.fromString(train.trainNumber),
+        "fromStopId" -> Json.fromString(fromStopId),
+        "fromStopSequenceNo" -> fromStopSequenceNo.fold(Json.Null)(Json.fromInt),
+        "fromStationCode" -> Json.fromString(input.fromStationCode),
+        "fromStationName" -> Json.fromString(fromStop.map(_.stationName).getOrElse(input.fromStationCode)),
+        "toStopId" -> Json.fromString(toStopId),
+        "toStopSequenceNo" -> toStopSequenceNo.fold(Json.Null)(Json.fromInt),
+        "toStationCode" -> Json.fromString(input.toStationCode),
+        "toStationName" -> Json.fromString(toStop.map(_.stationName).getOrElse(input.toStationCode)),
+        "departureTime" -> (if departureTime.nonEmpty then Json.fromString(departureTime) else Json.Null),
+        "arrivalTime" -> (if arrivalTime.nonEmpty then Json.fromString(arrivalTime) else Json.Null),
+        "seatInventoryId" -> Json.fromString(train.seatInventories.find(_.seatClass == input.seatClass).map(_.inventoryId).getOrElse(input.seatClass)),
+        "seatClass" -> Json.fromString(input.seatClass),
+        "requestedSeatPreference" -> input.seatPreference.map(preference => Json.fromString(preference.trim)).getOrElse(Json.Null),
+        "seatAssignments" -> seatAssignmentsJson,
+        "travelerIds" -> Json.fromValues(travelerIds.map(Json.fromString)),
+        "saleStartsAt" -> Json.fromString(train.saleStartsAt),
+        "unitPriceAmount" -> Json.fromBigDecimal(unitPrice),
+        "unitPriceCurrency" -> Json.fromString(currency),
+        "totalPriceAmount" -> Json.fromBigDecimal(totalPrice),
+        "totalPriceCurrency" -> Json.fromString(currency),
+        "departureStation" -> Json.fromString(fromStop.map(_.stationName).getOrElse(input.fromStationCode)),
+        "arrivalStation" -> Json.fromString(toStop.map(_.stationName).getOrElse(input.toStationCode))
+      )
+      .noSpaces
 
   private def readTrainSeatAllocations(connection: Connection, trainId: String): Vector[TrainSegmentSeatAllocation] =
     PlainSqlSupport.withStatement(connection, "select seat_id, order_id, order_item_id, from_stop_sequence_no, to_stop_sequence_no from train_seat_allocations where train_id = ? order by created_at, allocation_id") { statement =>
@@ -549,3 +679,39 @@ object TrainPlannerPlainSql:
       statement.setString(3, orderId)
       statement.executeUpdate()
     }
+
+  private def ensureTrainTravelerAvailability(
+      connection: Connection,
+      travelerIds: Vector[TravelerId],
+      currentJourneyWindow: TrainJourneyWindow,
+      currentTrainJourney: TrainJourney
+  ): Unit =
+    val requestedTravelerIds = travelerIds.map(_.value).map(_.trim).filter(_.nonEmpty).distinct.toSet
+    if requestedTravelerIds.nonEmpty then
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          select o.order_id, o.status, li.snapshot_json
+          from orders o
+          join order_line_items li on li.order_id = o.order_id
+          where li.item_kind = 'Train'
+            and o.status in ('PendingPayment', 'Confirmed')
+          order by o.created_at, o.order_id, li.sort_index
+        """
+      ) { statement =>
+        val resultSet = statement.executeQuery()
+        try
+          while resultSet.next() do
+            val snapshotJson = Option(resultSet.getString("snapshot_json")).getOrElse("{}")
+            DatabaseCodecs.decodeTrainBookingSnapshot(snapshotJson).fold(
+              _ => (),
+              existingSnapshot =>
+                val existingJourneyWindow = TrainJourneyWindow(existingSnapshot.departureTime, existingSnapshot.arrivalTime)
+                val overlappingTravelers = existingSnapshot.travelerIds.map(_.value).toSet.intersect(requestedTravelerIds)
+                if overlappingTravelers.nonEmpty && trainJourneyWindowOverlaps(currentJourneyWindow, existingJourneyWindow) then
+                  throw new IllegalArgumentException(
+                    s"Traveler(s) ${overlappingTravelers.toList.sorted.mkString(", ")} already have an active train order that overlaps with train '${currentTrainJourney.trainNumber.value}'"
+                  )
+            )
+        finally resultSet.close()
+      }

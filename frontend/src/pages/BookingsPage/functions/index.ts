@@ -4,6 +4,10 @@ export {
   findOrderItemReview,
   formatTravelerIdentity,
   hasOrderLineItemDetails,
+  isAttractionOrderLineItem,
+  isFlightOrderLineItem,
+  isHotelOrderLineItem,
+  isTrainOrderLineItem,
   isOrderPaid,
   isOrderPayable,
   isOrderRefunded,
@@ -11,6 +15,7 @@ export {
 } from './bookingOrderHelpers'
 export {
   buildFlightOrderDisplay,
+  buildAttractionOrderDisplay,
   buildHotelOrderDisplay,
   buildTrainOrderDisplay,
   formatFlightClock,
@@ -23,6 +28,7 @@ export {
   getOrderCategoryTitle,
   hasTrainSnapshot,
   parseFlightSnapshot,
+  parseAttractionSnapshot,
   parseHotelSnapshot,
   parseTrainSnapshot,
 } from './bookingOrderDisplayHelpers'

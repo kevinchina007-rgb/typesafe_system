@@ -1,5 +1,5 @@
 import { formatIsoDateTime, localizeBookingKind, localizeCabinClass, localizeReservationStatus, localizeSupplierReviewStatus } from '@/lib/presenters/view-models'
-import { formatTravelerIdentity, formatOrderLineItemTitle, parseFlightSnapshot } from '@/pages/BookingsPage/functions'
+import { formatTravelerIdentity, formatOrderLineItemTitle, parseAttractionSnapshot, parseFlightSnapshot } from '@/pages/BookingsPage/functions'
 import type { OrderLineItemDetailsProps } from '@/pages/BookingsPage/objects'
 
 export function OrderLineItemDetails({
@@ -10,7 +10,8 @@ export function OrderLineItemDetails({
   translate,
 }: OrderLineItemDetailsProps) {
   const snapshotDetails = parseFlightSnapshot(orderLineItem.summaryLabel)
-  const hasStructuredDetails = !!(orderLineItem.flightDetails || orderLineItem.hotelDetails || orderLineItem.trainDetails || orderLineItem.attractionDetails)
+  const attractionSnapshot = parseAttractionSnapshot(orderLineItem.summaryLabel)
+  const hasStructuredDetails = !!(orderLineItem.flightDetails || orderLineItem.hotelDetails || orderLineItem.trainDetails || orderLineItem.attractionDetails || attractionSnapshot)
 
   return (
     <div className="grid gap-2 text-base text-slate-700">
@@ -64,17 +65,17 @@ export function OrderLineItemDetails({
         </>
       ) : null}
 
-      {orderLineItem.attractionDetails ? (
+      {orderLineItem.attractionDetails || attractionSnapshot ? (
         <>
           <p className="m-0">
-            {`${translate('booking.attraction.ticketType')}: ${orderLineItem.attractionDetails.ticketTypeName} | ${translate('booking.attraction.travelers')}: ${orderLineItem.attractionDetails.travelerIds.length}`}
+            {`${translate('booking.attraction.ticketType')}: ${orderLineItem.attractionDetails?.ticketTypeName ?? attractionSnapshot?.ticketTypeName ?? ''} | ${translate('booking.attraction.travelers')}: ${(orderLineItem.attractionDetails?.travelerIds ?? attractionSnapshot?.travelerIds ?? []).length}`}
           </p>
-          <p className="m-0">{`${translate('booking.attraction.useDate')}: ${orderLineItem.attractionDetails.useDate}`}</p>
+          <p className="m-0">{`${translate('booking.attraction.useDate')}: ${orderLineItem.attractionDetails?.useDate ?? attractionSnapshot?.useDate ?? ''}`}</p>
           <p className="m-0">
-            {`${translate('booking.attraction.unitPrice')}: ${orderLineItem.attractionDetails.unitPrice} ${orderLineItem.attractionDetails.currency} | ${translate('booking.attraction.totalPrice')}: ${orderLineItem.attractionDetails.totalPrice} ${orderLineItem.attractionDetails.currency}`}
+            {`${translate('booking.attraction.unitPrice')}: ${orderLineItem.attractionDetails?.unitPrice ?? attractionSnapshot?.unitPrice ?? ''} ${orderLineItem.attractionDetails?.currency ?? attractionSnapshot?.currency ?? orderLineItem.bookedCurrency} | ${translate('booking.attraction.totalPrice')}: ${orderLineItem.attractionDetails?.totalPrice ?? attractionSnapshot?.totalPrice ?? orderLineItem.bookedAmount} ${orderLineItem.attractionDetails?.currency ?? attractionSnapshot?.currency ?? orderLineItem.bookedCurrency}`}
           </p>
-          {(orderLineItem.attractionDetails.eligibilityRuleSummaries ?? []).length > 0 ? (
-            <p className="m-0">{`${translate('booking.attraction.rules')}: ${(orderLineItem.attractionDetails.eligibilityRuleSummaries ?? []).join(' | ')}`}</p>
+          {((orderLineItem.attractionDetails?.eligibilityRuleSummaries ?? attractionSnapshot?.eligibilityRuleSummaries ?? []).length > 0) ? (
+            <p className="m-0">{`${translate('booking.attraction.rules')}: ${(orderLineItem.attractionDetails?.eligibilityRuleSummaries ?? attractionSnapshot?.eligibilityRuleSummaries ?? []).join(' | ')}`}</p>
           ) : null}
         </>
       ) : null}

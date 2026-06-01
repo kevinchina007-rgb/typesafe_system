@@ -1,21 +1,13 @@
 import type { OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { OrderLineItemDetails } from '@/pages/BookingsPage/components/OrderLineItemDetails'
-import { HotelInfoBlock } from '@/pages/BookingsPage/components/shared/HotelInfoBlock'
 import { OrderItemFeedbackActions } from '@/pages/BookingsPage/components/shared/OrderItemFeedbackActions'
-import { formatTravelerIdentity } from '@/pages/BookingsPage/functions'
+import { OrderMeta } from '@/pages/BookingsPage/components/shared/OrderMeta'
+import { OrderPaymentActions } from '@/pages/BookingsPage/components/shared/OrderPaymentActions'
 import type { OrderPanelProps } from '@/pages/BookingsPage/objects'
-import {
-  buildHotelOrderDisplay,
-  findOrderItemReview,
-  isOrderPaid,
-  isOrderPayable,
-  isOrderRefunded,
-  isHotelOrderLineItem,
-  parseHotelSnapshot,
-} from '@/pages/BookingsPage/functions'
+import { buildAttractionOrderDisplay, findOrderItemReview, isAttractionOrderLineItem, isOrderPaid, isOrderPayable, isOrderRefunded } from '@/pages/BookingsPage/functions'
 
-export function HotelOrderCard({
+export function AttractionOrderCard({
   currentLanguage,
   isBusy,
   order,
@@ -38,15 +30,14 @@ export function HotelOrderCard({
   onOpenOrderCancellationFeedback: (orderId: string) => Promise<void>
   onOpenPayment: (order: OrderResponse) => void
 }) {
-  const hotelLineItems = (order.orderLineItems ?? []).filter(orderLineItem => isHotelOrderLineItem(orderLineItem) || parseHotelSnapshot(orderLineItem.summaryLabel))
-  const hotelItem = hotelLineItems[0] ?? null
-  const displayHotel = hotelItem ? buildHotelOrderDisplay(hotelItem) : null
-  const existingReview = hotelItem ? findOrderItemReview(reviews, hotelItem.orderItemId) : null
+  const attractionLineItems = (order.orderLineItems ?? []).filter(orderLineItem => isAttractionOrderLineItem(orderLineItem))
+  const attractionItem = attractionLineItems[0] ?? null
+  const displayAttraction = attractionItem ? buildAttractionOrderDisplay(attractionItem) : null
   const isPayable = isOrderPayable(order.status)
   const isPaid = isOrderPaid(order.status)
   const isRefunded = isOrderRefunded(order.status)
 
-  if (!displayHotel || !hotelItem) {
+  if (!displayAttraction || !attractionItem) {
     return <li className="border border-slate-200 bg-white p-5 text-slate-500 shadow-sm shadow-slate-200/40">{translate('bookings.empty')}</li>
   }
 
@@ -58,27 +49,20 @@ export function HotelOrderCard({
         <div className="grid gap-5 lg:grid-cols-[1.25fr_0.9fr]">
           <div className="grid gap-3">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex min-h-9 items-center justify-center border border-cyan-200 bg-cyan-50 px-3 text-sm font-black text-cyan-700">酒店订单</span>
-              <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">{displayHotel.roomTypeName || '未填写房型'}</span>
+              <span className="inline-flex min-h-9 items-center justify-center border border-emerald-200 bg-emerald-50 px-3 text-sm font-black text-emerald-700">景点订单</span>
+              <span className="text-sm font-semibold uppercase tracking-wide text-slate-500">{displayAttraction.ticketTypeName || '未填写票型'}</span>
             </div>
 
             <div className="grid gap-2">
-              <h3 className="m-0 text-4xl font-black tracking-normal text-slate-950">{displayHotel.hotelName || '未填写酒店名称'}</h3>
-              <p className="m-0 text-base font-medium text-slate-600">{displayHotel.hotelLocation || '未填写酒店地点'}</p>
+              <h3 className="m-0 text-4xl font-black tracking-normal text-slate-950">{displayAttraction.attractionName || '未填写景点'}</h3>
+              <p className="m-0 text-base font-medium text-slate-600">{displayAttraction.useDate || '未填写使用日期'}</p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <HotelInfoBlock label={translate('booking.hotel.roomType')} value={displayHotel.roomTypeName || '未填写房型'} />
-              <HotelInfoBlock
-                label={translate('booking.hotel.guests')}
-                value={
-                  displayHotel.guestTravelerIds.length > 0
-                    ? displayHotel.guestTravelerIds.map(travelerId => formatTravelerIdentity(travelers, travelerId)).join('、')
-                    : '0'
-                }
-              />
-              <HotelInfoBlock label={translate('booking.hotel.stay')} value={`${displayHotel.checkInDate} -> ${displayHotel.checkOutDate}`} />
-              <HotelInfoBlock label={translate('booking.hotel.roomCount')} value={`${displayHotel.roomCount} 间房`} />
+              <OrderMeta label={translate('booking.attraction.ticketType')} value={displayAttraction.ticketTypeName || '未填写票型'} />
+              <OrderMeta label={translate('booking.attraction.travelers')} value={`${displayAttraction.travelerIds.length}`} />
+              <OrderMeta label={translate('booking.attraction.useDate')} value={displayAttraction.useDate || '未填写使用日期'} />
+              <OrderMeta label={translate('booking.attraction.rules')} value={(displayAttraction.eligibilityRuleSummaries ?? []).length > 0 ? displayAttraction.eligibilityRuleSummaries.join(' | ') : '暂无特殊规则'} />
             </div>
           </div>
 
@@ -108,7 +92,7 @@ export function HotelOrderCard({
         </div>
 
         <ul className="grid gap-3 border-t border-slate-200 pt-4">
-          {hotelLineItems.map(orderLineItem => {
+          {attractionLineItems.map(orderLineItem => {
             const existingReviewForLineItem = findOrderItemReview(reviews, orderLineItem.orderItemId)
             return (
               <li key={orderLineItem.orderItemId} className="grid gap-3">
@@ -129,31 +113,7 @@ export function HotelOrderCard({
         </ul>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        {isPayable ? (
-          <>
-            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={() => onOpenPayment(order)}>
-              {translate('bookings.pay')}
-            </button>
-            <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void onCancelOrder(order.orderId)}>
-              {translate('bookings.cancel')}
-            </button>
-          </>
-        ) : null}
-        <button
-          type="button"
-          className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-          disabled={isBusy}
-          onClick={() => void onOpenOrderCancellationFeedback(order.orderId)}
-        >
-          申请退款及向客服反馈
-        </button>
-        {existingReview?.canDelete ? (
-          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void onDeleteReview(existingReview.reviewId)}>
-            {translate('reviews.delete')}
-          </button>
-        ) : null}
-      </div>
+      <OrderPaymentActions isBusy={isBusy} order={order} translate={translate} onCancelOrder={onCancelOrder} onOpenPayment={onOpenPayment} />
     </li>
   )
 }

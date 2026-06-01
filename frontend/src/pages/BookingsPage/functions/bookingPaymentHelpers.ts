@@ -20,10 +20,16 @@ export const paymentMethodOptions: Array<{ value: PaymentMethodValue; label: str
 ]
 
 export function isFlightOrder(order: OrderResponse) {
+  if (!order.orderType.toLowerCase().includes('flight')) {
+    return false
+  }
   return (order.orderLineItems ?? []).some(orderLineItem => orderLineItem.flightDetails || hasFlightSnapshot(orderLineItem.summaryLabel))
 }
 
 export function getFlightDetailsPlannerOrderTravelerIds(order: OrderResponse) {
+  if (!isFlightOrder(order)) {
+    return []
+  }
   const flightItem = (order.orderLineItems ?? []).find(orderLineItem => orderLineItem.flightDetails || hasFlightSnapshot(orderLineItem.summaryLabel))
   if (!flightItem) {
     return []

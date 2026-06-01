@@ -2,6 +2,7 @@ package com.typesafe.travel.api.routes
 
 import com.typesafe.travel.advertising.domain.*
 import com.typesafe.travel.api.{ExploreSearchPlanner, ExploreSuggestionsPlanner}
+import com.typesafe.travel.attraction.api.BookAttractionItemPlanner
 import com.typesafe.travel.attraction.domain.{AttractionSuggestionsPlanner, CreateAttractionPlanner, CreateAttractionTicketRulePlanner, CreateAttractionTicketSessionPlanner, CreateAttractionTicketTypePlanner, GetAttractionDetailsPlanner, ListAttractionsPlanner, ListManagedAttractionsPlanner}
 import com.typesafe.travel.auth.domain.*
 import com.typesafe.travel.content.domain.*
@@ -38,6 +39,7 @@ object PlannerDefinitions:
         WithConnection(SearchHotelsPlanner),
         WithConnection(GetHotelDetailsPlanner),
         WithConnection(BookHotelPlanner),
+        WithConnection(BookAttractionItemPlanner),
         WithConnection(AttractionSuggestionsPlanner),
         WithConnection(ListAttractionsPlanner),
         WithConnection(GetAttractionDetailsPlanner),

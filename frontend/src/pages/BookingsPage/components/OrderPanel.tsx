@@ -1,5 +1,5 @@
 import type { OrderPanelProps } from '@/pages/BookingsPage/objects'
-import { FlightOrderCard, GenericOrderCard, HotelOrderCard, TrainOrderCard } from '@/pages/BookingsPage/components/cards'
+import { AttractionOrderCard, FlightOrderCard, HotelOrderCard, TrainOrderCard } from '@/pages/BookingsPage/components/cards'
 import { getOrderCategoryDescriptionKey, getOrderCategoryTitle, orderMatchesCategory } from '@/pages/BookingsPage/functions'
 
 export function OrderPanel({
@@ -94,7 +94,7 @@ export function OrderPanel({
                   onOpenPayment={onOpenPayment}
                 />
               ) : (
-                <GenericOrderCard
+                <AttractionOrderCard
                   key={order.orderId}
                   currentLanguage={currentLanguage}
                   isBusy={isBusy}

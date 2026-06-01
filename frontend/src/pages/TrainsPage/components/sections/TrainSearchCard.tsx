@@ -60,8 +60,11 @@ export function TrainSearchCard({
 
         <button
           className="inline-flex min-h-11 items-center justify-center border border-sky-500 bg-sky-500 px-5 py-2 text-sm font-semibold text-white shadow-none transition hover:border-sky-600 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-55"
-          type="submit"
+          type="button"
           disabled={isBusy}
+          onClick={async () => {
+            await onSearch()
+          }}
         >
           {translate('trains.search')}
         </button>

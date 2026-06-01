@@ -15,7 +15,8 @@ export const addTrainItemToOrder = async (orderId: string, payload: BookTrainIte
 }
 
 export const addAttractionItemToOrder = (orderId: string, payload: BookAttractionItemRequest): Promise<OrderResponse> =>
-    executeJsonApiRequest(`/orders/${orderId}/attraction-items`, 'POST', payload)
+    executeJsonApiRequest('/BookAttractionItemPlanner', 'POST', { ...payload, orderId })
+      .then(() => getOrder(orderId))
 
 export const createHotelOrder = async (payload: BookHotelPlannerRequest): Promise<OrderResponse> => {
     const response = await executeJsonApiRequest<{ orderId: string }>('/BookHotelPlanner', 'POST', payload)

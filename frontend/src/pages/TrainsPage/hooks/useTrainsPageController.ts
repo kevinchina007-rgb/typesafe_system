@@ -3,8 +3,8 @@ import { useMemo, useState } from 'react'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
-import { formatTrainRecommendation, sortTrainResponses } from '../functions'
-import type { TrainBookRequest, TrainSearchRequest, TrainSortMode, TrainsPageController, TrainsPageProps } from '../objects'
+import { formatTrainRecommendation, normalizeTrainSearchRequestStations, sortTrainResponses } from '../functions'
+import type { TrainBookRequest, TrainSortMode, TrainsPageController, TrainsPageProps } from '../objects'
 import { useTrainSearchState } from './useTrainSearchState'
 
 export function useTrainsPageController({
@@ -38,14 +38,16 @@ export function useTrainsPageController({
   const searchRecommendation = formatTrainRecommendation(searchFromStation, searchToStation, translate)
 
   async function executeTrainSearch() {
-    const payload: TrainSearchRequest = {
-      fromStation: searchFromStation,
-      toStation: searchToStation,
-      date: searchDate,
-    }
-    const trainListResponse = await travelMvpApiClient.listTrains(payload)
+    const normalizedStations = normalizeTrainSearchRequestStations(searchFromStation, searchToStation)
+    const resolvedTrainResponses = (
+      await travelMvpApiClient.listTrains({
+        fromStation: normalizedStations.fromStation,
+        toStation: normalizedStations.toStation,
+        date: searchDate,
+      })
+    ).trains
     setHasSearchedTrains(true)
-    setTrainResponses(trainListResponse.trains)
+    setTrainResponses(resolvedTrainResponses)
   }
 
   async function bookTrain(payload: TrainBookRequest) {

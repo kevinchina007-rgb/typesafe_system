@@ -27,11 +27,14 @@ object GetOrderPlanner extends ConnectionApiPlan[OrderIdPlannerRequest, OrderPla
 object CreatePaymentLinkPlanner extends ConnectionApiPlan[CreatePaymentLinkPlannerRequest, PaymentLinkPlannerResponse]:
   override val name: String = "CreatePaymentLinkPlanner"
   override def plan(input: CreatePaymentLinkPlannerRequest, connection: Connection): IO[PaymentLinkPlannerResponse] =
-    val expiresAt = Instant.now().plusSeconds(900)
-    val language = input.language.map(_.trim).filter(_.nonEmpty).getOrElse("en")
-    val origin = input.publicBackendOrigin.map(_.trim).filter(_.nonEmpty).getOrElse("http://127.0.0.1:19095")
-    val token = URLEncoder.encode(s"${input.orderId}|${input.paymentMethod}|$language|${expiresAt.getEpochSecond}", StandardCharsets.UTF_8)
-    IO.pure(PaymentLinkPlannerResponse(s"$origin/pay?token=$token", expiresAt.toString))
+    for
+      order <- OrderPlannerPlainSql.get(connection, OrderIdPlannerRequest(input.orderId))
+      _ <- if isOrderPayableStatus(order.status) then IO.unit else IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' cannot accept payments while in status ${order.status}"))
+      expiresAt = Instant.now().plusSeconds(900)
+      language = input.language.map(_.trim).filter(_.nonEmpty).getOrElse("en")
+      origin = input.publicBackendOrigin.map(_.trim).filter(_.nonEmpty).getOrElse("http://127.0.0.1:19095")
+      token = URLEncoder.encode(s"${input.orderId}|${input.paymentMethod}|$language|${expiresAt.getEpochSecond}", StandardCharsets.UTF_8)
+    yield PaymentLinkPlannerResponse(s"$origin/pay?token=$token", expiresAt.toString)
 
 object SubmitOrderPlanner extends ConnectionApiPlan[OrderIdPlannerRequest, OrderPlannerResponse]:
   override val name: String = "SubmitOrderPlanner"
@@ -62,3 +65,7 @@ object SettleRefundPlanner extends ConnectionApiPlan[RefundDecisionPlannerReques
   override val name: String = "SettleRefundPlanner"
   override def plan(input: RefundDecisionPlannerRequest, connection: Connection): IO[OrderPlannerResponse] =
     OrderPlannerPlainSql.settleRefund(connection, input, Instant.now())
+
+private def isOrderPayableStatus(status: String): Boolean =
+  val normalizedStatus = status.trim
+  normalizedStatus == "Draft" || normalizedStatus == "PendingSelection" || normalizedStatus == "PendingPayment"

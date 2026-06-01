@@ -31,7 +31,7 @@ export function parseFlightSnapshot(summaryLabel: string): FlightSnapshotSummary
       cabinClass?: unknown
       travelerIds?: unknown
     }
-    return {
+    const snapshot = {
       airlineName: typeof parsed.airlineName === 'string' ? parsed.airlineName : undefined,
       flightNumber: typeof parsed.flightNumber === 'string' ? parsed.flightNumber : undefined,
       flightId: typeof parsed.flightId === 'string' ? parsed.flightId : undefined,
@@ -42,6 +42,16 @@ export function parseFlightSnapshot(summaryLabel: string): FlightSnapshotSummary
       cabinClass: typeof parsed.cabinClass === 'string' ? parsed.cabinClass : undefined,
       travelerIds: Array.isArray(parsed.travelerIds) ? parsed.travelerIds.filter((value): value is string => typeof value === 'string') : [],
     }
+    return snapshot.airlineName ||
+      snapshot.flightNumber ||
+      snapshot.flightId ||
+      snapshot.departureAirport ||
+      snapshot.arrivalAirport ||
+      snapshot.departureAirportCode ||
+      snapshot.arrivalAirportCode ||
+      snapshot.cabinClass
+      ? snapshot
+      : null
   } catch {
     return null
   }
@@ -54,7 +64,7 @@ export function parseHotelSnapshot(summaryLabel: string): HotelSnapshotSummary |
 
   try {
     const parsed = JSON.parse(summaryLabel) as Record<string, unknown>
-    return {
+    const snapshot = {
       hotelName: getStringField(parsed, 'hotelName'),
       hotelLocation: getStringField(parsed, 'hotelLocation'),
       roomTypeName: getStringField(parsed, 'roomTypeName'),
@@ -63,6 +73,73 @@ export function parseHotelSnapshot(summaryLabel: string): HotelSnapshotSummary |
       checkOutDate: getStringField(parsed, 'checkOutDate'),
       travelerIds: getStringArrayField(parsed, 'travelerIds'),
     }
+    return snapshot.hotelName ||
+      snapshot.hotelLocation ||
+      snapshot.roomTypeName ||
+      snapshot.roomCount !== undefined ||
+      snapshot.checkInDate ||
+      snapshot.checkOutDate
+      ? snapshot
+      : null
+  } catch {
+    return null
+  }
+}
+
+export type AttractionSnapshotSummary = {
+  attractionId?: string
+  attractionName?: string
+  ticketTypeId?: string
+  ticketTypeName?: string
+  sessionId?: string | null
+  sessionName?: string | null
+  sessionStartsAt?: string | null
+  sessionEndsAt?: string | null
+  useDate?: string
+  travelerIds: string[]
+  unitPrice?: string
+  totalPrice?: string
+  currency?: string
+  eligibilityRuleSummaries: string[]
+}
+
+export function parseAttractionSnapshot(summaryLabel: string): AttractionSnapshotSummary | null {
+  if (!summaryLabel.trim().startsWith('{')) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(summaryLabel) as Record<string, unknown>
+    const snapshot = {
+      attractionId: getStringField(parsed, 'attractionId'),
+      attractionName: getStringField(parsed, 'attractionName'),
+      ticketTypeId: getStringField(parsed, 'ticketTypeId'),
+      ticketTypeName: getStringField(parsed, 'ticketTypeName'),
+      sessionId: getNullableStringField(parsed, 'sessionId'),
+      sessionName: getNullableStringField(parsed, 'sessionName'),
+      sessionStartsAt: getNullableStringField(parsed, 'sessionStartsAt'),
+      sessionEndsAt: getNullableStringField(parsed, 'sessionEndsAt'),
+      useDate: getStringField(parsed, 'useDate'),
+      travelerIds: getStringArrayField(parsed, 'travelerIds'),
+      unitPrice: getStringField(parsed, 'unitPrice'),
+      totalPrice: getStringField(parsed, 'totalPrice'),
+      currency: getStringField(parsed, 'currency'),
+      eligibilityRuleSummaries: getStringArrayField(parsed, 'eligibilityRuleSummaries'),
+    }
+    return snapshot.attractionId ||
+      snapshot.attractionName ||
+      snapshot.ticketTypeId ||
+      snapshot.ticketTypeName ||
+      snapshot.useDate ||
+      snapshot.sessionName ||
+      snapshot.sessionStartsAt ||
+      snapshot.sessionEndsAt ||
+      snapshot.unitPrice ||
+      snapshot.totalPrice ||
+      snapshot.currency ||
+      snapshot.eligibilityRuleSummaries.length > 0
+      ? snapshot
+      : null
   } catch {
     return null
   }
@@ -80,8 +157,12 @@ export function parseTrainSnapshot(summaryLabel: string): TrainSnapshotSummary |
       seatClass?: unknown
       departureStation?: unknown
       departureStationCode?: unknown
+      fromStationName?: unknown
+      fromStationCode?: unknown
       arrivalStation?: unknown
       arrivalStationCode?: unknown
+      toStationName?: unknown
+      toStationCode?: unknown
       departureTime?: unknown
       arrivalTime?: unknown
       requestedSeatPreference?: unknown
@@ -118,10 +199,10 @@ export function parseTrainSnapshot(summaryLabel: string): TrainSnapshotSummary |
       trainId: typeof parsed.trainId === 'string' ? parsed.trainId : undefined,
       trainNumber: typeof parsed.trainNumber === 'string' ? parsed.trainNumber : undefined,
       seatClass: typeof parsed.seatClass === 'string' ? parsed.seatClass : undefined,
-      departureStation: typeof parsed.departureStation === 'string' ? parsed.departureStation : undefined,
-      departureStationCode: typeof parsed.departureStationCode === 'string' ? parsed.departureStationCode : undefined,
-      arrivalStation: typeof parsed.arrivalStation === 'string' ? parsed.arrivalStation : undefined,
-      arrivalStationCode: typeof parsed.arrivalStationCode === 'string' ? parsed.arrivalStationCode : undefined,
+      departureStation: typeof parsed.departureStation === 'string' ? parsed.departureStation : typeof parsed.fromStationName === 'string' ? parsed.fromStationName : undefined,
+      departureStationCode: typeof parsed.departureStationCode === 'string' ? parsed.departureStationCode : typeof parsed.fromStationCode === 'string' ? parsed.fromStationCode : undefined,
+      arrivalStation: typeof parsed.arrivalStation === 'string' ? parsed.arrivalStation : typeof parsed.toStationName === 'string' ? parsed.toStationName : undefined,
+      arrivalStationCode: typeof parsed.arrivalStationCode === 'string' ? parsed.arrivalStationCode : typeof parsed.toStationCode === 'string' ? parsed.toStationCode : undefined,
       departureTime: typeof parsed.departureTime === 'string' ? parsed.departureTime : undefined,
       arrivalTime: typeof parsed.arrivalTime === 'string' ? parsed.arrivalTime : undefined,
       requestedSeatPreference: typeof parsed.requestedSeatPreference === 'string' ? parsed.requestedSeatPreference : undefined,
@@ -141,11 +222,7 @@ export function parseTrainSnapshot(summaryLabel: string): TrainSnapshotSummary |
       snapshot.departureTime ||
       snapshot.arrivalTime ||
       snapshot.requestedSeatPreference ||
-      (snapshot.seatAssignments?.length ?? 0) > 0 ||
-      snapshot.travelerIds.length > 0 ||
-      snapshot.unitPrice ||
-      snapshot.totalPrice ||
-      snapshot.currency
+      (snapshot.seatAssignments?.length ?? 0) > 0
       ? snapshot
       : null
   } catch {
@@ -166,12 +243,34 @@ export function hasTrainSnapshot(summaryLabel: string) {
     !!snapshot.departureTime ||
     !!snapshot.arrivalTime ||
     !!snapshot.requestedSeatPreference ||
-    (snapshot.seatAssignments?.length ?? 0) > 0 ||
-    snapshot.travelerIds.length > 0 ||
-    !!snapshot.unitPrice ||
-    !!snapshot.totalPrice ||
-    !!snapshot.currency
+    (snapshot.seatAssignments?.length ?? 0) > 0
   )
+}
+
+export function buildAttractionOrderDisplay(orderLineItem: OrderLineItemResponse) {
+  const snapshot = parseAttractionSnapshot(orderLineItem.summaryLabel)
+  const attractionDetails = orderLineItem.attractionDetails
+  const travelerIds = attractionDetails?.travelerIds ?? snapshot?.travelerIds ?? []
+  const unitPrice = attractionDetails?.unitPrice ?? snapshot?.unitPrice ?? null
+  const currency = attractionDetails?.currency ?? snapshot?.currency ?? orderLineItem.bookedCurrency
+  const totalPrice = attractionDetails?.totalPrice ?? snapshot?.totalPrice ?? orderLineItem.bookedAmount
+  return {
+    attractionId: attractionDetails?.attractionId ?? snapshot?.attractionId ?? '',
+    attractionName: attractionDetails?.attractionName ?? snapshot?.attractionName ?? '',
+    ticketTypeId: attractionDetails?.ticketTypeId ?? snapshot?.ticketTypeId ?? '',
+    ticketTypeName: attractionDetails?.ticketTypeName ?? snapshot?.ticketTypeName ?? '',
+    sessionId: attractionDetails?.sessionId ?? snapshot?.sessionId ?? null,
+    sessionName: attractionDetails?.sessionName ?? snapshot?.sessionName ?? null,
+    sessionStartsAt: attractionDetails?.sessionStartsAt ?? snapshot?.sessionStartsAt ?? null,
+    sessionEndsAt: attractionDetails?.sessionEndsAt ?? snapshot?.sessionEndsAt ?? null,
+    useDate: attractionDetails?.useDate ?? snapshot?.useDate ?? '',
+    travelerIds,
+    unitPrice,
+    totalPrice,
+    currency,
+    eligibilityRuleSummaries: attractionDetails?.eligibilityRuleSummaries ?? snapshot?.eligibilityRuleSummaries ?? [],
+    eligibilityValidatedAt: attractionDetails?.eligibilityValidatedAt ?? null,
+  }
 }
 
 export function buildFlightOrderDisplay(orderLineItem: OrderLineItemResponse): FlightOrderDisplay {
@@ -242,6 +341,24 @@ export function buildTrainOrderDisplay(orderLineItem: OrderLineItemResponse): Tr
 }
 
 export function formatOrderLineItemTitle(orderLineItem: OrderLineItemResponse, snapshotDetails: FlightSnapshotSummary | null, currentLanguage: AppLanguage) {
+  const hotelSnapshot = parseHotelSnapshot(orderLineItem.summaryLabel)
+  const attractionSnapshot = parseAttractionSnapshot(orderLineItem.summaryLabel)
+  if (orderLineItem.attractionDetails || attractionSnapshot) {
+    const attractionName = orderLineItem.attractionDetails?.attractionName ?? attractionSnapshot?.attractionName ?? ''
+    const ticketTypeName = orderLineItem.attractionDetails?.ticketTypeName ?? attractionSnapshot?.ticketTypeName ?? ''
+    const titleParts = [attractionName, ticketTypeName]
+    const title = titleParts.filter((part): part is string => typeof part === 'string' && part.trim().length > 0).join(' ')
+    return title || localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)
+  }
+
+  if (orderLineItem.hotelDetails || hotelSnapshot) {
+    const hotelName = orderLineItem.hotelDetails?.hotelName ?? hotelSnapshot?.hotelName ?? ''
+    const roomTypeName = orderLineItem.hotelDetails?.roomTypeName ?? hotelSnapshot?.roomTypeName ?? ''
+    const titleParts = [hotelName, roomTypeName]
+    const title = titleParts.filter((part): part is string => typeof part === 'string' && part.trim().length > 0).join(' ')
+    return title || localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)
+  }
+
   if (snapshotDetails) {
     if (snapshotDetails.airlineName || snapshotDetails.flightNumber) {
       return [snapshotDetails.airlineName, snapshotDetails.flightNumber].filter(Boolean).join(' ')
@@ -259,7 +376,7 @@ export function formatOrderLineItemTitle(orderLineItem: OrderLineItemResponse, s
     return titleParts.filter((part): part is string => typeof part === 'string' && part.trim().length > 0).join(' ')
   }
 
-  return orderLineItem.summaryLabel
+  return localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)
 }
 
 export function formatFlightClock(value: string) {
@@ -327,6 +444,11 @@ export function getOrderCategoryDescriptionKey(orderCategory: string) {
 function getStringField(record: Record<string, unknown>, key: string) {
   const value = record[key]
   return typeof value === 'string' ? value : undefined
+}
+
+function getNullableStringField(record: Record<string, unknown>, key: string) {
+  const value = record[key]
+  return typeof value === 'string' ? value : value === null ? null : undefined
 }
 
 function getStringArrayField(record: Record<string, unknown>, key: string) {

@@ -19,6 +19,7 @@ import type { RegisterAttractionManagerPlannerRequest } from '@/microservices/op
 import type { UpdateAirlineManagerProfilePlannerRequest } from '@/microservices/operations/objects/UpdateAirlineManagerProfilePlannerRequest'
 import type { TrainListResponse } from '@/microservices/train/objects/TrainListResponse'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { mapAttractionListResponseFromBackend, type BackendAttractionListResponse } from '@/microservices/attraction/api/AttractionResponseMappers'
 
 export const registerAirlineManager = (payload: {
     email: string
@@ -52,7 +53,7 @@ export const registerAttractionManager = (payload: RegisterAttractionManagerPlan
     executeJsonApiRequest('/RegisterAttractionManagerPlanner', 'POST', payload)
 
 export const listManagedAttractions = (managerId: string): Promise<AttractionListResponse> =>
-    executeJsonApiRequest('/ListManagedAttractionsPlanner', 'POST', { managerId })
+    executeJsonApiRequest<BackendAttractionListResponse>('/ListManagedAttractionsPlanner', 'POST', { managerId }).then(response => mapAttractionListResponseFromBackend(response))
 
 export const createAttraction = (payload: { managerId: string; attractionName: string; city: string; location: string; description: string }) =>
     executeJsonApiRequest('/CreateAttractionPlanner', 'POST', payload)

@@ -1,6 +1,6 @@
 import type { AppLanguage, OrderLineItemResponse, OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { localizePaymentMethod } from '@/lib/presenters/view-models'
-import { hasTrainSnapshot } from './bookingOrderDisplayHelpers'
+import { hasTrainSnapshot, parseAttractionSnapshot, parseFlightSnapshot, parseHotelSnapshot } from './bookingOrderDisplayHelpers'
 import type { OrderCategory } from '@/pages/BookingsPage/objects'
 
 export function findOrderItemReview(reviews: ReviewResponse[], orderItemId: string) {
@@ -34,24 +34,51 @@ export function hasOrderLineItemDetails(orderLineItem: OrderLineItemResponse) {
     orderLineItem.hotelDetails ||
     orderLineItem.trainDetails ||
     orderLineItem.attractionDetails ||
+    parseAttractionSnapshot(orderLineItem.summaryLabel) ||
     hasTrainSnapshot(orderLineItem.summaryLabel)
   )
 }
 
+export function isFlightOrderLineItem(orderLineItem: OrderLineItemResponse) {
+  if (orderLineItem.orderItemKind === 'Flight') return true
+  if (orderLineItem.orderItemKind === 'Hotel' || orderLineItem.orderItemKind === 'Train' || orderLineItem.orderItemKind === 'Attraction') return false
+  return !!orderLineItem.flightDetails || !!parseFlightSnapshot(orderLineItem.summaryLabel)
+}
+
+export function isHotelOrderLineItem(orderLineItem: OrderLineItemResponse) {
+  if (orderLineItem.orderItemKind === 'Hotel') return true
+  if (orderLineItem.orderItemKind === 'Flight' || orderLineItem.orderItemKind === 'Train' || orderLineItem.orderItemKind === 'Attraction') return false
+  return !!orderLineItem.hotelDetails || !!parseHotelSnapshot(orderLineItem.summaryLabel)
+}
+
+export function isTrainOrderLineItem(orderLineItem: OrderLineItemResponse) {
+  if (orderLineItem.orderItemKind === 'Train') return true
+  if (orderLineItem.orderItemKind === 'Flight' || orderLineItem.orderItemKind === 'Hotel' || orderLineItem.orderItemKind === 'Attraction') return false
+  return !!orderLineItem.trainDetails || hasTrainSnapshot(orderLineItem.summaryLabel)
+}
+
+export function isAttractionOrderLineItem(orderLineItem: OrderLineItemResponse) {
+  if (orderLineItem.orderItemKind === 'Attraction') return true
+  if (orderLineItem.orderItemKind === 'Flight' || orderLineItem.orderItemKind === 'Hotel' || orderLineItem.orderItemKind === 'Train') return false
+  return !!orderLineItem.attractionDetails || !!parseAttractionSnapshot(orderLineItem.summaryLabel)
+}
+
 export function orderMatchesCategory(order: OrderResponse, orderCategory: OrderCategory) {
-  const normalizedOrderType = order.orderType.toLowerCase()
   const orderLineItems = order.orderLineItems ?? []
   if (orderCategory === 'flightOrders') {
-    return normalizedOrderType.includes('flight') || orderLineItems.some(item => item.flightDetails)
+    const flightLineItems = orderLineItems.filter(item => isFlightOrderLineItem(item))
+    return flightLineItems.length > 0 && flightLineItems.length === orderLineItems.length
   }
   if (orderCategory === 'hotelOrders') {
-    return normalizedOrderType.includes('hotel') || orderLineItems.some(item => item.hotelDetails)
+    const hotelLineItems = orderLineItems.filter(item => isHotelOrderLineItem(item))
+    return hotelLineItems.length > 0 && hotelLineItems.length === orderLineItems.length
   }
   if (orderCategory === 'trainOrders') {
-    const trainLineItems = orderLineItems.filter(item => item.trainDetails || hasTrainSnapshot(item.summaryLabel))
+    const trainLineItems = orderLineItems.filter(item => isTrainOrderLineItem(item))
     return trainLineItems.length > 0 && trainLineItems.length === orderLineItems.length
   }
-  return normalizedOrderType.includes('attraction') || orderLineItems.some(item => item.attractionDetails)
+  const attractionLineItems = orderLineItems.filter(item => isAttractionOrderLineItem(item))
+  return attractionLineItems.length > 0 && attractionLineItems.length === orderLineItems.length
 }
 
 export function isOrderPayable(status: string) {

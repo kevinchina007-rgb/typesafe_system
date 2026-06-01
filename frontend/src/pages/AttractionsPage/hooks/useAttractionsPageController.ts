@@ -6,6 +6,7 @@ import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { AttractionsPageController, AttractionsPageProps } from '../objects'
 import { mapAdvertisementAttractionSelection, loadAttractionReviews, loadAttractionReviewSummary, loadDetailedAttractions, splitAttractionHotSpotSelection } from '../functions'
+import { summarizeAttractionEligibilityFailure } from '@/app/stores/models/attraction-booking-model'
 import { useAttractionsSearchState } from './useAttractionsSearchState'
 
 export function useAttractionsPageController({
@@ -73,8 +74,6 @@ export function useAttractionsPageController({
         city: searchState.searchCity,
         keyword: searchState.keyword,
         useDate: searchState.useDateDraft,
-        travelerCount: searchState.travelerCount,
-        attractionType: searchState.attractionType,
         sortPreference: searchState.sortPreference,
       })
       searchState.setHasSearchedAttractions(true)
@@ -102,11 +101,16 @@ export function useAttractionsPageController({
         return
       }
       await runPageAction(async () => {
+        const travelerSelectionError = summarizeAttractionEligibilityFailure(travelers, payload.travelerIds, payload.rules, payload.useDate)
+        if (travelerSelectionError) {
+          throw new Error(travelerSelectionError)
+        }
         const createdOrder = await travelMvpApiClient.createOrder({
           ownerUserId: signedInUser.userId,
           orderCurrency: payload.orderCurrency,
         })
         await travelMvpApiClient.addAttractionItemToOrder(createdOrder.orderId, {
+          userId: signedInUser.userId,
           attractionId: payload.attractionId,
           ticketTypeId: payload.ticketTypeId,
           sessionId: payload.sessionId,

@@ -494,6 +494,14 @@ export const chineseTranslations: TranslationDictionary = {
   'trains.trainType.emu': '动车',
   'trains.trainType.regular': '普快',
 
+  'weekdays.monday': '星期一',
+  'weekdays.tuesday': '星期二',
+  'weekdays.wednesday': '星期三',
+  'weekdays.thursday': '星期四',
+  'weekdays.friday': '星期五',
+  'weekdays.saturday': '星期六',
+  'weekdays.sunday': '星期日',
+
   'attractions.title': '景点',
   'attractions.description': '搜索景点、选择票型或场次，并把它们加入当前订单。',
   'attractions.searchModuleTitle': '搜索景点门票与游玩安排',
@@ -553,6 +561,8 @@ export const chineseTranslations: TranslationDictionary = {
   'attractions.ticketRules': '票务规则',
   'attractions.noRules': '暂无特殊规则',
   'attractions.unavailableForDate': '当前日期不可预订',
+  'attractions.eligible': '可预订',
+  'attractions.ineligible': '不符合条件',
 
   'feedback.title': '客服反馈',
   'feedback.userTitle': '我的反馈线程',

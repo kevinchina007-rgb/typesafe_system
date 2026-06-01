@@ -1,4 +1,5 @@
 import {
+  buildAttractionOrderDisplay,
   buildFlightOrderDisplay,
   buildHotelOrderDisplay,
   buildTrainOrderDisplay,
@@ -6,6 +7,7 @@ import {
   hasFlightSnapshot,
   hasTrainSnapshot,
   orderMatchesCategory,
+  parseAttractionSnapshot,
 } from '@/pages/BookingsPage/functions'
 import type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
 import type { OrderCategory } from '@/pages/BookingsPage/objects'
@@ -30,6 +32,17 @@ export function buildCancellationOrderTitle(order: OrderResponse) {
       display.trainNumber || '火车订单',
       buildRouteLabel(display.departureStationName || display.departureStationCode, display.arrivalStationName || display.arrivalStationCode),
       display.seatClass ?? undefined,
+      formatOrderPrice(display.totalPrice || order.totalPrice, display.currency || order.orderCurrency),
+    ])
+  }
+
+  const attractionItem = order.orderLineItems.find(isLikelyAttractionOrderLineItem)
+  if (attractionItem) {
+    const display = buildAttractionOrderDisplay(attractionItem)
+    return joinTitleParts([
+      display.attractionName || '景点订单',
+      display.ticketTypeName,
+      display.useDate,
       formatOrderPrice(display.totalPrice || order.totalPrice, display.currency || order.orderCurrency),
     ])
   }
@@ -75,6 +88,12 @@ function isLikelyTrainOrderLineItem(orderLineItem: OrderResponse['orderLineItems
   const summaryLabel = orderLineItem.summaryLabel.trim()
   if (orderLineItem.trainDetails) return true
   return hasTrainSnapshot(summaryLabel) || summaryLabel.toLowerCase().includes('"trainnumber"')
+}
+
+function isLikelyAttractionOrderLineItem(orderLineItem: OrderResponse['orderLineItems'][number]) {
+  const summaryLabel = orderLineItem.summaryLabel.trim()
+  if (orderLineItem.attractionDetails) return true
+  return !!parseAttractionSnapshot(summaryLabel)
 }
 
 function buildRouteLabel(departure: string, arrival: string) {

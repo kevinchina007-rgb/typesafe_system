@@ -109,9 +109,9 @@ def createFeedbackMessage(
         threadId = threadId,
         senderId = senderDisplayName.trim,
         senderRole = senderRole,
-    senderDisplayName = "系统",
+        senderDisplayName = senderDisplayName.trim,
         messageType = FeedbackMessageType.Text,
-        content = "申请取消订单",
+        content = body.trim,
         payload = None,
         isRead = false,
         createdAt = sentAt
@@ -333,5 +333,3 @@ def createEscalatedFeedbackThread(source: FeedbackThread, now: Instant): Feedbac
     createdAt = now,
     updatedAt = now
   )
-
-

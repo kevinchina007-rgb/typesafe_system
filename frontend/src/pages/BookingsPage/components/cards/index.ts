@@ -1,3 +1,4 @@
+export { AttractionOrderCard } from './AttractionOrderCard'
 export { FlightOrderCard } from './FlightOrderCard'
 export { GenericOrderCard } from './GenericOrderCard'
 export { HotelOrderCard } from './HotelOrderCard'

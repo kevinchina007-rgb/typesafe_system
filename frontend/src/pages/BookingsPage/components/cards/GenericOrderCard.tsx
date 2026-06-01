@@ -5,7 +5,7 @@ import { OrderItemFeedbackActions } from '@/pages/BookingsPage/components/shared
 import { OrderMeta } from '@/pages/BookingsPage/components/shared/OrderMeta'
 import { OrderPaymentActions } from '@/pages/BookingsPage/components/shared/OrderPaymentActions'
 import type { OrderPanelProps } from '@/pages/BookingsPage/objects'
-import { buildOrderPaymentSummary, buildOrderRefundSummary, findOrderItemReview } from '@/pages/BookingsPage/functions'
+import { buildOrderPaymentSummary, buildOrderRefundSummary, findOrderItemReview, isAttractionOrderLineItem } from '@/pages/BookingsPage/functions'
 
 export function GenericOrderCard({
   currentLanguage,
@@ -30,7 +30,7 @@ export function GenericOrderCard({
   onOpenOrderCancellationFeedback: (orderId: string) => Promise<void>
   onOpenPayment: (order: OrderResponse) => void
 }) {
-  const visibleLineItems = order.orderLineItems ?? []
+  const visibleLineItems = (order.orderLineItems ?? []).filter(orderLineItem => isAttractionOrderLineItem(orderLineItem))
 
   return (
     <li className="border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/40">

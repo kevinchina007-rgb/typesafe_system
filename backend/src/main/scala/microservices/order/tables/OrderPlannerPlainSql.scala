@@ -1,18 +1,19 @@
 package com.typesafe.travel.persistence.order
 
 import cats.effect.IO
+import cats.syntax.all.*
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.PlainSqlSupport
 import io.circe.Json
 import io.circe.parser.parse
 
 import java.sql.{Connection, ResultSet, Timestamp}
-import java.time.Instant
+import java.time.{Duration, Instant}
 import java.util.UUID
 
 object OrderPlannerPlainSql:
   def listByUser(connection: Connection, input: ListOrdersPlannerRequest): IO[OrderListPlannerResponse] =
-    IO.blocking {
+    expireTrainOrdersIfNeeded(connection, Instant.now()) *> IO.blocking {
       PlainSqlSupport.withStatement(connection, orderSelectSql + " where buyer_user_id = ? order by created_at desc") { statement =>
         statement.setString(1, input.userId)
         OrderListPlannerResponse(PlainSqlSupport.queryList(statement)(resultSet => readOrder(connection, resultSet)))
@@ -20,7 +21,7 @@ object OrderPlannerPlainSql:
     }
 
   def create(connection: Connection, input: CreateOrderPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
-    IO.blocking {
+    expireTrainOrdersIfNeeded(connection, now) *> IO.blocking {
       val orderId = s"order-${UUID.randomUUID().toString.take(12)}"
       PlainSqlSupport.withStatement(connection, "insert into orders(order_id, buyer_user_id, order_type, status, currency, total_price_amount, remaining_refundable_amount, created_at) values (?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
         statement.setString(1, orderId)
@@ -34,45 +35,50 @@ object OrderPlannerPlainSql:
         statement.executeUpdate()
       }
       findRequired(connection, orderId)
-    }
+  }
 
   def get(connection: Connection, input: OrderIdPlannerRequest): IO[OrderPlannerResponse] =
-    IO.blocking(findRequired(connection, input.orderId))
+    expireTrainOrdersIfNeeded(connection, Instant.now()) *> IO.blocking(findRequired(connection, input.orderId))
 
   def submit(connection: Connection, input: OrderIdPlannerRequest): IO[OrderPlannerResponse] =
-    updateStatus(connection, input.orderId, "PendingPayment", None, None)
+    expireTrainOrdersIfNeeded(connection, Instant.now()) *> validateOrderCanTransitionToPayment(connection, input.orderId) *> updateStatus(connection, input.orderId, "PendingPayment", None, None)
 
   def pay(connection: Connection, input: PayOrderPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
-    IO.blocking {
-      if input.paymentSucceeded then
-        val order = findRequired(connection, input.orderId)
-        if order.orderLineItems.exists(_.orderItemKind == "Flight") then
-          input.travelerIds.foreach(updateFlightTravelerSelection(connection, input.orderId, _))
-        val resolvedOrderTotalAmount = resolveOrderTotalAmount(connection, input.orderId, BigDecimal(order.totalPrice))
-        val paymentId = s"payment-${UUID.randomUUID().toString.take(12)}"
-        PlainSqlSupport.withStatement(connection, "insert into order_payments(payment_id, order_id, payment_amount, payment_currency, payment_method, payment_status, authorized_at, created_at, captured_at, metadata_json) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
-          statement.setString(1, paymentId)
-          statement.setString(2, input.orderId)
-          statement.setBigDecimal(3, resolvedOrderTotalAmount.bigDecimal)
-          statement.setString(4, order.orderCurrency)
-          statement.setString(5, input.paymentMethod)
-          statement.setString(6, "Captured")
-          statement.setTimestamp(7, Timestamp.from(now))
-          statement.setTimestamp(8, Timestamp.from(now))
-          statement.setTimestamp(9, Timestamp.from(now))
-          statement.setString(10, "{}")
-          statement.executeUpdate()
-        }
-        refreshOrderTotals(connection, input.orderId, resolvedOrderTotalAmount)
-        PlainSqlSupport.withStatement(connection, "update orders set status = ?, paid_at = ?, confirmed_at = ? where order_id = ?") { statement =>
-          statement.setString(1, "Confirmed")
-          statement.setTimestamp(2, Timestamp.from(now))
-          statement.setTimestamp(3, Timestamp.from(now))
-          statement.setString(4, input.orderId)
-          statement.executeUpdate()
-        }
-      findRequired(connection, input.orderId)
-    }
+    expireTrainOrdersIfNeeded(connection, now) *>
+      IO.blocking {
+        if input.paymentSucceeded then
+          val order = findRequired(connection, input.orderId)
+          if !isOrderPayable(order.status) then
+            throw new IllegalArgumentException(s"Order '${input.orderId}' cannot accept payments while in status ${order.status}")
+          val hasFlightLineItem = order.orderLineItems.exists(_.orderItemKind == "Flight")
+          if hasFlightLineItem then
+            val travelerIds = input.travelerIds.getOrElse(throw new IllegalArgumentException(s"Flight order '${input.orderId}' requires traveler selection"))
+            updateFlightTravelerSelection(connection, input.orderId, travelerIds)
+          val resolvedOrderTotalAmount = resolveOrderTotalAmount(connection, input.orderId, BigDecimal(order.totalPrice))
+          val paymentId = s"payment-${UUID.randomUUID().toString.take(12)}"
+          PlainSqlSupport.withStatement(connection, "insert into order_payments(payment_id, order_id, payment_amount, payment_currency, payment_method, payment_status, authorized_at, created_at, captured_at, metadata_json) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
+            statement.setString(1, paymentId)
+            statement.setString(2, input.orderId)
+            statement.setBigDecimal(3, resolvedOrderTotalAmount.bigDecimal)
+            statement.setString(4, order.orderCurrency)
+            statement.setString(5, input.paymentMethod)
+            statement.setString(6, "Captured")
+            statement.setTimestamp(7, Timestamp.from(now))
+            statement.setTimestamp(8, Timestamp.from(now))
+            statement.setTimestamp(9, Timestamp.from(now))
+            statement.setString(10, "{}")
+            statement.executeUpdate()
+          }
+          refreshOrderTotals(connection, input.orderId, resolvedOrderTotalAmount)
+          PlainSqlSupport.withStatement(connection, "update orders set status = ?, paid_at = ?, confirmed_at = ? where order_id = ?") { statement =>
+            statement.setString(1, "Confirmed")
+            statement.setTimestamp(2, Timestamp.from(now))
+            statement.setTimestamp(3, Timestamp.from(now))
+            statement.setString(4, input.orderId)
+            statement.executeUpdate()
+          }
+        findRequired(connection, input.orderId)
+      }
 
   private def updateFlightTravelerSelection(connection: Connection, orderId: String, travelerIds: List[String]): Unit =
     val cleanedTravelerIds = travelerIds.map(_.trim).filter(_.nonEmpty).distinct
@@ -101,10 +107,17 @@ object OrderPlannerPlainSql:
     }
 
   def cancel(connection: Connection, input: OrderIdPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
-    updateStatus(connection, input.orderId, "Cancelled", Some("cancelled_at"), Some(now))
+    expireTrainOrdersIfNeeded(connection, now) *>
+      updateStatus(connection, input.orderId, "Cancelled", Some("cancelled_at"), Some(now)).flatTap { _ =>
+        PlainSqlSupport.withStatement(connection, "update orders set remaining_refundable_amount = 0 where order_id = ?") { statement =>
+          statement.setString(1, input.orderId)
+          statement.executeUpdate()
+        }
+        releaseTrainSeatAllocations(connection, input.orderId)
+      }
 
   def requestRefund(connection: Connection, input: RequestRefundPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
-    IO.blocking {
+    expireTrainOrdersIfNeeded(connection, now) *> IO.blocking {
       val order = findRequired(connection, input.orderId)
       val refundId = s"refund-${UUID.randomUUID().toString.take(12)}"
       PlainSqlSupport.withStatement(connection, "insert into order_refunds(refund_id, order_id, refund_amount, refund_currency, refund_reason, refund_status, requested_at, created_at, metadata_json) values (?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
@@ -123,10 +136,10 @@ object OrderPlannerPlainSql:
     }
 
   def approveRefund(connection: Connection, input: RefundDecisionPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
-    refundStatus(connection, input, "Approved", Some("approved_at"), now)
+    expireTrainOrdersIfNeeded(connection, now) *> refundStatus(connection, input, "Approved", Some("approved_at"), now)
 
   def settleRefund(connection: Connection, input: RefundDecisionPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
-    refundStatus(connection, input, "Settled", Some("settled_at"), now)
+    expireTrainOrdersIfNeeded(connection, now) *> refundStatus(connection, input, "Settled", Some("settled_at"), now)
 
   private def updateStatus(connection: Connection, orderId: String, status: String, timestampColumn: Option[String], timestamp: Option[Instant]): IO[OrderPlannerResponse] =
     IO.blocking {
@@ -171,6 +184,93 @@ object OrderPlannerPlainSql:
       val resultSet = statement.executeQuery()
       try if resultSet.next() then readOrder(connection, resultSet) else throw new IllegalArgumentException(s"Order '$orderId' was not found")
       finally resultSet.close()
+    }
+
+  private def isOrderPayable(orderStatus: String): Boolean =
+    val normalizedStatus = orderStatus.trim
+    normalizedStatus == "Draft" || normalizedStatus == "PendingSelection" || normalizedStatus == "PendingPayment"
+
+  private def validateOrderCanTransitionToPayment(connection: Connection, orderId: String): IO[Unit] =
+    IO.blocking {
+      val order = findRequired(connection, orderId)
+      if !isOrderPayable(order.status) then
+        throw new IllegalArgumentException(s"Order '${orderId}' cannot accept payments while in status ${order.status}")
+      ()
+    }
+
+  private def releaseTrainSeatAllocations(connection: Connection, orderId: String): IO[Unit] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(connection, "delete from train_seat_allocations where order_id = ?") { statement =>
+        statement.setString(1, orderId)
+        statement.executeUpdate()
+      }
+      ()
+    }
+
+  private def expireTrainOrdersIfNeeded(connection: Connection, now: Instant): IO[Unit] =
+    IO.blocking {
+      val cutoff = Timestamp.from(now.minus(Duration.ofMinutes(10)))
+      val expiredOrderIds = PlainSqlSupport.withStatement(
+        connection,
+        """
+          select o.order_id, o.created_at
+          from orders o
+          where o.order_type in (?, ?)
+            and o.status in (?, ?, ?)
+            and o.created_at <= ?
+            and exists (
+              select 1
+              from order_line_items li
+              where li.order_id = o.order_id and li.item_kind = ?
+            )
+          order by o.created_at, o.order_id
+        """
+      ) { statement =>
+        statement.setString(1, "PendingSelection")
+        statement.setString(2, "TrainBooking")
+        statement.setString(3, "Draft")
+        statement.setString(4, "PendingSelection")
+        statement.setString(5, "PendingPayment")
+        statement.setTimestamp(6, cutoff)
+        statement.setString(7, "Train")
+
+        val resultSet = statement.executeQuery()
+        try {
+          val ids = List.newBuilder[String]
+          while resultSet.next() do {
+            ids += resultSet.getString("order_id")
+          }
+          ids.result().distinct
+        } finally {
+          resultSet.close()
+        }
+      }
+
+      expiredOrderIds.foreach { orderId =>
+        PlainSqlSupport.withStatement(connection, "update orders set status = ?, cancelled_at = coalesce(cancelled_at, ?) where order_id = ? and status in (?, ?, ?)") { statement =>
+          statement.setString(1, "Cancelled")
+          statement.setTimestamp(2, Timestamp.from(now))
+          statement.setString(3, orderId)
+          statement.setString(4, "Draft")
+          statement.setString(5, "PendingSelection")
+          statement.setString(6, "PendingPayment")
+          statement.executeUpdate()
+        }
+        PlainSqlSupport.withStatement(connection, "update orders set remaining_refundable_amount = 0 where order_id = ?") { statement =>
+          statement.setString(1, orderId)
+          statement.executeUpdate()
+        }
+        PlainSqlSupport.withStatement(connection, "update order_line_items set item_status = ? where order_id = ?") { statement =>
+          statement.setString(1, "Cancelled")
+          statement.setString(2, orderId)
+          statement.executeUpdate()
+        }
+        PlainSqlSupport.withStatement(connection, "delete from train_seat_allocations where order_id = ?") { statement =>
+          statement.setString(1, orderId)
+          statement.executeUpdate()
+        }
+      }
+      ()
     }
 
   private def readOrder(connection: Connection, resultSet: ResultSet): OrderPlannerResponse =

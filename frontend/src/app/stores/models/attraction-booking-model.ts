@@ -1,4 +1,4 @@
-import type { AttractionResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { AttractionTicketTypeRuleResponse, AttractionResponse, TravelerResponse } from '@/lib/mvp-types/index'
 
 export type AttractionQuickDatePreset = 'today' | 'tomorrow' | 'weekend' | 'holiday'
 export type AttractionTypePreference = 'Nature' | 'Museum' | 'ThemePark' | 'Performance' | 'DayTour'
@@ -20,12 +20,24 @@ export const attractionTypeOptions: AttractionTypePreference[] = ['Nature', 'Mus
 export const attractionSortOptions: AttractionSortPreference[] = ['Popular', 'Rating', 'Price']
 export const attractionFilterOptions = ['priceRange', 'type', 'rating', 'distance', 'refundable', 'show', 'familyFriendly', 'tripLength'] as const
 
-export function renderAttractionTravelerOptionLabel(traveler: TravelerResponse): string {
-  return `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
+export type AttractionTravelerEligibility = {
+  travelerId: string
+  eligible: boolean
+  failureReasons: string[]
+  ageOnUseDate: number | null
+}
+
+export function renderAttractionTravelerOptionLabel(traveler: TravelerResponse, useDate?: string): string {
+  const baseLabel = `${traveler.fullName} (${traveler.documentNumber.slice(-4)})`
+  if (!useDate) {
+    return baseLabel
+  }
+  const ageLabel = getTravelerAgeOnDate(traveler.birthDate, useDate)
+  return ageLabel === null ? baseLabel : `${baseLabel} · ${ageLabel}岁`
 }
 
 export function formatAttractionRules(ruleSummaries: string[], translate: (translationKey: string) => string) {
-  return ruleSummaries.length > 0 ? ruleSummaries.join(' · ') : translate('attractions.noRules')
+  return ruleSummaries.length > 0 ? ruleSummaries.join(' / ') : translate('attractions.noRules')
 }
 
 export function filterAttractionSessionsForUseDate<T extends { useDate: string }>(sessions: T[], useDate: string) {
@@ -55,3 +67,112 @@ export function formatAttractionInsight(attractions: AttractionResponse[], trans
   return translate('attractions.insightValue').replace('{name}', attractions[0].attractionName)
 }
 
+export function getTravelerAgeOnDate(birthDate: string, useDate: string): number | null {
+  if (!birthDate || !useDate) {
+    return null
+  }
+  const parsedBirthDate = new Date(birthDate)
+  const parsedUseDate = new Date(useDate)
+  if (Number.isNaN(parsedBirthDate.getTime()) || Number.isNaN(parsedUseDate.getTime())) {
+    return null
+  }
+
+  let age = parsedUseDate.getFullYear() - parsedBirthDate.getFullYear()
+  const hasBirthdayPassed =
+    parsedUseDate.getMonth() > parsedBirthDate.getMonth() ||
+    (parsedUseDate.getMonth() === parsedBirthDate.getMonth() && parsedUseDate.getDate() >= parsedBirthDate.getDate())
+  if (!hasBirthdayPassed) {
+    age -= 1
+  }
+  return age >= 0 ? age : null
+}
+
+export function evaluateAttractionTravelerEligibility(
+  traveler: TravelerResponse,
+  rules: AttractionTicketTypeRuleResponse[],
+  useDate: string,
+): AttractionTravelerEligibility {
+  const failureReasons: string[] = []
+  const ageOnUseDate = getTravelerAgeOnDate(traveler.birthDate, useDate)
+  const normalizedDocumentType = traveler.documentType.trim().toLowerCase()
+  const normalizedDocumentNumber = traveler.documentNumber.trim().toLowerCase()
+
+  for (const rule of rules) {
+    const normalizedRuleType = rule.ruleType.trim()
+    if (normalizedRuleType === 'AgeLessThan') {
+      const maxExclusive = rule.ageValue ?? 0
+      if (ageOnUseDate === null || ageOnUseDate >= maxExclusive) {
+        failureReasons.push(`年龄必须小于 ${maxExclusive} 岁`)
+      }
+      continue
+    }
+    if (normalizedRuleType === 'AgeBetween') {
+      const minAge = rule.minAge ?? 0
+      const maxAge = rule.maxAge ?? 0
+      if (ageOnUseDate === null || ageOnUseDate < minAge || ageOnUseDate > maxAge) {
+        failureReasons.push(`年龄必须在 ${minAge}-${maxAge} 岁之间`)
+      }
+      continue
+    }
+    if (normalizedRuleType === 'AgeAtLeast') {
+      const minAge = rule.minAge ?? rule.ageValue ?? 0
+      if (ageOnUseDate === null || ageOnUseDate < minAge) {
+        failureReasons.push(`年龄必须至少 ${minAge} 岁`)
+      }
+      continue
+    }
+    if (normalizedRuleType === 'DocumentTypeEquals') {
+      const expectedDocumentType = (rule.documentType ?? '').trim().toLowerCase()
+      if (expectedDocumentType && normalizedDocumentType !== expectedDocumentType) {
+        failureReasons.push(`证件类型必须是 ${rule.documentType}`)
+      }
+      continue
+    }
+    if (normalizedRuleType === 'DocumentNumberPrefix') {
+      const prefix = (rule.documentNumberPrefix ?? '').trim().toLowerCase()
+      if (prefix && !normalizedDocumentNumber.startsWith(prefix)) {
+        failureReasons.push(`证件号必须以 ${rule.documentNumberPrefix} 开头`)
+      }
+    }
+  }
+
+  return {
+    travelerId: traveler.travelerId,
+    eligible: failureReasons.length === 0,
+    failureReasons,
+    ageOnUseDate,
+  }
+}
+
+export function evaluateAttractionTravelersEligibility(
+  travelers: TravelerResponse[],
+  rules: AttractionTicketTypeRuleResponse[],
+  useDate: string,
+) {
+  return travelers.map(traveler => ({
+    traveler,
+    eligibility: evaluateAttractionTravelerEligibility(traveler, rules, useDate),
+  }))
+}
+
+export function summarizeAttractionEligibilityFailure(
+  travelers: TravelerResponse[],
+  selectedTravelerIds: string[],
+  rules: AttractionTicketTypeRuleResponse[],
+  useDate: string,
+) {
+  const selectedTravelers = travelers.filter(traveler => selectedTravelerIds.includes(traveler.travelerId))
+  if (selectedTravelers.length === 0) {
+    return 'invalid_traveler_selection: Please choose at least one traveler.'
+  }
+
+  const invalidDetails = evaluateAttractionTravelersEligibility(selectedTravelers, rules, useDate)
+    .filter(item => !item.eligibility.eligible)
+    .map(item => `${item.traveler.fullName}: ${item.eligibility.failureReasons.join('；')}`)
+
+  if (invalidDetails.length > 0) {
+    return `traveler_not_eligible: ${invalidDetails.join(' / ')}`
+  }
+
+  return null
+}

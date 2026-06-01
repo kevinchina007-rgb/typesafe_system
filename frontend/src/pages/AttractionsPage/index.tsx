@@ -1,6 +1,7 @@
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
 import { AdvertisementCardRail } from '@/pages/shared/advertising/sections/AdvertisementCardRail'
 import { formatAttractionInsight } from '@/app/stores/models/attraction-booking-model'
+import { useMemo } from 'react'
 import type { AttractionsPageProps } from './objects'
 import { ATTRACTION_HOT_SPOTS, ATTRACTION_RECENT_SEARCHES } from './objects'
 import { AttractionFilterBar, AttractionPageHero, AttractionResultsSection, AttractionSearchCard } from './components'
@@ -20,6 +21,7 @@ export function AttractionsPage({
     onNavigate,
     onShowNotice,
   })
+  const attractionAdvertisement = useMemo(() => controller.deliveryAdvertisements[0] ?? null, [controller.deliveryAdvertisements])
 
   return (
     <>
@@ -29,7 +31,6 @@ export function AttractionsPage({
 
         {/* 搜索区 */}
         <AttractionSearchCard
-          attractionType={controller.attractionType}
           hotAttractions={ATTRACTION_HOT_SPOTS}
           insight={formatAttractionInsight(controller.attractionResponses, translate)}
           isBusy={controller.isBusy}
@@ -37,30 +38,36 @@ export function AttractionsPage({
           recentSearches={ATTRACTION_RECENT_SEARCHES}
           searchCity={controller.searchCity}
           selectedQuickDatePreset={controller.selectedQuickDatePreset}
-          sortPreference={controller.sortPreference}
-          travelerCount={controller.travelerCount}
           translate={translate}
           useDateDraft={controller.useDateDraft}
           onSearchCityChange={controller.setSearchCity}
           onKeywordChange={controller.setKeyword}
           onUseDateChange={controller.setUseDateDraft}
-          onTravelerCountChange={controller.setTravelerCount}
-          onAttractionTypeChange={controller.setAttractionType}
-          onSortPreferenceChange={controller.setSortPreference}
           onSelectQuickDatePreset={controller.handleSelectQuickDatePreset}
           onSelectHotAttraction={controller.handleSelectHotAttraction}
           onSearch={controller.handleSearchAttractions}
         />
 
         {/* 广告投放区 */}
-        <AdvertisementCardRail
-          advertisements={controller.deliveryAdvertisements}
-          translate={translate}
-          onOpenAdvertisement={controller.handleOpenAdvertisement}
-        />
+        {attractionAdvertisement ? (
+          <section className="grid gap-4 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+            <p className="text-sm font-bold text-slate-500">{translate('advertising.deliveryEyebrow')}</p>
+            <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.deliveryTitle')}</h3>
+            <AdvertisementCardRail
+              advertisements={[attractionAdvertisement]}
+              translate={translate}
+              onOpenAdvertisement={controller.handleOpenAdvertisement}
+            />
+          </section>
+        ) : null}
 
         {/* 筛选区 */}
-        <AttractionFilterBar translate={translate} />
+        <AttractionFilterBar
+          hasSearchedAttractions={controller.hasSearchedAttractions}
+          sortPreference={controller.sortPreference}
+          translate={translate}
+          onSortPreferenceChange={controller.setSortPreference}
+        />
 
         {/* 访客提示区 */}
         {controller.isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('attractions.guest')}</p> : null}

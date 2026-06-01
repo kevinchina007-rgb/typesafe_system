@@ -5,7 +5,7 @@ import { OrderItemFeedbackActions } from '@/pages/BookingsPage/components/shared
 import { OrderMeta } from '@/pages/BookingsPage/components/shared/OrderMeta'
 import { OrderPaymentActions } from '@/pages/BookingsPage/components/shared/OrderPaymentActions'
 import type { OrderPanelProps } from '@/pages/BookingsPage/objects'
-import { buildTrainOrderDisplay, formatTrainDateTimeRange, formatTrainSeatLabel, hasTrainSnapshot, isOrderPaid, isOrderPayable, isOrderRefunded, findOrderItemReview } from '@/pages/BookingsPage/functions'
+import { buildTrainOrderDisplay, formatTrainDateTimeRange, formatTrainSeatLabel, isOrderPaid, isOrderPayable, isOrderRefunded, findOrderItemReview, isTrainOrderLineItem } from '@/pages/BookingsPage/functions'
 
 export function TrainOrderCard({
   currentLanguage,
@@ -30,7 +30,8 @@ export function TrainOrderCard({
   onOpenOrderCancellationFeedback: (orderId: string) => Promise<void>
   onOpenPayment: (order: OrderResponse) => void
 }) {
-  const trainItem = (order.orderLineItems ?? []).find(orderLineItem => orderLineItem.trainDetails || hasTrainSnapshot(orderLineItem.summaryLabel))
+  const trainLineItems = (order.orderLineItems ?? []).filter(orderLineItem => isTrainOrderLineItem(orderLineItem))
+  const trainItem = trainLineItems[0] ?? null
   const displayTrain = trainItem ? buildTrainOrderDisplay(trainItem) : null
   const isPayable = isOrderPayable(order.status)
   const isPaid = isOrderPaid(order.status)
@@ -145,7 +146,7 @@ export function TrainOrderCard({
         </div>
 
         <ul className="grid gap-3 border-t border-slate-200 pt-4">
-          {(order.orderLineItems ?? []).map(orderLineItem => {
+          {trainLineItems.map(orderLineItem => {
             const existingReviewForLineItem = findOrderItemReview(reviews, orderLineItem.orderItemId)
             return (
               <li key={orderLineItem.orderItemId} className="grid gap-3">

@@ -86,7 +86,10 @@ object CreateOrderCancellationMessagePlanner extends ConnectionApiPlan[CreateOrd
             thread.orderId.exists(_.value == summary.orderId) &&
             thread.resourceType == descriptor.resourceType &&
             thread.resourceSummaryTitle == descriptor.resourceSummaryTitle then
-            IO.pure(summary)
+            FeedbackPlannerPlainSql.hasOpenOrderCancellationRequest(connection, thread.threadId).flatMap {
+              case true  => IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' already has a pending cancellation request"))
+              case false => IO.pure(summary)
+            }
           else IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' cannot be cancelled in this feedback thread"))
         case None => IO.raiseError(new IllegalArgumentException(s"Order '${input.orderId}' was not found"))
       }

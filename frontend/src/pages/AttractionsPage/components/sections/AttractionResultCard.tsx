@@ -1,7 +1,12 @@
 import type { AttractionResultCardProps } from '../../objects'
 import { mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
-import { filterAttractionSessionsForUseDate, formatAttractionRules, renderAttractionTravelerOptionLabel } from '@/app/stores/models/attraction-booking-model'
+import {
+  evaluateAttractionTravelersEligibility,
+  filterAttractionSessionsForUseDate,
+  formatAttractionRules,
+  renderAttractionTravelerOptionLabel,
+} from '@/app/stores/models/attraction-booking-model'
 import { readAttractionTicketBookingForm } from '../../functions'
 
 export function AttractionResultCard({
@@ -43,83 +48,115 @@ export function AttractionResultCard({
       <p>{attractionResponse.description}</p>
 
       <ul className="grid gap-3">
-        {attractionResponse.ticketTypes.map(ticketType => (
-          <li key={ticketType.ticketTypeId} className="grid gap-3 border border-slate-200 bg-slate-50 p-4">
-            <div>
-              <strong>{ticketType.ticketTypeName}</strong>
-              <p>{ticketType.description}</p>
-              <p>{`${translate('attractions.ticketPrice')}: ${ticketType.priceAmount} ${ticketType.priceCurrency}`}</p>
-              <p>{`${translate('attractions.availableDateRange')}: ${ticketType.availableFromDate} - ${ticketType.availableToDate}`}</p>
-              <p>{`${translate('attractions.totalQuantity')}: ${ticketType.totalQuantity}`}</p>
-              <p>{`${translate('attractions.remainingTickets')}: ${ticketType.availableQuantityForRequestedDate ?? '-'}`}</p>
-              <p>{`${translate('attractions.validWeekdays')}: ${ticketType.validWeekdays.map(weekday => translate(`weekdays.${weekday.toLowerCase()}`)).join(' / ')}`}</p>
-              {!ticketType.isAvailableForRequestedDate ? <p>{translate('attractions.unavailableForDate')}</p> : null}
-              <p>{`${translate('attractions.ticketRules')}: ${formatAttractionRules(ticketType.rules.map(rule => rule.summary), translate)}`}</p>
-            </div>
+        {attractionResponse.ticketTypes.map(ticketType => {
+          const travelerEligibility = evaluateAttractionTravelersEligibility(travelers, ticketType.rules, useDateDraft)
+          const hasEligibleTraveler = travelerEligibility.some(item => item.eligibility.eligible)
 
-            <form
-              className="flex flex-wrap items-center gap-3"
-              onSubmit={async event => {
-                event.preventDefault()
-                if (isGuestMode) {
-                  onRequireLogin()
-                  return
-                }
-                const formData = new FormData(event.currentTarget)
-                const { sessionId, travelerIds, useDate } = readAttractionTicketBookingForm(formData)
-
-                await onBookAttraction({
-                  attractionId: attractionResponse.attractionId,
-                  ticketTypeId: ticketType.ticketTypeId,
-                  sessionId,
-                  travelerIds,
-                  useDate,
-                  orderCurrency: ticketType.priceCurrency,
-                })
-              }}
-            >
-              <label>
-                {translate('attractions.useDate')}
-                <input name="useDate" type="date" defaultValue={useDateDraft} required disabled={isBusy} />
-              </label>
-              {ticketType.sessions.length > 0 ? (
-                <label>
-                  {translate('attractions.session')}
-                  <select name="sessionId" defaultValue="" required disabled={isBusy}>
-                    <option value="" disabled>
-                      {translate('attractions.selectSession')}
-                    </option>
-                    {filterAttractionSessionsForUseDate(ticketType.sessions, useDateDraft).map(session => (
-                      <option key={session.sessionId} value={session.sessionId}>
-                        {`${session.sessionName} | ${session.startsAt.slice(11, 16)}-${session.endsAt.slice(11, 16)}`}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-
-              <div className="grid gap-2">
-                <p className="text-sm font-medium text-slate-500">{translate('attractions.selectTravelers')}</p>
-                {travelers.map(traveler => (
-                  <label key={traveler.travelerId} className="flex items-center gap-2">
-                    <input type="checkbox" name="travelerIds" value={traveler.travelerId} disabled={isBusy} />
-                    {renderAttractionTravelerOptionLabel(traveler)}
-                  </label>
-                ))}
+          return (
+            <li key={ticketType.ticketTypeId} className="grid gap-3 border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <strong>{ticketType.ticketTypeName}</strong>
+                <p>{ticketType.description}</p>
+                <p>{`${translate('attractions.ticketPrice')}: ${ticketType.priceAmount} ${ticketType.priceCurrency}`}</p>
+                <p>{`${translate('attractions.availableDateRange')}: ${ticketType.availableFromDate} - ${ticketType.availableToDate}`}</p>
+                <p>{`${translate('attractions.totalQuantity')}: ${ticketType.totalQuantity}`}</p>
+                <p>{`${translate('attractions.remainingTickets')}: ${ticketType.availableQuantityForRequestedDate ?? '-'}`}</p>
+                <p>{`${translate('attractions.validWeekdays')}: ${ticketType.validWeekdays.map(weekday => translate(`weekdays.${weekday.toLowerCase()}`)).join(' / ')}`}</p>
+                {!ticketType.isAvailableForRequestedDate ? <p>{translate('attractions.unavailableForDate')}</p> : null}
+                <p>{`${translate('attractions.ticketRules')}: ${formatAttractionRules(ticketType.rules.map(rule => rule.summary), translate)}`}</p>
               </div>
 
-              <button
-                className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-                type="submit"
-                disabled={isBusy || !ticketType.isAvailableForRequestedDate || (ticketType.availableQuantityForRequestedDate ?? 0) <= 0}
+              <form
+                className="flex flex-wrap items-center gap-3"
+                onSubmit={async event => {
+                  event.preventDefault()
+                  if (isGuestMode) {
+                    onRequireLogin()
+                    return
+                  }
+                  const formData = new FormData(event.currentTarget)
+                  const { sessionId, travelerIds, useDate } = readAttractionTicketBookingForm(formData)
+
+                  await onBookAttraction({
+                    attractionId: attractionResponse.attractionId,
+                    attractionName: attractionResponse.attractionName,
+                    ticketTypeId: ticketType.ticketTypeId,
+                    ticketTypeName: ticketType.ticketTypeName,
+                    sessionId,
+                    travelerIds,
+                    useDate,
+                    orderCurrency: ticketType.priceCurrency,
+                    rules: ticketType.rules,
+                  })
+                }}
               >
-                {translate('attractions.bookNow')}
-              </button>
-            </form>
-          </li>
-        ))}
+                <label>
+                  {translate('attractions.useDate')}
+                  <input name="useDate" type="date" defaultValue={useDateDraft} required disabled={isBusy} />
+                </label>
+                {ticketType.sessions.length > 0 ? (
+                  <label>
+                    {translate('attractions.session')}
+                    <select name="sessionId" defaultValue="" required disabled={isBusy}>
+                      <option value="" disabled>
+                        {translate('attractions.selectSession')}
+                      </option>
+                      {filterAttractionSessionsForUseDate(ticketType.sessions, useDateDraft).map(session => (
+                        <option key={session.sessionId} value={session.sessionId}>
+                          {`${session.sessionName} | ${session.startsAt.slice(11, 16)}-${session.endsAt.slice(11, 16)}`}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                <div className="grid gap-2">
+                  <p className="text-sm font-medium text-slate-500">{translate('attractions.selectTravelers')}</p>
+                  {travelers.map(traveler => {
+                    const eligibility = travelerEligibility.find(item => item.traveler.travelerId === traveler.travelerId)?.eligibility
+                    const isEligible = eligibility?.eligible ?? true
+                    return (
+                      <label key={traveler.travelerId} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          name="travelerIds"
+                          value={traveler.travelerId}
+                          defaultChecked={isEligible}
+                          disabled={isBusy || !isEligible}
+                        />
+                        <span className="flex flex-wrap items-center gap-2">
+                          {renderAttractionTravelerOptionLabel(traveler, useDateDraft)}
+                          {isEligible ? (
+                            <span className="inline-flex items-center border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">
+                              {translate('attractions.eligible')}
+                            </span>
+                          ) : (
+                            <span className="grid gap-1">
+                              <span className="inline-flex items-center border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-700">
+                                {translate('attractions.ineligible')}
+                              </span>
+                              {eligibility?.failureReasons.length ? <small className="text-xs leading-5 text-rose-600">{eligibility.failureReasons.join(' / ')}</small> : null}
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+
+                <button
+                  className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
+                  type="submit"
+                  disabled={isBusy || !ticketType.isAvailableForRequestedDate || (ticketType.availableQuantityForRequestedDate ?? 0) <= 0 || !hasEligibleTraveler}
+                >
+                  {translate('attractions.bookNow')}
+                </button>
+                {!hasEligibleTraveler ? <p className="text-sm text-rose-600">当前出行人都不符合该票型条件。</p> : null}
+              </form>
+            </li>
+          )
+        })}
       </ul>
     </article>
   )
 }
-

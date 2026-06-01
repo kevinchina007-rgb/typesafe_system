@@ -15,13 +15,30 @@ object AttractionPlannerPlainSql:
     IO.blocking {
       PlainSqlSupport.withStatement(
         connection,
-        "select attraction_id, name, city, location from attractions where status = ? and (name ilike ? or city ilike ? or location ilike ?) order by name limit 12"
+        """
+          select attraction_id, name, city, location
+          from attractions
+          where status = ?
+            and (name ilike ? or city ilike ? or location ilike ? or description ilike ?)
+          order by
+            case when lower(name) = lower(?) then 0 else 1 end,
+            case when name ilike ? then 0 when city ilike ? then 1 when location ilike ? then 2 when description ilike ? then 3 else 4 end,
+            created_at,
+            attraction_id
+          limit 12
+        """
       ) { statement =>
         val q = s"%${input.q.trim}%"
         statement.setString(1, AttractionStatus.Published.toString)
         statement.setString(2, q)
         statement.setString(3, q)
         statement.setString(4, q)
+        statement.setString(5, q)
+        statement.setString(6, input.q.trim)
+        statement.setString(7, q)
+        statement.setString(8, q)
+        statement.setString(9, q)
+        statement.setString(10, q)
         AttractionSuggestionListPlannerResponse(
           PlainSqlSupport.queryList(statement) { resultSet =>
             AttractionSuggestionPlannerResponse(
@@ -38,13 +55,47 @@ object AttractionPlannerPlainSql:
   def list(connection: Connection, input: ListAttractionsPlannerRequest): IO[AttractionListPlannerResponse] =
     IO.blocking {
       val city = input.city.map(_.trim).filter(_.nonEmpty)
+      val keyword = input.keyword.map(_.trim).filter(_.nonEmpty)
+      val cityFilterSql = city.map(_ => " and city ilike ?").getOrElse("")
+      val keywordFilterSql = keyword.map(_ => " and (name ilike ? or city ilike ? or location ilike ? or description ilike ?)").getOrElse("")
+      val citySortSql = city.map(_ => "case when lower(city) = lower(?) then 0 else 1 end,").getOrElse("")
+      val keywordSortSql = keyword
+        .map(_ => "case when lower(name) = lower(?) then 0 when name ilike ? then 1 when location ilike ? then 2 when description ilike ? then 3 else 4 end,")
+        .getOrElse("")
       val sql =
-        "select attraction_id, manager_id, name, city, location, description, status, created_at from attractions where status = ?" +
-          city.map(_ => " and city ilike ?").getOrElse("") +
-          " order by created_at, attraction_id"
+        s"""
+           select attraction_id, manager_id, name, city, location, description, status, created_at
+           from attractions
+           where status = ?$cityFilterSql$keywordFilterSql
+           order by ${citySortSql}${keywordSortSql}created_at, attraction_id
+         """
       PlainSqlSupport.withStatement(connection, sql) { statement =>
-        statement.setString(1, AttractionStatus.Published.toString)
-        city.foreach(value => statement.setString(2, s"%$value%"))
+        var index = 1
+        statement.setString(index, AttractionStatus.Published.toString)
+        index += 1
+        city.foreach { value =>
+          statement.setString(index, s"%$value%")
+          index += 1
+        }
+        keyword.foreach { value =>
+          val pattern = s"%$value%"
+          statement.setString(index, pattern)
+          statement.setString(index + 1, pattern)
+          statement.setString(index + 2, pattern)
+          statement.setString(index + 3, pattern)
+          index += 4
+        }
+        city.foreach { value =>
+          statement.setString(index, value)
+          index += 1
+        }
+        keyword.foreach { value =>
+          val pattern = s"%$value%"
+          statement.setString(index, value)
+          statement.setString(index + 1, pattern)
+          statement.setString(index + 2, pattern)
+          statement.setString(index + 3, pattern)
+        }
         AttractionListPlannerResponse(PlainSqlSupport.queryList(statement)(readAttraction(connection)))
       }
     }
@@ -239,7 +290,24 @@ object AttractionPlannerPlainSql:
           decodeWeekdays(Option(resultSet.getString("valid_weekdays")).getOrElse("")),
           TicketTypeStatus.fromText(resultSet.getString("status")),
           loadSessions(connection, ticketTypeId),
-          Vector.empty,
+          loadEligibilityRules(connection, ticketTypeId),
+          resultSet.getTimestamp("created_at").toInstant
+        )
+      }.toVector
+    }
+
+  private def loadEligibilityRules(connection: Connection, ticketTypeId: TicketTypeId): Vector[TicketEligibilityRule] =
+    PlainSqlSupport.withStatement(
+      connection,
+      "select rule_id, rule_type, rule_config_json, created_at from ticket_type_rules where ticket_type_id = ? order by created_at, rule_id"
+    ) { statement =>
+      statement.setString(1, ticketTypeId.value)
+      PlainSqlSupport.queryList(statement) { resultSet =>
+        TicketEligibilityRule(
+          TicketEligibilityRuleId(resultSet.getString("rule_id")),
+          ticketTypeId,
+          TicketEligibilityRuleType.fromText(resultSet.getString("rule_type")),
+          resultSet.getString("rule_config_json"),
           resultSet.getTimestamp("created_at").toInstant
         )
       }.toVector

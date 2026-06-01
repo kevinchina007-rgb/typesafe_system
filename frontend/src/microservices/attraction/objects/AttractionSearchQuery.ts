@@ -1,7 +1,9 @@
-﻿export type AttractionSearchQuery = {
+export type AttractionSearchQuery = {
   city?: string
+  keyword?: string
   useDate?: string
 }
+
 export const attractionSearchQueryFromJson = (json: string): AttractionSearchQuery =>
   JSON.parse(json) as AttractionSearchQuery
 

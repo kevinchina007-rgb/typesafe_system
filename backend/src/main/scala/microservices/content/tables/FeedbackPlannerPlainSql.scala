@@ -217,7 +217,22 @@ object FeedbackPlannerPlainSql:
         statement.setString(6, "Approved")
         statement.executeUpdate()
       }
+      PlainSqlSupport.withStatement(connection, "delete from train_seat_allocations where order_id = ?") { statement =>
+        statement.setString(1, orderId)
+        statement.executeUpdate()
+      }
       ()
+    }
+
+  def hasOpenOrderCancellationRequest(connection: Connection, threadId: SupportTicketId): IO[Boolean] =
+    IO.blocking {
+      listMessagesUnsafe(connection, threadId).exists { message =>
+        message.messageType == FeedbackMessageType.OrderCancellationRequest &&
+        message.payload.exists(payload =>
+          payload.status == OrderCancellationRequestStatus.Pending ||
+            payload.status == OrderCancellationRequestStatus.NeedMoreInfo
+        )
+      }
     }
 
   def saveThread(connection: Connection, thread: FeedbackThread): IO[Unit] =

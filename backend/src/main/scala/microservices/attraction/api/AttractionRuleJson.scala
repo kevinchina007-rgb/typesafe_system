@@ -4,6 +4,7 @@ import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.*
 import io.circe.{Decoder, Encoder}
 import io.circe.generic.semiauto.*
+import io.circe.parser.parse
 import io.circe.parser.decode
 import io.circe.syntax.*
 
@@ -38,14 +39,17 @@ object AttractionRuleJson:
     ruleType match
       case TicketEligibilityRuleType.AgeLessThan =>
         decode[TicketEligibilityRuleConfig.AgeLessThan](ruleConfigJson)
+          .orElse(decodeLegacyAgeLessThanRuleConfig(ruleConfigJson))
           .left
           .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
       case TicketEligibilityRuleType.AgeBetween =>
         decode[TicketEligibilityRuleConfig.AgeBetween](ruleConfigJson)
+          .orElse(decodeLegacyAgeBetweenRuleConfig(ruleConfigJson))
           .left
           .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
       case TicketEligibilityRuleType.AgeAtLeast =>
         decode[TicketEligibilityRuleConfig.AgeAtLeast](ruleConfigJson)
+          .orElse(decodeLegacyAgeAtLeastRuleConfig(ruleConfigJson))
           .left
           .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
       case TicketEligibilityRuleType.DocumentTypeEquals =>
@@ -56,3 +60,24 @@ object AttractionRuleJson:
         decode[TicketEligibilityRuleConfig.DocumentNumberPrefix](ruleConfigJson)
           .left
           .map(error => AttractionError.TicketEligibilityRuleConfigWasInvalid(ticketTypeId, error.getMessage))
+
+  private def decodeLegacyAgeLessThanRuleConfig(ruleConfigJson: String): Either[Throwable, TicketEligibilityRuleConfig.AgeLessThan] =
+    parse(ruleConfigJson).flatMap { json =>
+      val cursor = json.hcursor
+      cursor.downField("maxExclusive").as[Int].orElse(cursor.downField("ageValue").as[Int]).map(TicketEligibilityRuleConfig.AgeLessThan.apply)
+    }
+
+  private def decodeLegacyAgeBetweenRuleConfig(ruleConfigJson: String): Either[Throwable, TicketEligibilityRuleConfig.AgeBetween] =
+    parse(ruleConfigJson).flatMap { json =>
+      val cursor = json.hcursor
+      for
+        minInclusive <- cursor.downField("minInclusive").as[Int].orElse(cursor.downField("minAge").as[Int])
+        maxInclusive <- cursor.downField("maxInclusive").as[Int].orElse(cursor.downField("maxAge").as[Int])
+      yield TicketEligibilityRuleConfig.AgeBetween(minInclusive, maxInclusive)
+    }
+
+  private def decodeLegacyAgeAtLeastRuleConfig(ruleConfigJson: String): Either[Throwable, TicketEligibilityRuleConfig.AgeAtLeast] =
+    parse(ruleConfigJson).flatMap { json =>
+      val cursor = json.hcursor
+      cursor.downField("minInclusive").as[Int].orElse(cursor.downField("ageValue").as[Int]).map(TicketEligibilityRuleConfig.AgeAtLeast.apply)
+    }

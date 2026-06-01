@@ -1,6 +1,41 @@
-import type { TrainResponse } from '@/lib/mvp-types/index'
+﻿import type { TrainResponse } from '@/lib/mvp-types/index'
 import { quoteTrainSegmentAmount, resolveTrainSearchSegment } from '@/app/stores/models/train-booking-model'
 import type { TrainSortMode } from '../objects'
+
+const trainStationQueryAliases: Record<string, string> = {
+  北京南: 'BJS',
+  天津南: 'TJS',
+  济南西: 'JNW',
+  南京南: 'NJS',
+  上海虹桥: 'SHH',
+  深圳北: 'SZN',
+  杭州东: 'HZD',
+  宁波: 'NGB',
+  温州南: 'WZS',
+  福州南: 'FZN',
+  厦门北: 'XMN',
+  成都东: 'CDD',
+  重庆北: 'CQB',
+  武汉: 'WUH',
+  长沙南: 'CSN',
+  郑州东: 'ZZD',
+  合肥南: 'HFN',
+}
+
+export function normalizeTrainSearchStationQuery(query: string): string {
+  const trimmed = query.trim()
+  if (!trimmed) {
+    return trimmed
+  }
+  return trainStationQueryAliases[trimmed] ?? trimmed
+}
+
+export function normalizeTrainSearchRequestStations(fromStation: string, toStation: string): { fromStation: string; toStation: string } {
+  return {
+    fromStation: normalizeTrainSearchStationQuery(fromStation),
+    toStation: normalizeTrainSearchStationQuery(toStation),
+  }
+}
 
 function getTrainPriorityScore(trainNumber: string): number {
   const firstChar = trainNumber.trim().toUpperCase().charAt(0)
@@ -71,6 +106,30 @@ export function sortTrainResponses(
         return left.trainNumber.localeCompare(right.trainNumber)
       }
     }
+  })
+}
+
+export function filterTrainResponsesBySearchCriteria(
+  trainResponses: TrainResponse[],
+  fromStationQuery: string,
+  toStationQuery: string,
+  searchDate: string,
+): TrainResponse[] {
+  const normalizedSearchDate = searchDate.trim()
+  return trainResponses.filter(trainResponse => {
+    const routeSegment = resolveTrainSearchSegment(trainResponse, fromStationQuery, toStationQuery)
+    if (!routeSegment) {
+      return false
+    }
+
+    if (!normalizedSearchDate) {
+      return true
+    }
+
+    return routeSegment.segmentStops.some(stop => {
+      const departureValue = stop.departureTime ?? stop.arrivalTime ?? null
+      return typeof departureValue === 'string' && departureValue.startsWith(normalizedSearchDate)
+    })
   })
 }
 

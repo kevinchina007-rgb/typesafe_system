@@ -3,6 +3,7 @@ import type { AdvertisementResponse } from '@/microservices/advertising/objects/
 import type { AppViewKey } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { AttractionQuickDatePreset, AttractionSortPreference, AttractionTypePreference } from '@/app/stores/models/attraction-booking-model'
+import type { AttractionTicketTypeRuleResponse } from '@/lib/mvp-types/resources'
 
 export type AttractionsPageProps = {
   currentLanguage: AppLanguage
@@ -16,18 +17,19 @@ export type AttractionsSearchRequest = {
   city?: string
   keyword?: string
   useDate?: string
-  travelerCount?: number
-  attractionType?: AttractionTypePreference
   sortPreference?: AttractionSortPreference
 }
 
 export type AttractionBookingPayload = {
   attractionId: string
+  attractionName: string
   ticketTypeId: string
+  ticketTypeName: string
   sessionId?: string | null
   travelerIds: string[]
   useDate: string
   orderCurrency: string
+  rules: AttractionTicketTypeRuleResponse[]
 }
 
 export type AttractionsPageController = {
@@ -77,9 +79,6 @@ export type AttractionSearchCardProps = {
   searchCity: string
   keyword: string
   useDateDraft: string
-  travelerCount: number
-  attractionType: AttractionTypePreference
-  sortPreference: AttractionSortPreference
   selectedQuickDatePreset: AttractionQuickDatePreset | null
   hotAttractions: string[]
   recentSearches: string[]
@@ -88,16 +87,16 @@ export type AttractionSearchCardProps = {
   onSearchCityChange: (value: string) => void
   onKeywordChange: (value: string) => void
   onUseDateChange: (value: string) => void
-  onTravelerCountChange: (value: number) => void
-  onAttractionTypeChange: (value: AttractionTypePreference) => void
-  onSortPreferenceChange: (value: AttractionSortPreference) => void
   onSelectQuickDatePreset: (preset: AttractionQuickDatePreset, nextDate: string) => void
   onSelectHotAttraction: (value: string) => void
   onSearch: () => void
 }
 
 export type AttractionFilterBarProps = {
+  hasSearchedAttractions: boolean
+  sortPreference: AttractionSortPreference
   translate: (translationKey: string) => string
+  onSortPreferenceChange: (value: AttractionSortPreference) => void
 }
 
 export type AttractionResultsSectionProps = {

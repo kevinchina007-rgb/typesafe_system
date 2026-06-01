@@ -145,28 +145,47 @@ object DatabaseCodecs:
   given Encoder[SerializedHotelBookingSnapshot] = deriveEncoder
   given Decoder[SerializedHotelBookingSnapshot] = deriveDecoder
   given Encoder[SerializedTrainBookingSnapshot] = deriveEncoder
-  given Decoder[SerializedTrainBookingSnapshot] = Decoder.instance { (cursor: HCursor) =>
-    for
+  given Decoder[SerializedTrainBookingSnapshot] = Decoder.instance { cursor =>
+    (for
       trainId <- cursor.downField("trainId").as[String]
       trainNumber <- cursor.downField("trainNumber").as[String]
-      fromStopId <- cursor.downField("fromStopId").as[String]
-      fromStopSequenceNo <- cursor.downField("fromStopSequenceNo").as[Option[Int]]
       fromStationCode <- cursor.downField("fromStationCode").as[String]
+        .orElse(cursor.downField("departureStationCode").as[String])
+        .orElse(Right(trainId))
       fromStationName <- cursor.downField("fromStationName").as[String]
-      toStopId <- cursor.downField("toStopId").as[String]
-      toStopSequenceNo <- cursor.downField("toStopSequenceNo").as[Option[Int]]
+        .orElse(cursor.downField("departureStation").as[String])
+        .orElse(Right(fromStationCode))
       toStationCode <- cursor.downField("toStationCode").as[String]
+        .orElse(cursor.downField("arrivalStationCode").as[String])
+        .orElse(Right(trainId))
       toStationName <- cursor.downField("toStationName").as[String]
-      departureTime <- cursor.downField("departureTime").as[String]
-      arrivalTime <- cursor.downField("arrivalTime").as[String]
-      seatInventoryId <- cursor.downField("seatInventoryId").as[String]
-      seatClass <- cursor.downField("seatClass").as[String]
+        .orElse(cursor.downField("arrivalStation").as[String])
+        .orElse(Right(toStationCode))
+      departureTime <- cursor.downField("departureTime").as[String].orElse(Right(java.time.Instant.EPOCH.toString))
+      arrivalTime <- cursor.downField("arrivalTime").as[String].orElse(Right(departureTime))
+      seatClassText <- cursor.downField("seatClass").as[String]
       requestedSeatPreference <- cursor.downField("requestedSeatPreference").as[Option[String]]
       seatAssignments <- cursor.downField("seatAssignments").as[Option[Vector[SerializedTrainSeatAssignment]]]
-      travelerIds <- cursor.downField("travelerIds").as[Vector[String]]
-      saleStartsAt <- cursor.downField("saleStartsAt").as[String]
+      travelerIds <- cursor.downField("travelerIds").as[Option[Vector[String]]].map(_.getOrElse(Vector.empty))
+      saleStartsAt <- cursor.downField("saleStartsAt").as[String].orElse(Right(departureTime))
+      fromStopId <- cursor.downField("fromStopId").as[String]
+        .orElse(cursor.downField("departureStationCode").as[String])
+        .orElse(Right(fromStationCode))
+      fromStopSequenceNo <- cursor.downField("fromStopSequenceNo").as[Option[Int]]
+      toStopId <- cursor.downField("toStopId").as[String]
+        .orElse(cursor.downField("arrivalStationCode").as[String])
+        .orElse(Right(toStationCode))
+      toStopSequenceNo <- cursor.downField("toStopSequenceNo").as[Option[Int]]
+      seatInventoryId <- cursor.downField("seatInventoryId").as[String].orElse(Right(s"legacy-$seatClassText"))
       unitPriceAmount <- cursor.downField("unitPriceAmount").as[BigDecimal]
+        .orElse(cursor.downField("unitPrice").as[BigDecimal])
+        .orElse(cursor.downField("totalPriceAmount").as[BigDecimal])
+        .orElse(cursor.downField("totalPrice").as[BigDecimal])
+        .orElse(Right(BigDecimal(0)))
       unitPriceCurrency <- cursor.downField("unitPriceCurrency").as[String]
+        .orElse(cursor.downField("currency").as[String])
+        .orElse(cursor.downField("totalPriceCurrency").as[String])
+        .orElse(Right("CNY"))
     yield SerializedTrainBookingSnapshot(
       trainId = trainId,
       trainNumber = trainNumber,
@@ -181,13 +200,14 @@ object DatabaseCodecs:
       departureTime = departureTime,
       arrivalTime = arrivalTime,
       seatInventoryId = seatInventoryId,
-      seatClass = seatClass,
+      seatClass = seatClassText,
       requestedSeatPreference = requestedSeatPreference,
       seatAssignments = seatAssignments,
       travelerIds = travelerIds,
       saleStartsAt = saleStartsAt,
       unitPriceAmount = unitPriceAmount,
       unitPriceCurrency = unitPriceCurrency
+    )
     )
   }
   given Encoder[SerializedTrainSeatAssignment] = deriveEncoder

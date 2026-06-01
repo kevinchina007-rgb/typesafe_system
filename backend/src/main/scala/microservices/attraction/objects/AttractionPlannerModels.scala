@@ -8,7 +8,7 @@ object AttractionSuggestionRequest:
   given sourceEncoder: Encoder[AttractionSuggestionRequest] = deriveEncoder
   given sourceDecoder: Decoder[AttractionSuggestionRequest] = deriveDecoder
 
-final case class ListAttractionsPlannerRequest(city: Option[String], useDate: Option[String])
+final case class ListAttractionsPlannerRequest(city: Option[String], keyword: Option[String], useDate: Option[String])
 object ListAttractionsPlannerRequest:
   given sourceEncoder: Encoder[ListAttractionsPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[ListAttractionsPlannerRequest] = deriveDecoder
@@ -72,6 +72,24 @@ final case class CreateAttractionTicketRulePlannerRequest(
 object CreateAttractionTicketRulePlannerRequest:
   given sourceEncoder: Encoder[CreateAttractionTicketRulePlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[CreateAttractionTicketRulePlannerRequest] = deriveDecoder
+
+final case class BookAttractionItemPlannerRequest(
+    userId: String,
+    orderId: String,
+    attractionId: String,
+    ticketTypeId: String,
+    sessionId: Option[String],
+    travelerIds: List[String],
+    useDate: String
+)
+object BookAttractionItemPlannerRequest:
+  given sourceEncoder: Encoder[BookAttractionItemPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[BookAttractionItemPlannerRequest] = deriveDecoder
+
+final case class BookAttractionItemPlannerResponse(orderId: String, orderItemId: String)
+object BookAttractionItemPlannerResponse:
+  given sourceEncoder: Encoder[BookAttractionItemPlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[BookAttractionItemPlannerResponse] = deriveDecoder
 
 final case class AttractionListPlannerResponse(attractions: List[Attraction])
 object AttractionListPlannerResponse:

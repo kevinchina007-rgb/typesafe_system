@@ -274,7 +274,6 @@ export function FeedbackConversationWorkspace({
   const [draftMessage, setDraftMessage] = useState('')
   const [showCancellationForm, setShowCancellationForm] = useState(false)
   const [cancellationOrderId, setCancellationOrderId] = useState('')
-  const [cancellationReason, setCancellationReason] = useState('')
   const [managerNotes, setManagerNotes] = useState<Record<string, string>>({})
   void fullScreen
 
@@ -509,9 +508,15 @@ export function FeedbackConversationWorkspace({
                       className="grid gap-3 border border-slate-200 bg-slate-50 p-3"
                       onSubmit={event => {
                         event.preventDefault()
-                        if (!cancellationOrderId || cancellationReason.trim().length === 0) return
-                        void onCreateCancellationRequest(activeThread.threadId, cancellationOrderId, cancellationReason)
-                        setCancellationReason('')
+                        const trimmedMessage = draftMessage.trim()
+                        if (trimmedMessage.length === 0) return
+                        if (cancellationOrderId) {
+                          void onCreateCancellationRequest(activeThread.threadId, cancellationOrderId, trimmedMessage)
+                        } else {
+                          void onSendMessage(activeThread.threadId, trimmedMessage)
+                        }
+                        setDraftMessage('')
+                        setCancellationOrderId('')
                         setShowCancellationForm(false)
                       }}
                     >
@@ -526,12 +531,12 @@ export function FeedbackConversationWorkspace({
                       <textarea
                         className="min-h-28 border border-slate-300 bg-white p-3 text-base outline-none focus:border-black"
                         rows={4}
-                        value={cancellationReason}
-                        onChange={event => setCancellationReason(event.target.value)}
-                        placeholder="请写明你想取消订单的原因，例如时间不合适、价格变化、行程有变等。"
+                        value={draftMessage}
+                        onChange={event => setDraftMessage(event.target.value)}
+                        placeholder={cancellationOrderId ? '请写明你想取消订单的原因，例如时间不合适、价格变化、行程有变等。' : '不选择订单时，这里会作为普通消息直接发送。'}
                       />
                       <button type="submit" className="w-fit min-h-11 border border-pink-500 bg-pink-500 px-5 py-2 font-bold text-white">
-                        提交取消请求
+                        {cancellationOrderId ? '提交取消请求' : '发送'}
                       </button>
                     </form>
                   ) : null}
