@@ -22,6 +22,7 @@ const appViewKeys: AppViewKey[] = [
   'trains',
   'attractions',
   'tourGroups',
+  'tourGroupPlanBuilder',
   'bookings',
   'manager',
   'siteAdminLogin',

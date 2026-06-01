@@ -18,6 +18,7 @@ export function useTourGroupsPageController({
     isBusy,
     signedInUser,
     travelers,
+    onNavigate,
     translate,
     onListGroups: async () => {
       const response = await travelMvpApiClient.listTourGroups()
@@ -34,6 +35,12 @@ export function useTourGroupsPageController({
       runPageActionWithResult(
         () => travelMvpApiClient.joinTourGroup(groupId, payload),
         translate('tourGroups.joinGroup'),
+        translate('notice.actionSuccess'),
+      ),
+    onLeaveGroup: (groupId, payload) =>
+      runPageActionWithResult(
+        () => travelMvpApiClient.leaveTourGroup(groupId, payload),
+        translate('tourGroups.leaveGroup'),
         translate('notice.actionSuccess'),
       ),
     onAddMembershipTraveler: (groupId, payload) =>
@@ -88,6 +95,24 @@ export function useTourGroupsPageController({
       runPageActionWithResult(
         () => travelMvpApiClient.batchRejectTourGroupSelections(payload),
         translate('tourGroups.batchRejectSelections'),
+        translate('notice.actionSuccess'),
+      ),
+    onKickMember: (groupId, payload) =>
+      runPageActionWithResult(
+        () => travelMvpApiClient.kickTourGroupMember(groupId, payload),
+        translate('tourGroups.kickMember'),
+        translate('notice.actionSuccess'),
+      ),
+    onBlacklistMember: (groupId, payload) =>
+      runPageActionWithResult(
+        () => travelMvpApiClient.blacklistTourGroupMember(groupId, payload),
+        translate('tourGroups.blacklistMember'),
+        translate('notice.actionSuccess'),
+      ),
+    onTransferOrganizer: (groupId, payload) =>
+      runPageActionWithResult(
+        () => travelMvpApiClient.transferTourGroupLeader(groupId, payload),
+        translate('tourGroups.transferOrganizer'),
         translate('notice.actionSuccess'),
       ),
     onBatchPaySelections: payload =>

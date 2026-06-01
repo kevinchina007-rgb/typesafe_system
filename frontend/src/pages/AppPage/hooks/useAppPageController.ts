@@ -151,7 +151,7 @@ export function useAppPageController() {
 
   useEffect(() => {
     if (!hasResolvedPrincipalState) return
-    if (isGuestMode && (normalizedViewKey === 'travelers' || normalizedViewKey === 'tourGroups' || normalizedViewKey === 'customerFeedback')) {
+    if (isGuestMode && (normalizedViewKey === 'travelers' || normalizedViewKey === 'tourGroups' || normalizedViewKey === 'tourGroupPlanBuilder' || normalizedViewKey === 'customerFeedback')) {
       setAppView('blog')
       return
     }

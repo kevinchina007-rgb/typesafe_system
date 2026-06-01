@@ -8,6 +8,8 @@
   endDate: string
   capacity: number
   usedCapacity: number
+  coverImageUrl: string | null
+  tags: string[]
   memberCount: number
   pendingSelectionCount: number
   confirmedSelectionCount: number

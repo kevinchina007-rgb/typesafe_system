@@ -1,7 +1,8 @@
 import { useEffect } from 'react'
 
-import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, GroupPlanOptionResponse, GroupSelectionOrderProjectionResponse, GroupPlanSelectionResponse, HotelPlannerResponse, TourGroupMembershipResponse, TrainResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, GroupPlanOptionResponse, GroupSelectionOrderProjectionResponse, GroupPlanSelectionResponse, HotelPlannerResponse, TourGroupMembershipResponse, TrainResponse, UserResponse } from '@/lib/mvp-types/index'
 import { TourGroupPlanComposer } from '@/pages/TourGroupsPage/components/TourGroupPlanComposer'
+import { TourGroupMemberManagementSection } from '@/pages/TourGroupsPage/components/TourGroupMemberManagementSection'
 import { TourGroupPlanSection } from '@/pages/TourGroupsPage/components/TourGroupPlanSection'
 import { TourGroupSelectionList } from '@/pages/TourGroupsPage/components/TourGroupSelectionList'
 
@@ -14,6 +15,10 @@ type TourGroupOrganizerWorkspaceProps = {
   selectionOrderProjections: GroupSelectionOrderProjectionResponse[]
   pendingApprovals: GroupPlanSelectionResponse[]
   activeMembership: TourGroupMembershipResponse | null
+  memberships: TourGroupMembershipResponse[]
+  blacklists: import('@/lib/mvp-types/index').TourGroupBlacklistResponse[]
+  organizerUserId: string
+  signedInUser: UserResponse | null
   translate: (translationKey: string) => string
   onCreatePlanItem: (payload: {
     itemType: string
@@ -44,6 +49,9 @@ type TourGroupOrganizerWorkspaceProps = {
   onRejectSelection: (selectionId: string, note: string) => Promise<void>
   onBatchConfirmSelections: (selectionIds: string[]) => Promise<void>
   onBatchRejectSelections: (selectionIds: string[], note: string) => Promise<void>
+  onKickMember: (targetUserId: string) => Promise<void>
+  onBlacklistMember: (targetUserId: string) => Promise<void>
+  onTransferOrganizer: (targetUserId: string) => Promise<void>
 }
 
 export function TourGroupOrganizerWorkspace({
@@ -55,6 +63,10 @@ export function TourGroupOrganizerWorkspace({
   selectionOrderProjections,
   pendingApprovals,
   activeMembership,
+  memberships,
+  blacklists,
+  organizerUserId,
+  signedInUser,
   translate,
   onCreatePlanItem,
   onSelectPlanItem,
@@ -67,6 +79,9 @@ export function TourGroupOrganizerWorkspace({
   onRejectSelection,
   onBatchConfirmSelections,
   onBatchRejectSelections,
+  onKickMember,
+  onBlacklistMember,
+  onTransferOrganizer,
 }: TourGroupOrganizerWorkspaceProps) {
   useEffect(() => {
     if (!activePlanItem && planItems.length > 0) {
@@ -121,6 +136,17 @@ export function TourGroupOrganizerWorkspace({
           onCreateOptionForPlanItem={async (planItemId, payload) => {
             await onCreateOption(planItemId, payload)
           }}
+        />
+        <TourGroupMemberManagementSection
+          memberships={memberships}
+          blacklists={blacklists}
+          organizerUserId={organizerUserId}
+          signedInUser={signedInUser}
+          isBusy={isBusy}
+          translate={translate}
+          onKickMember={onKickMember}
+          onBlacklistMember={onBlacklistMember}
+          onTransferOrganizer={onTransferOrganizer}
         />
       </aside>
     </div>

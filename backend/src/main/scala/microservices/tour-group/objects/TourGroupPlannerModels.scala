@@ -10,7 +10,9 @@ final case class CreateTourGroupPlannerRequest(
     destination: String,
     startDate: String,
     endDate: String,
-    capacity: Int
+    capacity: Int,
+    coverImageUrl: Option[String] = None,
+    tags: List[String] = Nil
 )
 object CreateTourGroupPlannerRequest:
   given sourceEncoder: Encoder[CreateTourGroupPlannerRequest] = deriveEncoder
@@ -31,10 +33,60 @@ object JoinTourGroupPlannerRequest:
   given sourceEncoder: Encoder[JoinTourGroupPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[JoinTourGroupPlannerRequest] = deriveDecoder
 
+final case class LeaveTourGroupPlannerRequest(groupId: String, userId: String)
+object LeaveTourGroupPlannerRequest:
+  given sourceEncoder: Encoder[LeaveTourGroupPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[LeaveTourGroupPlannerRequest] = deriveDecoder
+
 final case class AddMembershipTravelerPlannerRequest(groupId: String, userId: String, travelerId: String)
 object AddMembershipTravelerPlannerRequest:
   given sourceEncoder: Encoder[AddMembershipTravelerPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[AddMembershipTravelerPlannerRequest] = deriveDecoder
+
+final case class KickTourGroupMemberPlannerRequest(groupId: String, organizerUserId: String, targetUserId: String)
+object KickTourGroupMemberPlannerRequest:
+  given sourceEncoder: Encoder[KickTourGroupMemberPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[KickTourGroupMemberPlannerRequest] = deriveDecoder
+
+final case class BlacklistTourGroupMemberPlannerRequest(groupId: String, organizerUserId: String, targetUserId: String)
+object BlacklistTourGroupMemberPlannerRequest:
+  given sourceEncoder: Encoder[BlacklistTourGroupMemberPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[BlacklistTourGroupMemberPlannerRequest] = deriveDecoder
+
+final case class TransferTourGroupLeaderPlannerRequest(groupId: String, organizerUserId: String, targetUserId: String)
+object TransferTourGroupLeaderPlannerRequest:
+  given sourceEncoder: Encoder[TransferTourGroupLeaderPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[TransferTourGroupLeaderPlannerRequest] = deriveDecoder
+
+final case class CreateTourGroupPlanItemPlannerRequest(
+    groupId: String,
+    organizerUserId: String,
+    itemType: String,
+    title: String,
+    description: String,
+    scheduledAt: String,
+    endsAt: Option[String] = None,
+    sequenceNo: Int
+)
+object CreateTourGroupPlanItemPlannerRequest:
+  given sourceEncoder: Encoder[CreateTourGroupPlanItemPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateTourGroupPlanItemPlannerRequest] = deriveDecoder
+
+final case class CreateTourGroupPlanOptionPlannerRequest(
+    groupId: String,
+    organizerUserId: String,
+    planItemId: String,
+    resourceType: String,
+    resourceId: String,
+    resourceVariantCode: Option[String] = None,
+    resourceContext: Option[String] = None,
+    label: String,
+    description: String,
+    defaultQuantity: Int
+)
+object CreateTourGroupPlanOptionPlannerRequest:
+  given sourceEncoder: Encoder[CreateTourGroupPlanOptionPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateTourGroupPlanOptionPlannerRequest] = deriveDecoder
 
 final case class TourGroupSummaryPlannerResponse(
     groupId: String,
@@ -47,6 +99,8 @@ final case class TourGroupSummaryPlannerResponse(
     capacity: Int,
     usedCapacity: Int,
     isFull: Boolean,
+    coverImageUrl: Option[String],
+    tags: List[String],
     memberCount: Int,
     activeTravelerCount: Int,
     pendingSelectionCount: Int,
@@ -69,10 +123,23 @@ object TourGroupMembershipTravelerPlannerResponse:
   given sourceEncoder: Encoder[TourGroupMembershipTravelerPlannerResponse] = deriveEncoder
   given sourceDecoder: Decoder[TourGroupMembershipTravelerPlannerResponse] = deriveDecoder
 
+final case class TourGroupBlacklistPlannerResponse(
+    blacklistId: String,
+    groupId: String,
+    userId: String,
+    blacklistedByUserId: String,
+    reason: String,
+    createdAt: String
+)
+object TourGroupBlacklistPlannerResponse:
+  given sourceEncoder: Encoder[TourGroupBlacklistPlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[TourGroupBlacklistPlannerResponse] = deriveDecoder
+
 final case class TourGroupDetailsPlannerResponse(
     group: TourGroupSummaryPlannerResponse,
     memberships: List[TourGroupMembershipPlannerResponse],
-    membershipTravelers: List[TourGroupMembershipTravelerPlannerResponse]
+    membershipTravelers: List[TourGroupMembershipTravelerPlannerResponse],
+    blacklists: List[TourGroupBlacklistPlannerResponse]
 )
 object TourGroupDetailsPlannerResponse:
   given sourceEncoder: Encoder[TourGroupDetailsPlannerResponse] = deriveEncoder

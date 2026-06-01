@@ -9,6 +9,8 @@ export type TourGroupsPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
+export type TourGroupsPageMode = 'home' | 'mine'
+
 export type TourGroupsPageRegionKey = 'header' | 'groupList' | 'groupDetail' | 'dialogs'
 
 export type TourGroupsPageRegion = {
@@ -21,7 +23,7 @@ export const TOUR_GROUPS_PAGE_REGIONS: TourGroupsPageRegion[] = [
   {
     key: 'header',
     title: '页面标题区',
-    description: '显示旅团页标题和当前页面说明。',
+    description: '显示旅游团页标题和当前页面说明。',
   },
   {
     key: 'groupList',
@@ -41,10 +43,12 @@ export const TOUR_GROUPS_PAGE_REGIONS: TourGroupsPageRegion[] = [
 ]
 
 export type TourGroupsPanelCommonProps = {
+  pageMode?: TourGroupsPageMode
   isBusy: boolean
   currentLanguage: AppLanguage
   travelers: TravelerResponse[]
   signedInUser: UserResponse | null
+  onNavigate: (viewKey: AppViewKey) => void
   translate: (translationKey: string) => string
   onListGroups: () => Promise<import('@/lib/mvp-types/index').TourGroupSummaryResponse[]>
   onLoadGroupDetails: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
@@ -56,8 +60,11 @@ export type TourGroupsPanelCommonProps = {
     startDate: string
     endDate: string
     capacity: number
+    coverImageUrl?: string | null
+    tags?: string[]
   }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
   onJoinGroup: (groupId: string, payload: { userId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
+  onLeaveGroup: (groupId: string, payload: { userId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
   onAddMembershipTraveler: (groupId: string, payload: { userId: string; travelerId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
   onCreatePlanItem: (groupId: string, payload: {
     organizerUserId: string
@@ -97,6 +104,9 @@ export type TourGroupsPanelCommonProps = {
     selectionIds: string[]
     reviewNote: string
   }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
+  onKickMember: (groupId: string, payload: { organizerUserId: string; targetUserId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
+  onBlacklistMember: (groupId: string, payload: { organizerUserId: string; targetUserId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
+  onTransferOrganizer: (groupId: string, payload: { organizerUserId: string; targetUserId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
   onBatchPaySelections: (payload: {
     userId: string
     selectionIds: string[]

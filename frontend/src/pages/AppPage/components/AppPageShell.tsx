@@ -11,6 +11,7 @@ import { HomePage } from '@/pages/HomePage'
 import { ManagerPage } from '@/pages/ManagerPage'
 import { ReviewsPage } from '@/pages/ReviewsPage'
 import { SmartTripPlannerPage } from '@/pages/SmartTripPlannerPage'
+import { TourGroupPlanBuilderPage } from '@/pages/TourGroupPlanBuilderPage'
 import { TourGroupsPage } from '@/pages/TourGroupsPage'
 import { TrainsPage } from '@/pages/TrainsPage'
 import { TravelersPage } from '@/pages/TravelersPage'
@@ -40,6 +41,7 @@ function renderCurrentPage(controller: ReturnType<typeof useAppPageController>) 
   if (normalizedViewKey === 'trains') return <TrainsPage currentLanguage={currentLanguage} signedInUser={signedInUserResponse} translate={controller.translate} onNavigate={setAppView} onShowNotice={showNotice} />
   if (normalizedViewKey === 'attractions') return <AttractionsPage currentLanguage={currentLanguage} signedInUser={signedInUserResponse} translate={controller.translate} onNavigate={setAppView} onShowNotice={showNotice} />
   if (normalizedViewKey === 'tourGroups') return <TourGroupsPage currentLanguage={currentLanguage} signedInUser={signedInUserResponse} translate={controller.translate} onNavigate={setAppView} onShowNotice={showNotice} />
+  if (normalizedViewKey === 'tourGroupPlanBuilder') return <TourGroupPlanBuilderPage currentLanguage={currentLanguage} signedInUser={signedInUserResponse} translate={controller.translate} onNavigate={setAppView} onShowNotice={showNotice} />
   if (normalizedViewKey === 'flightOrders' || normalizedViewKey === 'hotelOrders' || normalizedViewKey === 'trainOrders' || normalizedViewKey === 'attractionOrders') {
     return <BookingsPage currentLanguage={currentLanguage} orderCategory={normalizedViewKey} isSessionReady={hasResolvedPrincipalState} signedInUser={signedInUserResponse} translate={controller.translate} onNavigate={setAppView} onShowNotice={showNotice} />
   }

@@ -10,6 +10,7 @@ export type { TourGroupDetailsResponse } from '@/microservices/tour-group/object
 export type { TourGroupListResponse } from '@/microservices/tour-group/objects/TourGroupListResponse'
 export type { TourGroupMembershipResponse } from '@/microservices/tour-group/objects/TourGroupMembershipResponse'
 export type { TourGroupMembershipTravelerResponse } from '@/microservices/tour-group/objects/TourGroupMembershipTravelerResponse'
+export type { TourGroupBlacklistResponse } from '@/microservices/tour-group/objects/TourGroupBlacklistResponse'
 export type { TourGroupMessageAttachmentResponse } from '@/microservices/tour-group/objects/TourGroupMessageAttachmentResponse'
 export type { TourGroupMessageListResponse } from '@/microservices/tour-group/objects/TourGroupMessageListResponse'
 export type { TourGroupMessageReactionResponse } from '@/microservices/tour-group/objects/TourGroupMessageReactionResponse'

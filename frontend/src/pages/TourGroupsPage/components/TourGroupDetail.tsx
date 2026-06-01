@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TourGroupDetailsResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AppViewKey, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TourGroupDetailsResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { localizeTourGroupStatus } from '@/lib/presenters/view-models'
+import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import { TourGroupMemberWorkspace } from '@/pages/TourGroupsPage/components/TourGroupMemberWorkspace'
 import { TourGroupOrganizerWorkspace } from '@/pages/TourGroupsPage/components/TourGroupOrganizerWorkspace'
 import { TourGroupChatPanel } from '@/pages/TourGroupsPage/components/TourGroupChatPanel'
@@ -14,7 +15,9 @@ type TourGroupDetailProps = {
   isBusy: boolean
   translate: (translationKey: string) => string
   onJoinGroup: () => Promise<void>
+  onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
+  onNavigate: (viewKey: AppViewKey) => void
   onCreatePlanItem: (payload: {
     itemType: string
     title: string
@@ -43,6 +46,9 @@ type TourGroupDetailProps = {
   onRejectSelection: (selectionId: string, note: string) => Promise<void>
   onBatchConfirmSelections: (selectionIds: string[]) => Promise<void>
   onBatchRejectSelections: (selectionIds: string[], note: string) => Promise<void>
+  onKickMember: (targetUserId: string) => Promise<void>
+  onBlacklistMember: (targetUserId: string) => Promise<void>
+  onTransferOrganizer: (targetUserId: string) => Promise<void>
   onBatchPaySelections: (selectionIds: string[]) => Promise<void>
   onOpenBookings: () => void
   onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
@@ -82,7 +88,9 @@ export function TourGroupDetail({
   translate,
   activePlanItem,
   onJoinGroup,
+  onLeaveGroup,
   onAddMembershipTraveler,
+  onNavigate,
   onCreatePlanItem,
   onSelectPlanItem,
   onCreateOption,
@@ -92,6 +100,9 @@ export function TourGroupDetail({
   onRejectSelection,
   onBatchConfirmSelections,
   onBatchRejectSelections,
+  onKickMember,
+  onBlacklistMember,
+  onTransferOrganizer,
   onBatchPaySelections,
   onOpenBookings,
   onSearchFlights,
@@ -142,6 +153,8 @@ export function TourGroupDetail({
           <p className="text-sm font-bold text-slate-500">{translate('tourGroups.detailEyebrow')}</p>
           <h2>{details.group.title}</h2>
           <p>{details.group.description}</p>
+          {details.group.coverImageUrl ? <BackendAssetImage className="mt-3 h-56 w-full object-cover" assetUrl={details.group.coverImageUrl} alt={details.group.title} /> : null}
+          {details.group.tags.length > 0 ? <p className="mt-2 text-sm font-medium text-slate-500">{details.group.tags.join(' / ')}</p> : null}
         </div>
         <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{localizeTourGroupStatus(details.group.status, currentLanguage)}</span>
       </div>
@@ -199,6 +212,19 @@ export function TourGroupDetail({
           >
             {translate('tourGroups.enterGroup')}
           </button>
+          <button
+            type="button"
+            className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 shadow-none transition hover:border-sky-500 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-55"
+            disabled={isBusy}
+            onClick={() => {
+              const nextUrl = new URL(window.location.href)
+              nextUrl.searchParams.set('groupId', details.group.groupId)
+              window.history.replaceState(window.history.state, '', nextUrl)
+              onNavigate('tourGroupPlanBuilder')
+            }}
+          >
+            {translate('nav.tourGroupPlanBuilder')}
+          </button>
         </div>
       ) : null}
 
@@ -212,6 +238,10 @@ export function TourGroupDetail({
           selectionOrderProjections={details.selectionOrderProjections}
           pendingApprovals={pendingApprovals}
           activeMembership={activeMembership}
+          memberships={details.memberships}
+          blacklists={details.blacklists}
+          organizerUserId={details.group.organizerUserId}
+          signedInUser={signedInUser}
           translate={translate}
           onCreatePlanItem={onCreatePlanItem}
           onSelectPlanItem={onSelectPlanItem}
@@ -224,6 +254,9 @@ export function TourGroupDetail({
           onRejectSelection={onRejectSelection}
           onBatchConfirmSelections={onBatchConfirmSelections}
           onBatchRejectSelections={onBatchRejectSelections}
+          onKickMember={onKickMember}
+          onBlacklistMember={onBlacklistMember}
+          onTransferOrganizer={onTransferOrganizer}
         />
       ) : (
         <TourGroupMemberWorkspace
@@ -238,6 +271,7 @@ export function TourGroupDetail({
           isBusy={isBusy}
           translate={translate}
           onJoinGroup={onJoinGroup}
+          onLeaveGroup={onLeaveGroup}
           onAddMembershipTraveler={onAddMembershipTraveler}
           onOpenChoose={onOpenChoose}
           onSubmitSelection={onSubmitSelection}

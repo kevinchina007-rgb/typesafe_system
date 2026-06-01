@@ -64,14 +64,39 @@ def rejectGroupPlanSelection(selection: GroupPlanSelection, organizerUserId: Use
 def markGroupPlanSelectionConvertedToOrder(selection: GroupPlanSelection): Either[TourGroupError, GroupPlanSelection] =
   Either.cond(selection.status == GroupPlanSelectionStatus.OrganizerConfirmed, selection.copy(status = GroupPlanSelectionStatus.ConvertedToOrder), TourGroupError.SelectionWasNotPayable(selection.selectionId, selection.status))
 
-def createTourGroup(groupId: TourGroupId, organizerUserId: UserId, title: String, description: String, destination: String, startDate: LocalDate, endDate: LocalDate, capacity: Int, createdAt: Instant): Either[TourGroupError, TourGroup] =
+def createTourGroup(
+    groupId: TourGroupId,
+    organizerUserId: UserId,
+    title: String,
+    description: String,
+    destination: String,
+    startDate: LocalDate,
+    endDate: LocalDate,
+    capacity: Int,
+    coverImageUrl: Option[String],
+    tags: Vector[String],
+    createdAt: Instant
+): Either[TourGroupError, TourGroup] =
   for
     _ <- Either.cond(capacity > 0, (), TourGroupError.GroupCapacityWasInvalid(capacity))
     _ <- Either.cond(startDate.isBefore(endDate), (), TourGroupError.GroupDateRangeWasInvalid(startDate, endDate))
     normalizedTitle <- normalizeRequiredTourGroupText("tour-group-title", title)
     normalizedDescription <- normalizeRequiredTourGroupText("tour-group-description", description)
     normalizedDestination <- normalizeRequiredTourGroupText("tour-group-destination", destination)
-  yield TourGroup(groupId, organizerUserId, normalizedTitle, normalizedDescription, normalizedDestination, startDate, endDate, capacity, TourGroupStatus.Open, createdAt)
+  yield TourGroup(
+    groupId,
+    organizerUserId,
+    normalizedTitle,
+    normalizedDescription,
+    normalizedDestination,
+    startDate,
+    endDate,
+    capacity,
+    coverImageUrl.map(_.trim).filter(_.nonEmpty),
+    tags.map(_.trim).filter(_.nonEmpty).distinct,
+    TourGroupStatus.Open,
+    createdAt
+  )
 
 def createOrganizerMembership(membershipId: TourGroupMembershipId, groupId: TourGroupId, organizerUserId: UserId, joinedAt: Instant): TourGroupMembership =
   TourGroupMembership(membershipId, groupId, organizerUserId, joinedAt, TourGroupMembershipStatus.Active)

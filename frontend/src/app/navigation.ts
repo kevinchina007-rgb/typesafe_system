@@ -8,6 +8,7 @@ export type TopNavKey =
   | 'travelManagement'
   | 'community'
   | 'smartPlanner'
+  | 'tourGroupPlanBuilder'
   | 'customerFeedback'
   | 'userCenter'
   | 'managerCenter'
@@ -200,6 +201,16 @@ export const appRoutes: RouteMeta[] = [
     prerequisiteState: 'orders',
   },
   {
+    viewKey: 'tourGroupPlanBuilder',
+    titleKey: 'nav.tourGroupPlanBuilder',
+    descriptionKey: 'tourGroups.addPlanItemsDescription',
+    section: 'travelManagement',
+    topNav: 'travelManagement',
+    icon: 'operations',
+    sortOrder: 25,
+    prerequisiteState: 'orders',
+  },
+  {
     viewKey: 'blog',
     titleKey: 'nav.blog',
     descriptionKey: 'community.blogDescription',
@@ -379,7 +390,7 @@ function isRouteVisible(params: {
   }
 
   if (isGuestMode) {
-    if (route.viewKey === 'reviews' || route.viewKey === 'tourGroups' || route.viewKey === 'travelers') {
+    if (route.viewKey === 'reviews' || route.viewKey === 'tourGroups' || route.viewKey === 'tourGroupPlanBuilder' || route.viewKey === 'travelers') {
       return false
     }
     return route.supportsGuests === true

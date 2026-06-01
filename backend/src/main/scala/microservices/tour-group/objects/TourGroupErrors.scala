@@ -27,6 +27,10 @@ object TourGroupError:
     override val message: String =
       s"User '${userId.value}' already has an active membership in group '${groupId.value}'"
 
+  final case class UserWasBlacklistedFromGroup(groupId: TourGroupId, userId: UserId) extends TourGroupError:
+    override val message: String =
+      s"User '${userId.value}' was blacklisted from group '${groupId.value}'"
+
   final case class PlanItemWasNotFound(planItemId: GroupPlanItemId) extends TourGroupError:
     override val message: String =
       s"Group plan item '${planItemId.value}' was not found"
@@ -42,6 +46,22 @@ object TourGroupError:
   final case class OrganizerScopeDidNotMatch(groupId: TourGroupId, actingUserId: UserId) extends TourGroupError:
     override val message: String =
       s"User '${actingUserId.value}' is not organizer of group '${groupId.value}'"
+
+  final case class OrganizerMustTransferBeforeLeaving(groupId: TourGroupId, actingUserId: UserId) extends TourGroupError:
+    override val message: String =
+      s"User '${actingUserId.value}' must transfer organizer role before leaving group '${groupId.value}'"
+
+  final case class OrganizerCannotBeKicked(groupId: TourGroupId, targetUserId: UserId) extends TourGroupError:
+    override val message: String =
+      s"Organizer '${targetUserId.value}' cannot be kicked from group '${groupId.value}'"
+
+  final case class OrganizerCannotBeBlacklisted(groupId: TourGroupId, targetUserId: UserId) extends TourGroupError:
+    override val message: String =
+      s"Organizer '${targetUserId.value}' cannot be blacklisted from group '${groupId.value}'"
+
+  final case class OrganizerTransferTargetWasInvalid(groupId: TourGroupId, targetUserId: UserId) extends TourGroupError:
+    override val message: String =
+      s"User '${targetUserId.value}' cannot become organizer of group '${groupId.value}'"
 
   final case class MembershipScopeDidNotMatch(membershipId: TourGroupMembershipId, actingUserId: UserId)
       extends TourGroupError:

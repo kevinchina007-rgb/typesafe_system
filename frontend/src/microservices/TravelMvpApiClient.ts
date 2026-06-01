@@ -20,7 +20,7 @@ import { createUser, loginUser, getUser, uploadUserAvatar, updateUserProfile } f
 import { registerAirlineManager, registerHotelManager, registerSiteAdmin, registerRailwayManager, registerAttractionManager, listManagedAttractions, createAttraction, createAttractionTicketType, createAttractionTicketSession, createAttractionTicketRule, listManagedTrains, createTrainJourney, createManagerRoomType, listManagedHotels, listManagerTasks, batchConfirmManagerBookingItems, batchRejectManagerBookingItems, listManagerFlights, listManagerFlightOrders, listManagerRefundTasks, updateAirlineManagerProfile, updateHotelManagerProfile, createManagerFlight, toggleManagerFlightStatus, confirmManagerBookingItem, rejectManagerBookingItem } from '@/microservices/operations/api/ManagerPlanners'
 import { createPaymentLink } from '@/microservices/order/api/FindOrderPaymentPlanner'
 import { createOrder, addTrainItemToOrder, addAttractionItemToOrder, createHotelOrder, getOrder, listOrders, payOrder, cancelOrder, requestRefund, approveRefund, rejectRefund } from '@/microservices/order/api/OrderPlanners'
-import { createTourGroup, listTourGroups, getTourGroup, joinTourGroup, addTourGroupMembershipTraveler, createTourGroupPlanItem, createTourGroupPlanOption, createTourGroupSelection, submitTourGroupSelection, confirmTourGroupSelection, rejectTourGroupSelection, payTourGroupSelection, batchPayTourGroupSelections, batchConfirmTourGroupSelections, batchRejectTourGroupSelections, listTourGroupBookings, getTourGroupChatSettings, updateTourGroupChatSettings, listTourGroupChatMessages, sendTourGroupChatMessage, listTourGroupDirectConversations, listTourGroupConversations, searchTourGroupConversations, searchTourGroupMessages, getOrCreateTourGroupDirectConversation, listDirectConversationMessages, listConversationMessages, markConversationRead, uploadConversationAttachment, sendConversationMessage, sendDirectConversationMessage, editConversationMessage, deleteConversationMessage, recallConversationMessage, addConversationReaction, removeConversationReaction, updateDirectConversationMuteState, updateDirectConversationArchiveState } from '@/microservices/tour-group/api/TourGroupPlanners'
+import { createTourGroup, listTourGroups, getTourGroup, joinTourGroup, leaveTourGroup, addTourGroupMembershipTraveler, kickTourGroupMember, blacklistTourGroupMember, transferTourGroupLeader, createTourGroupPlanItem, createTourGroupPlanOption, createTourGroupSelection, submitTourGroupSelection, confirmTourGroupSelection, rejectTourGroupSelection, payTourGroupSelection, batchPayTourGroupSelections, batchConfirmTourGroupSelections, batchRejectTourGroupSelections, listTourGroupBookings, getTourGroupChatSettings, updateTourGroupChatSettings, listTourGroupChatMessages, sendTourGroupChatMessage, listTourGroupDirectConversations, listTourGroupConversations, searchTourGroupConversations, searchTourGroupMessages, getOrCreateTourGroupDirectConversation, listDirectConversationMessages, listConversationMessages, markConversationRead, uploadConversationAttachment, sendConversationMessage, sendDirectConversationMessage, editConversationMessage, deleteConversationMessage, recallConversationMessage, addConversationReaction, removeConversationReaction, updateDirectConversationMuteState, updateDirectConversationArchiveState } from '@/microservices/tour-group/api/TourGroupPlanners'
 import { listTrains, getTrain } from '@/microservices/train/api/TrainPlanners'
 import { createTraveler, updateTraveler, listTravelers, deleteTraveler } from '@/microservices/traveler/api/TravelerPlanners'
 
@@ -155,7 +155,11 @@ export const travelMvpApiClient = {
   listTourGroups,
   getTourGroup,
   joinTourGroup,
+  leaveTourGroup,
   addTourGroupMembershipTraveler,
+  kickTourGroupMember,
+  blacklistTourGroupMember,
+  transferTourGroupLeader,
   createTourGroupPlanItem,
   createTourGroupPlanOption,
   createTourGroupSelection,

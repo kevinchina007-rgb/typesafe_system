@@ -22,11 +22,13 @@ export function TourGroupsPanel({
   isBusy,
   signedInUser,
   travelers,
+  onNavigate,
   translate,
   onListGroups,
   onLoadGroupDetails,
   onCreateGroup,
   onJoinGroup,
+  onLeaveGroup,
   onAddMembershipTraveler,
   onCreatePlanItem,
   onCreatePlanOption,
@@ -36,6 +38,9 @@ export function TourGroupsPanel({
   onRejectSelection,
   onBatchConfirmSelections,
   onBatchRejectSelections,
+  onKickMember,
+  onBlacklistMember,
+  onTransferOrganizer,
   onBatchPaySelections,
   onSearchFlights,
   onSearchHotels,
@@ -59,8 +64,10 @@ export function TourGroupsPanel({
   onRemoveReaction,
   onUpdateMuteState,
   onUpdateArchiveState,
+  pageMode = 'home',
 }: TourGroupsPanelCommonProps) {
   const [groupSummaries, setGroupSummaries] = useState<TourGroupSummaryResponse[]>([])
+  const [groupDetailsCache, setGroupDetailsCache] = useState<Record<string, TourGroupDetailsResponse>>({})
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [selectedGroupDetails, setSelectedGroupDetails] = useState<TourGroupDetailsResponse | null>(null)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
@@ -71,11 +78,18 @@ export function TourGroupsPanel({
     void (async () => {
       const groups = await onListGroups()
       setGroupSummaries(groups)
+      const detailsEntries = await Promise.all(
+        groups.map(async group => {
+          const details = await onLoadGroupDetails(group.groupId)
+          return [group.groupId, details] as const
+        }),
+      )
+      setGroupDetailsCache(Object.fromEntries(detailsEntries))
       if (groups.length > 0) {
         setSelectedGroupId(currentGroupId => currentGroupId ?? groups[0].groupId)
       }
     })()
-  }, [onListGroups])
+  }, [onListGroups, onLoadGroupDetails])
 
   useEffect(() => {
     if (!selectedGroupId) {
@@ -106,9 +120,34 @@ export function TourGroupsPanel({
     [membershipTravelerIds, travelers],
   )
 
+  const visibleGroupSummaries = useMemo(() => {
+    if (pageMode !== 'mine' || !signedInUser) {
+      return groupSummaries
+    }
+
+    return groupSummaries.filter(group => {
+      if (group.organizerUserId === signedInUser.userId) {
+        return true
+      }
+
+      const details = groupDetailsCache[group.groupId]
+      return details?.memberships.some(membership => membership.userId === signedInUser.userId && membership.status === 'Active') ?? false
+    })
+  }, [groupDetailsCache, groupSummaries, pageMode, signedInUser?.userId])
+
+  useEffect(() => {
+    if (visibleGroupSummaries.length === 0) {
+      return
+    }
+    if (!selectedGroupId || !visibleGroupSummaries.some(group => group.groupId === selectedGroupId)) {
+      setSelectedGroupId(visibleGroupSummaries[0].groupId)
+    }
+  }, [selectedGroupId, visibleGroupSummaries])
+
   function applyUpdatedGroupDetails(details: TourGroupDetailsResponse) {
     setSelectedGroupDetails(details)
     setSelectedGroupId(details.group.groupId)
+    setGroupDetailsCache(currentCache => ({ ...currentCache, [details.group.groupId]: details }))
     setGroupSummaries(currentGroups => syncGroupSummary(currentGroups, details))
     setActiveOrganizerPlanItem(currentPlanItem => {
       return pickInitialActivePlanItem(details, currentPlanItem)
@@ -175,7 +214,7 @@ export function TourGroupsPanel({
       <div className="grid gap-5 xl:grid-cols-[18rem_1fr]">
         <TourGroupList
           currentLanguage={currentLanguage}
-          groups={groupSummaries}
+          groups={visibleGroupSummaries}
           selectedGroupId={selectedGroupId}
           signedInUser={signedInUser}
           isBusy={isBusy}
@@ -196,6 +235,11 @@ export function TourGroupsPanel({
               onJoinGroup={async () => {
                 if (!signedInUser) return
                 const details = await onJoinGroup(selectedGroupDetails.group.groupId, { userId: signedInUser.userId })
+                applyUpdatedGroupDetails(details)
+              }}
+              onLeaveGroup={async () => {
+                if (!signedInUser) return
+                const details = await onLeaveGroup(selectedGroupDetails.group.groupId, { userId: signedInUser.userId })
                 applyUpdatedGroupDetails(details)
               }}
               onAddMembershipTraveler={async travelerId => {
@@ -270,6 +314,30 @@ export function TourGroupsPanel({
                 })
                 applyUpdatedGroupDetails(details)
               }}
+              onKickMember={async targetUserId => {
+                if (!signedInUser) return
+                const details = await onKickMember(selectedGroupDetails.group.groupId, {
+                  organizerUserId: signedInUser.userId,
+                  targetUserId,
+                })
+                applyUpdatedGroupDetails(details)
+              }}
+              onBlacklistMember={async targetUserId => {
+                if (!signedInUser) return
+                const details = await onBlacklistMember(selectedGroupDetails.group.groupId, {
+                  organizerUserId: signedInUser.userId,
+                  targetUserId,
+                })
+                applyUpdatedGroupDetails(details)
+              }}
+              onTransferOrganizer={async targetUserId => {
+                if (!signedInUser) return
+                const details = await onTransferOrganizer(selectedGroupDetails.group.groupId, {
+                  organizerUserId: signedInUser.userId,
+                  targetUserId,
+                })
+                applyUpdatedGroupDetails(details)
+              }}
               onOpenBookings={async () => {
                 await onOpenBookings()
               }}
@@ -303,6 +371,7 @@ export function TourGroupsPanel({
               onRemoveReaction={onRemoveReaction}
               onUpdateMuteState={onUpdateMuteState}
               onUpdateArchiveState={onUpdateArchiveState}
+              onNavigate={onNavigate}
             />
           ) : (
             <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">

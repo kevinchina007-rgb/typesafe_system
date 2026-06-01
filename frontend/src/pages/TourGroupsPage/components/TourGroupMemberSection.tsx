@@ -11,6 +11,7 @@ type TourGroupMemberSectionProps = {
   isBusy: boolean
   translate: (translationKey: string) => string
   onJoinGroup: () => Promise<void>
+  onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
 }
 
@@ -23,6 +24,7 @@ export function TourGroupMemberSection({
   isBusy,
   translate,
   onJoinGroup,
+  onLeaveGroup,
   onAddMembershipTraveler,
 }: TourGroupMemberSectionProps) {
   const membershipTravelerIds = new Set(
@@ -115,6 +117,14 @@ export function TourGroupMemberSection({
               {translate('tourGroups.addMembershipTraveler')}
             </button>
           </form>
+
+          {signedInUser?.userId !== details.group.organizerUserId ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <button className="inline-flex min-h-11 items-center justify-center border border-rose-300 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 shadow-none transition hover:border-rose-500 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy} onClick={() => void onLeaveGroup()}>
+                {translate('tourGroups.leaveGroup')}
+              </button>
+            </div>
+          ) : null}
         </div>
       )}
     </section>

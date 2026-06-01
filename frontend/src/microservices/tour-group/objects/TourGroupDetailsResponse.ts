@@ -6,6 +6,7 @@ import type { GroupPlanOptionResponse } from './GroupPlanOptionResponse'
 import type { GroupPlanSelectionResponse } from './GroupPlanSelectionResponse'
 import type { GroupSelectionOrderLinkResponse } from './GroupSelectionOrderLinkResponse'
 import type { GroupSelectionOrderProjectionResponse } from './GroupSelectionOrderProjectionResponse'
+import type { TourGroupBlacklistResponse } from './TourGroupBlacklistResponse'
 import type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
 
 export type TourGroupDetailsResponse = {
@@ -15,9 +16,10 @@ export type TourGroupDetailsResponse = {
   planItems: GroupPlanItemResponse[]
   planOptions: GroupPlanOptionResponse[]
   selections: GroupPlanSelectionResponse[]
-  selectionOrderLinks: GroupSelectionOrderLinkResponse[]
-  selectionOrderProjections: GroupSelectionOrderProjectionResponse[]
-  bookings: OrderResponse[]
+  selectionOrderLinks: GroupSelectionOrderLinkResponse[]
+  selectionOrderProjections: GroupSelectionOrderProjectionResponse[]
+  blacklists: TourGroupBlacklistResponse[]
+  bookings: OrderResponse[]
 }
 export const tourGroupDetailsResponseFromJson = (json: string): TourGroupDetailsResponse =>
   JSON.parse(json) as TourGroupDetailsResponse

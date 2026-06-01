@@ -26,7 +26,7 @@ final class ApiRouter(
     ).routes
 
   val routes: HttpRoutes[IO] =
-    HealthRouter.routes <+> staticAssetRoutes
+    HealthRouter.routes <+> TourGroupChatRouter().routes <+> staticAssetRoutes
 
 object ApiRouter:
   def apply(

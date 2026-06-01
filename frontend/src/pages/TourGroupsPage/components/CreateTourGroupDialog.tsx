@@ -12,6 +12,8 @@ type CreateTourGroupDialogProps = {
     startDate: string
     endDate: string
     capacity: number
+    coverImageUrl?: string | null
+    tags?: string[]
   }) => Promise<void>
 }
 
@@ -28,6 +30,8 @@ export function CreateTourGroupDialog({
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [capacity, setCapacity] = useState(4)
+  const [coverImageUrl, setCoverImageUrl] = useState('')
+  const [tagsText, setTagsText] = useState('')
 
   useEffect(() => {
     if (!isOpen) {
@@ -37,6 +41,8 @@ export function CreateTourGroupDialog({
       setStartDate('')
       setEndDate('')
       setCapacity(4)
+      setCoverImageUrl('')
+      setTagsText('')
     }
   }, [isOpen])
 
@@ -70,6 +76,11 @@ export function CreateTourGroupDialog({
               startDate,
               endDate,
               capacity,
+              coverImageUrl: coverImageUrl.trim() || null,
+              tags: tagsText
+                .split(',')
+                .map(tag => tag.trim())
+                .filter(Boolean),
             })
           }}
         >
@@ -97,6 +108,14 @@ export function CreateTourGroupDialog({
             <label>
               {translate('tourGroups.descriptionLabel')}
               <input value={description} onChange={event => setDescription(event.target.value)} required />
+            </label>
+            <label className="md:col-span-2">
+              封面图 URL
+              <input value={coverImageUrl} onChange={event => setCoverImageUrl(event.target.value)} placeholder="https://..." />
+            </label>
+            <label className="md:col-span-3">
+              标签
+              <input value={tagsText} onChange={event => setTagsText(event.target.value)} placeholder="海岛, 亲子, 周末游" />
             </label>
           </div>
 

@@ -26,6 +26,7 @@ export type AppViewKey =
   | 'trains'
   | 'attractions'
   | 'tourGroups'
+  | 'tourGroupPlanBuilder'
   | 'bookings'
   | 'manager'
   | 'siteAdminLogin'

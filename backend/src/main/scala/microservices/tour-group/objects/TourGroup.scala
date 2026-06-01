@@ -36,6 +36,8 @@ final case class TourGroup(
     startDate: LocalDate,
     endDate: LocalDate,
     capacity: Int,
+    coverImageUrl: Option[String],
+    tags: Vector[String],
     status: TourGroupStatus,
     createdAt: Instant
 )
@@ -58,4 +60,3 @@ final case class TourGroupDetails(
 object TourGroupDetails:
   given sourceEncoder: Encoder[TourGroupDetails] = deriveEncoder
   given sourceDecoder: Decoder[TourGroupDetails] = deriveDecoder
-

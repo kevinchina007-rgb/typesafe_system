@@ -16,6 +16,7 @@ type TourGroupMemberWorkspaceProps = {
   isBusy: boolean
   translate: (translationKey: string) => string
   onJoinGroup: () => Promise<void>
+  onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
   onOpenChoose: (planItem: GroupPlanItemResponse) => void
   onSubmitSelection: (selectionId: string) => Promise<void>
@@ -35,6 +36,7 @@ export function TourGroupMemberWorkspace({
   isBusy,
   translate,
   onJoinGroup,
+  onLeaveGroup,
   onAddMembershipTraveler,
   onOpenChoose,
   onSubmitSelection,
@@ -52,6 +54,7 @@ export function TourGroupMemberWorkspace({
         isBusy={isBusy}
         translate={translate}
         onJoinGroup={onJoinGroup}
+        onLeaveGroup={onLeaveGroup}
         onAddMembershipTraveler={onAddMembershipTraveler}
       />
       <TourGroupPlanSection
