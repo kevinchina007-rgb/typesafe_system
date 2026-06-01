@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { useAdvertisingStore, useDeliverableAdvertisements } from '@/app/stores/advertising-store'
+import { addHotelDays } from '@/app/stores/models/hotel-booking-model'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
@@ -19,7 +20,9 @@ export function useAttractionsPageController({
   const { travelers } = useSignedInTravelers(signedInUser)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  const [selectedTravelerIds, setSelectedTravelerIds] = useState<string[]>([])
   const searchState = useAttractionsSearchState()
+  const [dateWindowStart, setDateWindowStart] = useState(() => addHotelDays(searchState.useDateDraft, -3))
   const deliveryAdvertisements = useDeliverableAdvertisements('attractionBooking')
   const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
 
@@ -44,11 +47,28 @@ export function useAttractionsPageController({
     }
   }, [loadDeliverableAdvertisements])
 
+  useEffect(() => {
+    const availableTravelerIds = travelers.map(traveler => traveler.travelerId)
+    setSelectedTravelerIds(currentIds => {
+      const nextIds = currentIds.filter(travelerId => availableTravelerIds.includes(travelerId))
+      return nextIds.length > 0 ? nextIds : availableTravelerIds
+    })
+  }, [travelers])
+
+  const toggleTravelerSelection = useCallback((travelerId: string) => {
+    setSelectedTravelerIds(currentIds =>
+      currentIds.includes(travelerId)
+        ? currentIds.filter(nextTravelerId => nextTravelerId !== travelerId)
+        : [...currentIds, travelerId],
+    )
+  }, [])
+
   return {
     currentLanguage,
     isBusy,
     isGuestMode: signedInUser === null,
     travelers,
+    selectedTravelerIds,
     deliveryAdvertisements,
     attractionResponses: searchState.attractionResponses,
     hasSearchedAttractions: searchState.hasSearchedAttractions,
@@ -59,6 +79,7 @@ export function useAttractionsPageController({
     attractionType: searchState.attractionType,
     sortPreference: searchState.sortPreference,
     selectedQuickDatePreset: searchState.selectedQuickDatePreset,
+    dateWindowStart,
     isAuthDialogOpen,
     setAttractionResponses: searchState.setAttractionResponses,
     setHasSearchedAttractions: searchState.setHasSearchedAttractions,
@@ -69,6 +90,7 @@ export function useAttractionsPageController({
     setAttractionType: searchState.setAttractionType,
     setSortPreference: searchState.setSortPreference,
     setSelectedQuickDatePreset: searchState.setSelectedQuickDatePreset,
+    toggleTravelerSelection,
     handleSearchAttractions: async () => {
       const nextAttractions = await loadDetailedAttractions({
         city: searchState.searchCity,
@@ -78,6 +100,25 @@ export function useAttractionsPageController({
       })
       searchState.setHasSearchedAttractions(true)
       searchState.setAttractionResponses(nextAttractions)
+      setDateWindowStart(addHotelDays(searchState.useDateDraft, -3))
+    },
+    onPreviousDateWindow: () => {
+      setDateWindowStart(date => addHotelDays(date, -1))
+    },
+    onNextDateWindow: () => {
+      setDateWindowStart(date => addHotelDays(date, 1))
+    },
+    handleDateSelect: async date => {
+      searchState.setUseDateDraft(date)
+      const nextAttractions = await loadDetailedAttractions({
+        city: searchState.searchCity,
+        keyword: searchState.keyword,
+        useDate: date,
+        sortPreference: searchState.sortPreference,
+      })
+      searchState.setHasSearchedAttractions(true)
+      searchState.setAttractionResponses(nextAttractions)
+      setDateWindowStart(addHotelDays(date, -3))
     },
     handleSelectHotAttraction: value => {
       const { city, keyword } = splitAttractionHotSpotSelection(value)
@@ -117,7 +158,7 @@ export function useAttractionsPageController({
           travelerIds: payload.travelerIds,
           useDate: payload.useDate,
         })
-        onNavigate('bookings')
+        onNavigate('attractionOrders')
       }, translate('attractions.bookNow'), translate('notice.bookingCreated'))
     },
     handleLoadReviewSummary: payload => loadAttractionReviewSummary(signedInUser, translate, payload),

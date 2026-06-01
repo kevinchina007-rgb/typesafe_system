@@ -19,6 +19,7 @@ export function useFlightsPageController({
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [lateBookingFlight, setLateBookingFlight] = useState<FlightPlannerResponse | null>(null)
+  const [selectedTravelerIds, setSelectedTravelerIds] = useState<string[]>([])
   const lastSubmittedSearchKey = useRef<string | null>(null)
   const lastReportedErrorKey = useRef<string | null>(null)
   const searchStateStore = useFlightSearchState()
@@ -51,6 +52,14 @@ export function useFlightsPageController({
       travelMvpApiClient.flightDailyLowestPricesPlanner(payload),
     [],
   )
+
+  useEffect(() => {
+    const availableTravelerIds = travelers.map(traveler => traveler.travelerId)
+    setSelectedTravelerIds(currentIds => {
+      const nextIds = currentIds.filter(travelerId => availableTravelerIds.includes(travelerId))
+      return nextIds.length > 0 ? nextIds : availableTravelerIds
+    })
+  }, [travelers])
 
   const submitSearch = useCallback(async () => {
     const validationMessage = validateFlightSearchState(searchStateStore.searchState)
@@ -107,9 +116,18 @@ export function useFlightsPageController({
     [onNavigate, runPageAction, signedInUser, translate],
   )
 
+  const toggleTravelerSelection = useCallback((travelerId: string) => {
+    setSelectedTravelerIds(currentIds =>
+      currentIds.includes(travelerId)
+        ? currentIds.filter(nextTravelerId => nextTravelerId !== travelerId)
+        : [...currentIds, travelerId],
+    )
+  }, [])
+
   return {
     ...searchStateStore,
     travelers,
+    selectedTravelerIds,
     isBusy,
     isAuthDialogOpen,
     lateBookingFlight,
@@ -123,5 +141,6 @@ export function useFlightsPageController({
     loadDailyLowestPrices,
     bookFlight,
     submitSearch,
+    toggleTravelerSelection,
   }
 }

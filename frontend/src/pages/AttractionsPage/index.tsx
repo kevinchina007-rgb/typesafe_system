@@ -1,7 +1,10 @@
+import { useMemo } from 'react'
+
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
 import { AdvertisementCardRail } from '@/pages/shared/advertising/sections/AdvertisementCardRail'
-import { formatAttractionInsight } from '@/app/stores/models/attraction-booking-model'
-import { useMemo } from 'react'
+import { DateWindowStrip } from '@/pages/shared/date/DateWindowStrip'
+import { TravelerSelectionPanel } from '@/pages/shared/travelers/TravelerSelectionPanel'
+import { formatAttractionInsight, renderAttractionTravelerOptionLabel } from '@/app/stores/models/attraction-booking-model'
 import type { AttractionsPageProps } from './objects'
 import { ATTRACTION_HOT_SPOTS, ATTRACTION_RECENT_SEARCHES } from './objects'
 import { AttractionFilterBar, AttractionPageHero, AttractionResultsSection, AttractionSearchCard } from './components'
@@ -26,10 +29,8 @@ export function AttractionsPage({
   return (
     <>
       <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
-        {/* 页面标题区 */}
         <AttractionPageHero title={translate('attractions.title')} description={translate('attractions.description')} />
 
-        {/* 搜索区 */}
         <AttractionSearchCard
           hotAttractions={ATTRACTION_HOT_SPOTS}
           insight={formatAttractionInsight(controller.attractionResponses, translate)}
@@ -48,7 +49,29 @@ export function AttractionsPage({
           onSearch={controller.handleSearchAttractions}
         />
 
-        {/* 广告投放区 */}
+        {controller.hasSearchedAttractions ? (
+          <TravelerSelectionPanel
+            title="选择出行人"
+            hint="这里勾选的出行人会直接带到支付页"
+            travelers={controller.travelers}
+            selectedTravelerIds={controller.selectedTravelerIds}
+            onToggleTravelerSelection={controller.toggleTravelerSelection}
+            renderTravelerLabel={traveler => renderAttractionTravelerOptionLabel(traveler, controller.useDateDraft)}
+            emptySelectionMessage="请至少选择一位出行人"
+          />
+        ) : null}
+
+        {controller.hasSearchedAttractions ? (
+          <DateWindowStrip
+            dateWindowStart={controller.dateWindowStart}
+            selectedDate={controller.useDateDraft}
+            isBusy={controller.isBusy}
+            onPrevious={controller.onPreviousDateWindow}
+            onNext={controller.onNextDateWindow}
+            onDateSelect={controller.handleDateSelect}
+          />
+        ) : null}
+
         {attractionAdvertisement ? (
           <section className="grid gap-4 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
             <p className="text-sm font-bold text-slate-500">{translate('advertising.deliveryEyebrow')}</p>
@@ -61,7 +84,6 @@ export function AttractionsPage({
           </section>
         ) : null}
 
-        {/* 筛选区 */}
         <AttractionFilterBar
           hasSearchedAttractions={controller.hasSearchedAttractions}
           sortPreference={controller.sortPreference}
@@ -69,10 +91,8 @@ export function AttractionsPage({
           onSortPreferenceChange={controller.setSortPreference}
         />
 
-        {/* 访客提示区 */}
         {controller.isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('attractions.guest')}</p> : null}
 
-        {/* 结果区 */}
         {controller.hasSearchedAttractions ? (
           <AttractionResultsSection
             attractionResponses={controller.attractionResponses}
@@ -80,8 +100,10 @@ export function AttractionsPage({
             isBusy={controller.isBusy}
             isGuestMode={controller.isGuestMode}
             travelers={controller.travelers}
+            selectedTravelerIds={controller.selectedTravelerIds}
             translate={translate}
             useDateDraft={controller.useDateDraft}
+            onToggleTravelerSelection={controller.toggleTravelerSelection}
             onRequireLogin={controller.handleOpenAuthDialog}
             onBookAttraction={controller.handleBookAttraction}
             onLoadReviewSummary={controller.handleLoadReviewSummary}
@@ -90,7 +112,6 @@ export function AttractionsPage({
         ) : null}
       </section>
 
-      {/* 登录提示弹窗 */}
       <AuthRequiredDialog
         isOpen={controller.isAuthDialogOpen}
         title={translate('authRequired.bookingTitle')}

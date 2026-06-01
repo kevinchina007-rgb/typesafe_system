@@ -64,7 +64,5 @@ export async function loadAttractionReviews(
 export function readAttractionTicketBookingForm(formData: FormData) {
   return {
     sessionId: String(formData.get('sessionId') ?? '').trim() || null,
-    travelerIds: formData.getAll('travelerIds').map(value => String(value)).filter(Boolean),
-    useDate: String(formData.get('useDate') ?? '').trim(),
   }
 }

@@ -2,6 +2,7 @@ package com.typesafe.travel.persistence.order
 
 import cats.effect.IO
 import cats.syntax.all.*
+import com.typesafe.travel.persistence.attraction.AttractionPlannerPlainSql
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.PlainSqlSupport
 import io.circe.Json
@@ -54,6 +55,7 @@ object OrderPlannerPlainSql:
           if hasFlightLineItem then
             val travelerIds = input.travelerIds.getOrElse(throw new IllegalArgumentException(s"Flight order '${input.orderId}' requires traveler selection"))
             updateFlightTravelerSelection(connection, input.orderId, travelerIds)
+          AttractionPlannerPlainSql.consumeInventoryForPaidOrder(connection, input.orderId)
           val resolvedOrderTotalAmount = resolveOrderTotalAmount(connection, input.orderId, BigDecimal(order.totalPrice))
           val paymentId = s"payment-${UUID.randomUUID().toString.take(12)}"
           PlainSqlSupport.withStatement(connection, "insert into order_payments(payment_id, order_id, payment_amount, payment_currency, payment_method, payment_status, authorized_at, created_at, captured_at, metadata_json) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
@@ -108,13 +110,18 @@ object OrderPlannerPlainSql:
 
   def cancel(connection: Connection, input: OrderIdPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
     expireTrainOrdersIfNeeded(connection, now) *>
-      updateStatus(connection, input.orderId, "Cancelled", Some("cancelled_at"), Some(now)).flatTap { _ =>
-        PlainSqlSupport.withStatement(connection, "update orders set remaining_refundable_amount = 0 where order_id = ?") { statement =>
-          statement.setString(1, input.orderId)
-          statement.executeUpdate()
+      IO.blocking(findRequired(connection, input.orderId)).flatMap { orderBeforeCancel =>
+        updateStatus(connection, input.orderId, "Cancelled", Some("cancelled_at"), Some(now)).flatTap { _ =>
+          PlainSqlSupport.withStatement(connection, "update orders set remaining_refundable_amount = 0 where order_id = ?") { statement =>
+            statement.setString(1, input.orderId)
+            statement.executeUpdate()
+          }
+          releaseTrainSeatAllocations(connection, input.orderId)
+          if orderBeforeCancel.status == "Confirmed" then IO.blocking(AttractionPlannerPlainSql.restoreInventoryForCancelledOrder(connection, input.orderId))
+          else IO.unit
         }
-        releaseTrainSeatAllocations(connection, input.orderId)
       }
+    }
 
   def requestRefund(connection: Connection, input: RequestRefundPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
     expireTrainOrdersIfNeeded(connection, now) *> IO.blocking {

@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react'
-
-import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainResponse } from '@/lib/mvp-types/index'
 import { localizeTrainSeatClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
 import {
@@ -11,7 +9,6 @@ import {
 import {
   quoteTrainSegmentAmount,
   renderTrainSearchSegmentSummary,
-  renderTrainTravelerOptionLabel,
   resolveTrainSearchSegment,
 } from '@/app/stores/models/train-booking-model'
 
@@ -22,7 +19,7 @@ type TrainResultCardProps = {
   searchFromStation: string
   searchToStation: string
   trainResponse: TrainResponse
-  travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
   translate: (translationKey: string) => string
   onRequireLogin: () => void
   onBookTrain: (payload: {
@@ -45,7 +42,7 @@ export function TrainResultCard({
   searchFromStation,
   searchToStation,
   trainResponse,
-  travelers,
+  selectedTravelerIds,
   translate,
   onRequireLogin,
   onBookTrain,
@@ -60,18 +57,6 @@ export function TrainResultCard({
   const resolvedRouteSummary = renderTrainSearchSegmentSummary(trainResponse, searchFromStation, searchToStation)
   const departureLabel = getTrainDepartureStationLabel(trainResponse, searchFromStation, searchToStation)
   const destinationLabel = getTrainDestinationStationLabel(trainResponse, searchFromStation, searchToStation)
-  const defaultTravelerIds = travelers.filter(traveler => traveler.isDefault).map(traveler => traveler.travelerId)
-  const [selectedTravelerIds, setSelectedTravelerIds] = useState<string[]>(defaultTravelerIds)
-
-  useEffect(() => {
-    setSelectedTravelerIds(currentSelectedTravelerIds => {
-      if (currentSelectedTravelerIds.length > 0) {
-        return currentSelectedTravelerIds
-      }
-
-      return defaultTravelerIds
-    })
-  }, [defaultTravelerIds.join('|')])
 
   return (
     <article className="grid gap-5 border border-sky-100 bg-white p-5 text-slate-950 shadow-sm shadow-sky-100/40">
@@ -163,14 +148,13 @@ export function TrainResultCard({
                     throw new Error('train_station_not_found')
                   }
 
-                  const travelerIds = selectedTravelerIds.length > 0 ? selectedTravelerIds : defaultTravelerIds
-                  if (travelerIds.length === 0) {
+                  if (selectedTravelerIds.length === 0) {
                     throw new Error('train_traveler_required')
                   }
 
                   await onBookTrain({
                     trainId: trainResponse.trainId,
-                    travelerIds,
+                    travelerIds: selectedTravelerIds,
                     fromStationCode: routeSegment.fromStop.stationCode,
                     toStationCode: routeSegment.toStop.stationCode,
                     seatClass: seatInventory.seatClass,
@@ -190,34 +174,6 @@ export function TrainResultCard({
                     </select>
                   </label>
 
-                  <div className="grid gap-2">
-                    <p className="text-sm font-medium text-slate-500">{translate('trains.selectTravelers')}</p>
-                    <div className="flex flex-wrap gap-3">
-                      {travelers.map(traveler => (
-                        <label key={traveler.travelerId} className="inline-flex items-center gap-2 border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700">
-                          <input
-                            type="checkbox"
-                            name="travelerIds"
-                            value={traveler.travelerId}
-                            checked={selectedTravelerIds.includes(traveler.travelerId)}
-                            onChange={event => {
-                              setSelectedTravelerIds(currentSelectedTravelerIds => {
-                                if (event.target.checked) {
-                                  return currentSelectedTravelerIds.includes(traveler.travelerId)
-                                    ? currentSelectedTravelerIds
-                                    : [...currentSelectedTravelerIds, traveler.travelerId]
-                                }
-
-                                return currentSelectedTravelerIds.filter(selectedTravelerId => selectedTravelerId !== traveler.travelerId)
-                              })
-                            }}
-                            disabled={isBusy || !quote}
-                          />
-                          {renderTrainTravelerOptionLabel(traveler)}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -225,7 +181,7 @@ export function TrainResultCard({
                   <button
                     className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-slate-950 hover:bg-slate-950 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                     type="submit"
-                    disabled={isBusy || !quote}
+                    disabled={isBusy || !quote || selectedTravelerIds.length === 0}
                   >
                     {translate('trains.bookNow')}
                   </button>

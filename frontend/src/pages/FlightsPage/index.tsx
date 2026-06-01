@@ -11,6 +11,8 @@ export function FlightsPage(props: FlightsPageProps) {
     flightResultGroups,
     hasSearchedFlights,
     travelers,
+    selectedTravelerIds,
+    toggleTravelerSelection,
     isBusy,
     isAuthDialogOpen,
     lateBookingFlight,
@@ -68,6 +70,8 @@ export function FlightsPage(props: FlightsPageProps) {
           isGuestMode={isGuestMode}
           signedInUserId={signedInUserId}
           travelers={travelers}
+          selectedTravelerIds={selectedTravelerIds}
+          onToggleTravelerSelection={toggleTravelerSelection}
           translate={translate}
           onRequireLogin={openAuthDialog}
           onBookFlight={bookFlight}

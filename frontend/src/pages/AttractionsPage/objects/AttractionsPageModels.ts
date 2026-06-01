@@ -37,6 +37,7 @@ export type AttractionsPageController = {
   isBusy: boolean
   isGuestMode: boolean
   travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
   deliveryAdvertisements: AdvertisementResponse[]
   attractionResponses: AttractionResponse[]
   hasSearchedAttractions: boolean
@@ -47,6 +48,7 @@ export type AttractionsPageController = {
   attractionType: AttractionTypePreference
   sortPreference: AttractionSortPreference
   selectedQuickDatePreset: AttractionQuickDatePreset | null
+  dateWindowStart: string
   isAuthDialogOpen: boolean
   setSearchCity: (value: string) => void
   setKeyword: (value: string) => void
@@ -55,9 +57,13 @@ export type AttractionsPageController = {
   setAttractionType: (value: AttractionTypePreference) => void
   setSortPreference: (value: AttractionSortPreference) => void
   setSelectedQuickDatePreset: (value: AttractionQuickDatePreset | null) => void
+  toggleTravelerSelection: (travelerId: string) => void
   setAttractionResponses: (value: AttractionResponse[]) => void
   setHasSearchedAttractions: (value: boolean) => void
   handleSearchAttractions: () => Promise<void>
+  onPreviousDateWindow: () => void
+  onNextDateWindow: () => void
+  handleDateSelect: (date: string) => Promise<void>
   handleSelectHotAttraction: (value: string) => void
   handleOpenAdvertisement: (advertisement: AdvertisementResponse) => Promise<void>
   handleBookAttraction: (payload: AttractionBookingPayload) => Promise<void>
@@ -105,8 +111,10 @@ export type AttractionResultsSectionProps = {
   isBusy: boolean
   isGuestMode: boolean
   travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
   translate: (translationKey: string) => string
   useDateDraft: string
+  onToggleTravelerSelection: (travelerId: string) => void
   onRequireLogin: () => void
   onBookAttraction: (payload: AttractionBookingPayload) => Promise<void>
   onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
@@ -119,6 +127,7 @@ export type AttractionResultCardProps = {
   isBusy: boolean
   isGuestMode: boolean
   travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
   translate: (translationKey: string) => string
   useDateDraft: string
   onRequireLogin: () => void

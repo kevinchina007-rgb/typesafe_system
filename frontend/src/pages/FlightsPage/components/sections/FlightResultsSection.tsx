@@ -36,6 +36,8 @@ export function FlightResultsSection({
   isGuestMode,
   signedInUserId,
   travelers,
+  selectedTravelerIds,
+  onToggleTravelerSelection,
   translate,
   onRequireLogin,
   onBookFlight,
@@ -47,7 +49,6 @@ export function FlightResultsSection({
   onRequireLateBookingReview,
   getLateBookingNotice,
 }: FlightResultsSectionProps) {
-  void travelers
   const [activeLeg, setActiveLeg] = useState<RoundTripLeg>('outbound')
   const [activeMultiCitySegmentId, setActiveMultiCitySegmentId] = useState<string | null>(null)
   const isRoundTrip = searchState.tripType === 'roundTrip'
@@ -137,7 +138,7 @@ export function FlightResultsSection({
     onDepartureDateChange(date)
   }
 
-  async function handleFlightBooking(event: FormEvent<HTMLFormElement>, displayFlight: DisplayFlight) {
+  async function handleFlightBooking(event: FormEvent<HTMLFormElement>, displayFlight: DisplayFlight, travelerIds: string[]) {
     event.preventDefault()
 
     if (isGuestMode) {
@@ -158,7 +159,7 @@ export function FlightResultsSection({
     await onBookFlight({
       userId: signedInUserId,
       flightId: displayFlight.flight.flightId,
-      travelerIds: [],
+      travelerIds,
       cabinClass: displayFlight.displayCabinClass,
     })
   }
@@ -170,7 +171,7 @@ export function FlightResultsSection({
   return (
     <section className="relative z-0 grid gap-6 bg-slate-100 px-6 pb-8 pt-10">
       {isRoundTrip ? (
-        <ResultsBody
+      <ResultsBody
           route={activeRoute}
           resultsState={resultsState}
           routeTabs={
@@ -190,6 +191,9 @@ export function FlightResultsSection({
             />
           }
           isBusy={isBusy}
+          travelers={travelers}
+          selectedTravelerIds={selectedTravelerIds}
+          onToggleTravelerSelection={onToggleTravelerSelection}
           translate={translate}
           getLateBookingNotice={getLateBookingNotice}
           onDateSelect={handleDateSelect}
@@ -207,6 +211,9 @@ export function FlightResultsSection({
             />
           }
           isBusy={isBusy}
+          travelers={travelers}
+          selectedTravelerIds={selectedTravelerIds}
+          onToggleTravelerSelection={onToggleTravelerSelection}
           translate={translate}
           getLateBookingNotice={getLateBookingNotice}
           onDateSelect={handleDateSelect}
@@ -218,6 +225,9 @@ export function FlightResultsSection({
           resultsState={resultsState}
           showRouteHeading
           isBusy={isBusy}
+          travelers={travelers}
+          selectedTravelerIds={selectedTravelerIds}
+          onToggleTravelerSelection={onToggleTravelerSelection}
           translate={translate}
           getLateBookingNotice={getLateBookingNotice}
           onDateSelect={handleDateSelect}
@@ -381,6 +391,9 @@ function ResultsBody({
   routeTabs,
   showRouteHeading,
   isBusy,
+  travelers,
+  selectedTravelerIds,
+  onToggleTravelerSelection,
   translate,
   getLateBookingNotice,
   onDateSelect,
@@ -391,13 +404,17 @@ function ResultsBody({
   routeTabs?: ReactNode
   showRouteHeading?: boolean
   isBusy: boolean
+  travelers: FlightResultsSectionProps['travelers']
+  selectedTravelerIds: string[]
+  onToggleTravelerSelection: (travelerId: string) => void
   translate: (translationKey: string) => string
   getLateBookingNotice: (flightResponse: FlightPlannerResponse) => string
   onDateSelect: (date: string) => void
-  onSubmit: (event: FormEvent<HTMLFormElement>, displayFlight: DisplayFlight) => Promise<void>
+  onSubmit: (event: FormEvent<HTMLFormElement>, displayFlight: DisplayFlight, travelerIds: string[]) => Promise<void>
 }) {
   return (
     <div className="grid gap-6 bg-slate-100">
+      <FlightTravelerSelectionPanel travelers={travelers} selectedTravelerIds={selectedTravelerIds} onToggleTravelerSelection={onToggleTravelerSelection} />
       <DatePriceStrip
         prices={resultsState.dailyLowestPrices}
         selectedDate={route.departureDate}
@@ -446,8 +463,9 @@ function ResultsBody({
               key={displayFlight.flight.flightId}
               displayFlight={displayFlight}
               isBusy={isBusy}
+              selectedTravelerIds={selectedTravelerIds}
               getLateBookingNotice={getLateBookingNotice}
-              onSubmit={event => void onSubmit(event, displayFlight)}
+              onSubmit={event => void onSubmit(event, displayFlight, selectedTravelerIds)}
             />
           ))
         ) : (
@@ -654,11 +672,13 @@ function FilterSelect({
 function FlightResultCard({
   displayFlight,
   isBusy,
+  selectedTravelerIds,
   getLateBookingNotice,
   onSubmit,
 }: {
   displayFlight: DisplayFlight
   isBusy: boolean
+  selectedTravelerIds: string[]
   getLateBookingNotice: (flightResponse: FlightPlannerResponse) => string
   onSubmit: (event: FormEvent<HTMLFormElement>) => void
 }) {
@@ -697,7 +717,7 @@ function FlightResultCard({
         <button
           type="submit"
           className="inline-flex min-h-14 min-w-28 items-center justify-center bg-pink-500 px-6 py-3 text-lg font-bold text-white transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:bg-slate-300"
-          disabled={isBusy || !displayFlight.isDisplayCabinBookable}
+          disabled={isBusy || !displayFlight.isDisplayCabinBookable || selectedTravelerIds.length === 0}
         >
           订票
         </button>
@@ -706,6 +726,49 @@ function FlightResultCard({
         ) : null}
       </form>
     </article>
+  )
+}
+
+function FlightTravelerSelectionPanel({
+  travelers,
+  selectedTravelerIds,
+  onToggleTravelerSelection,
+}: {
+  travelers: FlightResultsSectionProps['travelers']
+  selectedTravelerIds: string[]
+  onToggleTravelerSelection: (travelerId: string) => void
+}) {
+  if (travelers.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="grid gap-4 border border-slate-200 bg-white px-6 py-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="m-0 text-2xl font-bold text-slate-950">选择出行人</h3>
+        <p className="m-0 text-sm font-medium text-slate-500">这里勾选的出行人会直接带到支付页</p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {travelers.map(traveler => {
+          const isSelected = selectedTravelerIds.includes(traveler.travelerId)
+          return (
+            <label
+              key={traveler.travelerId}
+              className={`flex cursor-pointer items-center gap-4 border px-4 py-4 text-base font-semibold transition ${
+                isSelected ? 'border-sky-500 bg-sky-50 text-slate-950' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-400'
+              }`}
+            >
+              <input type="checkbox" checked={isSelected} onChange={() => onToggleTravelerSelection(traveler.travelerId)} />
+              <span className="inline-flex h-11 w-11 items-center justify-center border border-slate-300 bg-slate-50 text-lg font-black text-slate-700">
+                {traveler.fullName.slice(0, 1)}
+              </span>
+              <span className="truncate">{`${traveler.fullName} (${traveler.documentNumber.slice(-4)})`}</span>
+            </label>
+          )
+        })}
+      </div>
+      {selectedTravelerIds.length === 0 ? <p className="m-0 text-sm font-medium text-rose-600">请至少选择一位出行人</p> : null}
+    </section>
   )
 }
 

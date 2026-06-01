@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import type { PaymentLinkResponse } from '@/lib/mvp-types/index'
-import { formatTravelerIdentity, getFlightDetailsPlannerOrderTravelerIds, isFlightOrder, isOrderPaid, paymentMethodOptions, type PaymentMethodValue } from '@/pages/BookingsPage/functions'
+import { formatTravelerIdentity, getFlightDetailsPlannerOrderTravelerIds, isFlightOrder, paymentMethodOptions, type PaymentMethodValue } from '@/pages/BookingsPage/functions'
 import type { PaymentModalProps } from '@/pages/BookingsPage/objects'
 import { SelectionCard } from '@/pages/BookingsPage/components/payment/SelectionCard'
 
@@ -15,7 +15,6 @@ export function PaymentModal({
   onConfirmPayment,
 }: PaymentModalProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodValue | null>(null)
-  const [selectedTravelerId, setSelectedTravelerId] = useState<string>('')
   const [paymentLink, setPaymentLink] = useState<PaymentLinkResponse | null>(null)
   const [paymentStep, setPaymentStep] = useState<'selection' | 'qr'>('selection')
   const [isLoadingPaymentLink, setIsLoadingPaymentLink] = useState(false)
@@ -23,7 +22,6 @@ export function PaymentModal({
   useEffect(() => {
     if (!isOpen) {
       setSelectedPaymentMethod(null)
-      setSelectedTravelerId('')
       setPaymentLink(null)
       setPaymentStep('selection')
       setIsLoadingPaymentLink(false)
@@ -35,12 +33,12 @@ export function PaymentModal({
   }
 
   const activeOrder = order
-  const isFlightPaymentOrder = isFlightOrder(activeOrder)
+  const isFlightPaymentOrder = isFlightOrder(order)
   const flightTravelerIds = getFlightDetailsPlannerOrderTravelerIds(order)
-  const needsTravelerSelection = isFlightPaymentOrder && !isOrderPaid(order.status)
-  const selectedPaymentTravelerId = needsTravelerSelection ? selectedTravelerId : flightTravelerIds[0] ?? ''
-  const canConfirmPayment = !!selectedPaymentMethod && (!needsTravelerSelection || !!selectedTravelerId)
-  const paymentQrLabel = selectedPaymentMethod ? paymentMethodOptions.find(option => option.value === selectedPaymentMethod)?.label ?? '支付二维码' : '支付二维码'
+  const canConfirmPayment = !!selectedPaymentMethod && (!isFlightPaymentOrder || flightTravelerIds.length > 0)
+  const paymentQrLabel = selectedPaymentMethod
+    ? paymentMethodOptions.find(option => option.value === selectedPaymentMethod)?.label ?? '支付二维码'
+    : '支付二维码'
 
   async function showPaymentQr() {
     if (!selectedPaymentMethod || !canConfirmPayment) {
@@ -70,31 +68,28 @@ export function PaymentModal({
 
         {paymentStep === 'selection' ? (
           <>
-            {needsTravelerSelection ? (
+            {isFlightPaymentOrder ? (
               <div className="grid gap-3">
-                <p className="m-0 text-base font-medium text-slate-500">选择本次出行人</p>
-                {travelers.length > 0 ? (
-                  <div className="grid gap-3">
-                    {travelers.map(traveler => (
-                      <SelectionCard
-                        key={traveler.travelerId}
-                        name="paymentTravelerId"
-                        value={traveler.travelerId}
-                        checked={selectedTravelerId === traveler.travelerId}
-                        label={formatTravelerIdentity(travelers, traveler.travelerId)}
-                        marker={traveler.fullName.slice(0, 1)}
-                        onChange={() => setSelectedTravelerId(traveler.travelerId)}
-                      />
-                    ))}
+                <p className="m-0 text-base font-medium text-slate-500">本次航班订单已使用下单时选择的出行人</p>
+                {flightTravelerIds.length > 0 ? (
+                  <div className="flex flex-wrap gap-3 border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
+                    {flightTravelerIds.map(travelerId => {
+                      const displayName = formatTravelerIdentity(travelers, travelerId)
+                      return (
+                        <span key={travelerId} className="inline-flex items-center gap-2 border border-slate-300 bg-white px-3 py-2">
+                          <span className="inline-flex h-8 w-8 items-center justify-center border border-slate-300 bg-slate-50 text-base font-black text-slate-700">
+                            {displayName.slice(0, 1)}
+                          </span>
+                          <span>{displayName}</span>
+                        </span>
+                      )
+                    })}
                   </div>
                 ) : (
-                  <p className="m-0 border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-500">当前账号还没有出行人，请先到账户页添加出行人。</p>
+                  <p className="m-0 border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">
+                    该航班订单没有记录出行人，请返回重新下单。
+                  </p>
                 )}
-              </div>
-            ) : selectedPaymentTravelerId ? (
-              <div className="flex items-center gap-3 border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-600">
-                <span className="inline-flex h-10 w-10 items-center justify-center border border-slate-300 bg-white text-base font-black text-slate-700">{formatTravelerIdentity(travelers, selectedPaymentTravelerId).slice(0, 1)}</span>
-                <span>{formatTravelerIdentity(travelers, selectedPaymentTravelerId)}</span>
               </div>
             ) : null}
 
@@ -187,7 +182,7 @@ export function PaymentModal({
                     ? onConfirmPayment({
                         orderId: order.orderId,
                         paymentMethod: selectedPaymentMethod,
-                        travelerIds: isFlightPaymentOrder && selectedPaymentTravelerId ? [selectedPaymentTravelerId] : undefined,
+                        travelerIds: isFlightPaymentOrder ? flightTravelerIds : undefined,
                       })
                     : Promise.resolve())
                 }

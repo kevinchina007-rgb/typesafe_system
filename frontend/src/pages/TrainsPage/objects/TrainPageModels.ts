@@ -74,7 +74,9 @@ export type TrainResultsSectionProps = {
   searchToStation: string
   trainResponses: TrainResponse[]
   travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
   translate: (translationKey: string) => string
+  onToggleTravelerSelection: (travelerId: string) => void
   onRequireLogin: () => void
   onBookTrain: (payload: TrainBookRequest) => Promise<void>
   onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
@@ -83,6 +85,7 @@ export type TrainResultsSectionProps = {
 
 export type TrainsPageController = {
   travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
   isBusy: boolean
   isGuestMode: boolean
   trainResponses: TrainResponse[]
@@ -92,12 +95,17 @@ export type TrainsPageController = {
   searchFromStation: string
   searchToStation: string
   trainSortMode: TrainSortMode
+  dateWindowStart: string
   isAuthDialogOpen: boolean
   executeTrainSearch: () => Promise<void>
+  onPreviousDateWindow: () => void
+  onNextDateWindow: () => void
+  handleDateSelect: (date: string) => Promise<void>
   setSearchDate: (value: string) => void
   setSearchFromStation: (value: string) => void
   setSearchToStation: (value: string) => void
   setTrainSortMode: (value: TrainSortMode) => void
+  toggleTravelerSelection: (travelerId: string) => void
   onRequireLogin: () => void
   onAuthDialogClose: () => void
   onAuthDialogConfirm: () => void

@@ -1,4 +1,5 @@
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
+import { TravelerSelectionPanel } from '@/pages/shared/travelers/TravelerSelectionPanel'
 import { hotelHotDestinations } from './functions'
 import { useHotelsPageController } from './hooks'
 import type { HotelsPageProps } from './objects'
@@ -36,6 +37,18 @@ export function HotelsPage(props: HotelsPageProps) {
             void controller.executeHotelSearch(controller.searchLocation, controller.searchCheckInDate, controller.searchCheckOutDate)
           }}
         />
+
+        {controller.hasSearchedHotels ? (
+          <TravelerSelectionPanel
+            title="选择出行人"
+            hint="这里勾选的出行人会直接带到支付页"
+            travelers={controller.travelers}
+            selectedTravelerIds={controller.selectedTravelerIds}
+            onToggleTravelerSelection={controller.toggleTravelerSelection}
+            renderTravelerLabel={traveler => traveler.fullName}
+            emptySelectionMessage="请至少选择一位出行人"
+          />
+        ) : null}
 
         <HotelSearchNotice ref={controller.noticeSectionRef} notice={controller.searchNotice} />
 
@@ -78,7 +91,9 @@ export function HotelsPage(props: HotelsPageProps) {
               searchCheckInDate={controller.searchCheckInDate}
               searchCheckOutDate={controller.searchCheckOutDate}
               travelers={controller.travelers}
+              selectedTravelerIds={controller.selectedTravelerIds}
               translate={translate}
+              onToggleTravelerSelection={controller.toggleTravelerSelection}
               onRequireLogin={controller.onRequireLogin}
               onBookHotel={controller.bookHotel}
               onLoadReviewSummary={controller.loadReviewSummary}

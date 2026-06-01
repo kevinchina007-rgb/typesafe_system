@@ -1,6 +1,5 @@
 import { formatIsoDateTime, localizeBedType, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
-import { renderHotelTravelerOptionLabel } from '@/app/stores/models/hotel-booking-model'
 import type { HotelResultsSectionProps } from '@/pages/HotelsPage/objects'
 
 export function HotelResultsSection({
@@ -11,7 +10,7 @@ export function HotelResultsSection({
   defaultRoomCount,
   searchCheckInDate,
   searchCheckOutDate,
-  travelers,
+  selectedTravelerIds,
   translate,
   onRequireLogin,
   onBookHotel,
@@ -68,30 +67,31 @@ export function HotelResultsSection({
                         <span className="inline-flex w-fit bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700">{localizeBedType(roomTypeResponse.bedType, currentLanguage)}</span>
                       </div>
                       <p className="text-base font-medium text-slate-600">
-                        {`${translate('hotels.capacity')}：${roomTypeResponse.capacity} | ${translate('hotels.availableRooms')}：${roomTypeResponse.availableRoomsForRequestedStay ?? '-'}`}
+                        {`${translate('hotels.capacity')}: ${roomTypeResponse.capacity} | ${translate('hotels.availableRooms')}: ${roomTypeResponse.availableRoomsForRequestedStay ?? '-'}`}
                       </p>
                       <p className="text-lg font-black text-orange-500">
                         {`${translate('hotels.priceFrom')}: ${roomTypeResponse.basePrice} ${roomTypeResponse.currency}`}
                       </p>
                     </div>
+
                     <form
                       className="grid gap-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4"
-                    onSubmit={async event => {
-                      event.preventDefault()
-                      if (isGuestMode) {
-                        onRequireLogin()
-                        return
-                      }
-                      const formData = new FormData(event.currentTarget)
-                      const selectedGuestTravelerIds = formData.getAll('guestTravelerIds').map(value => String(value)).filter(Boolean)
-                      await onBookHotel({
-                        roomTypeId: roomTypeResponse.roomTypeId,
-                        guestTravelerIds: selectedGuestTravelerIds,
-                        checkInDate: String(formData.get('checkInDate') ?? searchCheckInDate),
-                        checkOutDate: String(formData.get('checkOutDate') ?? searchCheckOutDate),
-                        roomCount: Number(formData.get('roomCount') ?? 1),
-                      })
-                    }}
+                      onSubmit={async event => {
+                        event.preventDefault()
+                        if (isGuestMode) {
+                          onRequireLogin()
+                          return
+                        }
+
+                        const formData = new FormData(event.currentTarget)
+                        await onBookHotel({
+                          roomTypeId: roomTypeResponse.roomTypeId,
+                          guestTravelerIds: selectedTravelerIds,
+                          checkInDate: String(formData.get('checkInDate') ?? searchCheckInDate),
+                          checkOutDate: String(formData.get('checkOutDate') ?? searchCheckOutDate),
+                          roomCount: Number(formData.get('roomCount') ?? 1),
+                        })
+                      }}
                     >
                       <div className="grid gap-3 sm:grid-cols-2">
                         <label className="grid gap-2 text-sm font-black text-slate-700">
@@ -115,24 +115,11 @@ export function HotelResultsSection({
                           />
                         </label>
                       </div>
-                      <div className="grid gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-                        <p className="text-sm font-black uppercase tracking-[0.14em] text-slate-500">{translate('hotels.selectGuests')}</p>
-                      {travelers.map(traveler => (
-                          <label key={traveler.travelerId} className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                          <input
-                            type="checkbox"
-                            name="guestTravelerIds"
-                            value={traveler.travelerId}
-                            disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}
-                          />
-                          {renderHotelTravelerOptionLabel(traveler)}
-                        </label>
-                      ))}
-                      </div>
+
                       <button
                         className="inline-flex min-h-12 items-center justify-center bg-gradient-to-r from-fuchsia-500 via-pink-500 to-orange-500 px-5 py-2 text-base font-black text-white shadow-lg shadow-pink-200/70 transition hover:from-fuchsia-600 hover:via-pink-600 hover:to-orange-600 disabled:cursor-not-allowed disabled:opacity-55"
                         type="submit"
-                        disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay}
+                        disabled={isBusy || !roomTypeResponse.isBookableForRequestedStay || selectedTravelerIds.length === 0}
                       >
                         {translate('hotels.bookNow')}
                       </button>

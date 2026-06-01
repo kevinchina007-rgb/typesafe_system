@@ -74,6 +74,8 @@ export type FlightResultsSectionProps = {
   isGuestMode: boolean
   signedInUserId: string | null
   travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
+  onToggleTravelerSelection: (travelerId: string) => void
   translate: (translationKey: string) => string
   onRequireLogin: () => void
   onBookFlight: (payload: BookFlightPlannerRequest) => Promise<void>
@@ -105,4 +107,6 @@ export type FlightsPageController = {
   searchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>
   loadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>
   bookFlight: (payload: BookFlightPlannerRequest) => Promise<void>
+  selectedTravelerIds: string[]
+  toggleTravelerSelection: (travelerId: string) => void
 }

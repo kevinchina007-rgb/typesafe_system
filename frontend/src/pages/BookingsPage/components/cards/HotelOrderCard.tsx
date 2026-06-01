@@ -1,4 +1,4 @@
-import type { OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
+﻿import type { OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { OrderLineItemDetails } from '@/pages/BookingsPage/components/OrderLineItemDetails'
 import { HotelInfoBlock } from '@/pages/BookingsPage/components/shared/HotelInfoBlock'
@@ -140,14 +140,6 @@ export function HotelOrderCard({
             </button>
           </>
         ) : null}
-        <button
-          type="button"
-          className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-          disabled={isBusy}
-          onClick={() => void onOpenOrderCancellationFeedback(order.orderId)}
-        >
-          申请退款及向客服反馈
-        </button>
         {existingReview?.canDelete ? (
           <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" disabled={isBusy} onClick={() => void onDeleteReview(existingReview.reviewId)}>
             {translate('reviews.delete')}

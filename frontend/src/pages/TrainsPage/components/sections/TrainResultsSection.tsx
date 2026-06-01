@@ -8,7 +8,7 @@ export function TrainResultsSection({
   searchFromStation,
   searchToStation,
   trainResponses,
-  travelers,
+  selectedTravelerIds,
   translate,
   onRequireLogin,
   onBookTrain,
@@ -27,7 +27,7 @@ export function TrainResultsSection({
             searchFromStation={searchFromStation}
             searchToStation={searchToStation}
             trainResponse={trainResponse}
-            travelers={travelers}
+            selectedTravelerIds={selectedTravelerIds}
             translate={translate}
             onRequireLogin={onRequireLogin}
             onBookTrain={onBookTrain}

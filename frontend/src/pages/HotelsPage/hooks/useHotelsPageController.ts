@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useAdvertisingStore, useDeliverableAdvertisements } from '@/app/stores/advertising-store'
 import { addHotelDays } from '@/app/stores/models/hotel-booking-model'
@@ -41,6 +41,7 @@ export function useHotelsPageController({
     setHotelPreference,
     setNearbyPreference,
   } = useHotelSearchState()
+  const [selectedTravelerIds, setSelectedTravelerIds] = useState<string[]>([])
 
   const deliveryAdvertisements = useDeliverableAdvertisements('hotelBooking')
   const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
@@ -94,8 +95,24 @@ export function useHotelsPageController({
     noticeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [searchNotice])
 
+  useEffect(() => {
+    const availableTravelerIds = travelers.map(traveler => traveler.travelerId)
+    setSelectedTravelerIds(currentIds => {
+      const nextIds = currentIds.filter(travelerId => availableTravelerIds.includes(travelerId))
+      return nextIds.length > 0 ? nextIds : availableTravelerIds
+    })
+  }, [travelers])
+
   const featuredAdvertisement = deliveryAdvertisements[0] ?? null
   const hotelLowestNightlyPrice = useMemo(() => getLowestRoomPrice(hotelResponses), [hotelResponses])
+
+  const toggleTravelerSelection = useCallback((travelerId: string) => {
+    setSelectedTravelerIds(currentIds =>
+      currentIds.includes(travelerId)
+        ? currentIds.filter(nextTravelerId => nextTravelerId !== travelerId)
+        : [...currentIds, travelerId],
+    )
+  }, [])
 
   async function executeHotelSearch(nextLocation: string, nextCheckInDate: string, nextCheckOutDate: string) {
     const validationNotice = validateHotelSearchInput(translate, nextLocation, nextCheckInDate, nextCheckOutDate)
@@ -213,6 +230,7 @@ export function useHotelsPageController({
 
   return {
     travelers,
+    selectedTravelerIds,
     isBusy,
     isGuestMode: signedInUser === null,
     hotelResponses,
@@ -239,6 +257,7 @@ export function useHotelsPageController({
     setSearchCheckOutDate,
     setHotelPreference,
     setNearbyPreference,
+    toggleTravelerSelection,
     onRequireLogin: () => setIsAuthDialogOpen(true),
     onAuthDialogClose: () => setIsAuthDialogOpen(false),
     onAuthDialogConfirm: () => {

@@ -77,7 +77,9 @@ export type HotelResultsSectionProps = {
   searchCheckInDate: string
   searchCheckOutDate: string
   travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
   translate: (translationKey: string) => string
+  onToggleTravelerSelection: (travelerId: string) => void
   onRequireLogin: () => void
   onBookHotel: (payload: {
     roomTypeId: string
@@ -92,6 +94,7 @@ export type HotelResultsSectionProps = {
 
 export type HotelsPageController = {
   travelers: TravelerResponse[]
+  selectedTravelerIds: string[]
   isBusy: boolean
   isGuestMode: boolean
   hotelResponses: HotelPlannerResponse[]
@@ -118,6 +121,7 @@ export type HotelsPageController = {
   setSearchCheckOutDate: (value: string) => void
   setHotelPreference: (value: 'Economy' | 'Luxury' | 'Homestay' | 'Family' | 'Business') => void
   setNearbyPreference: (value: string) => void
+  toggleTravelerSelection: (travelerId: string) => void
   onRequireLogin: () => void
   onAuthDialogClose: () => void
   onAuthDialogConfirm: () => void

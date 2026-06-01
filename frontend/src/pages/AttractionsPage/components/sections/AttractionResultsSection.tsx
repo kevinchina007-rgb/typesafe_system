@@ -7,6 +7,7 @@ export function AttractionResultsSection({
   isBusy,
   isGuestMode,
   travelers,
+  selectedTravelerIds,
   translate,
   useDateDraft,
   onRequireLogin,
@@ -25,6 +26,7 @@ export function AttractionResultsSection({
             isBusy={isBusy}
             isGuestMode={isGuestMode}
             travelers={travelers}
+            selectedTravelerIds={selectedTravelerIds}
             translate={translate}
             useDateDraft={useDateDraft}
             onRequireLogin={onRequireLogin}
@@ -39,4 +41,3 @@ export function AttractionResultsSection({
     </div>
   )
 }
-
