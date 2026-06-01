@@ -36,7 +36,7 @@ object OrderPlannerPlainSql:
         statement.executeUpdate()
       }
       findRequired(connection, orderId)
-  }
+    }
 
   def get(connection: Connection, input: OrderIdPlannerRequest): IO[OrderPlannerResponse] =
     expireTrainOrdersIfNeeded(connection, Instant.now()) *> IO.blocking(findRequired(connection, input.orderId))
@@ -121,7 +121,6 @@ object OrderPlannerPlainSql:
           else IO.unit
         }
       }
-    }
 
   def requestRefund(connection: Connection, input: RequestRefundPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
     expireTrainOrdersIfNeeded(connection, now) *> IO.blocking {
