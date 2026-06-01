@@ -92,7 +92,7 @@ export function TourGroupOrganizerWorkspace({
   }, [activePlanItem, onSelectPlanItem, planItems])
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[1fr_20rem]">
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-start">
       <div className="grid gap-4">
         <TourGroupPlanSection
           currentLanguage={currentLanguage}

@@ -7,8 +7,10 @@ type TourGroupsPageShellProps = {
 
 export function TourGroupsPageShell({ controller }: TourGroupsPageShellProps) {
   return (
-    <section className="grid gap-4 px-6 pb-8 pt-6">
-      <TourGroupsPanel {...controller} />
+    <section className="grid justify-start px-6 pb-8 pt-6">
+      <div className="grid w-full max-w-[112rem] justify-start gap-4">
+        <TourGroupsPanel {...controller} />
+      </div>
     </section>
   )
 }

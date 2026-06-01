@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { GroupPlanItemResponse, TourGroupDetailsResponse, TourGroupSummaryResponse } from '@/lib/mvp-types/index'
 import { CreateTourGroupDialog } from '@/pages/TourGroupsPage/components/CreateTourGroupDialog'
-import { TourGroupDetail } from '@/pages/TourGroupsPage/components/TourGroupDetail'
+import { TourGroupDetailOverlay } from '@/pages/TourGroupsPage/components/TourGroupDetailOverlay'
 import { TourGroupList } from '@/pages/TourGroupsPage/components/TourGroupList'
 import { TourGroupSelectionDialog } from '@/pages/TourGroupsPage/components/TourGroupSelectionDialog'
 import type { TourGroupsPanelCommonProps } from '../objects'
@@ -70,6 +70,7 @@ export function TourGroupsPanel({
   const [groupDetailsCache, setGroupDetailsCache] = useState<Record<string, TourGroupDetailsResponse>>({})
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [selectedGroupDetails, setSelectedGroupDetails] = useState<TourGroupDetailsResponse | null>(null)
+  const [isGroupDetailOpen, setIsGroupDetailOpen] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [activeOrganizerPlanItem, setActiveOrganizerPlanItem] = useState<GroupPlanItemResponse | null>(null)
   const [selectionPlanItem, setSelectionPlanItem] = useState<GroupPlanItemResponse | null>(null)
@@ -95,6 +96,7 @@ export function TourGroupsPanel({
     if (!selectedGroupId) {
       setSelectedGroupDetails(null)
       setActiveOrganizerPlanItem(null)
+      setIsGroupDetailOpen(false)
       return
     }
 
@@ -147,6 +149,7 @@ export function TourGroupsPanel({
   function applyUpdatedGroupDetails(details: TourGroupDetailsResponse) {
     setSelectedGroupDetails(details)
     setSelectedGroupId(details.group.groupId)
+    setIsGroupDetailOpen(currentOpen => currentOpen)
     setGroupDetailsCache(currentCache => ({ ...currentCache, [details.group.groupId]: details }))
     setGroupSummaries(currentGroups => syncGroupSummary(currentGroups, details))
     setActiveOrganizerPlanItem(currentPlanItem => {
@@ -211,7 +214,7 @@ export function TourGroupsPanel({
 
       <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('tourGroups.description')}</p>
 
-      <div className="grid gap-5 xl:grid-cols-[18rem_1fr]">
+      <div className="grid gap-5">
         <TourGroupList
           currentLanguage={currentLanguage}
           groups={visibleGroupSummaries}
@@ -220,166 +223,165 @@ export function TourGroupsPanel({
           isBusy={isBusy}
           translate={translate}
           onOpenCreateDialog={() => setIsCreateDialogOpen(true)}
-          onSelectGroup={setSelectedGroupId}
+          onSelectGroup={groupId => {
+            setSelectedGroupId(groupId)
+            setIsGroupDetailOpen(true)
+          }}
         />
 
-        <div className="grid gap-4">
-          {selectedGroupDetails ? (
-            <TourGroupDetail
-              currentLanguage={currentLanguage}
-              details={selectedGroupDetails}
-              signedInUser={signedInUser}
-              travelers={travelers}
-              isBusy={isBusy}
-              translate={translate}
-              onJoinGroup={async () => {
-                if (!signedInUser) return
-                const details = await onJoinGroup(selectedGroupDetails.group.groupId, { userId: signedInUser.userId })
-                applyUpdatedGroupDetails(details)
-              }}
-              onLeaveGroup={async () => {
-                if (!signedInUser) return
-                const details = await onLeaveGroup(selectedGroupDetails.group.groupId, { userId: signedInUser.userId })
-                applyUpdatedGroupDetails(details)
-              }}
-              onAddMembershipTraveler={async travelerId => {
-                if (!signedInUser) return
-                const details = await onAddMembershipTraveler(selectedGroupDetails.group.groupId, {
-                  userId: signedInUser.userId,
-                  travelerId,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onCreatePlanItem={async payload => {
-                if (!signedInUser) return null
-                const previousPlanItemIds = new Set(selectedGroupDetails.planItems.map(planItem => planItem.planItemId))
-                const details = await onCreatePlanItem(selectedGroupDetails.group.groupId, {
-                  organizerUserId: signedInUser.userId,
-                  ...payload,
-                })
-                applyUpdatedGroupDetails(details)
-                const createdPlanItem = pickCreatedPlanItem(details, previousPlanItemIds)
-                if (createdPlanItem) {
-                  setActiveOrganizerPlanItem(createdPlanItem)
-                }
-                return createdPlanItem
-              }}
-              activePlanItem={activeOrganizerPlanItem}
-              onSelectPlanItem={setActiveOrganizerPlanItem}
-              onCreateOption={async (planItemId, payload) => {
-                if (!signedInUser || !selectedGroupDetails) return
-                const details = await onCreatePlanOption(planItemId, selectedGroupDetails.group.groupId, {
-                  organizerUserId: signedInUser.userId,
-                  ...payload,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onOpenChoose={setSelectionPlanItem}
-              onSubmitSelection={async selectionId => {
-                if (!signedInUser) return
-                const details = await onSubmitSelection(selectionId, { userId: signedInUser.userId })
-                applyUpdatedGroupDetails(details)
-              }}
-              onConfirmSelection={async (selectionId, note) => {
-                if (!signedInUser) return
-                const details = await onConfirmSelection(selectionId, {
-                  organizerUserId: signedInUser.userId,
-                  reviewNote: note.trim() || null,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onRejectSelection={async (selectionId, note) => {
-                if (!signedInUser) return
-                const details = await onRejectSelection(selectionId, {
-                  organizerUserId: signedInUser.userId,
-                  reviewNote: note,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onBatchConfirmSelections={async selectionIds => {
-                if (!signedInUser || selectionIds.length === 0) return
-                const details = await onBatchConfirmSelections({
-                  organizerUserId: signedInUser.userId,
-                  selectionIds,
-                  reviewNote: null,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onBatchRejectSelections={async (selectionIds, note) => {
-                if (!signedInUser || selectionIds.length === 0) return
-                const details = await onBatchRejectSelections({
-                  organizerUserId: signedInUser.userId,
-                  selectionIds,
-                  reviewNote: note,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onKickMember={async targetUserId => {
-                if (!signedInUser) return
-                const details = await onKickMember(selectedGroupDetails.group.groupId, {
-                  organizerUserId: signedInUser.userId,
-                  targetUserId,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onBlacklistMember={async targetUserId => {
-                if (!signedInUser) return
-                const details = await onBlacklistMember(selectedGroupDetails.group.groupId, {
-                  organizerUserId: signedInUser.userId,
-                  targetUserId,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onTransferOrganizer={async targetUserId => {
-                if (!signedInUser) return
-                const details = await onTransferOrganizer(selectedGroupDetails.group.groupId, {
-                  organizerUserId: signedInUser.userId,
-                  targetUserId,
-                })
-                applyUpdatedGroupDetails(details)
-              }}
-              onOpenBookings={async () => {
-                await onOpenBookings()
-              }}
-              onBatchPaySelections={async selectionIds => {
-                if (!signedInUser || selectionIds.length === 0) return
-                const result = await onBatchPaySelections({
-                  userId: signedInUser.userId,
-                  selectionIds,
-                  paymentMethod: 'Wallet',
-                })
-                applyUpdatedGroupDetails(result.group)
-              }}
-              onSearchFlights={onSearchFlights}
-              onSearchHotels={onSearchHotels}
-              onSearchTrains={onSearchTrains}
-              onSearchAttractions={onSearchAttractions}
-              onLoadChatSettings={onLoadChatSettings}
-              onUpdateChatSettings={onUpdateChatSettings}
-              onLoadConversations={onLoadConversations}
-              onSearchConversations={onSearchConversations}
-              onSearchMessages={onSearchMessages}
-              onGetOrCreateDirectConversation={onGetOrCreateDirectConversation}
-              onLoadMessages={onLoadMessages}
-              onSendMessage={onSendMessage}
-              onUploadAttachment={onUploadAttachment}
-              onMarkConversationRead={onMarkConversationRead}
-              onEditMessage={onEditMessage}
-              onDeleteMessage={onDeleteMessage}
-              onRecallMessage={onRecallMessage}
-              onAddReaction={onAddReaction}
-              onRemoveReaction={onRemoveReaction}
-              onUpdateMuteState={onUpdateMuteState}
-              onUpdateArchiveState={onUpdateArchiveState}
-              onNavigate={onNavigate}
-            />
-          ) : (
-            <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
-              <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.selectGroupHint')}</p>
-            </section>
-          )}
-        </div>
       </div>
+
+      {isGroupDetailOpen && selectedGroupDetails ? (
+        <TourGroupDetailOverlay
+          currentLanguage={currentLanguage}
+          details={selectedGroupDetails}
+          signedInUser={signedInUser}
+          travelers={travelers}
+          isBusy={isBusy}
+          translate={translate}
+          onClose={() => setIsGroupDetailOpen(false)}
+          onJoinGroup={async () => {
+            if (!signedInUser) return
+            const details = await onJoinGroup(selectedGroupDetails.group.groupId, { userId: signedInUser.userId })
+            applyUpdatedGroupDetails(details)
+          }}
+          onLeaveGroup={async () => {
+            if (!signedInUser) return
+            const details = await onLeaveGroup(selectedGroupDetails.group.groupId, { userId: signedInUser.userId })
+            applyUpdatedGroupDetails(details)
+          }}
+          onAddMembershipTraveler={async travelerId => {
+            if (!signedInUser) return
+            const details = await onAddMembershipTraveler(selectedGroupDetails.group.groupId, {
+              userId: signedInUser.userId,
+              travelerId,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onCreatePlanItem={async payload => {
+            if (!signedInUser) return null
+            const previousPlanItemIds = new Set(selectedGroupDetails.planItems.map(planItem => planItem.planItemId))
+            const details = await onCreatePlanItem(selectedGroupDetails.group.groupId, {
+              organizerUserId: signedInUser.userId,
+              ...payload,
+            })
+            applyUpdatedGroupDetails(details)
+            const createdPlanItem = pickCreatedPlanItem(details, previousPlanItemIds)
+            if (createdPlanItem) {
+              setActiveOrganizerPlanItem(createdPlanItem)
+            }
+            return createdPlanItem
+          }}
+          activePlanItem={activeOrganizerPlanItem}
+          onSelectPlanItem={setActiveOrganizerPlanItem}
+          onCreateOption={async (planItemId, payload) => {
+            if (!signedInUser || !selectedGroupDetails) return
+            const details = await onCreatePlanOption(planItemId, selectedGroupDetails.group.groupId, {
+              organizerUserId: signedInUser.userId,
+              ...payload,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onOpenChoose={setSelectionPlanItem}
+          onSubmitSelection={async selectionId => {
+            if (!signedInUser) return
+            const details = await onSubmitSelection(selectionId, { userId: signedInUser.userId })
+            applyUpdatedGroupDetails(details)
+          }}
+          onConfirmSelection={async (selectionId, note) => {
+            if (!signedInUser) return
+            const details = await onConfirmSelection(selectionId, {
+              organizerUserId: signedInUser.userId,
+              reviewNote: note.trim() || null,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onRejectSelection={async (selectionId, note) => {
+            if (!signedInUser) return
+            const details = await onRejectSelection(selectionId, {
+              organizerUserId: signedInUser.userId,
+              reviewNote: note,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onBatchConfirmSelections={async selectionIds => {
+            if (!signedInUser || selectionIds.length === 0) return
+            const details = await onBatchConfirmSelections({
+              organizerUserId: signedInUser.userId,
+              selectionIds,
+              reviewNote: null,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onBatchRejectSelections={async (selectionIds, note) => {
+            if (!signedInUser || selectionIds.length === 0) return
+            const details = await onBatchRejectSelections({
+              organizerUserId: signedInUser.userId,
+              selectionIds,
+              reviewNote: note,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onKickMember={async targetUserId => {
+            if (!signedInUser) return
+            const details = await onKickMember(selectedGroupDetails.group.groupId, {
+              organizerUserId: signedInUser.userId,
+              targetUserId,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onBlacklistMember={async targetUserId => {
+            if (!signedInUser) return
+            const details = await onBlacklistMember(selectedGroupDetails.group.groupId, {
+              organizerUserId: signedInUser.userId,
+              targetUserId,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onTransferOrganizer={async targetUserId => {
+            if (!signedInUser) return
+            const details = await onTransferOrganizer(selectedGroupDetails.group.groupId, {
+              organizerUserId: signedInUser.userId,
+              targetUserId,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onOpenBookings={async () => {
+            await onOpenBookings()
+          }}
+          onBatchPaySelections={async selectionIds => {
+            if (!signedInUser || selectionIds.length === 0) return
+            const result = await onBatchPaySelections({
+              userId: signedInUser.userId,
+              selectionIds,
+              paymentMethod: 'Wallet',
+            })
+            applyUpdatedGroupDetails(result.group)
+          }}
+          onSearchFlights={onSearchFlights}
+          onSearchHotels={onSearchHotels}
+          onSearchTrains={onSearchTrains}
+          onSearchAttractions={onSearchAttractions}
+          onLoadChatSettings={onLoadChatSettings}
+          onUpdateChatSettings={onUpdateChatSettings}
+          onLoadConversations={onLoadConversations}
+          onSearchConversations={onSearchConversations}
+          onSearchMessages={onSearchMessages}
+          onGetOrCreateDirectConversation={onGetOrCreateDirectConversation}
+          onLoadMessages={onLoadMessages}
+          onSendMessage={onSendMessage}
+          onUploadAttachment={onUploadAttachment}
+          onMarkConversationRead={onMarkConversationRead}
+          onEditMessage={onEditMessage}
+          onDeleteMessage={onDeleteMessage}
+          onRecallMessage={onRecallMessage}
+          onAddReaction={onAddReaction}
+          onRemoveReaction={onRemoveReaction}
+          onUpdateMuteState={onUpdateMuteState}
+          onUpdateArchiveState={onUpdateArchiveState}
+          onNavigate={onNavigate}
+        />
+      ) : null}
 
       <CreateTourGroupDialog
         isOpen={isCreateDialogOpen}

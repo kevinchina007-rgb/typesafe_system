@@ -41,15 +41,15 @@ export function TourGroupList({
       {groups.length === 0 ? (
         <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.empty')}</p>
       ) : (
-        <ul className="grid gap-3">
+        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {groups.map(group => (
             <li key={group.groupId}>
               <button
                 type="button"
-                className={`grid w-full gap-2 border border-slate-200 bg-white p-4 text-left text-slate-950 transition hover:border-black hover:bg-black hover:text-white ${selectedGroupId === group.groupId ? 'border-black bg-black text-white' : ''}`}
+                className={`grid h-full w-full gap-2 border border-slate-200 bg-white p-4 text-left text-slate-950 transition hover:border-black hover:bg-black hover:text-white ${selectedGroupId === group.groupId ? 'border-black bg-black text-white' : ''}`}
                 onClick={() => onSelectGroup(group.groupId)}
               >
-                {group.coverImageUrl ? <BackendAssetImage className="h-32 w-full object-cover" assetUrl={group.coverImageUrl} alt={group.title} /> : null}
+                {group.coverImageUrl ? <BackendAssetImage className="h-40 w-full object-cover" assetUrl={group.coverImageUrl} alt={group.title} /> : null}
                 <div>
                   <strong>{group.title}</strong>
                   <p>{formatGroupCardSubtitle(group)}</p>
