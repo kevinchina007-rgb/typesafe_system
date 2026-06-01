@@ -6,6 +6,8 @@ import com.typesafe.travel.shared.kernel.*
 
 import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
+import java.security.MessageDigest
+import java.util.HexFormat
 import java.util.Base64
 import java.util.UUID
 
@@ -142,7 +144,7 @@ object TourGroupChatPlainSql:
 
       val conversation =
         findDirectConversation(connection, groupId, currentUserId, targetUserId).getOrElse {
-          val conversationId = s"conversation-${UUID.randomUUID().toString.take(12)}"
+          val conversationId = directConversationId(groupId, currentUserId, targetUserId)
           insertConversation(connection, conversationId, groupId, directType, Some(normalizeDirectMemberA(currentUserId, targetUserId)), Some(normalizeDirectMemberB(currentUserId, targetUserId)), now)
           insertParticipant(connection, s"participant-${UUID.randomUUID().toString.take(12)}", conversationId, currentUserId, if currentIsOrganizer then "Organizer" else "Member", now)
           insertParticipant(connection, s"participant-${UUID.randomUUID().toString.take(12)}", conversationId, targetUserId, if targetIsOrganizer then "Organizer" else "Member", now)
@@ -499,12 +501,18 @@ object TourGroupChatPlainSql:
   private def normalizeDirectMemberB(userA: String, userB: String): String =
     if userA <= userB then userB else userA
 
+  private def directConversationId(groupId: String, userA: String, userB: String): String =
+    s"conversation-direct-${md5Hex(s"$groupId|${normalizeDirectMemberA(userA, userB)}|${normalizeDirectMemberB(userA, userB)}").take(24)}"
+
   private def otherDirectParticipantId(conversation: TourGroupConversation, currentUserId: String): String =
     conversation.directMemberAUserId.map(_.value).filter(_ == currentUserId) match
       case Some(_) => conversation.directMemberBUserId.map(_.value).getOrElse(throw TourGroupError.ConversationAccessWasDenied(conversation.conversationId, UserId(currentUserId)))
       case None if conversation.directMemberBUserId.exists(_.value == currentUserId) =>
         conversation.directMemberAUserId.map(_.value).getOrElse(throw TourGroupError.ConversationAccessWasDenied(conversation.conversationId, UserId(currentUserId)))
       case _ => throw TourGroupError.ConversationAccessWasDenied(conversation.conversationId, UserId(currentUserId))
+
+  private def md5Hex(value: String): String =
+    HexFormat.of().formatHex(MessageDigest.getInstance("MD5").digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8)))
 
   private def validateReactionType(reactionType: String): Unit =
     val normalized = reactionType.trim

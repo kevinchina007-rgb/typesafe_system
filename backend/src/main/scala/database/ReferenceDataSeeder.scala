@@ -22,6 +22,7 @@ object ReferenceDataSeeder:
       _ <- seedHotelDemoData(transactor)
       _ <- TrainReferenceDataSeeder.seedIfNeeded(transactor)
       _ <- AttractionReferenceDataSeeder.seedIfNeeded(transactor)
+      _ <- TourGroupReferenceDataSeeder.seedIfNeeded(transactor)
       _ <- if airlineManagerCount == 0 then seedAirlineManagers(transactor) else IO.unit
     yield ()
 
