@@ -59,3 +59,13 @@ object CreateTourGroupPlanOptionPlanner extends ConnectionApiPlan[CreateTourGrou
   override val name: String = "CreateTourGroupPlanOptionPlanner"
   override def plan(input: CreateTourGroupPlanOptionPlannerRequest, connection: Connection): IO[TourGroupDetailsPlannerResponse] =
     TourGroupPlannerPlainSql.createPlanOption(connection, input, java.time.Instant.now())
+
+object CreateTourGroupSelectionPlanner extends ConnectionApiPlan[CreateTourGroupSelectionPlannerRequest, TourGroupDetailsPlannerResponse]:
+  override val name: String = "CreateTourGroupSelectionPlanner"
+  override def plan(input: CreateTourGroupSelectionPlannerRequest, connection: Connection): IO[TourGroupDetailsPlannerResponse] =
+    TourGroupPlannerPlainSql.createSelection(connection, input, java.time.Instant.now())
+
+object SubmitTourGroupSelectionPlanner extends ConnectionApiPlan[SubmitTourGroupSelectionPlannerRequest, TourGroupDetailsPlannerResponse]:
+  override val name: String = "SubmitTourGroupSelectionPlanner"
+  override def plan(input: SubmitTourGroupSelectionPlannerRequest, connection: Connection): IO[TourGroupDetailsPlannerResponse] =
+    TourGroupPlannerPlainSql.submitSelection(connection, input, java.time.Instant.now())

@@ -242,12 +242,114 @@ object TourGroupPlannerPlainSql:
       details(connection, input.groupId)
     }
 
+  def createSelection(connection: Connection, input: CreateTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+    IO.blocking {
+      val activeMembershipRow = activeMembership(connection, input.groupId, input.userId)
+      val membershipTravelerIds =
+        membershipTravelers(connection, input.groupId)
+          .collect {
+            case row if row.membershipId == activeMembershipRow.membershipId.value && row.status == "Active" =>
+              TravelerId(row.travelerId)
+          }
+          .toSet
+      val planItem = planItems(connection, input.groupId).find(_.planItemId.value == input.planItemId).getOrElse {
+        throw TourGroupError.PlanItemWasNotFound(GroupPlanItemId(input.planItemId))
+      }
+      val planOption = planOptions(connection, input.groupId).find(_.optionId.value == input.optionId).getOrElse {
+        throw TourGroupError.PlanOptionWasNotFound(GroupPlanOptionId(input.optionId))
+      }
+      if planOption.planItemId != planItem.planItemId then
+        throw TourGroupError.PlanOptionDidNotBelongToPlanItem(planOption.optionId, planItem.planItemId)
+      val requestedTravelerIds = input.travelerIds.map(TravelerId.apply).distinct.toVector
+      if requestedTravelerIds.isEmpty then
+        throw TourGroupError.SelectionTravelerWasEmpty(planItem.planItemId)
+      if requestedTravelerIds.size != input.quantity then
+        throw TourGroupError.SelectionQuantityDidNotMatchTravelerCount(GroupPlanSelectionId("pending"), input.quantity, requestedTravelerIds.size)
+      requestedTravelerIds.foreach { travelerId =>
+        if !membershipTravelerIds.contains(travelerId) then
+          throw TourGroupError.SelectionTravelerWasNotInMembership(GroupPlanSelectionId("pending"), travelerId)
+      }
+      val selection = createGroupPlanSelection(
+        GroupPlanSelectionId(nextId("selection")),
+        TourGroupId(input.groupId),
+        planItem.planItemId,
+        planOption.optionId,
+        activeMembershipRow.membershipId,
+        input.quantity,
+        requestedTravelerIds,
+        now
+      ).fold(throw _, identity)
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          insert into group_plan_selections(
+            selection_id, group_id, plan_item_id, option_id, membership_id, quantity, status, created_at, confirmed_at, reviewed_by_organizer_user_id, review_note
+          ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+      ) { statement =>
+        statement.setString(1, selection.selectionId.value)
+        statement.setString(2, selection.groupId.value)
+        statement.setString(3, selection.planItemId.value)
+        statement.setString(4, selection.optionId.value)
+        statement.setString(5, selection.membershipId.value)
+        statement.setInt(6, selection.quantity)
+        statement.setString(7, selection.status.toString)
+        statement.setTimestamp(8, Timestamp.from(selection.createdAt))
+        statement.setTimestamp(9, null)
+        statement.setString(10, null)
+        statement.setString(11, null)
+        statement.executeUpdate()
+      }
+      requestedTravelerIds.zipWithIndex.foreach { case (travelerId, index) =>
+        PlainSqlSupport.withStatement(
+          connection,
+          """
+            insert into group_plan_selection_travelers(selection_traveler_id, selection_id, traveler_id)
+            values (?, ?, ?)
+          """
+        ) { statement =>
+          statement.setString(1, nextId(s"selection-traveler-${index + 1}"))
+          statement.setString(2, selection.selectionId.value)
+          statement.setString(3, travelerId.value)
+          statement.executeUpdate()
+        }
+      }
+      details(connection, input.groupId)
+    }
+
+  def submitSelection(connection: Connection, input: SubmitTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+    IO.blocking {
+      val selection = selectionById(connection, input.selectionId)
+      val activeMembershipRow = activeMembership(connection, selection.groupId.value, input.userId)
+      if selection.membershipId != activeMembershipRow.membershipId then
+        throw TourGroupError.MembershipScopeDidNotMatch(activeMembershipRow.membershipId, UserId(input.userId))
+      val submittedSelection = submitGroupPlanSelection(selection).fold(throw _, identity)
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          update group_plan_selections
+          set status = ?, created_at = ?
+          where selection_id = ?
+        """
+      ) { statement =>
+        statement.setString(1, submittedSelection.status.toString)
+        statement.setTimestamp(2, Timestamp.from(now))
+        statement.setString(3, submittedSelection.selectionId.value)
+        statement.executeUpdate()
+      }
+      details(connection, selection.groupId.value)
+    }
+
   private def details(connection: Connection, groupId: String): TourGroupDetailsPlannerResponse =
     val group = groupSummary(connection, groupId)
     TourGroupDetailsPlannerResponse(
       group = group,
       memberships = memberships(connection, groupId),
       membershipTravelers = membershipTravelers(connection, groupId),
+      planItems = planItems(connection, groupId),
+      planOptions = planOptions(connection, groupId),
+      selections = selections(connection, groupId),
+      selectionOrderLinks = selectionOrderLinks(connection, groupId),
       blacklists = blacklists(connection, groupId)
     )
 
@@ -332,6 +434,105 @@ object TourGroupPlannerPlainSql:
       status = TourGroupMembershipStatus.fromText(row.getString("status"))
     )
 
+  private def planItems(connection: Connection, groupId: String): List[GroupPlanItem] =
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select plan_item_id, group_id, item_type, title, description, scheduled_at, ends_at, sequence_no, status
+        from group_plan_items
+        where group_id = ?
+        order by sequence_no, plan_item_id
+      """
+    ) { statement =>
+      statement.setString(1, groupId)
+      PlainSqlSupport.queryList(statement)(readPlanItem)
+    }
+
+  private def planOptions(connection: Connection, groupId: String): List[GroupPlanOption] =
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select o.option_id, o.plan_item_id, o.resource_type, o.resource_id, o.resource_variant_code, o.resource_context, o.label, o.description, o.default_quantity, o.status
+        from group_plan_options o
+        inner join group_plan_items i on i.plan_item_id = o.plan_item_id
+        where i.group_id = ?
+        order by i.sequence_no, o.option_id
+      """
+    ) { statement =>
+      statement.setString(1, groupId)
+      PlainSqlSupport.queryList(statement)(readPlanOption)
+    }
+
+  private def selections(connection: Connection, groupId: String): List[GroupPlanSelection] =
+    val travelerIdsBySelectionId = selectionTravelerIds(connection, groupId)
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select selection_id, group_id, plan_item_id, option_id, membership_id, quantity, status, created_at, confirmed_at, reviewed_by_organizer_user_id, review_note
+        from group_plan_selections
+        where group_id = ?
+        order by created_at, selection_id
+      """
+    ) { statement =>
+      statement.setString(1, groupId)
+      PlainSqlSupport.queryList(statement) { row =>
+        readSelection(row, travelerIdsBySelectionId.getOrElse(row.getString("selection_id"), Vector.empty))
+      }
+    }
+
+  private def selectionOrderLinks(connection: Connection, groupId: String): List[GroupSelectionOrderLink] =
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select l.link_id, l.selection_id, l.order_id, l.created_at
+        from group_selection_order_links l
+        inner join group_plan_selections s on s.selection_id = l.selection_id
+        where s.group_id = ?
+        order by l.created_at, l.link_id
+      """
+    ) { statement =>
+      statement.setString(1, groupId)
+      PlainSqlSupport.queryList(statement)(readSelectionOrderLink)
+    }
+
+  private def selectionTravelerIds(connection: Connection, groupId: String): Map[String, Vector[TravelerId]] =
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select t.selection_id, t.traveler_id
+        from group_plan_selection_travelers t
+        inner join group_plan_selections s on s.selection_id = t.selection_id
+        where s.group_id = ?
+        order by t.selection_traveler_id
+      """
+    ) { statement =>
+      statement.setString(1, groupId)
+      PlainSqlSupport.queryList(statement) { row =>
+        row.getString("selection_id") -> TravelerId(row.getString("traveler_id"))
+      }.groupMap(_._1)(_._2).map { case (selectionId, travelerIds) => selectionId -> travelerIds.toVector }
+    }
+
+  private def selectionById(connection: Connection, selectionId: String): GroupPlanSelection =
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        select selection_id, group_id, plan_item_id, option_id, membership_id, quantity, status, created_at, confirmed_at, reviewed_by_organizer_user_id, review_note
+        from group_plan_selections
+        where selection_id = ?
+      """
+    ) { statement =>
+      statement.setString(1, selectionId)
+      val resultSet = statement.executeQuery()
+      try
+        if resultSet.next() then
+          val groupId = resultSet.getString("group_id")
+          val travelerIdsBySelectionId = selectionTravelerIds(connection, groupId)
+          readSelection(resultSet, travelerIdsBySelectionId.getOrElse(selectionId, Vector.empty))
+        else
+          throw TourGroupError.SelectionWasNotFound(GroupPlanSelectionId(selectionId))
+      finally resultSet.close()
+    }
+
   private def planItemById(connection: Connection, planItemId: String): GroupPlanItem =
     PlainSqlSupport.withStatement(
       connection,
@@ -358,6 +559,44 @@ object TourGroupPlannerPlainSql:
       endsAt = Option(row.getTimestamp("ends_at")).map(_.toInstant),
       sequenceNo = row.getInt("sequence_no"),
       status = GroupPlanItemStatus.fromText(row.getString("status"))
+    )
+
+  private def readPlanOption(row: ResultSet): GroupPlanOption =
+    GroupPlanOption(
+      optionId = GroupPlanOptionId(row.getString("option_id")),
+      planItemId = GroupPlanItemId(row.getString("plan_item_id")),
+      resourceType = GroupPlanOptionResourceType.fromText(row.getString("resource_type")),
+      resourceId = row.getString("resource_id"),
+      resourceVariantCode = Option(row.getString("resource_variant_code")).filter(_.nonEmpty),
+      resourceContext = Option(row.getString("resource_context")).filter(_.nonEmpty),
+      label = row.getString("label"),
+      description = row.getString("description"),
+      defaultQuantity = row.getInt("default_quantity"),
+      status = GroupPlanOptionStatus.fromText(row.getString("status"))
+    )
+
+  private def readSelection(row: ResultSet, travelerIds: Vector[TravelerId]): GroupPlanSelection =
+    GroupPlanSelection(
+      selectionId = GroupPlanSelectionId(row.getString("selection_id")),
+      groupId = TourGroupId(row.getString("group_id")),
+      planItemId = GroupPlanItemId(row.getString("plan_item_id")),
+      optionId = GroupPlanOptionId(row.getString("option_id")),
+      membershipId = TourGroupMembershipId(row.getString("membership_id")),
+      quantity = row.getInt("quantity"),
+      status = GroupPlanSelectionStatus.fromText(row.getString("status")),
+      createdAt = row.getTimestamp("created_at").toInstant,
+      confirmedAt = Option(row.getTimestamp("confirmed_at")).map(_.toInstant),
+      reviewedByOrganizerUserId = Option(row.getString("reviewed_by_organizer_user_id")).filter(_.nonEmpty).map(UserId.apply),
+      reviewNote = Option(row.getString("review_note")).filter(_.nonEmpty),
+      travelerIds = travelerIds
+    )
+
+  private def readSelectionOrderLink(row: ResultSet): GroupSelectionOrderLink =
+    GroupSelectionOrderLink(
+      linkId = GroupSelectionOrderLinkId(row.getString("link_id")),
+      selectionId = GroupPlanSelectionId(row.getString("selection_id")),
+      orderId = OrderId(row.getString("order_id")),
+      createdAt = row.getTimestamp("created_at").toInstant
     )
 
   private def readSummary(row: ResultSet): TourGroupSummaryPlannerResponse =

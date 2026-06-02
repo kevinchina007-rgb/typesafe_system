@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 
 import type { GroupPlanItemResponse, TourGroupDetailsResponse, TourGroupSummaryResponse } from '@/lib/mvp-types/index'
 import { CreateTourGroupDialog } from '@/pages/TourGroupsPage/components/CreateTourGroupDialog'
@@ -12,8 +12,10 @@ import {
   getMembershipTravelerIds,
   getSelectionDialogOptions,
   getSelectionDialogTravelers,
+  getTourGroupBookingViewKeyForSelectionOption,
   pickCreatedPlanItem,
   pickInitialActivePlanItem,
+  scoreTourGroupSummaryForQuery,
   syncGroupSummary,
 } from '../functions'
 
@@ -71,6 +73,8 @@ export function TourGroupsPanel({
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null)
   const [selectedGroupDetails, setSelectedGroupDetails] = useState<TourGroupDetailsResponse | null>(null)
   const [isGroupDetailOpen, setIsGroupDetailOpen] = useState(false)
+  const [searchInput, setSearchInput] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [activeOrganizerPlanItem, setActiveOrganizerPlanItem] = useState<GroupPlanItemResponse | null>(null)
   const [selectionPlanItem, setSelectionPlanItem] = useState<GroupPlanItemResponse | null>(null)
@@ -123,19 +127,29 @@ export function TourGroupsPanel({
   )
 
   const visibleGroupSummaries = useMemo(() => {
-    if (pageMode !== 'mine' || !signedInUser) {
-      return groupSummaries
-    }
+    const scopedGroupSummaries =
+      pageMode !== 'mine' || !signedInUser
+        ? groupSummaries
+        : groupSummaries.filter(group => {
+            if (group.organizerUserId === signedInUser.userId) {
+              return true
+            }
 
-    return groupSummaries.filter(group => {
-      if (group.organizerUserId === signedInUser.userId) {
-        return true
-      }
+            const details = groupDetailsCache[group.groupId]
+            return details?.memberships.some(membership => membership.userId === signedInUser.userId && membership.status === 'Active') ?? false
+          })
 
-      const details = groupDetailsCache[group.groupId]
-      return details?.memberships.some(membership => membership.userId === signedInUser.userId && membership.status === 'Active') ?? false
-    })
-  }, [groupDetailsCache, groupSummaries, pageMode, signedInUser?.userId])
+    const query = pageMode === 'home' ? searchQuery : ''
+
+    return scopedGroupSummaries
+      .map(group => ({
+        group,
+        score: scoreTourGroupSummaryForQuery(group, query),
+      }))
+      .filter(({ score }) => query.trim().length === 0 || score > 0)
+      .sort((left, right) => right.score - left.score || right.group.createdAt.localeCompare(left.group.createdAt))
+      .map(({ group }) => group)
+  }, [groupDetailsCache, groupSummaries, pageMode, searchQuery, signedInUser?.userId])
 
   useEffect(() => {
     if (visibleGroupSummaries.length === 0) {
@@ -149,12 +163,16 @@ export function TourGroupsPanel({
   function applyUpdatedGroupDetails(details: TourGroupDetailsResponse) {
     setSelectedGroupDetails(details)
     setSelectedGroupId(details.group.groupId)
-    setIsGroupDetailOpen(currentOpen => currentOpen)
     setGroupDetailsCache(currentCache => ({ ...currentCache, [details.group.groupId]: details }))
     setGroupSummaries(currentGroups => syncGroupSummary(currentGroups, details))
     setActiveOrganizerPlanItem(currentPlanItem => {
       return pickInitialActivePlanItem(details, currentPlanItem)
     })
+  }
+
+  function handleSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setSearchQuery(searchInput.trim())
   }
 
   async function createSelectionAndOptionallySubmit(
@@ -166,6 +184,7 @@ export function TourGroupsPanel({
       return
     }
 
+    const selectedOption = selectionDialogOptions.find(option => option.optionId === payload.optionId) ?? null
     const createdDetails = await onCreateSelection(planItemId, selectedGroupDetails.group.groupId, {
       userId: signedInUser.userId,
       optionId: payload.optionId,
@@ -185,6 +204,12 @@ export function TourGroupsPanel({
     }
 
     applyUpdatedGroupDetails(nextDetails)
+    if (submitAfterCreate) {
+      const targetViewKey = getTourGroupBookingViewKeyForSelectionOption(selectedOption)
+      if (targetViewKey) {
+        onNavigate(targetViewKey)
+      }
+    }
     setSelectionPlanItem(null)
   }
 
@@ -214,6 +239,44 @@ export function TourGroupsPanel({
 
       <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('tourGroups.description')}</p>
 
+      {pageMode === 'home' ? (
+        <form className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50" onSubmit={handleSearchSubmit}>
+          <label className="grid gap-2">
+            <span className="text-sm font-semibold text-slate-500">{translate('tourGroups.searchGroups')}</span>
+            <input
+              value={searchInput}
+              placeholder={translate('tourGroups.searchGroupsPlaceholder')}
+              onChange={event => setSearchInput(event.target.value)}
+            />
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="submit"
+              className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
+              disabled={isBusy}
+            >
+              {translate('tourGroups.searchGroupsButton')}
+            </button>
+            <button
+              type="button"
+              className="inline-flex min-h-11 items-center justify-center border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black hover:bg-white hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-55"
+              disabled={isBusy}
+              onClick={() => {
+                setSearchInput('')
+                setSearchQuery('')
+              }}
+            >
+              {translate('tourGroups.clearSearch')}
+            </button>
+          </div>
+          <p className="text-sm leading-6 text-slate-500">
+            {searchQuery.trim().length > 0
+              ? translate('tourGroups.searchGroupsResultsHint').replace('{count}', String(visibleGroupSummaries.length))
+              : translate('tourGroups.searchGroupsHint')}
+          </p>
+        </form>
+      ) : null}
+
       <div className="grid gap-5">
         <TourGroupList
           currentLanguage={currentLanguage}
@@ -228,6 +291,14 @@ export function TourGroupsPanel({
             setIsGroupDetailOpen(true)
           }}
         />
+
+        {visibleGroupSummaries.length === 0 ? (
+          <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+            <p className="text-sm leading-6 text-slate-500">
+              {searchQuery.trim().length > 0 ? translate('tourGroups.searchGroupsEmpty') : translate('tourGroups.empty')}
+            </p>
+          </section>
+        ) : null}
 
       </div>
 

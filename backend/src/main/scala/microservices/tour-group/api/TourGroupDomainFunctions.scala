@@ -120,9 +120,31 @@ def createGroupPlanOption(optionId: GroupPlanOptionId, planItemId: GroupPlanItem
     _ <- Either.cond(defaultQuantity > 0, (), TourGroupError.SelectionQuantityWasInvalid(defaultQuantity))
   yield GroupPlanOption(optionId, planItemId, resourceType, normalizedResourceId, resourceVariantCode.map(_.trim).filter(_.nonEmpty), resourceContext.map(_.trim).filter(_.nonEmpty), normalizedLabel, normalizedDescription, defaultQuantity, GroupPlanOptionStatus.Active)
 
-def createGroupPlanSelection(selectionId: GroupPlanSelectionId, groupId: TourGroupId, planItemId: GroupPlanItemId, optionId: GroupPlanOptionId, membershipId: TourGroupMembershipId, quantity: Int, createdAt: Instant): Either[TourGroupError, GroupPlanSelection] =
+def createGroupPlanSelection(
+    selectionId: GroupPlanSelectionId,
+    groupId: TourGroupId,
+    planItemId: GroupPlanItemId,
+    optionId: GroupPlanOptionId,
+    membershipId: TourGroupMembershipId,
+    quantity: Int,
+    travelerIds: Vector[TravelerId],
+    createdAt: Instant
+): Either[TourGroupError, GroupPlanSelection] =
   Either.cond(quantity > 0, (), TourGroupError.SelectionQuantityWasInvalid(quantity)).map { _ =>
-    GroupPlanSelection(selectionId, groupId, planItemId, optionId, membershipId, quantity, GroupPlanSelectionStatus.Draft, createdAt, None, None, None)
+    GroupPlanSelection(
+      selectionId,
+      groupId,
+      planItemId,
+      optionId,
+      membershipId,
+      quantity,
+      GroupPlanSelectionStatus.Draft,
+      createdAt,
+      None,
+      None,
+      None,
+      travelerIds
+    )
   }
 
 private def normalizeRequiredTourGroupText(fieldName: String, value: String): Either[TourGroupError, String] =

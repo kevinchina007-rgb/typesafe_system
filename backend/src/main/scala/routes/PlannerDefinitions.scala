@@ -161,7 +161,9 @@ object PlannerDefinitions:
         WithConnection(BlacklistTourGroupMemberPlanner),
         WithConnection(TransferTourGroupLeaderPlanner),
         WithConnection(CreateTourGroupPlanItemPlanner),
-        WithConnection(CreateTourGroupPlanOptionPlanner)
+        WithConnection(CreateTourGroupPlanOptionPlanner),
+        WithConnection(CreateTourGroupSelectionPlanner),
+        WithConnection(SubmitTourGroupSelectionPlanner)
       )
 
     PlannerRegistry(

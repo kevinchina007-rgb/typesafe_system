@@ -118,10 +118,10 @@ export const createTourGroupSelection = (
     groupId: string,
     payload: { userId: string; optionId: string; quantity: number; travelerIds: string[] },
   ): Promise<TourGroupDetailsResponse> =>
-    executeJsonApiRequest(`/plan-items/${planItemId}/selections${createQueryString({ groupId })}`, 'POST', payload)
+    executeJsonApiRequest<TourGroupDetailsResponse>('/CreateTourGroupSelectionPlanner', 'POST', { groupId, planItemId, ...payload }).then(normalizeTourGroupDetails)
 
 export const submitTourGroupSelection = (selectionId: string, payload: { userId: string }): Promise<TourGroupDetailsResponse> =>
-    executeJsonApiRequest(`/selections/${selectionId}/submit`, 'POST', payload)
+    executeJsonApiRequest<TourGroupDetailsResponse>('/SubmitTourGroupSelectionPlanner', 'POST', { selectionId, ...payload }).then(normalizeTourGroupDetails)
 
 export const confirmTourGroupSelection = (selectionId: string, payload: { organizerUserId: string; reviewNote?: string | null }): Promise<TourGroupDetailsResponse> =>
     executeJsonApiRequest(`/selections/${selectionId}/confirm`, 'POST', payload)

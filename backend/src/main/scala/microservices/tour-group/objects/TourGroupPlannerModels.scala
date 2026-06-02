@@ -88,6 +88,23 @@ object CreateTourGroupPlanOptionPlannerRequest:
   given sourceEncoder: Encoder[CreateTourGroupPlanOptionPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[CreateTourGroupPlanOptionPlannerRequest] = deriveDecoder
 
+final case class CreateTourGroupSelectionPlannerRequest(
+    groupId: String,
+    userId: String,
+    planItemId: String,
+    optionId: String,
+    quantity: Int,
+    travelerIds: List[String]
+)
+object CreateTourGroupSelectionPlannerRequest:
+  given sourceEncoder: Encoder[CreateTourGroupSelectionPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateTourGroupSelectionPlannerRequest] = deriveDecoder
+
+final case class SubmitTourGroupSelectionPlannerRequest(userId: String, selectionId: String)
+object SubmitTourGroupSelectionPlannerRequest:
+  given sourceEncoder: Encoder[SubmitTourGroupSelectionPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[SubmitTourGroupSelectionPlannerRequest] = deriveDecoder
+
 final case class TourGroupSummaryPlannerResponse(
     groupId: String,
     organizerUserId: String,
@@ -139,6 +156,10 @@ final case class TourGroupDetailsPlannerResponse(
     group: TourGroupSummaryPlannerResponse,
     memberships: List[TourGroupMembershipPlannerResponse],
     membershipTravelers: List[TourGroupMembershipTravelerPlannerResponse],
+    planItems: List[GroupPlanItem],
+    planOptions: List[GroupPlanOption],
+    selections: List[GroupPlanSelection],
+    selectionOrderLinks: List[GroupSelectionOrderLink],
     blacklists: List[TourGroupBlacklistPlannerResponse]
 )
 object TourGroupDetailsPlannerResponse:

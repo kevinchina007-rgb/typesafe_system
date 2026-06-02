@@ -271,6 +271,7 @@ object TourGroupReferenceDataSeeder:
       }
       seededUsers <- hashedUsers.traverse { case (seed, passwordHash) => upsertDemoUser(seed, passwordHash) }.transact(transactor)
       _ <- seedGroups(transactor, seededUsers)
+      _ <- backfillGroupPlanItems(transactor, seededUsers)
     yield ()
 
   private def ensureTourGroupColumns(transactor: Transactor[IO]): IO[Unit] =
@@ -467,6 +468,9 @@ object TourGroupReferenceDataSeeder:
   private def seedGroups(transactor: Transactor[IO], users: Vector[SeededDemoUser]): IO[Unit] =
     buildGroupSeeds(users).traverse_(seedGroup).transact(transactor).void
 
+  private def backfillGroupPlanItems(transactor: Transactor[IO], users: Vector[SeededDemoUser]): IO[Unit] =
+    buildGroupSeeds(users).traverse_(seedGroupPlanItemsOnly).transact(transactor).void
+
   private def buildGroupSeeds(users: Vector[SeededDemoUser]): Vector[GroupSeed] =
     val groups = Vector.newBuilder[GroupSeed]
     var groupIndex = 0
@@ -614,6 +618,9 @@ object TourGroupReferenceDataSeeder:
       else ().pure[ConnectionIO]
       _ <- planItems.traverse_(upsertPlanItem(group))
     yield ()
+
+  private def seedGroupPlanItemsOnly(group: GroupSeed): ConnectionIO[Unit] =
+    buildPlanItems(group).traverse_(upsertPlanItem(group))
 
   private def buildPlanItems(group: GroupSeed): Vector[PlanItemSeed] =
     val day1 = group.startDate

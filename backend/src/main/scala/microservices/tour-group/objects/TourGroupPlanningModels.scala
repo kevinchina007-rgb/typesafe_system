@@ -152,7 +152,8 @@ final case class GroupPlanSelection(
     createdAt: Instant,
     confirmedAt: Option[Instant],
     reviewedByOrganizerUserId: Option[UserId],
-    reviewNote: Option[String]
+    reviewNote: Option[String],
+    travelerIds: Vector[TravelerId]
 )
 
 object GroupPlanSelection:
@@ -179,4 +180,3 @@ final case class GroupSelectionOrderLink(
 object GroupSelectionOrderLink:
   given sourceEncoder: Encoder[GroupSelectionOrderLink] = deriveEncoder
   given sourceDecoder: Decoder[GroupSelectionOrderLink] = deriveDecoder
-

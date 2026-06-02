@@ -1,4 +1,5 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 import type { AppLanguage, GroupPlanItemResponse, GroupPlanOptionResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatTravelerChipLabel } from '@/lib/presenters/tour-group-presenter'
@@ -56,8 +57,8 @@ export function TourGroupSelectionDialog({
     )
   }
 
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/35 p-6" role="presentation">
+  return createPortal(
+    <div className="fixed inset-0 z-[140] grid place-items-center bg-slate-950/35 p-6" role="presentation">
       <div className="grid max-h-[90vh] w-full max-w-3xl gap-4 overflow-auto border border-slate-200 bg-white p-6 text-slate-950 shadow-2xl shadow-slate-950/20" role="dialog" aria-modal="true" aria-label={translate('tourGroups.createSelection')}>
         <div className="text-lg font-bold text-slate-950">
           <div>
@@ -112,7 +113,8 @@ export function TourGroupSelectionDialog({
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
+            <button
+              className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
               type="button"
               disabled={isBusy || !selectedOptionId || selectedTravelerIds.length === 0}
               onClick={() => void onSaveDraft({ optionId: selectedOptionId, quantity, travelerIds: selectedTravelerIds })}
@@ -130,6 +132,7 @@ export function TourGroupSelectionDialog({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
