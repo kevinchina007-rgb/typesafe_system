@@ -16,7 +16,79 @@ import type {
 import { toLegacyManagerSession, toManagerTypeKey } from '@/pages/ManagerPage/models/managerPageSession'
 import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
 import { toActiveSection } from '../functions'
-import type { LoginManagerType, ManagerPageController, ManagerPageProps, ManagerAuthMode } from '../objects'
+import type { AdvertisementResourceOption, LoginManagerType, ManagerPageController, ManagerPageProps, ManagerAuthMode } from '../objects'
+
+const airportCodeToCity: Record<string, string> = {
+  PEK: '北京',
+  PKX: '北京',
+  SHA: '上海',
+  PVG: '上海',
+  CAN: '广州',
+  SZX: '深圳',
+  TFU: '成都',
+  CTU: '成都',
+  CKG: '重庆',
+  HGH: '杭州',
+  NKG: '南京',
+  WUH: '武汉',
+  XIY: '西安',
+  TSN: '天津',
+  CGO: '郑州',
+  CSX: '长沙',
+  TAO: '青岛',
+  XMN: '厦门',
+}
+
+const airportCodeToName: Record<string, string> = {
+  PEK: '北京首都国际机场',
+  PKX: '北京大兴国际机场',
+  SHA: '上海虹桥国际机场',
+  PVG: '上海浦东国际机场',
+  CAN: '广州白云国际机场',
+  SZX: '深圳宝安国际机场',
+  TFU: '成都天府国际机场',
+  CTU: '成都双流国际机场',
+  CKG: '重庆江北国际机场',
+  HGH: '杭州萧山国际机场',
+  NKG: '南京禄口国际机场',
+  WUH: '武汉天河国际机场',
+  XIY: '西安咸阳国际机场',
+  TSN: '天津滨海国际机场',
+  CGO: '郑州新郑国际机场',
+  CSX: '长沙黄花国际机场',
+  TAO: '青岛胶东国际机场',
+  XMN: '厦门高崎国际机场',
+}
+
+function toAirportCityLabel(airportCode: string): string {
+  return airportCodeToCity[airportCode.toUpperCase()] ?? airportCode
+}
+
+function toAirportNameLabel(airportCode: string): string {
+  return airportCodeToName[airportCode.toUpperCase()] ?? airportCode
+}
+
+function toFlightTimeRange(isoDateTime: string): string {
+  const date = new Date(isoDateTime)
+  const hour = Number.isNaN(date.getTime()) ? Number(isoDateTime.slice(11, 13)) : date.getHours()
+  if (hour >= 0 && hour <= 3) return '00:00-03:59'
+  if (hour <= 7) return '04:00-07:59'
+  if (hour <= 11) return '08:00-11:59'
+  if (hour <= 15) return '12:00-15:59'
+  if (hour <= 19) return '16:00-19:59'
+  return '20:00-23:59'
+}
+
+function toFlightDateLabel(isoDateTime: string): string {
+  const date = new Date(isoDateTime)
+  if (Number.isNaN(date.getTime())) {
+    return isoDateTime.slice(0, 10)
+  }
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 
 export function useManagerPageController({
   currentLanguage,
@@ -277,7 +349,7 @@ export function useManagerPageController({
     })
   }
 
-  const hotelAdvertisementOptions = useMemo(() => {
+  const hotelAdvertisementOptions = useMemo<AdvertisementResourceOption[]>(() => {
     if (activeManagerType !== 'hotel') {
       return []
     }
@@ -301,7 +373,7 @@ export function useManagerPageController({
     ]
   }, [activeManagerType, currentManagerSession?.scopeId, currentManagerSession?.displayName, managedHotelPlannerResponses])
 
-  const flightAdvertisementOptions = useMemo(() => {
+  const flightAdvertisementOptions = useMemo<AdvertisementResourceOption[]>(() => {
     if (activeManagerType !== 'airline') {
       return []
     }
@@ -309,7 +381,12 @@ export function useManagerPageController({
     if (managedFlightPlannerResponses.length > 0) {
       return managedFlightPlannerResponses.map(flight => ({
         value: flight.flightId,
-        label: `${flight.flightNumber} ${flight.departureAirport}-${flight.arrivalAirport}`,
+        label: `${flight.flightNumber} ${toAirportCityLabel(flight.departureAirport)} -> ${toAirportCityLabel(flight.arrivalAirport)}`,
+        description: `${toAirportNameLabel(flight.departureAirport)} -> ${toAirportNameLabel(flight.arrivalAirport)} | ${toFlightDateLabel(flight.departureTime)} | ${flight.departureTime.slice(11, 16)} 起飞`,
+        departureCity: toAirportCityLabel(flight.departureAirport),
+        arrivalCity: toAirportCityLabel(flight.arrivalAirport),
+        departureDate: toFlightDateLabel(flight.departureTime),
+        timeRange: toFlightTimeRange(flight.departureTime),
       }))
     }
 
@@ -325,7 +402,7 @@ export function useManagerPageController({
     ]
   }, [activeManagerType, currentManagerSession?.scopeId, currentManagerSession?.displayName, managedFlightPlannerResponses])
 
-  const trainAdvertisementOptions = useMemo(() => {
+  const trainAdvertisementOptions = useMemo<AdvertisementResourceOption[]>(() => {
     if (activeManagerType !== 'train') {
       return []
     }
@@ -350,7 +427,7 @@ export function useManagerPageController({
     ]
   }, [activeManagerType, currentManagerSession?.scopeId, currentManagerSession?.displayName, currentTrainAdminSession?.managedTrains])
 
-  const attractionAdvertisementOptions = useMemo(
+  const attractionAdvertisementOptions = useMemo<AdvertisementResourceOption[]>(
     () =>
       (currentAttractionAdminSession?.managedAttractions ?? []).map(attraction => ({
         value: attraction.attractionId,

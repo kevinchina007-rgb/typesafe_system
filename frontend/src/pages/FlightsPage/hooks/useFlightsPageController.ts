@@ -54,6 +54,58 @@ export function useFlightsPageController({
   )
 
   useEffect(() => {
+    const targetFlightId = window.sessionStorage.getItem('flight-advertisement-target')
+    if (!targetFlightId) {
+      return
+    }
+
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const flight = await travelMvpApiClient.getFlightDetailsPlanner(targetFlightId)
+        if (cancelled) {
+          return
+        }
+
+        const departureDate = flight.departureTime.slice(0, 10)
+        const nextSearchState = {
+          ...searchStateStore.searchState,
+          tripType: 'oneWay' as const,
+          departureAirport: flight.departureAirport,
+          arrivalAirport: flight.arrivalAirport,
+          departureDate,
+          returnDate: '',
+          multiCitySegments: searchStateStore.searchState.multiCitySegments,
+        }
+
+        searchStateStore.setSearchState(nextSearchState)
+        searchStateStore.setFlightResultGroups([
+          {
+            id: 'advertisement-target',
+            title: `${flight.departureAirport} -> ${flight.arrivalAirport}`,
+            subtitle: flight.flightNumber,
+            flightResponses: [flight],
+          },
+        ])
+        searchStateStore.setFlightPlannerResponses([flight])
+        searchStateStore.setHasSearchedFlights(true)
+        lastSubmittedSearchKey.current = JSON.stringify(nextSearchState)
+        window.sessionStorage.removeItem('flight-advertisement-target')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } catch (error) {
+        if (!cancelled) {
+          onShowNotice('error', translate('error.friendly.default'), error instanceof Error ? error.message : '航班广告跳转失败。')
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [onShowNotice, searchStateStore, translate])
+
+  useEffect(() => {
     const availableTravelerIds = travelers.map(traveler => traveler.travelerId)
     setSelectedTravelerIds(currentIds => {
       const nextIds = currentIds.filter(travelerId => availableTravelerIds.includes(travelerId))

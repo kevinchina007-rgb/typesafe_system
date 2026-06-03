@@ -178,3 +178,75 @@ final case class UploadAdvertisementImageResponse(
 object UploadAdvertisementImageResponse:
   given sourceEncoder: Encoder[UploadAdvertisementImageResponse] = deriveEncoder
   given sourceDecoder: Decoder[UploadAdvertisementImageResponse] = deriveDecoder
+
+final case class GenerateAdvertisementImageCandidatesRequest(
+    prompt: String,
+    supportingCopy: Option[String],
+    tone: Option[String],
+    resourceLabel: Option[String],
+    advertisementKind: Option[String],
+    imageFactoryKind: Option[String],
+    transparentBackground: Option[Boolean],
+    width: Option[Int],
+    height: Option[Int],
+    candidateCount: Option[Int],
+    avoidText: Option[String]
+)
+
+object GenerateAdvertisementImageCandidatesRequest:
+  given sourceEncoder: Encoder[GenerateAdvertisementImageCandidatesRequest] = deriveEncoder
+  given sourceDecoder: Decoder[GenerateAdvertisementImageCandidatesRequest] = deriveDecoder
+
+final case class AdvertisementImageCandidateResponse(
+    assetId: String,
+    publicUrl: String,
+    prompt: String,
+    mimeType: String,
+    seed: Int
+)
+
+object AdvertisementImageCandidateResponse:
+  given sourceEncoder: Encoder[AdvertisementImageCandidateResponse] = deriveEncoder
+  given sourceDecoder: Decoder[AdvertisementImageCandidateResponse] = deriveDecoder
+
+final case class GenerateAdvertisementImageCandidatesResponse(
+    candidates: List[AdvertisementImageCandidateResponse]
+)
+
+object GenerateAdvertisementImageCandidatesResponse:
+  given sourceEncoder: Encoder[GenerateAdvertisementImageCandidatesResponse] = deriveEncoder
+  given sourceDecoder: Decoder[GenerateAdvertisementImageCandidatesResponse] = deriveDecoder
+
+final case class GenerateAdvertisementTextCandidatesRequest(
+    prompt: String,
+    sourceText: Option[String],
+    styleRequirement: Option[String],
+    focus: Option[String],
+    tone: Option[String],
+    resourceLabel: Option[String],
+    advertisementKind: Option[String],
+    candidateCount: Option[Int],
+    avoidText: Option[String]
+)
+
+object GenerateAdvertisementTextCandidatesRequest:
+  given sourceEncoder: Encoder[GenerateAdvertisementTextCandidatesRequest] = deriveEncoder
+  given sourceDecoder: Decoder[GenerateAdvertisementTextCandidatesRequest] = deriveDecoder
+
+final case class AdvertisementTextCandidateResponse(
+    text: String,
+    emphasis: String,
+    seed: Int
+)
+
+object AdvertisementTextCandidateResponse:
+  given sourceEncoder: Encoder[AdvertisementTextCandidateResponse] = deriveEncoder
+  given sourceDecoder: Decoder[AdvertisementTextCandidateResponse] = deriveDecoder
+
+final case class GenerateAdvertisementTextCandidatesResponse(
+    candidates: List[AdvertisementTextCandidateResponse]
+)
+
+object GenerateAdvertisementTextCandidatesResponse:
+  given sourceEncoder: Encoder[GenerateAdvertisementTextCandidatesResponse] = deriveEncoder
+  given sourceDecoder: Decoder[GenerateAdvertisementTextCandidatesResponse] = deriveDecoder

@@ -30,6 +30,15 @@ export type ManagerPageProps = {
 export type LoginManagerType = 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin'
 export type ManagerAuthMode = 'register' | 'login'
 export type BusinessManagerType = Exclude<LoginManagerType, 'siteAdmin'>
+export type AdvertisementResourceOption = {
+  value: string
+  label: string
+  description?: string
+  departureCity?: string
+  arrivalCity?: string
+  departureDate?: string
+  timeRange?: string
+}
 
 export type ManagerEntryCardProps = {
   title: string
@@ -70,9 +79,9 @@ export type ManagerPageController = {
   currentAttractionAdminSession: AttractionAdminSessionResponse | null
   managerTaskResponses: ManagerTaskResponse[]
   managerRefundTaskResponses: ManagerRefundTaskResponse[]
-  hotelAdvertisementOptions: Array<{ value: string; label: string }>
-  attractionAdvertisementOptions: Array<{ value: string; label: string }>
-  advertisementResourceOptions: Array<{ value: string; label: string }>
+  hotelAdvertisementOptions: AdvertisementResourceOption[]
+  attractionAdvertisementOptions: AdvertisementResourceOption[]
+  advertisementResourceOptions: AdvertisementResourceOption[]
   isSiteAdmin: boolean
   canSubmitAdvertisements: boolean
   shouldShowWorkspace: boolean

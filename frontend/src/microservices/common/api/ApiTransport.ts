@@ -5,6 +5,7 @@ import type { ApiErrorResponse } from '@/lib/mvp-types/index'
 // fetch / headers / multipart / status code / 错误格式统一在这里处理。
 const travelBackendOrigin = getTravelBackendOrigin()
 const travelMvpApiBaseUrl = `${travelBackendOrigin}/api`
+const defaultRequestTimeoutMs = 180000
 
 function formatApiErrorMessage(apiErrorResponse: ApiErrorResponse, status: number): string {
   return `${apiErrorResponse.code}|${apiErrorResponse.message}|HTTP ${status}`
@@ -48,18 +49,32 @@ export function createSingleFileFormData(fieldName: string, file: File): FormDat
 export async function executeApiRequest<TResponse>(path: string, options?: RequestInit): Promise<TResponse> {
   // multipart 不能强塞 application/json header，这里统一做分支。
   const isMultipartBody = typeof FormData !== 'undefined' && options?.body instanceof FormData
-  const response = await fetch(`${travelMvpApiBaseUrl}${path}`, {
-    credentials: 'include',
-    headers: isMultipartBody
-      ? {
-          ...(options?.headers ?? {}),
-        }
-      : {
-          'Content-Type': 'application/json',
-          ...(options?.headers ?? {}),
-        },
-    ...options,
-  })
+  const abortController = new AbortController()
+  const timeoutHandle = window.setTimeout(() => abortController.abort(), defaultRequestTimeoutMs)
+
+  let response: Response
+  try {
+    response = await fetch(`${travelMvpApiBaseUrl}${path}`, {
+      credentials: 'include',
+      headers: isMultipartBody
+        ? {
+            ...(options?.headers ?? {}),
+          }
+        : {
+            'Content-Type': 'application/json',
+            ...(options?.headers ?? {}),
+          },
+      ...options,
+      signal: abortController.signal,
+    })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error(`request_timeout|The request took too long to finish.|HTTP 408`)
+    }
+    throw error
+  } finally {
+    window.clearTimeout(timeoutHandle)
+  }
 
   if (!response.ok) {
     // 兼容旧接口的 { code, message } 和 PlannerRouter 的 { error }。

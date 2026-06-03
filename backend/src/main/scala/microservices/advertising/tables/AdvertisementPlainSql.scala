@@ -222,7 +222,7 @@ object AdvertisementPlainSql:
       finally statement.close()
       UploadAdvertisementImageResponse(
         assetId = assetId,
-        publicUrl = s"/api/assets/$assetId/${java.net.URLEncoder.encode(normalizedFileName, java.nio.charset.StandardCharsets.UTF_8)}",
+        publicUrl = s"/uploads/assets/$assetId/${java.net.URLEncoder.encode(normalizedFileName, java.nio.charset.StandardCharsets.UTF_8)}",
         originalFileName = normalizedFileName,
         mimeType = request.mimeType,
         fileSize = binaryContent.length.toLong

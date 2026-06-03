@@ -1,19 +1,44 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useAdvertisingStore } from '@/app/stores/advertising-store'
+import { toBackendAssetUrl } from '@/lib/presenters/view-models'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 
-type AdvertisementKind = 'ResourcePromotion' | 'CompanyPromotion'
 type CanvasElementType = 'text' | 'image' | 'shape' | 'field'
 type PlacementValue = 'FlightBookingPage' | 'HotelBookingPage' | 'TrainBookingPage' | 'AttractionBookingPage'
 type TargetResourceType = 'Flight' | 'Hotel' | 'Train' | 'Attraction'
-type WorkflowStep = 'kind' | 'resource' | 'creative'
+type WorkspaceTab = 'create' | 'drafts'
 type ToneKey = 'clean' | 'premium' | 'energetic' | 'warm'
+type FactoryMode = 'text' | 'image'
+type VisualStyleKey =
+  | 'cartoon'
+  | 'realistic'
+  | 'exaggerated'
+  | 'minimal'
+  | 'retro'
+  | 'luxury'
+  | 'futuristic'
+  | 'dreamy'
+  | 'editorial'
+  | 'playful'
+  | 'cinematic'
+  | 'tech'
+  | 'travel'
+  | 'fashion'
+type ImageFactoryKind = 'background' | 'element'
 
 type AdvertisementSubmissionWorkspaceProps = {
   defaultPlacement: PlacementValue
   defaultTargetResourceType: TargetResourceType
-  resourceOptions: Array<{ value: string; label: string }>
+  resourceOptions: Array<{
+    value: string
+    label: string
+    description?: string
+    departureCity?: string
+    arrivalCity?: string
+    departureDate?: string
+    timeRange?: string
+  }>
   translate: (translationKey: string) => string
   onOpenResource: (resourceId: string) => void
   onShowNotice?: (kind: 'success' | 'error', title: string, description: string) => void
@@ -48,28 +73,28 @@ const canvasWidth = 960
 const canvasHeight = 240
 const timeWindows = ['00:00-03:59', '04:00-07:59', '08:00-11:59', '12:00-15:59', '16:00-19:59', '20:00-23:59']
 const flightCityOptions = ['北京', '上海', '武汉', '南京', '杭州', '深圳', '重庆', '广州', '成都', '长沙', '厦门', '西安', '天津', '青岛']
-const cityAirportCodes: Record<string, string[]> = {
-  北京: ['PKX', 'PEK'],
-  上海: ['PVG', 'SHA'],
-  武汉: ['WUH'],
-  南京: ['NKG'],
-  杭州: ['HGH'],
-  深圳: ['SZX'],
-  重庆: ['CKG'],
-  广州: ['CAN'],
-  成都: ['TFU'],
-  长沙: ['CSX'],
-  厦门: ['XMN'],
-  西安: ['XIY'],
-  天津: ['TSN'],
-  青岛: ['TAO'],
-}
-
 const tonePalettes: Record<ToneKey, { label: string; bg: string; fg: string; accent: string; soft: string }> = {
   clean: { label: '清爽', bg: '#075985', fg: '#ffffff', accent: '#38bdf8', soft: '#dbeafe' },
   premium: { label: '高级', bg: '#111827', fg: '#f8fafc', accent: '#d4af37', soft: '#e5e7eb' },
   energetic: { label: '活力', bg: '#be185d', fg: '#ffffff', accent: '#fb923c', soft: '#fce7f3' },
   warm: { label: '温暖', bg: '#166534', fg: '#ffffff', accent: '#facc15', soft: '#dcfce7' },
+}
+
+const visualStyleLabels: Record<VisualStyleKey, string> = {
+  cartoon: '卡通',
+  realistic: '写实',
+  exaggerated: '夸张',
+  minimal: '极简',
+  retro: '复古',
+  luxury: '高级感',
+  futuristic: '未来感',
+  dreamy: '梦幻',
+  editorial: '杂志感',
+  playful: '活泼',
+  cinematic: '电影感',
+  tech: '科技感',
+  travel: '旅行感',
+  fashion: '时尚',
 }
 
 const defaultCreative: CreativeState = {
@@ -83,6 +108,43 @@ function cloneCreative(creative: CreativeState): CreativeState {
   return { ...creative, elements: creative.elements.map(element => ({ ...element })) }
 }
 
+function parseCreativeJson(creativeJson: string | null | undefined): CreativeState | null {
+  if (!creativeJson) {
+    return null
+  }
+
+  try {
+    const parsed = JSON.parse(creativeJson) as Partial<CreativeState>
+    if (!parsed || !Array.isArray(parsed.elements)) {
+      return null
+    }
+    return {
+      width: typeof parsed.width === 'number' ? parsed.width : canvasWidth,
+      height: typeof parsed.height === 'number' ? parsed.height : canvasHeight,
+      backgroundColor: typeof parsed.backgroundColor === 'string' ? parsed.backgroundColor : tonePalettes.clean.bg,
+      elements: parsed.elements.map((element, index) => ({
+        id: typeof element.id === 'string' ? element.id : `restored-${Date.now()}-${index}`,
+        type: element.type ?? 'text',
+        text: element.text ?? '',
+        src: element.src,
+        x: typeof element.x === 'number' ? element.x : 0,
+        y: typeof element.y === 'number' ? element.y : 0,
+        width: typeof element.width === 'number' ? element.width : 240,
+        height: typeof element.height === 'number' ? element.height : 80,
+        fontSize: typeof element.fontSize === 'number' ? element.fontSize : 28,
+        fontWeight: typeof element.fontWeight === 'number' ? element.fontWeight : 700,
+        color: typeof element.color === 'string' ? element.color : '#ffffff',
+        backgroundColor: typeof element.backgroundColor === 'string' ? element.backgroundColor : 'transparent',
+        opacity: typeof element.opacity === 'number' ? element.opacity : 1,
+        borderRadius: typeof element.borderRadius === 'number' ? element.borderRadius : 0,
+        effect: element.effect ?? 'none',
+      })),
+    }
+  } catch {
+    return null
+  }
+}
+
 function defaultWindow() {
   const startAt = new Date()
   const endAt = new Date()
@@ -90,7 +152,13 @@ function defaultWindow() {
   return { startAt: startAt.toISOString(), endAt: endAt.toISOString() }
 }
 
-function inferResourceLabel(resourceOptions: Array<{ value: string; label: string }>, resourceId: string) {
+function inferResourceLabel(
+  resourceOptions: Array<{
+    value: string
+    label: string
+  }>,
+  resourceId: string,
+) {
   return resourceOptions.find(option => option.value === resourceId)?.label ?? resourceId
 }
 
@@ -98,9 +166,14 @@ function escapeSvgText(value: string) {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function makeImageDataUrl(prompt: string, tone: ToneKey, index: number) {
+function makeImageDataUrl(_prompt: string, tone: ToneKey, index: number, transparentBackground = false) {
   const palette = tonePalettes[tone]
-  const label = escapeSvgText(prompt.trim() || 'travel visual')
+  const backgroundLayer = transparentBackground ? '' : `<rect width="960" height="240" fill="url(#g)"/>`
+  const subjectLayer = transparentBackground
+    ? `<ellipse cx="480" cy="124" rx="130" ry="74" fill="${palette.accent}" fill-opacity="0.92"/>
+    <path d="M360 136 C418 74, 540 76, 610 132" fill="none" stroke="rgba(255,255,255,0.68)" stroke-width="12" stroke-linecap="round"/>`
+    : `<circle cx="${720 + index * 24}" cy="${64 + index * 12}" r="92" fill="rgba(255,255,255,0.16)"/>
+    <path d="M80 ${178 - index * 8} C250 108, 390 218, 560 ${120 + index * 12} S820 76, 920 ${138 - index * 6}" fill="none" stroke="rgba(255,255,255,0.38)" stroke-width="12" stroke-linecap="round"/>`
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="960" height="240" viewBox="0 0 960 240">
     <defs>
       <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
@@ -108,58 +181,125 @@ function makeImageDataUrl(prompt: string, tone: ToneKey, index: number) {
         <stop stop-color="${palette.accent}" offset="1"/>
       </linearGradient>
     </defs>
-    <rect width="960" height="240" fill="url(#g)"/>
-    <circle cx="${720 + index * 24}" cy="${64 + index * 12}" r="92" fill="rgba(255,255,255,0.16)"/>
-    <path d="M80 ${178 - index * 8} C250 108, 390 218, 560 ${120 + index * 12} S820 76, 920 ${138 - index * 6}" fill="none" stroke="rgba(255,255,255,0.38)" stroke-width="12" stroke-linecap="round"/>
-    <text x="64" y="132" font-family="Arial, sans-serif" font-size="34" font-weight="800" fill="${palette.fg}">${label}</text>
+    ${backgroundLayer}
+    ${subjectLayer}
+  </svg>`
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
+function makeTextArtDataUrl(text: string, tone: ToneKey) {
+  const palette = tonePalettes[tone]
+  const safeText = escapeSvgText(text.trim() || '广告标题')
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="220" viewBox="0 0 720 220">
+    <defs>
+      <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="${palette.bg}" flood-opacity="0.28"/>
+      </filter>
+    </defs>
+    <g filter="url(#shadow)">
+      <text x="360" y="120" text-anchor="middle" font-size="72" font-weight="900" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" fill="${palette.fg}" stroke="${palette.accent}" stroke-width="6" paint-order="stroke fill">${safeText}</text>
+      <text x="360" y="120" text-anchor="middle" font-size="72" font-weight="900" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" fill="${palette.fg}">${safeText}</text>
+    </g>
   </svg>`
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
 function buildTextCandidates(prompt: string, tone: ToneKey, resourceLabel: string): CreativeElement[] {
-  const palette = tonePalettes[tone]
   const baseText = prompt.trim() || `${resourceLabel} 即刻出发`
-  const snippets = [
-    baseText,
-    `${resourceLabel}，把旅程安排得更漂亮`,
-    `${baseText} / ${palette.label}出行`,
-    `选择 ${resourceLabel}`,
-  ]
-
-  return snippets.map((text, index) => ({
-    id: `text-candidate-${Date.now()}-${index}`,
-    type: 'text',
-    text,
-    x: index % 2 === 0 ? 56 : 520,
-    y: index < 2 ? 48 : 138,
-    width: index % 2 === 0 ? 460 : 340,
-    height: index < 2 ? 58 : 46,
-    fontSize: index < 2 ? 34 : 24,
-    fontWeight: index === 1 ? 900 : 800,
-    color: index === 2 ? palette.soft : palette.fg,
-    backgroundColor: index === 3 ? 'rgba(255,255,255,0.16)' : 'transparent',
+  return [{
+    id: `text-candidate-${Date.now()}`,
+    type: 'image',
+    text: baseText,
+    src: makeTextArtDataUrl(baseText, tone),
+    x: 96,
+    y: 44,
+    width: 520,
+    height: 160,
+    fontSize: 34,
+    fontWeight: 900,
+    color: '#ffffff',
+    backgroundColor: 'transparent',
     opacity: 1,
-    borderRadius: index === 3 ? 4 : 0,
-    effect: index === 1 ? 'slideUp' : 'none',
-  }))
+    borderRadius: 0,
+    effect: 'fadeIn',
+  }]
 }
 
-function buildImageCandidates(prompt: string, tone: ToneKey): CreativeElement[] {
-  return [0, 1, 2, 3].map(index => ({
+function buildImageCandidates(prompt: string, tone: ToneKey, imageFactoryKind: ImageFactoryKind, transparentBackground = false): CreativeElement[] {
+  return [0].map(index => ({
     id: `image-candidate-${Date.now()}-${index}`,
     type: 'image',
     text: prompt.trim() || tonePalettes[tone].label,
-    src: makeImageDataUrl(prompt, tone, index),
-    x: index % 2 === 0 ? 0 : 520,
-    y: index < 2 ? 0 : 72,
-    width: index % 2 === 0 ? 960 : 360,
-    height: index % 2 === 0 ? 240 : 132,
+    src: makeImageDataUrl(prompt, tone, index, transparentBackground),
+    x: imageFactoryKind === 'background' ? (index % 2 === 0 ? 0 : 520) : (index % 2 === 0 ? 72 : 456),
+    y: imageFactoryKind === 'background' ? (index < 2 ? 0 : 72) : (index < 2 ? 28 : 116),
+    width: imageFactoryKind === 'background' ? (index % 2 === 0 ? 960 : 360) : 240,
+    height: imageFactoryKind === 'background' ? (index % 2 === 0 ? 240 : 132) : 240,
     fontSize: 18,
     fontWeight: 700,
     color: '#ffffff',
     backgroundColor: 'transparent',
     opacity: index % 2 === 0 ? 0.95 : 0.85,
     borderRadius: index % 2 === 0 ? 0 : 6,
+    effect: 'fadeIn',
+  }))
+}
+
+function makeLocalImageFallbackLabel(input: {
+  imagePrompt: string
+  visualElementsPrompt: string
+  focusPrompt: string
+  selectedResourceLabel: string
+  imageFactoryKind: ImageFactoryKind
+}) {
+  const primary = input.imagePrompt.trim() || input.visualElementsPrompt.trim() || input.focusPrompt.trim() || input.selectedResourceLabel.trim()
+  if (!primary) return input.imageFactoryKind === 'element' ? '广告元素' : '广告背景'
+  return primary.slice(0, 24)
+}
+
+function buildRemoteImageCandidates(
+  candidates: Array<{ assetId: string; publicUrl: string; prompt: string; seed: number }>,
+  tone: ToneKey,
+  imageFactoryKind: ImageFactoryKind,
+): CreativeElement[] {
+  return candidates.map((candidate, index) => ({
+    id: `image-candidate-${candidate.assetId}-${index}`,
+    type: 'image',
+    text: candidate.prompt,
+    src: toBackendAssetUrl(candidate.publicUrl),
+    x: imageFactoryKind === 'background' ? (index % 2 === 0 ? 0 : 520) : (index % 2 === 0 ? 72 : 456),
+    y: imageFactoryKind === 'background' ? (index < 2 ? 0 : 72) : (index < 2 ? 28 : 116),
+    width: imageFactoryKind === 'background' ? (index % 2 === 0 ? 960 : 360) : 240,
+    height: imageFactoryKind === 'background' ? (index % 2 === 0 ? 240 : 132) : 240,
+    fontSize: 18,
+    fontWeight: 700,
+    color: '#ffffff',
+    backgroundColor: 'transparent',
+    opacity: index % 2 === 0 ? 0.95 : 0.85,
+    borderRadius: index % 2 === 0 ? 0 : 6,
+    effect: tone === 'premium' ? 'pulse' : 'fadeIn',
+  }))
+}
+
+function buildRemoteTextCandidates(
+  candidates: Array<{ assetId: string; publicUrl: string; prompt: string; seed: number }>,
+  sourceText: string,
+): CreativeElement[] {
+  return candidates.slice(0, 1).map(candidate => ({
+    id: `text-candidate-${candidate.assetId}`,
+    type: 'image',
+    text: sourceText,
+    src: toBackendAssetUrl(candidate.publicUrl),
+    x: 96,
+    y: 44,
+    width: 520,
+    height: 160,
+    fontSize: 34,
+    fontWeight: 900,
+    color: '#ffffff',
+    backgroundColor: 'transparent',
+    opacity: 1,
+    borderRadius: 0,
     effect: 'fadeIn',
   }))
 }
@@ -188,9 +328,12 @@ function svgToFile(svg: string) {
 
 function getPrimaryCopy(creative: CreativeState) {
   const textElements = creative.elements.filter(element => element.type !== 'image').map(element => element.text.trim()).filter(Boolean)
+  const imageTextFallback = creative.elements.find(element => element.type === 'image' && element.text.trim())?.text.trim()
+  const primaryText = textElements[0] ?? imageTextFallback
+  const secondaryText = textElements[1] ?? primaryText
   return {
-    title: textElements[0] ?? '广告创意',
-    subtitle: textElements[1] ?? textElements[0] ?? '精选推荐',
+    title: primaryText ?? '广告创意',
+    subtitle: secondaryText ?? '精选推荐',
     ctaLabel: textElements.find(text => text.length <= 8) ?? '查看详情',
   }
 }
@@ -206,43 +349,50 @@ export function AdvertisementSubmissionWorkspace({
   const ownerAdvertisements = useAdvertisingStore(state => state.ownerAdvertisements)
   const loadOwnerAdvertisements = useAdvertisingStore(state => state.loadOwnerAdvertisements)
   const createAdvertisement = useAdvertisingStore(state => state.createAdvertisement)
+  const updateAdvertisement = useAdvertisingStore(state => state.updateAdvertisement)
   const uploadAdvertisementImage = useAdvertisingStore(state => state.uploadAdvertisementImage)
+  const generateAdvertisementImageCandidates = useAdvertisingStore(state => state.generateAdvertisementImageCandidates)
   const submitAdvertisementForReview = useAdvertisingStore(state => state.submitAdvertisementForReview)
-  const pauseAdvertisement = useAdvertisingStore(state => state.pauseAdvertisement)
   const isLoading = useAdvertisingStore(state => state.isLoading)
 
-  const [step, setStep] = useState<WorkflowStep>('kind')
-  const [advertisementKind, setAdvertisementKind] = useState<AdvertisementKind>('ResourcePromotion')
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>('create')
+  const [editingAdvertisementId, setEditingAdvertisementId] = useState<string | null>(null)
   const [targetResourceId, setTargetResourceId] = useState(resourceOptions[0]?.value ?? '')
   const [creative, setCreative] = useState<CreativeState>(() => cloneCreative(defaultCreative))
-  const [tone, setTone] = useState<ToneKey>('clean')
+  const [tone] = useState<ToneKey>('clean')
+  const [factoryMode, setFactoryMode] = useState<FactoryMode>('text')
+  const [focusPrompt, setFocusPrompt] = useState('')
+  const [visualElementsPrompt, setVisualElementsPrompt] = useState('')
+  const [avoidPrompt, setAvoidPrompt] = useState('')
   const [textPrompt, setTextPrompt] = useState('')
+  const [textVisualStyles, setTextVisualStyles] = useState<VisualStyleKey[]>(['realistic'])
+  const [textNotes, setTextNotes] = useState('')
   const [imagePrompt, setImagePrompt] = useState('')
+  const [imageFactoryKind, setImageFactoryKind] = useState<ImageFactoryKind>('background')
+  const [shouldCutoutImageElement, setShouldCutoutImageElement] = useState(true)
+  const [imageVisualStyles, setImageVisualStyles] = useState<VisualStyleKey[]>(['realistic'])
+  const [imageNotes, setImageNotes] = useState('')
+  const [backgroundAutoFit, setBackgroundAutoFit] = useState(true)
   const [textCandidates, setTextCandidates] = useState<CreativeElement[]>([])
   const [imageCandidates, setImageCandidates] = useState<CreativeElement[]>([])
+  const [isGeneratingText, setIsGeneratingText] = useState(false)
+  const [isGeneratingImages, setIsGeneratingImages] = useState(false)
   const [dragTemplate, setDragTemplate] = useState<CreativeElement | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [dragState, setDragState] = useState<{ elementId: string; offsetX: number; offsetY: number } | null>(null)
+  const [resizeState, setResizeState] = useState<{ elementId: string; startClientX: number; startClientY: number; startWidth: number; startHeight: number } | null>(null)
   const [factoryPanelWidth, setFactoryPanelWidth] = useState(320)
   const [isResizingFactoryPanel, setIsResizingFactoryPanel] = useState(false)
   const splitContainerRef = useRef<HTMLDivElement | null>(null)
   const canvasRef = useRef<HTMLDivElement | null>(null)
 
+  const [hyperlinkEnabled, setHyperlinkEnabled] = useState(false)
   const [searchDraft, setSearchDraft] = useState({ departureCity: '', arrivalCity: '', departureDate: '', timeRange: 'all' })
+  const [flightSearchResults, setFlightSearchResults] = useState<typeof resourceOptions>([])
+  const [hasSearchedFlights, setHasSearchedFlights] = useState(false)
   const selectedResourceLabel = inferResourceLabel(resourceOptions, targetResourceId)
-  const filteredFlightOptions = useMemo(() => {
-    if (defaultTargetResourceType !== 'Flight') return resourceOptions
-    const departureCodes = searchDraft.departureCity ? cityAirportCodes[searchDraft.departureCity] ?? [] : []
-    const arrivalCodes = searchDraft.arrivalCity ? cityAirportCodes[searchDraft.arrivalCity] ?? [] : []
-    return resourceOptions.filter(option => {
-      const label = option.label.toUpperCase()
-      const matchesDeparture = departureCodes.length === 0 || departureCodes.some(code => label.includes(code))
-      const matchesArrival = arrivalCodes.length === 0 || arrivalCodes.some(code => label.includes(code))
-      return matchesDeparture && matchesArrival
-    })
-  }, [defaultTargetResourceType, resourceOptions, searchDraft.arrivalCity, searchDraft.departureCity])
-  const reviewQueue = useMemo(
-    () => ownerAdvertisements.filter(item => item.reviewStatus === 'PendingReview'),
+  const draftAdvertisements = useMemo(
+    () => [...ownerAdvertisements].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt)),
     [ownerAdvertisements],
   )
 
@@ -253,6 +403,18 @@ export function AdvertisementSubmissionWorkspace({
   useEffect(() => {
     if (!targetResourceId && resourceOptions[0]) setTargetResourceId(resourceOptions[0].value)
   }, [resourceOptions, targetResourceId])
+
+  useEffect(() => {
+    if (defaultTargetResourceType !== 'Flight') {
+      return
+    }
+    setFlightSearchResults([])
+    setHasSearchedFlights(false)
+  }, [resourceOptions, defaultTargetResourceType])
+
+  useEffect(() => {
+    setCreative(current => current.backgroundColor === tonePalettes[tone].bg ? current : { ...current, backgroundColor: tonePalettes[tone].bg })
+  }, [tone])
 
   useEffect(() => {
     if (!isResizingFactoryPanel) return
@@ -282,6 +444,49 @@ export function AdvertisementSubmissionWorkspace({
     }
   }, [isResizingFactoryPanel])
 
+  useEffect(() => {
+    if (!dragState && !resizeState) return
+
+    function handleMouseMove(event: MouseEvent) {
+      if (!canvasRef.current) return
+      const rect = canvasRef.current.getBoundingClientRect()
+      const scale = canvasWidth / rect.width
+
+      if (dragState) {
+        moveElement(
+          dragState.elementId,
+          Math.max(0, Math.round((event.clientX - rect.left - dragState.offsetX) * scale)),
+          Math.max(0, Math.round((event.clientY - rect.top - dragState.offsetY) * scale)),
+        )
+      }
+
+      if (resizeState) {
+        const widthDelta = Math.round((event.clientX - resizeState.startClientX) * scale)
+        const heightDelta = Math.round((event.clientY - resizeState.startClientY) * scale)
+        resizeElement(
+          resizeState.elementId,
+          Math.max(80, resizeState.startWidth + widthDelta),
+          Math.max(44, resizeState.startHeight + heightDelta),
+        )
+      }
+    }
+
+    function handleMouseUp() {
+      setDragState(null)
+      setResizeState(null)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+    document.body.style.userSelect = 'none'
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+      document.body.style.userSelect = ''
+    }
+  }, [dragState, resizeState])
+
   function addTemplateToCanvas(template: CreativeElement, placement?: { x: number; y: number }) {
     const nextElement = {
       ...template,
@@ -299,44 +504,289 @@ export function AdvertisementSubmissionWorkspace({
     }))
   }
 
-  async function submitAdvertisement() {
+  function resizeElement(elementId: string, width: number, height: number) {
+    setCreative(current => ({
+      ...current,
+      elements: current.elements.map(element =>
+        element.id === elementId
+          ? {
+              ...element,
+              width,
+              height,
+              fontSize: element.type === 'image' ? element.fontSize : Math.max(18, Math.round(height * 0.42)),
+            }
+          : element,
+      ),
+    }))
+  }
+
+  function removeElement(elementId: string) {
+    setCreative(current => ({
+      ...current,
+      elements: current.elements.filter(element => element.id !== elementId),
+    }))
+  }
+
+  function describeCanvasContent() {
+    const textSummary = creative.elements
+      .filter(element => element.type !== 'image')
+      .map(element => element.text.trim())
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(' / ')
+    const imageCount = creative.elements.filter(element => element.type === 'image').length
+    return [textSummary ? `current text: ${textSummary}` : null, imageCount > 0 ? `current element images: ${imageCount}` : null]
+      .filter(Boolean)
+      .join(', ')
+  }
+
+  function toggleStyleSelection(
+    styles: VisualStyleKey[],
+    nextStyle: VisualStyleKey,
+    updateStyles: (styles: VisualStyleKey[]) => void,
+  ) {
+    if (styles.includes(nextStyle)) {
+      const nextStyles = styles.filter(style => style !== nextStyle)
+      updateStyles(nextStyles.length > 0 ? nextStyles : [nextStyle])
+      return
+    }
+
+    updateStyles([...styles, nextStyle])
+  }
+
+  function updateSearchDraftField(nextField: Partial<typeof searchDraft>) {
+    setSearchDraft(current => ({ ...current, ...nextField }))
+    setHasSearchedFlights(false)
+  }
+
+  function runFlightSearch() {
+    if (defaultTargetResourceType !== 'Flight') {
+      return
+    }
+    const nextResults = resourceOptions.filter(option => {
+      const matchesDeparture = !searchDraft.departureCity || option.departureCity === searchDraft.departureCity
+      const matchesArrival = !searchDraft.arrivalCity || option.arrivalCity === searchDraft.arrivalCity
+      const matchesDate = !searchDraft.departureDate || option.departureDate === searchDraft.departureDate
+      const matchesTimeRange = searchDraft.timeRange === 'all' || option.timeRange === searchDraft.timeRange
+      return matchesDeparture && matchesArrival && matchesDate && matchesTimeRange
+    })
+    setFlightSearchResults(nextResults)
+    setHasSearchedFlights(true)
+    if (nextResults.length > 0) {
+      setTargetResourceId(current => nextResults.some(option => option.value === current) ? current : nextResults[0].value)
+    }
+  }
+
+  function buildAdvertisementPayload(uploadedImageUrl: string) {
+    const { startAt, endAt } = defaultWindow()
+    const copy = getPrimaryCopy(creative)
+    const fallbackTargetId = targetResourceId || resourceOptions[0]?.value || `${defaultTargetResourceType.toLowerCase()}-draft`
+    const targetId = hyperlinkEnabled ? fallbackTargetId : fallbackTargetId
+    const resourceSummaryTitle = hyperlinkEnabled ? (selectedResourceLabel || copy.title) : copy.title
+    const landingTarget =
+      hyperlinkEnabled && defaultTargetResourceType === 'Flight'
+        ? `flight:${fallbackTargetId}`
+        : 'disabled'
+
+    return {
+      advertisementKind: 'ResourcePromotion',
+      title: copy.title,
+      subtitle: copy.subtitle,
+      description: `${copy.title} ${copy.subtitle}`.trim(),
+      imageUrl: uploadedImageUrl,
+      ctaLabel: copy.ctaLabel,
+      targetResourceType: defaultTargetResourceType,
+      targetResourceId: targetId,
+      resourceSummaryTitle,
+      landingTarget,
+      placement: defaultPlacement,
+      creativeJson: JSON.stringify(creative),
+      creativeWidth: creative.width,
+      creativeHeight: creative.height,
+      priority: 50,
+      startAt,
+      endAt,
+    }
+  }
+
+  function resetComposer() {
+    setEditingAdvertisementId(null)
+    setTargetResourceId(resourceOptions[0]?.value ?? '')
+    setHyperlinkEnabled(false)
+    setCreative(cloneCreative(defaultCreative))
+    setFactoryMode('text')
+    setFocusPrompt('')
+    setVisualElementsPrompt('')
+    setAvoidPrompt('')
+    setTextPrompt('')
+    setImagePrompt('')
+    setTextVisualStyles(['realistic'])
+    setImageVisualStyles(['realistic'])
+    setTextNotes('')
+    setImageNotes('')
+    setImageFactoryKind('background')
+    setShouldCutoutImageElement(true)
+    setBackgroundAutoFit(true)
+    setTextCandidates([])
+    setImageCandidates([])
+    setSearchDraft({ departureCity: '', arrivalCity: '', departureDate: '', timeRange: 'all' })
+    setFlightSearchResults([])
+    setHasSearchedFlights(false)
+  }
+
+  function openAdvertisementDraft(advertisement: AdvertisementResponse) {
+    const restoredCreative = parseCreativeJson(advertisement.creativeJson)
+    setEditingAdvertisementId(advertisement.advertisementId)
+    setTargetResourceId(advertisement.targetResourceId)
+    setHyperlinkEnabled(advertisement.landingTarget !== 'disabled')
+    setCreative(restoredCreative ? cloneCreative(restoredCreative) : cloneCreative(defaultCreative))
+    setTextPrompt(advertisement.title)
+    setImagePrompt(advertisement.landingTarget === 'disabled' ? '' : advertisement.resourceSummaryTitle)
+    setFlightSearchResults([])
+    setHasSearchedFlights(false)
+    setWorkspaceTab('create')
+  }
+
+  async function generateTextStyles() {
+    const linkedResourceLabel = hyperlinkEnabled ? selectedResourceLabel : ''
+    const sourceText = textPrompt.trim() || linkedResourceLabel
+    const styleRequirement = [
+      textVisualStyles.length > 0 ? `画风：${textVisualStyles.map(style => visualStyleLabels[style]).join('、')}` : null,
+      textNotes.trim() ? `补充要求：${textNotes.trim()}` : null,
+    ].filter(Boolean).join('；') || '做成适合广告横幅的艺术字体'
+
+    const textSource = [
+      `我希望得到当前文本：“${sourceText}”的艺术字体。`,
+      `要求：“${styleRequirement}”。`,
+      '输出内容必须包含这句完整文字。',
+      '除文字本身与必要装饰外，其余背景全部透明并抠掉。',
+      '不要生成额外人物、风景、按钮、边框、底板、海报背景。',
+      '这是一个可拖拽到广告画布里的独立文字元素，不是整张海报。',
+    ].join('')
+    setIsGeneratingText(true)
+    try {
+      const response = await generateAdvertisementImageCandidates({
+        prompt: textSource,
+        supportingCopy: textNotes.trim() || null,
+        tone: tonePalettes[tone].label,
+        resourceLabel: linkedResourceLabel || sourceText,
+        advertisementKind: 'ResourcePromotion',
+        imageFactoryKind: 'element',
+        transparentBackground: true,
+        width: 720,
+        height: 220,
+        candidateCount: 1,
+        avoidText: [avoidPrompt.trim(), '不要改写文字，不要漏字，不要错别字'].filter(Boolean).join('；'),
+      })
+      if (response.candidates.length > 0) {
+        setTextCandidates(buildRemoteTextCandidates(response.candidates, sourceText))
+        return
+      }
+      setTextCandidates(buildTextCandidates(sourceText, tone, linkedResourceLabel))
+    } catch (error) {
+      setTextCandidates(buildTextCandidates(sourceText, tone, linkedResourceLabel))
+      onShowNotice?.('error', translate('advertising.factory.text'), error instanceof Error ? error.message : '文字生成失败，已切换为本地文案预览。')
+    } finally {
+      setIsGeneratingText(false)
+    }
+  }
+
+  async function generateImageStyles(styleOverride?: VisualStyleKey[]) {
+    const activeStyles = styleOverride ?? imageVisualStyles
+    const linkedResourceLabel = hyperlinkEnabled ? selectedResourceLabel : ''
+    const canvasDescription = backgroundAutoFit ? describeCanvasContent() : ''
+    const fallbackLabel = makeLocalImageFallbackLabel({
+      imagePrompt,
+      visualElementsPrompt,
+      focusPrompt,
+      selectedResourceLabel: linkedResourceLabel,
+      imageFactoryKind,
+    })
+    const primaryPrompt = [
+      imagePrompt.trim() || visualElementsPrompt.trim() || focusPrompt.trim() || linkedResourceLabel,
+      `styles: ${activeStyles.map(style => visualStyleLabels[style]).join(', ')}`,
+      imageFactoryKind === 'element' ? 'image usage: element' : 'image usage: background',
+      imageFactoryKind === 'element' ? `cutout subject: ${shouldCutoutImageElement ? 'yes' : 'no'}` : null,
+      imageFactoryKind === 'element' && shouldCutoutImageElement ? 'transparent background' : null,
+      imageNotes.trim() ? `notes: ${imageNotes.trim()}` : null,
+      imageFactoryKind === 'background' && backgroundAutoFit && canvasDescription ? `fit around ${canvasDescription}` : null,
+    ].filter(Boolean).join(', ')
+    const supportingCopy = [focusPrompt.trim(), visualElementsPrompt.trim()].filter(Boolean).join('，')
+    setIsGeneratingImages(true)
+    try {
+      const response = await generateAdvertisementImageCandidates({
+        prompt: primaryPrompt,
+        supportingCopy: supportingCopy || null,
+        tone: tonePalettes[tone].label,
+        resourceLabel: linkedResourceLabel,
+        advertisementKind: 'ResourcePromotion',
+        imageFactoryKind,
+        transparentBackground: imageFactoryKind === 'element' ? shouldCutoutImageElement : null,
+        width: canvasWidth,
+        height: canvasHeight,
+        candidateCount: 1,
+        avoidText: avoidPrompt.trim() || '不要在图片中直接生成文字、水印和 logo',
+      })
+      if (response.candidates.length > 0) {
+        setImageCandidates(buildRemoteImageCandidates(response.candidates, tone, imageFactoryKind))
+        return
+      }
+      setImageCandidates(buildImageCandidates(fallbackLabel, tone, imageFactoryKind, imageFactoryKind === 'element' && shouldCutoutImageElement))
+    } catch (error) {
+      setImageCandidates(buildImageCandidates(fallbackLabel, tone, imageFactoryKind, imageFactoryKind === 'element' && shouldCutoutImageElement))
+      onShowNotice?.('error', translate('advertising.factory.image'), error instanceof Error ? error.message : '图片生成失败，已切换为本地预览图。')
+    } finally {
+      setIsGeneratingImages(false)
+    }
+  }
+
+  async function saveDraft(submitForReview = false) {
     setIsSubmitting(true)
     try {
       const svg = renderCreativeSvg(creative)
       const uploadedImage = await uploadAdvertisementImage(svgToFile(svg))
-      const { startAt, endAt } = defaultWindow()
-      const copy = getPrimaryCopy(creative)
-      const targetId = advertisementKind === 'CompanyPromotion' ? `company-${defaultTargetResourceType.toLowerCase()}` : targetResourceId
-      const resourceSummaryTitle = advertisementKind === 'CompanyPromotion' ? selectedResourceLabel || copy.title : selectedResourceLabel
-      const createdAdvertisement = await createAdvertisement({
-        advertisementKind,
-        title: copy.title,
-        subtitle: copy.subtitle,
-        description: `${copy.title} ${copy.subtitle}`,
-        imageUrl: uploadedImage.publicUrl,
-        ctaLabel: copy.ctaLabel,
-        targetResourceType: defaultTargetResourceType,
-        targetResourceId: targetId,
-        resourceSummaryTitle,
-        landingTarget: null,
-        placement: defaultPlacement,
-        creativeJson: JSON.stringify(creative),
-        creativeWidth: creative.width,
-        creativeHeight: creative.height,
-        priority: 50,
-        startAt,
-        endAt,
-      })
-      await submitAdvertisementForReview(createdAdvertisement.advertisementId)
+      const payload = buildAdvertisementPayload(uploadedImage.publicUrl)
+      const savedAdvertisement = editingAdvertisementId
+        ? await updateAdvertisement(editingAdvertisementId, payload)
+        : await createAdvertisement(payload)
+      if (submitForReview) {
+        await submitAdvertisementForReview(savedAdvertisement.advertisementId)
+      }
       await loadOwnerAdvertisements()
-      onShowNotice?.('success', translate('advertising.createSuccess'), translate('advertising.createSuccessDescription'))
-      setStep('kind')
-      setCreative(cloneCreative(defaultCreative))
-      setTextCandidates([])
-      setImageCandidates([])
+      onShowNotice?.(
+        'success',
+        submitForReview ? translate('advertising.createSuccess') : '草稿已保存',
+        submitForReview ? translate('advertising.createSuccessDescription') : '你可以继续在草稿页查看、编辑或撤稿。',
+      )
+      setWorkspaceTab('drafts')
+      setEditingAdvertisementId(savedAdvertisement.advertisementId)
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  async function withdrawAdvertisement(advertisement: AdvertisementResponse) {
+    await updateAdvertisement(advertisement.advertisementId, {
+      advertisementKind: advertisement.advertisementKind,
+      title: advertisement.title,
+      subtitle: advertisement.subtitle,
+      description: advertisement.description,
+      imageUrl: advertisement.imageUrl,
+      ctaLabel: advertisement.ctaLabel,
+      targetResourceType: advertisement.targetResourceType,
+      targetResourceId: advertisement.targetResourceId,
+      resourceSummaryTitle: advertisement.resourceSummaryTitle,
+      landingTarget: advertisement.landingTarget,
+      placement: advertisement.placement,
+      creativeJson: advertisement.creativeJson,
+      creativeWidth: advertisement.creativeWidth,
+      creativeHeight: advertisement.creativeHeight,
+      priority: advertisement.priority,
+      startAt: advertisement.startAt,
+      endAt: advertisement.endAt,
+    })
+    await loadOwnerAdvertisements()
+    onShowNotice?.('success', '已撤稿', '广告已恢复为未提交状态。')
   }
 
   return (
@@ -347,90 +797,222 @@ export function AdvertisementSubmissionWorkspace({
           <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.submitTitle')}</h2>
         </div>
 
-        {step === 'kind' ? (
-          <div className="grid gap-4 md:grid-cols-2">
-            <button type="button" className="grid gap-3 border border-slate-200 bg-white p-6 text-left transition hover:border-slate-950" onClick={() => { setAdvertisementKind('ResourcePromotion'); setStep('resource') }}>
-              <strong className="text-2xl">{translate('advertising.kind.resource')}</strong>
-              <span className="text-sm leading-6 text-slate-500">{translate('advertising.kind.resourceDescription')}</span>
-            </button>
-            <button type="button" className="grid gap-3 border border-slate-200 bg-white p-6 text-left transition hover:border-slate-950" onClick={() => { setAdvertisementKind('CompanyPromotion'); setStep('creative') }}>
-              <strong className="text-2xl">{translate('advertising.kind.company')}</strong>
-              <span className="text-sm leading-6 text-slate-500">{translate('advertising.kind.companyDescription')}</span>
-            </button>
-          </div>
-        ) : null}
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            className={`inline-flex min-h-11 items-center justify-center border px-4 py-2 text-sm font-semibold transition ${workspaceTab === 'create' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-950'}`}
+            onClick={() => setWorkspaceTab('create')}
+          >
+            创作
+          </button>
+          <button
+            type="button"
+            className={`inline-flex min-h-11 items-center justify-center border px-4 py-2 text-sm font-semibold transition ${workspaceTab === 'drafts' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-950'}`}
+            onClick={() => setWorkspaceTab('drafts')}
+          >
+            查看草稿
+          </button>
+        </div>
 
-        {step === 'resource' ? (
+      {workspaceTab === 'create' ? (
           <div className="grid gap-5">
-            {defaultTargetResourceType === 'Flight' ? (
-              <section className="grid gap-5 bg-slate-100 p-5">
-                <div className="grid gap-4 xl:grid-cols-[1fr_1fr_1fr_1fr]">
-                  <label>{translate('advertising.flight.departureCity')}<select value={searchDraft.departureCity} onChange={event => setSearchDraft(current => ({ ...current, departureCity: event.target.value }))}><option value="">{translate('advertising.flight.allCities')}</option>{flightCityOptions.map(city => <option key={city} value={city}>{city}</option>)}</select></label>
-                  <label>{translate('advertising.flight.arrivalCity')}<select value={searchDraft.arrivalCity} onChange={event => setSearchDraft(current => ({ ...current, arrivalCity: event.target.value }))}><option value="">{translate('advertising.flight.allCities')}</option>{flightCityOptions.map(city => <option key={city} value={city}>{city}</option>)}</select></label>
-                  <label>{translate('advertising.flight.departureDate')}<input type="date" value={searchDraft.departureDate} onChange={event => setSearchDraft(current => ({ ...current, departureDate: event.target.value }))} /></label>
-                  <label>{translate('advertising.flight.timeRange')}<select value={searchDraft.timeRange} onChange={event => setSearchDraft(current => ({ ...current, timeRange: event.target.value }))}><option value="all">{translate('advertising.flight.allDay')}</option>{timeWindows.map(window => <option key={window} value={window}>{window}</option>)}</select></label>
-                </div>
-                <div className="grid gap-3">
-                  {filteredFlightOptions.map(option => (
-                    <button key={option.value} type="button" className={`grid gap-1 border p-4 text-left transition ${targetResourceId === option.value ? 'border-pink-500 bg-pink-50' : 'border-slate-200 bg-white hover:border-slate-950'}`} onClick={() => setTargetResourceId(option.value)}>
-                      <strong>{option.label}</strong>
-                      <span className="text-sm text-slate-500">{option.value}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ) : (
-              <label>{translate('advertising.field.targetResource')}<select value={targetResourceId} onChange={event => setTargetResourceId(event.target.value)}>{resourceOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-            )}
-            <div className="flex flex-wrap gap-3">
-              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => setStep('kind')}>{translate('manager.back')}</button>
-              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600 disabled:opacity-50" disabled={!targetResourceId} onClick={() => setStep('creative')}>{translate('advertising.continueCreative')}</button>
-            </div>
-          </div>
-        ) : null}
+            <section className="grid gap-4 border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
+                  onClick={resetComposer}
+                >
+                  新建草稿
+                </button>
+              </div>
+            </section>
 
-        {step === 'creative' ? (
-          <div className="grid gap-5">
             <div
               ref={splitContainerRef}
               className="grid gap-0"
               style={{ gridTemplateColumns: `${factoryPanelWidth}px 12px minmax(0, 1fr)` }}
             >
               <aside className="grid content-start gap-4 border border-slate-200 bg-slate-50 p-4">
+                <section className="hidden">
+                </section>
+
+                <section className="hidden">
+                  <label className="grid gap-2">
+                    <strong>想突出</strong>
+                    <input value={focusPrompt} onChange={event => setFocusPrompt(event.target.value)} placeholder="比如：直飞、准点、品牌感、度假氛围" />
+                  </label>
+                  <label className="grid gap-2">
+                    <strong>画面元素</strong>
+                    <input value={visualElementsPrompt} onChange={event => setVisualElementsPrompt(event.target.value)} placeholder="比如：飞机侧影、云层、城市灯光、留白区域" />
+                  </label>
+                  <label className="grid gap-2">
+                    <strong>不要出现</strong>
+                    <input value={avoidPrompt} onChange={event => setAvoidPrompt(event.target.value)} placeholder="比如：人物、水印、深色背景、图片内置文字" />
+                  </label>
+                </section>
+
                 <section className="grid gap-3">
-                  <strong>{translate('advertising.factory.tone')}</strong>
                   <div className="grid grid-cols-2 gap-2">
-                    {(Object.keys(tonePalettes) as ToneKey[]).map(key => (
-                      <button key={key} type="button" className={`min-h-10 border px-3 text-sm font-semibold ${tone === key ? 'border-pink-500 bg-pink-50' : 'border-slate-200 bg-white'}`} onClick={() => setTone(key)}>{tonePalettes[key].label}</button>
-                    ))}
+                    <button
+                      type="button"
+                      className={`inline-flex min-h-10 items-center justify-center border px-3 text-sm font-semibold ${factoryMode === 'text' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-950'}`}
+                      onClick={() => setFactoryMode('text')}
+                    >
+                      {translate('advertising.factory.text')}
+                    </button>
+                    <button
+                      type="button"
+                      className={`inline-flex min-h-10 items-center justify-center border px-3 text-sm font-semibold ${factoryMode === 'image' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-950'}`}
+                      onClick={() => setFactoryMode('image')}
+                    >
+                      {translate('advertising.factory.image')}
+                    </button>
                   </div>
-                </section>
 
-                <section className="grid gap-3 border-t border-slate-200 pt-4">
-                  <strong>{translate('advertising.factory.text')}</strong>
-                  <textarea rows={3} value={textPrompt} onChange={event => setTextPrompt(event.target.value)} placeholder={translate('advertising.factory.textPlaceholder')} />
-                  <button type="button" className="inline-flex min-h-10 items-center justify-center border border-black bg-black px-3 text-sm font-semibold text-white" onClick={() => setTextCandidates(buildTextCandidates(textPrompt, tone, selectedResourceLabel))}>{translate('advertising.factory.generateText')}</button>
-                  <div className="grid gap-2">
-                    {textCandidates.map(candidate => (
-                      <button key={candidate.id} type="button" draggable className="grid gap-1 border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-950" onDragStart={() => setDragTemplate(candidate)} onClick={() => addTemplateToCanvas(candidate)}>
-                        <span className="text-xs font-bold text-slate-500">{translate('advertising.factory.preview')}</span>
-                        <strong style={{ color: candidate.color === '#ffffff' ? tonePalettes[tone].bg : candidate.color }}>{candidate.text}</strong>
+                  {factoryMode === 'text' ? (
+                    <div className="grid gap-3">
+                      <strong>{translate('advertising.factory.text')}</strong>
+                      <textarea rows={3} value={textPrompt} onChange={event => setTextPrompt(event.target.value)} placeholder={translate('advertising.factory.textPlaceholder')} />
+                      <label className="grid gap-2">
+                        <span className="text-sm font-semibold text-slate-700">画风</span>
+                        <div className="flex flex-wrap gap-2">
+                          {(Object.keys(visualStyleLabels) as VisualStyleKey[]).map(styleKey => (
+                            <button
+                              key={styleKey}
+                              type="button"
+                              className={`inline-flex min-h-9 items-center justify-center border px-3 text-sm font-semibold ${textVisualStyles.includes(styleKey) ? 'border-pink-500 bg-pink-50 text-pink-700' : 'border-slate-200 bg-white text-slate-700'}`}
+                              onClick={() => toggleStyleSelection(textVisualStyles, styleKey, setTextVisualStyles)}
+                            >
+                              {visualStyleLabels[styleKey]}
+                            </button>
+                          ))}
+                        </div>
+                      </label>
+                      <label className="grid gap-2">
+                        <span className="text-sm font-semibold text-slate-700">备注</span>
+                        <textarea rows={2} value={textNotes} onChange={event => setTextNotes(event.target.value)} placeholder="比如：更有速度感、标题更夸张、适合年轻人" />
+                      </label>
+                      <button type="button" className="inline-flex min-h-10 items-center justify-center border border-black bg-black px-3 text-sm font-semibold text-white disabled:opacity-60" disabled={isGeneratingText} onClick={() => void generateTextStyles()}>
+                        {isGeneratingText ? translate('search.loading') : translate('advertising.factory.generateText')}
                       </button>
-                    ))}
-                  </div>
-                </section>
-
-                <section className="grid gap-3 border-t border-slate-200 pt-4">
-                  <strong>{translate('advertising.factory.image')}</strong>
-                  <textarea rows={3} value={imagePrompt} onChange={event => setImagePrompt(event.target.value)} placeholder={translate('advertising.factory.imagePlaceholder')} />
-                  <button type="button" className="inline-flex min-h-10 items-center justify-center border border-black bg-black px-3 text-sm font-semibold text-white" onClick={() => setImageCandidates(buildImageCandidates(imagePrompt, tone))}>{translate('advertising.factory.generateImage')}</button>
-                  <div className="grid gap-2">
-                    {imageCandidates.map(candidate => (
-                      <button key={candidate.id} type="button" draggable className="overflow-hidden border border-slate-200 bg-white text-left transition hover:border-slate-950" onDragStart={() => setDragTemplate(candidate)} onClick={() => addTemplateToCanvas(candidate)}>
-                        {candidate.src ? <img src={candidate.src} alt="" className="aspect-video w-full object-cover" /> : null}
-                      </button>
-                    ))}
-                  </div>
+                      <div className="grid gap-2">
+                        {textCandidates.map(candidate => (
+                          <button key={candidate.id} type="button" draggable className="grid gap-1 border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-950" onDragStart={() => setDragTemplate(candidate)} onClick={() => addTemplateToCanvas(candidate)}>
+                            <span className="text-xs font-bold text-slate-500">{translate('advertising.factory.preview')}</span>
+                            {candidate.type === 'image' && candidate.src ? (
+                              <img src={candidate.src} alt={candidate.text} className="max-h-40 w-full object-contain" />
+                            ) : (
+                              <strong style={{ color: candidate.color === '#ffffff' ? tonePalettes[tone].bg : candidate.color }}>{candidate.text}</strong>
+                            )}
+                            <span className="text-xs text-slate-500">艺术字方案</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      <strong>{translate('advertising.factory.image')}</strong>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          className={`inline-flex min-h-10 items-center justify-center border px-3 text-sm font-semibold ${imageFactoryKind === 'background' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-950'}`}
+                          onClick={() => setImageFactoryKind('background')}
+                        >
+                          背景
+                        </button>
+                        <button
+                          type="button"
+                          className={`inline-flex min-h-10 items-center justify-center border px-3 text-sm font-semibold ${imageFactoryKind === 'element' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-950'}`}
+                          onClick={() => setImageFactoryKind('element')}
+                        >
+                          元素
+                        </button>
+                      </div>
+                      <textarea rows={3} value={imagePrompt} onChange={event => setImagePrompt(event.target.value)} placeholder={translate('advertising.factory.imagePlaceholder')} />
+                      {imageFactoryKind === 'element' ? (
+                        <>
+                          <label className="grid gap-2">
+                            <span className="text-sm font-semibold text-slate-700">是否把内容抠出来</span>
+                            <select value={shouldCutoutImageElement ? 'yes' : 'no'} onChange={event => setShouldCutoutImageElement(event.target.value === 'yes')}>
+                              <option value="yes">是</option>
+                              <option value="no">否</option>
+                            </select>
+                          </label>
+                          <label className="grid gap-2">
+                            <span className="text-sm font-semibold text-slate-700">画风</span>
+                            <div className="flex flex-wrap gap-2">
+                              {(Object.keys(visualStyleLabels) as VisualStyleKey[]).map(styleKey => (
+                                <button
+                                  key={styleKey}
+                                  type="button"
+                                  className={`inline-flex min-h-9 items-center justify-center border px-3 text-sm font-semibold ${imageVisualStyles.includes(styleKey) ? 'border-pink-500 bg-pink-50 text-pink-700' : 'border-slate-200 bg-white text-slate-700'}`}
+                                  onClick={() => toggleStyleSelection(imageVisualStyles, styleKey, setImageVisualStyles)}
+                                >
+                                  {visualStyleLabels[styleKey]}
+                                </button>
+                              ))}
+                            </div>
+                          </label>
+                          <label className="grid gap-2">
+                            <span className="text-sm font-semibold text-slate-700">备注</span>
+                            <textarea rows={2} value={imageNotes} onChange={event => setImageNotes(event.target.value)} placeholder="比如：只要飞机主体、边缘干净、适合贴在右侧" />
+                          </label>
+                        </>
+                      ) : (
+                        <>
+                          <label className="grid gap-2">
+                            <span className="text-sm font-semibold text-slate-700">画风</span>
+                            <div className="flex flex-wrap gap-2">
+                              {(Object.keys(visualStyleLabels) as VisualStyleKey[]).map(styleKey => (
+                                <button
+                                  key={styleKey}
+                                  type="button"
+                                  className={`inline-flex min-h-9 items-center justify-center border px-3 text-sm font-semibold ${imageVisualStyles.includes(styleKey) ? 'border-pink-500 bg-pink-50 text-pink-700' : 'border-slate-200 bg-white text-slate-700'}`}
+                                  onClick={() => toggleStyleSelection(imageVisualStyles, styleKey, setImageVisualStyles)}
+                                >
+                                  {visualStyleLabels[styleKey]}
+                                </button>
+                              ))}
+                            </div>
+                          </label>
+                          <label className="grid gap-2">
+                            <span className="text-sm font-semibold text-slate-700">备注</span>
+                            <textarea rows={2} value={imageNotes} onChange={event => setImageNotes(event.target.value)} placeholder="比如：给左侧文字留白、天空更通透、不要太花" />
+                          </label>
+                          <label className="grid gap-2">
+                            <span className="text-sm font-semibold text-slate-700">是否自动适应文字、元素</span>
+                            <select value={backgroundAutoFit ? 'yes' : 'no'} onChange={event => setBackgroundAutoFit(event.target.value === 'yes')}>
+                              <option value="yes">是</option>
+                              <option value="no">否</option>
+                            </select>
+                          </label>
+                        </>
+                      )}
+                      <div className="grid grid-cols-2 gap-2">
+                        <button type="button" className="inline-flex min-h-10 items-center justify-center border border-black bg-black px-3 text-sm font-semibold text-white disabled:opacity-60" disabled={isGeneratingImages} onClick={() => void generateImageStyles()}>
+                          {isGeneratingImages ? translate('search.loading') : translate('advertising.factory.generateImage')}
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-950 disabled:opacity-60"
+                          disabled={isGeneratingImages}
+                          onClick={() => {
+                            void generateImageStyles()
+                          }}
+                        >
+                          切换风格
+                        </button>
+                      </div>
+                      <div className="grid gap-2">
+                        {imageCandidates.map(candidate => (
+                          <button key={candidate.id} type="button" draggable className="overflow-hidden border border-slate-200 bg-white text-left transition hover:border-slate-950" onDragStart={() => setDragTemplate(candidate)} onClick={() => addTemplateToCanvas(candidate)}>
+                            {candidate.src ? <img src={candidate.src} alt="" className="aspect-video w-full object-cover" /> : null}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </section>
               </aside>
 
@@ -450,7 +1032,7 @@ export function AdvertisementSubmissionWorkspace({
                 <div className="grid gap-3 border border-slate-200 bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm font-bold text-slate-500">{canvasWidth} x {canvasHeight}</span>
-                    <span className="text-sm text-slate-500">{advertisementKind === 'CompanyPromotion' ? translate('advertising.kind.company') : selectedResourceLabel}</span>
+                    <span className="text-sm text-slate-500">{hyperlinkEnabled ? selectedResourceLabel : '未添加超链接'}</span>
                   </div>
                   <div
                     ref={canvasRef}
@@ -468,14 +1050,6 @@ export function AdvertisementSubmissionWorkspace({
                       })
                       setDragTemplate(null)
                     }}
-                    onMouseMove={event => {
-                      if (!dragState || !canvasRef.current) return
-                      const rect = canvasRef.current.getBoundingClientRect()
-                      const scale = canvasWidth / rect.width
-                      moveElement(dragState.elementId, Math.max(0, Math.round((event.clientX - rect.left - dragState.offsetX) * scale)), Math.max(0, Math.round((event.clientY - rect.top - dragState.offsetY) * scale)))
-                    }}
-                    onMouseUp={() => setDragState(null)}
-                    onMouseLeave={() => setDragState(null)}
                   >
                     {creative.elements.map(element => {
                       const scale = 100 / canvasWidth
@@ -492,19 +1066,50 @@ export function AdvertisementSubmissionWorkspace({
                         fontWeight: element.fontWeight,
                       }
                       return (
-                        <button
+                        <div
                           key={element.id}
-                          type="button"
-                          className="absolute grid place-items-center overflow-hidden border border-transparent text-left transition hover:border-white hover:ring-2 hover:ring-pink-500"
+                          className="absolute overflow-hidden border border-transparent text-left transition hover:border-white hover:ring-2 hover:ring-pink-500"
                           style={style}
                           onMouseDown={event => {
                             if (!canvasRef.current) return
+                            if ((event.target as HTMLElement).closest('[data-resize-handle="true"]') || (event.target as HTMLElement).closest('[data-remove-handle="true"]')) {
+                              return
+                            }
                             const rect = canvasRef.current.getBoundingClientRect()
                             setDragState({ elementId: element.id, offsetX: event.clientX - rect.left - element.x / canvasWidth * rect.width, offsetY: event.clientY - rect.top - element.y / canvasHeight * rect.height })
                           }}
                         >
-                          {element.type === 'image' && element.src ? <img src={element.src} alt="" className="h-full w-full object-cover" /> : element.text}
-                        </button>
+                          <button
+                            type="button"
+                            data-remove-handle="true"
+                            className="absolute right-1 top-1 z-20 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-xs font-bold text-white"
+                            onClick={() => removeElement(element.id)}
+                          >
+                            ×
+                          </button>
+                          {element.type === 'image' && element.src ? (
+                            <img src={element.src} alt="" className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="grid h-full w-full place-items-center px-3 text-center">{element.text}</div>
+                          )}
+                          <button
+                            type="button"
+                            data-resize-handle="true"
+                            className="absolute bottom-1 right-1 z-20 grid h-6 w-6 place-items-center rounded-full bg-white/90 text-[10px] font-bold text-slate-950 shadow"
+                            onMouseDown={event => {
+                              event.stopPropagation()
+                              setResizeState({
+                                elementId: element.id,
+                                startClientX: event.clientX,
+                                startClientY: event.clientY,
+                                startWidth: element.width,
+                                startHeight: element.height,
+                              })
+                            }}
+                          >
+                            ↘
+                          </button>
+                        </div>
                       )
                     })}
                   </div>
@@ -513,82 +1118,177 @@ export function AdvertisementSubmissionWorkspace({
               </main>
             </div>
 
+            <section className="grid gap-4 border border-slate-200 bg-slate-50 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="grid gap-1">
+                  <strong>超链接</strong>
+                  <span className="text-sm leading-6 text-slate-500">这是可选功能。需要时再把广告跳到对应预订页，并只筛选这一条航班。</span>
+                </div>
+                <label className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                  <input type="checkbox" checked={hyperlinkEnabled} onChange={event => setHyperlinkEnabled(event.target.checked)} />
+                  添加超链接
+                </label>
+              </div>
+
+              {hyperlinkEnabled ? (
+                defaultTargetResourceType === 'Flight' ? (
+                  <section className="grid gap-4">
+                    <div className="grid gap-4 xl:grid-cols-[1fr_1fr_1fr_1fr_auto]">
+                      <label className="grid gap-2">
+                        <span>{translate('advertising.flight.departureCity')}</span>
+                        <select value={searchDraft.departureCity} onChange={event => updateSearchDraftField({ departureCity: event.target.value })}>
+                          <option value="">{translate('advertising.flight.allCities')}</option>
+                          {flightCityOptions.map(city => <option key={city} value={city}>{city}</option>)}
+                        </select>
+                      </label>
+                      <label className="grid gap-2">
+                        <span>{translate('advertising.flight.arrivalCity')}</span>
+                        <select value={searchDraft.arrivalCity} onChange={event => updateSearchDraftField({ arrivalCity: event.target.value })}>
+                          <option value="">{translate('advertising.flight.allCities')}</option>
+                          {flightCityOptions.map(city => <option key={city} value={city}>{city}</option>)}
+                        </select>
+                      </label>
+                      <label className="grid gap-2">
+                        <span>{translate('advertising.flight.departureDate')}</span>
+                        <input type="date" value={searchDraft.departureDate} onChange={event => updateSearchDraftField({ departureDate: event.target.value })} />
+                      </label>
+                      <label className="grid gap-2">
+                        <span>{translate('advertising.flight.timeRange')}</span>
+                        <select value={searchDraft.timeRange} onChange={event => updateSearchDraftField({ timeRange: event.target.value })}>
+                          <option value="all">{translate('advertising.flight.allDay')}</option>
+                          {timeWindows.map(window => <option key={window} value={window}>{window}</option>)}
+                        </select>
+                      </label>
+                      <button
+                        type="button"
+                        className="inline-flex min-h-11 items-center justify-center self-end border border-slate-950 bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                        onClick={runFlightSearch}
+                      >
+                        搜索航班
+                      </button>
+                    </div>
+
+                    {!hasSearchedFlights ? (
+                      <p className="m-0 text-sm leading-6 text-slate-500">先填筛选条件，再点“搜索航班”，这里才会出现可选航班。</p>
+                    ) : flightSearchResults.length === 0 ? (
+                      <p className="m-0 text-sm leading-6 text-slate-500">没有找到符合条件的航班，换个日期、城市或时段再试试。</p>
+                    ) : (
+                      <div className="grid gap-3">
+                        {flightSearchResults.map(option => (
+                          <button
+                            key={option.value}
+                            type="button"
+                            className={`grid gap-1 border p-4 text-left transition ${targetResourceId === option.value ? 'border-pink-500 bg-pink-50' : 'border-slate-200 bg-white hover:border-slate-950'}`}
+                            onClick={() => setTargetResourceId(option.value)}
+                          >
+                            <strong>{option.label}</strong>
+                            {option.description ? <span className="text-sm text-slate-500">{option.description}</span> : null}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                ) : (
+                  <label className="grid gap-2">
+                    <span>{translate('advertising.field.targetResource')}</span>
+                    <select value={targetResourceId} onChange={event => setTargetResourceId(event.target.value)}>
+                      {resourceOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                    </select>
+                  </label>
+                )
+              ) : (
+                <p className="m-0 text-sm leading-6 text-slate-500">不添加也没关系，这张广告会按普通展示内容保存，不绑定跳转目标。</p>
+              )}
+            </section>
+
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => setStep(advertisementKind === 'CompanyPromotion' ? 'kind' : 'resource')}>{translate('manager.back')}</button>
-              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-5 py-2 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600 disabled:opacity-50" disabled={isLoading || isSubmitting || creative.elements.length === 0} onClick={() => void submitAdvertisement()}>{isSubmitting ? translate('advertising.submitting') : translate('advertising.create')}</button>
+              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white disabled:opacity-50" disabled={isLoading || isSubmitting || creative.elements.length === 0} onClick={() => void saveDraft(false)}>保存草稿</button>
+              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-5 py-2 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600 disabled:opacity-50" disabled={isLoading || isSubmitting || creative.elements.length === 0} onClick={() => void saveDraft(true)}>{isSubmitting ? translate('advertising.submitting') : '提交给网站管理者'}</button>
             </div>
           </div>
         ) : null}
       </section>
 
-      <AdvertisementListSection advertisements={ownerAdvertisements} reviewQueue={reviewQueue} translate={translate} onOpenResource={onOpenResource} onPause={pauseAdvertisement} onSubmitReview={submitAdvertisementForReview} />
+      {workspaceTab === 'drafts' ? (
+        <AdvertisementDraftSection
+          advertisements={draftAdvertisements}
+          translate={translate}
+          onEdit={openAdvertisementDraft}
+          onOpenResource={onOpenResource}
+          onWithdraw={withdrawAdvertisement}
+          onSubmitReview={submitAdvertisementForReview}
+        />
+      ) : null}
     </section>
   )
 }
 
-type AdvertisementListSectionProps = {
+type AdvertisementDraftSectionProps = {
   advertisements: AdvertisementResponse[]
-  reviewQueue: AdvertisementResponse[]
   translate: (translationKey: string) => string
+  onEdit: (advertisement: AdvertisementResponse) => void
   onOpenResource: (resourceId: string) => void
-  onPause: (advertisementId: string) => Promise<AdvertisementResponse>
+  onWithdraw: (advertisement: AdvertisementResponse) => Promise<void>
   onSubmitReview: (advertisementId: string) => Promise<AdvertisementResponse>
 }
 
-function AdvertisementListSection({ advertisements, reviewQueue, translate, onOpenResource, onPause, onSubmitReview }: AdvertisementListSectionProps) {
+function AdvertisementDraftSection({ advertisements, translate, onEdit, onOpenResource, onWithdraw, onSubmitReview }: AdvertisementDraftSectionProps) {
   return (
-    <>
-      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
-        <div>
-          <p className="text-sm font-bold text-slate-500">{translate('advertising.myListEyebrow')}</p>
-          <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.myListTitle')}</h3>
+    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+      <div>
+        <p className="text-sm font-bold text-slate-500">我的广告</p>
+        <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">查看草稿</h3>
+      </div>
+      {advertisements.length === 0 ? <p className="text-sm leading-6 text-slate-500">{translate('advertising.empty')}</p> : (
+        <div className="grid gap-4">
+          {advertisements.map(advertisement => (
+            <AdvertisementAdminCard
+              key={advertisement.advertisementId}
+              advertisement={advertisement}
+              translate={translate}
+              onEdit={onEdit}
+              onOpenResource={onOpenResource}
+              onWithdraw={onWithdraw}
+              onSubmitReview={onSubmitReview}
+            />
+          ))}
         </div>
-        {advertisements.length === 0 ? <p className="text-sm leading-6 text-slate-500">{translate('advertising.empty')}</p> : (
-          <div className="grid gap-3">
-            {advertisements.map(advertisement => <AdvertisementAdminCard key={advertisement.advertisementId} advertisement={advertisement} translate={translate} onOpenResource={onOpenResource} onPause={onPause} onSubmitReview={onSubmitReview} />)}
-          </div>
-        )}
-      </section>
-      {reviewQueue.length > 0 ? (
-        <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
-          <div>
-            <p className="text-sm font-bold text-slate-500">{translate('advertising.pendingEyebrow')}</p>
-            <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.pendingTitle')}</h3>
-          </div>
-          <div className="grid gap-3">
-            {reviewQueue.map(advertisement => <AdvertisementAdminCard key={advertisement.advertisementId} advertisement={advertisement} translate={translate} onOpenResource={onOpenResource} onPause={onPause} onSubmitReview={onSubmitReview} />)}
-          </div>
-        </section>
-      ) : null}
-    </>
+      )}
+    </section>
   )
 }
 
 type AdvertisementAdminCardProps = {
   advertisement: AdvertisementResponse
   translate: (translationKey: string) => string
+  onEdit: (advertisement: AdvertisementResponse) => void
   onOpenResource: (resourceId: string) => void
-  onPause: (advertisementId: string) => Promise<AdvertisementResponse>
+  onWithdraw: (advertisement: AdvertisementResponse) => Promise<void>
   onSubmitReview: (advertisementId: string) => Promise<AdvertisementResponse>
 }
 
-function AdvertisementAdminCard({ advertisement, translate, onOpenResource, onPause, onSubmitReview }: AdvertisementAdminCardProps) {
+function AdvertisementAdminCard({ advertisement, translate, onEdit, onOpenResource, onWithdraw, onSubmitReview }: AdvertisementAdminCardProps) {
+  const isSubmitted = advertisement.reviewStatus !== 'Draft' && advertisement.reviewStatus !== 'Rejected'
+  const hasHyperlink = advertisement.landingTarget !== 'disabled'
   return (
-    <article className="grid gap-4 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50 md:grid-cols-[160px_1fr]">
-      {advertisement.imageUrl ? <img src={advertisement.imageUrl} alt={advertisement.title} className="aspect-video w-full object-cover" /> : null}
+    <article className="grid gap-4 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+      {advertisement.imageUrl ? <img src={advertisement.imageUrl} alt={advertisement.title} className="aspect-[960/240] w-full object-cover" /> : null}
       <div className="grid gap-3">
         <div className="grid gap-1">
           <strong>{advertisement.title}</strong>
           <span className="text-sm text-slate-500">{advertisement.resourceSummaryTitle}</span>
-          <span className="text-sm font-semibold text-slate-700">{advertisement.advertisementKind} / {advertisement.reviewStatus} / {advertisement.deliveryStatus}</span>
+          <span className="text-sm font-semibold text-slate-700">{advertisement.advertisementKind} / {isSubmitted ? '已提交' : '未提交'} / {advertisement.deliveryStatus}</span>
           {advertisement.rejectionNote ? <span className="text-sm font-medium text-slate-500">{`${translate('advertising.rejectionNote')}: ${advertisement.rejectionNote}`}</span> : null}
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => onOpenResource(advertisement.targetResourceId)}>{translate('advertising.openResource')}</button>
-          {advertisement.reviewStatus === 'Draft' || advertisement.reviewStatus === 'Rejected' ? <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" type="button" onClick={() => void onSubmitReview(advertisement.advertisementId)}>{translate('advertising.submitReview')}</button> : null}
-          {advertisement.deliveryStatus === 'Active' ? <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => void onPause(advertisement.advertisementId)}>{translate('advertising.pause')}</button> : null}
+          <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => onEdit(advertisement)}>编辑</button>
+          {hasHyperlink ? <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => onOpenResource(advertisement.targetResourceId)}>打开目标页</button> : null}
+          {!isSubmitted ? <button className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600" type="button" onClick={() => void onSubmitReview(advertisement.advertisementId)}>提交</button> : null}
+          {isSubmitted ? <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => void onWithdraw(advertisement)}>撤稿</button> : null}
         </div>
       </div>
     </article>
   )
 }
+
+

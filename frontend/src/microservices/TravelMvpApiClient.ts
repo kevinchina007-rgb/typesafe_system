@@ -1,6 +1,8 @@
 import { approveAdvertisement } from '@/microservices/advertising/api/ApproveAdvertisementPlanner'
 import { assignAdvertisementSlot } from '@/microservices/advertising/api/AssignAdvertisementSlotPlanner'
 import { createAdvertisement } from '@/microservices/advertising/api/CreateAdvertisementPlanner'
+import { generateAdvertisementImageCandidates } from '@/microservices/advertising/api/GenerateAdvertisementImageCandidatesPlanner'
+import { generateAdvertisementTextCandidates } from '@/microservices/advertising/api/GenerateAdvertisementTextCandidatesPlanner'
 import { listMyAdvertisements, listPendingAdvertisements, listReviewedAdvertisements, listDeliverableAdvertisements } from '@/microservices/advertising/api/ListAdvertisementsPlanner'
 import { pauseAdvertisement } from '@/microservices/advertising/api/PauseAdvertisementPlanner'
 import { rejectAdvertisement } from '@/microservices/advertising/api/RejectAdvertisementPlanner'
@@ -28,6 +30,8 @@ export const travelMvpApiClient = {
   approveAdvertisement,
   assignAdvertisementSlot,
   createAdvertisement,
+  generateAdvertisementImageCandidates,
+  generateAdvertisementTextCandidates,
   listMyAdvertisements,
   listPendingAdvertisements,
   listReviewedAdvertisements,

@@ -1,0 +1,17 @@
+export type GenerateAdvertisementTextCandidatesRequest = {
+  prompt: string
+  sourceText?: string | null
+  styleRequirement?: string | null
+  focus?: string | null
+  tone?: string | null
+  resourceLabel?: string | null
+  advertisementKind?: string | null
+  candidateCount?: number | null
+  avoidText?: string | null
+}
+
+export const generateAdvertisementTextCandidatesRequestFromJson = (json: string): GenerateAdvertisementTextCandidatesRequest =>
+  JSON.parse(json) as GenerateAdvertisementTextCandidatesRequest
+
+export const generateAdvertisementTextCandidatesRequestToJson = (value: GenerateAdvertisementTextCandidatesRequest): string =>
+  JSON.stringify(value)

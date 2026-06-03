@@ -546,7 +546,7 @@ export function formatTravelerReference(
 
 export function toBackendAssetUrl(relativeAssetUrl: string | null | undefined): string {
   // 数据库存的是相对 publicUrl；前端在这里补齐 backend origin，得到真正的访问地址。
-  // 同时兼容完整 URL、/uploads/... 以及 uploads/... 这三类输入。
+  // 同时兼容完整 URL、/uploads/...、旧版 /api/assets/... 以及 uploads/... 这几类输入。
   if (!relativeAssetUrl) {
     return ''
   }
@@ -568,6 +568,10 @@ export function toBackendAssetUrl(relativeAssetUrl: string | null | undefined): 
     return normalizedAssetUrl.startsWith('/') ? normalizedAssetUrl : `/${normalizedAssetUrl}`
   }
 
-  const normalizedPath = normalizedAssetUrl.startsWith('/') ? normalizedAssetUrl : `/${normalizedAssetUrl}`
+  const normalizedPath = normalizedAssetUrl.startsWith('/api/assets/')
+    ? normalizedAssetUrl.replace('/api/assets/', '/uploads/assets/')
+    : normalizedAssetUrl.startsWith('/')
+      ? normalizedAssetUrl
+      : `/${normalizedAssetUrl}`
   return `${travelBackendOrigin}${encodeURI(normalizedPath)}`
 }

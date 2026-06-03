@@ -3,6 +3,8 @@
 import { getManagerSnap } from '@/app/stores/manager-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { AdvertisementImageUploadResponse } from '@/microservices/advertising/objects/AdvertisementImageUploadResponse'
+import type { GenerateAdvertisementImageCandidatesResponse } from '@/microservices/advertising/objects/GenerateAdvertisementImageCandidatesResponse'
+import type { GenerateAdvertisementTextCandidatesResponse } from '@/microservices/advertising/objects/GenerateAdvertisementTextCandidatesResponse'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 import type { AdvertisementReviewDecisionRequest } from '@/microservices/advertising/objects/AdvertisementReviewDecisionRequest'
 import type { AdvertisementSlotAssignmentRequest } from '@/microservices/advertising/objects/AdvertisementSlotAssignmentRequest'
@@ -31,6 +33,30 @@ type AdvertisingActions = {
     payload: Omit<CreateAdvertisementRequest, 'ownerManagerId' | 'ownerType' | 'ownerDisplayName'>
   ) => Promise<AdvertisementResponse>
   uploadAdvertisementImage: (imageFile: File) => Promise<AdvertisementImageUploadResponse>
+  generateAdvertisementImageCandidates: (payload: {
+    prompt: string
+    supportingCopy?: string | null
+    tone?: string | null
+    resourceLabel?: string | null
+    advertisementKind?: string | null
+    imageFactoryKind?: string | null
+    transparentBackground?: boolean | null
+    width?: number | null
+    height?: number | null
+    candidateCount?: number | null
+    avoidText?: string | null
+  }) => Promise<GenerateAdvertisementImageCandidatesResponse>
+  generateAdvertisementTextCandidates: (payload: {
+    prompt: string
+    sourceText?: string | null
+    styleRequirement?: string | null
+    focus?: string | null
+    tone?: string | null
+    resourceLabel?: string | null
+    advertisementKind?: string | null
+    candidateCount?: number | null
+    avoidText?: string | null
+  }) => Promise<GenerateAdvertisementTextCandidatesResponse>
   updateAdvertisement: (
     advertisementId: string,
     payload: Omit<UpdateAdvertisementRequest, 'ownerManagerId' | 'ownerType'>
@@ -183,6 +209,8 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   uploadAdvertisementImage: async imageFile => travelMvpApiClient.uploadAdvertisementImage(imageFile),
+  generateAdvertisementImageCandidates: async payload => travelMvpApiClient.generateAdvertisementImageCandidates(payload),
+  generateAdvertisementTextCandidates: async payload => travelMvpApiClient.generateAdvertisementTextCandidates(payload),
   updateAdvertisement: async (advertisementId, payload) => {
     const manager = requireSignedInManager()
     const advertisement = await travelMvpApiClient.updateAdvertisement(advertisementId, {

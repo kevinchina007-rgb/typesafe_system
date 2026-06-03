@@ -30,6 +30,8 @@ object PlannerDefinitions:
         WithConnection(RejectAdvertisementPlanner),
         WithConnection(AssignAdvertisementSlotPlanner),
         WithConnection(UploadAdvertisementImagePlanner),
+        WithConnection(GenerateAdvertisementImageCandidatesPlanner),
+        WithConnection(GenerateAdvertisementTextCandidatesPlanner),
         WithConnection(FlightSuggestionsPlanner),
         WithConnection(SearchFlightsPlanner),
         WithConnection(FlightDailyLowestPricesPlanner),

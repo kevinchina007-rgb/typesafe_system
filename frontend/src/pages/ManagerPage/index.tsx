@@ -373,7 +373,9 @@ export function ManagerPage(props: ManagerPageProps) {
           translate={translate}
           onShowNotice={(kind, title, description) => onShowNotice(kind, title, description)}
           onOpenResource={resourceId => {
-            void resourceId
+            if (advertisingSubmitConfig.resourceView === 'flights') {
+              window.sessionStorage.setItem('flight-advertisement-target', resourceId)
+            }
             onNavigate(advertisingSubmitConfig.resourceView)
           }}
         />
