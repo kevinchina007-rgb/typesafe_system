@@ -36,8 +36,11 @@ export type AttractionsPageController = {
   currentLanguage: AppLanguage
   isBusy: boolean
   isGuestMode: boolean
+  isTourGroupTargetMode: boolean
+  targetAttractionResponses: AttractionResponse[]
   travelers: TravelerResponse[]
   selectedTravelerIds: string[]
+  focusedSessionId: string | null
   deliveryAdvertisements: AdvertisementResponse[]
   attractionResponses: AttractionResponse[]
   hasSearchedAttractions: boolean
@@ -112,6 +115,7 @@ export type AttractionResultsSectionProps = {
   isGuestMode: boolean
   travelers: TravelerResponse[]
   selectedTravelerIds: string[]
+  focusedSessionId: string | null
   translate: (translationKey: string) => string
   useDateDraft: string
   onToggleTravelerSelection: (travelerId: string) => void
@@ -128,6 +132,7 @@ export type AttractionResultCardProps = {
   isGuestMode: boolean
   travelers: TravelerResponse[]
   selectedTravelerIds: string[]
+  focusedSessionId: string | null
   translate: (translationKey: string) => string
   useDateDraft: string
   onRequireLogin: () => void

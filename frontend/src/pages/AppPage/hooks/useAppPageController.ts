@@ -73,6 +73,21 @@ export function useAppPageController() {
     [],
   )
 
+  const shouldClearPrincipalStateOnError = useCallback((error: unknown) => {
+    if (isUnauthorizedApiError(error)) {
+      return true
+    }
+
+    if (!(error instanceof Error)) {
+      return false
+    }
+
+    return (
+      error.message.startsWith('user_not_found|') ||
+      error.message.startsWith('manager_not_found|')
+    )
+  }, [])
+
   const reloadBackendHealth = useCallback(async () => {
     try {
       await withTimeout(travelMvpApiClient.getHealth(), 'backend_health_timeout')
@@ -93,26 +108,31 @@ export function useAppPageController() {
       withTimeout(travelMvpApiClient.getCurrentManagerSession(), 'manager_session_timeout'),
     ])
 
+    let didResolvePrincipalState = true
+
     if (currentUserSessionResult.status === 'fulfilled') {
       setCurrentUserSession(currentUserSessionResult.value.user)
-    } else if (isUnauthorizedApiError(currentUserSessionResult.reason)) {
+    } else if (shouldClearPrincipalStateOnError(currentUserSessionResult.reason)) {
       setCurrentUserSession(null)
     } else {
-      setCurrentUserSession(null)
+      didResolvePrincipalState = false
     }
 
     if (currentManagerSessionResult.status === 'fulfilled') {
       setCurrentManagerSession(currentManagerSessionResult.value)
-    } else if (isUnauthorizedApiError(currentManagerSessionResult.reason)) {
+    } else if (shouldClearPrincipalStateOnError(currentManagerSessionResult.reason)) {
       setCurrentManagerSession(null)
     } else {
-      setCurrentManagerSession(null)
+      didResolvePrincipalState = false
     }
 
-    setUserStateResolved(true)
-    setManagerStateResolved(true)
-    return true
-  }, [withTimeout])
+    if (didResolvePrincipalState) {
+      setUserStateResolved(true)
+      setManagerStateResolved(true)
+    }
+
+    return didResolvePrincipalState
+  }, [shouldClearPrincipalStateOnError, withTimeout])
 
   useEffect(() => {
     let isDisposed = false

@@ -97,6 +97,8 @@ export type HotelsPageController = {
   selectedTravelerIds: string[]
   isBusy: boolean
   isGuestMode: boolean
+  isTourGroupTargetMode: boolean
+  targetHotelResponses: HotelPlannerResponse[]
   hotelResponses: HotelPlannerResponse[]
   hasSearchedHotels: boolean
   searchLocation: string

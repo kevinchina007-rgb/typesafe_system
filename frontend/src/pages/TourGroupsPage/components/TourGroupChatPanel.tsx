@@ -52,7 +52,6 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
     onLoadChatSettings,
     onUpdateChatSettings,
     onLoadConversations,
-    onSearchConversations,
     onSearchMessages,
     onGetOrCreateDirectConversation,
     onLoadMessages,
@@ -78,9 +77,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
   const [editingDraft, setEditingDraft] = useState('')
   const [attachments, setAttachments] = useState<TourGroupUploadedAttachmentResponse[]>([])
   const [directTargetUserId, setDirectTargetUserId] = useState('')
-  const [conversationQuery, setConversationQuery] = useState('')
   const [messageQuery, setMessageQuery] = useState('')
-  const [conversationSearchResults, setConversationSearchResults] = useState<TourGroupConversationSummaryResponse[]>([])
   const [messageSearchResults, setMessageSearchResults] = useState<TourGroupMessageSearchResultResponse[]>([])
   const [targetMessageId, setTargetMessageId] = useState<string | null>(null)
 
@@ -88,6 +85,9 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
   const isMember = memberships.some(membership => membership.userId === signedInUser?.userId && membership.status === 'Active')
   const activeConversation =
     conversationList?.conversations.find(conversation => conversation.conversationId === activeConversationId) ?? null
+  const groupChatConversation =
+    conversationList?.conversations.find(conversation => conversation.conversationType === 'GroupPublic') ?? null
+  const hasConversationSelected = activeConversation !== null
 
   const memberDisplayNameMap = useMemo(() => {
     const entries = memberships.map(membership => [membership.userId, membership.userDisplayName ?? membership.userId] as const)
@@ -104,6 +104,15 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
     return memberDisplayNameMap.get(userId) ?? userId
   }
 
+  function getDefaultDirectTargetUserId() {
+    const currentUserId = signedInUser?.userId
+    if (!currentUserId) return ''
+    if (currentUserId !== organizerUserId && selectableDirectTargets.some(target => target.userId === organizerUserId)) {
+      return organizerUserId
+    }
+    return selectableDirectTargets.find(target => target.userId !== currentUserId)?.userId ?? ''
+  }
+
   function localizeConversationTitle(conversationTitle: string, conversationType?: string) {
     if (conversationType === 'GroupPublic' || conversationTitle === 'Group chat') {
       return translate('tourGroups.groupChat')
@@ -112,6 +121,12 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
       return translate('tourGroups.directMessages')
     }
     return conversationTitle
+  }
+
+  function getDirectConversationIdentityLabel(conversation: TourGroupConversationSummaryResponse) {
+    const roleLabel = conversation.counterpartUserId === organizerUserId ? translate('tourGroups.organizer') : translate('tourGroups.member')
+    const displayName = conversation.counterpartDisplayName?.trim() || conversation.counterpartUserId || translate('tourGroups.directMessages')
+    return `${roleLabel} - ${displayName}`
   }
 
   const activeConversationParticipantsSummary =
@@ -132,6 +147,22 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
       return chatSettings?.allowMemberDirectChat ?? false
     })
   }, [chatSettings?.allowMemberDirectChat, memberships, organizerUserId, signedInUser])
+
+  useEffect(() => {
+    setChatSettings(null)
+    setConversationList(null)
+    setActiveConversationId(null)
+    setMessages([])
+    setDraft('')
+    setReplyTarget(null)
+    setEditingMessageId(null)
+    setEditingDraft('')
+    setAttachments([])
+    setDirectTargetUserId('')
+    setMessageQuery('')
+    setMessageSearchResults([])
+    setTargetMessageId(null)
+  }, [groupId])
 
   useEffect(() => {
     if (!signedInUser || !isMember) return
@@ -174,7 +205,7 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
     setChatSettings(settings)
     setConversationList(conversations)
     setActiveConversationId(current => current ?? conversations.groupChatConversationId ?? conversations.conversations[0]?.conversationId ?? null)
-    setDirectTargetUserId(current => current || selectableDirectTargets[0]?.userId || '')
+    setDirectTargetUserId(current => current || getDefaultDirectTargetUserId())
   }
 
   async function openConversation(conversationId: string) {
@@ -247,21 +278,34 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
 
       <div className="grid gap-4 xl:grid-cols-[18rem_1fr]">
         <aside className="grid gap-4 border border-slate-200 bg-white p-4">
+          <div className="grid gap-2">
+            <label>{translate('tourGroups.groupChat')}</label>
+            <button
+              className={groupChatConversation?.conversationId === activeConversationId
+                ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55 border-black bg-black text-white'
+                : 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55'}
+              type="button"
+              disabled={isBusy || !groupChatConversation}
+              onClick={() => {
+                if (!groupChatConversation) return
+                setActiveConversationId(groupChatConversation.conversationId)
+              }}
+            >
+              {translate('tourGroups.groupChat')}
+            </button>
+          </div>
+
           <div className="grid gap-4">
-            <label>{translate('tourGroups.searchConversations')}</label>
-            <div className="grid gap-4 md:grid-cols-2">
-              <input value={conversationQuery} onChange={event => setConversationQuery(event.target.value)} />
-              <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-                type="button"
-                disabled={isBusy || !conversationQuery.trim()}
-                onClick={async () => setConversationSearchResults(await onSearchConversations(groupId, conversationQuery))}
-              >
-                {translate('blog.confirmSearch')}
-              </button>
-            </div>
             <label>{translate('tourGroups.searchMessages')}</label>
             <div className="grid gap-4 md:grid-cols-2">
-              <input value={messageQuery} onChange={event => setMessageQuery(event.target.value)} />
+              <input
+                type="search"
+                autoComplete="off"
+                spellCheck={false}
+                placeholder={translate('tourGroups.searchMessages')}
+                value={messageQuery}
+                onChange={event => setMessageQuery(event.target.value)}
+              />
               <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                 type="button"
                 disabled={isBusy || !messageQuery.trim()}
@@ -287,56 +331,41 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
               disabled={isBusy || !directTargetUserId}
               onClick={async () => {
                 if (!directTargetUserId) return
-                const conversation = await onGetOrCreateDirectConversation(groupId, { targetUserId: directTargetUserId })
-                setConversationList(current =>
-                  current
-                    ? {
-                        ...current,
-                        conversations: [conversation, ...current.conversations.filter(item => item.conversationId !== conversation.conversationId)],
-                      }
-                    : { conversations: [conversation], groupChatConversationId: null },
-                )
-                setActiveConversationId(conversation.conversationId)
+                try {
+                  const conversation = await onGetOrCreateDirectConversation(groupId, { targetUserId: directTargetUserId })
+                  setMessageSearchResults([])
+                  setConversationList(current =>
+                    current
+                      ? {
+                          ...current,
+                          conversations: [conversation, ...current.conversations.filter(item => item.conversationId !== conversation.conversationId)],
+                        }
+                      : { conversations: [conversation], groupChatConversationId: null },
+                  )
+                  setActiveConversationId(conversation.conversationId)
+                } catch {
+                  setDirectTargetUserId(getDefaultDirectTargetUserId())
+                  setActiveConversationId(groupChatConversation?.conversationId ?? null)
+                }
               }}
             >
               {translate('tourGroups.openConversation')}
             </button>
           </div>
 
-          {conversationSearchResults.length > 0 ? (
-            <div className="grid gap-2">
-              {conversationSearchResults.map(conversation => (
-                <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" key={conversation.conversationId} type="button" onClick={() => setActiveConversationId(conversation.conversationId)}>
-                  <strong>{localizeConversationTitle(conversation.conversationTitle, conversation.conversationType)}</strong>
-                  <span>{conversation.lastMessagePreview ?? translate('tourGroups.noMessagesYet')}</span>
-                </button>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="grid gap-2">
-            {conversationList?.conversations.map(conversation => (
-              <button
-                key={conversation.conversationId}
-                type="button"
-                className={conversation.conversationId === activeConversationId ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
-                onClick={() => setActiveConversationId(conversation.conversationId)}
-              >
-                <strong>{localizeConversationTitle(conversation.conversationTitle, conversation.conversationType)}</strong>
-                <span>{conversation.lastMessagePreview ?? translate('tourGroups.noMessagesYet')}</span>
-                {conversation.unreadCount > 0 ? <em>{conversation.unreadCount}</em> : null}
-              </button>
-            )) ?? null}
-          </div>
         </aside>
 
         <div className="grid gap-4">
-          {activeConversation ? (
+          {hasConversationSelected ? (
             <>
               <div className="text-lg font-bold text-slate-950">
                 <div>
                   <h4>{localizeConversationTitle(activeConversation.conversationTitle, activeConversation.conversationType)}</h4>
-                  <p>{activeConversationParticipantsSummary}</p>
+                  <p>
+                    {activeConversation.conversationType === 'Direct'
+                      ? getDirectConversationIdentityLabel(activeConversation)
+                      : activeConversationParticipantsSummary}
+                  </p>
                 </div>
                 {activeConversation.conversationType === 'Direct' ? (
                   <div className="flex flex-wrap items-center gap-3">
@@ -506,7 +535,18 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
               )}
             </>
           ) : (
-            <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.chooseConversationHint')}</p>
+            <div className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+              <p className="text-sm leading-6 text-slate-500">{translate('tourGroups.chooseConversationHint')}</p>
+              {groupChatConversation ? (
+                <button
+                  type="button"
+                  className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
+                  onClick={() => setActiveConversationId(groupChatConversation.conversationId)}
+                >
+                  {translate('tourGroups.groupChat')}
+                </button>
+              ) : null}
+            </div>
           )}
         </div>
       </div>

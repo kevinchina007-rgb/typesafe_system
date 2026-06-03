@@ -48,6 +48,7 @@ export function FlightResultsSection({
   onMultiCitySegmentChange,
   onRequireLateBookingReview,
   getLateBookingNotice,
+  initialSelectedCabin = 'all',
 }: FlightResultsSectionProps) {
   const [activeLeg, setActiveLeg] = useState<RoundTripLeg>('outbound')
   const [activeMultiCitySegmentId, setActiveMultiCitySegmentId] = useState<string | null>(null)
@@ -119,6 +120,7 @@ export function FlightResultsSection({
     theme: isRoundTrip ? activeLeg : isMultiCity ? 'outbound' : 'single',
     onSearchFlights,
     onLoadDailyLowestPrices,
+    initialSelectedCabin,
   })
 
   function handleDateSelect(date: string) {

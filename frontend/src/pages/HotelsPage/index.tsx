@@ -16,29 +16,41 @@ import {
 export function HotelsPage(props: HotelsPageProps) {
   const controller = useHotelsPageController(props)
   const { currentLanguage, translate } = props
+  const displayHotelResponses =
+    controller.isTourGroupTargetMode && controller.targetHotelResponses.length > 0
+      ? controller.targetHotelResponses
+      : controller.hotelResponses
+  const displayHasSearchedHotels = controller.isTourGroupTargetMode ? displayHotelResponses.length > 0 : controller.hasSearchedHotels
 
   return (
     <>
       <section className="grid gap-5 border-y border-sky-100 bg-gradient-to-b from-slate-50 via-white to-sky-50 p-6 text-slate-950 shadow-sm shadow-sky-100/40">
         <HotelPageHero title={translate('hotels.title')} description={translate('hotels.description')} />
 
-        <HotelSearchCard
-          hotDestinations={hotelHotDestinations}
-          isBusy={controller.isBusy}
-          searchCheckInDate={controller.searchCheckInDate}
-          searchCheckOutDate={controller.searchCheckOutDate}
-          searchLocation={controller.searchLocation}
-          translate={translate}
-          onSearchLocationChange={controller.setSearchLocation}
-          onSearchCheckInDateChange={controller.setSearchCheckInDate}
-          onSearchCheckOutDateChange={controller.setSearchCheckOutDate}
-          onSelectDestination={controller.setSearchLocation}
-          onSearch={() => {
-            void controller.executeHotelSearch(controller.searchLocation, controller.searchCheckInDate, controller.searchCheckOutDate)
-          }}
-        />
+        {!controller.isTourGroupTargetMode ? (
+          <HotelSearchCard
+            hotDestinations={hotelHotDestinations}
+            isBusy={controller.isBusy}
+            searchCheckInDate={controller.searchCheckInDate}
+            searchCheckOutDate={controller.searchCheckOutDate}
+            searchLocation={controller.searchLocation}
+            translate={translate}
+            onSearchLocationChange={controller.setSearchLocation}
+            onSearchCheckInDateChange={controller.setSearchCheckInDate}
+            onSearchCheckOutDateChange={controller.setSearchCheckOutDate}
+            onSelectDestination={controller.setSearchLocation}
+            onSearch={() => {
+              void controller.executeHotelSearch(controller.searchLocation, controller.searchCheckInDate, controller.searchCheckOutDate)
+            }}
+          />
+        ) : (
+          <section className="grid gap-2 border border-sky-100 bg-sky-50 px-6 py-4 text-slate-950">
+            <p className="text-sm font-bold text-sky-700">团内定向预订</p>
+            <p className="text-base text-slate-700">已定位到对应酒店房型，直接在下方完成预订。</p>
+          </section>
+        )}
 
-        {controller.hasSearchedHotels ? (
+        {displayHasSearchedHotels ? (
           <TravelerSelectionPanel
             title="选择出行人"
             hint="这里勾选的出行人会直接带到支付页"
@@ -52,14 +64,16 @@ export function HotelsPage(props: HotelsPageProps) {
 
         <HotelSearchNotice ref={controller.noticeSectionRef} notice={controller.searchNotice} />
 
-        <HotelAdvertisingSection
-          featuredAdvertisement={controller.featuredAdvertisement}
-          selectedAdvertisement={controller.selectedAdvertisement}
-          translate={translate}
-          onOpenAdvertisement={controller.openAdvertisement}
-        />
+        {!controller.isTourGroupTargetMode ? (
+          <HotelAdvertisingSection
+            featuredAdvertisement={controller.featuredAdvertisement}
+            selectedAdvertisement={controller.selectedAdvertisement}
+            translate={translate}
+            onOpenAdvertisement={controller.openAdvertisement}
+          />
+        ) : null}
 
-        {controller.hasSearchedHotels ? (
+        {displayHasSearchedHotels ? (
           <div ref={controller.resultsSectionRef} className="grid gap-4">
             <HotelDatePriceStrip
               dateWindowStart={controller.dateWindowStart}
@@ -84,7 +98,7 @@ export function HotelsPage(props: HotelsPageProps) {
 
             <HotelResultsSection
               currentLanguage={currentLanguage}
-              hotelResponses={controller.hotelResponses}
+              hotelResponses={displayHotelResponses}
               isBusy={controller.isBusy}
               isGuestMode={controller.isGuestMode}
               defaultRoomCount={controller.roomCount}
@@ -102,7 +116,7 @@ export function HotelsPage(props: HotelsPageProps) {
           </div>
         ) : null}
 
-        {!controller.hasSearchedHotels && controller.isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('hotels.guest')}</p> : null}
+        {!displayHasSearchedHotels && controller.isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('hotels.guest')}</p> : null}
       </section>
 
       <AuthRequiredDialog

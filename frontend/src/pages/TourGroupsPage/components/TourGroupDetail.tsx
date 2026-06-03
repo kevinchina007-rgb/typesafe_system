@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import type { AppLanguage, AppViewKey, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TourGroupDetailsResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AppViewKey, GroupPlanItemResponse, TourGroupDetailsResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { localizeTourGroupStatus } from '@/lib/presenters/view-models'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import { TourGroupMemberWorkspace } from '@/pages/TourGroupsPage/components/TourGroupMemberWorkspace'
@@ -18,43 +18,12 @@ type TourGroupDetailProps = {
   onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
   onNavigate: (viewKey: AppViewKey) => void
-  onCreatePlanItem: (payload: {
-    itemType: string
-    title: string
-    description: string
-    scheduledAt: string
-    endsAt?: string | null
-    sequenceNo: number
-  }) => Promise<GroupPlanItemResponse | null>
   activePlanItem: GroupPlanItemResponse | null
   onSelectPlanItem: (planItem: GroupPlanItemResponse) => void
-  onCreateOption: (
-    planItemId: string,
-    payload: {
-      resourceType: string
-      resourceId: string
-      resourceVariantCode?: string | null
-      resourceContext?: string | null
-      label: string
-      description: string
-      defaultQuantity: number
-    },
-  ) => Promise<void>
   onOpenChoose: (planItem: GroupPlanItemResponse) => void
-  onSubmitSelection: (selectionId: string) => Promise<void>
-  onConfirmSelection: (selectionId: string, note: string) => Promise<void>
-  onRejectSelection: (selectionId: string, note: string) => Promise<void>
-  onBatchConfirmSelections: (selectionIds: string[]) => Promise<void>
-  onBatchRejectSelections: (selectionIds: string[], note: string) => Promise<void>
   onKickMember: (targetUserId: string) => Promise<void>
   onBlacklistMember: (targetUserId: string) => Promise<void>
   onTransferOrganizer: (targetUserId: string) => Promise<void>
-  onBatchPaySelections: (selectionIds: string[]) => Promise<void>
-  onOpenBookings: () => void
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
-  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
-  onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onLoadChatSettings: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupChatSettingsResponse>
   onUpdateChatSettings: (groupId: string, payload: { allowMemberDirectChat: boolean }) => Promise<import('@/lib/mvp-types/index').TourGroupChatSettingsResponse>
   onLoadConversations: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupConversationListResponse>
@@ -91,24 +60,11 @@ export function TourGroupDetail({
   onLeaveGroup,
   onAddMembershipTraveler,
   onNavigate,
-  onCreatePlanItem,
   onSelectPlanItem,
-  onCreateOption,
   onOpenChoose,
-  onSubmitSelection,
-  onConfirmSelection,
-  onRejectSelection,
-  onBatchConfirmSelections,
-  onBatchRejectSelections,
   onKickMember,
   onBlacklistMember,
   onTransferOrganizer,
-  onBatchPaySelections,
-  onOpenBookings,
-  onSearchFlights,
-  onSearchHotels,
-  onSearchTrains,
-  onSearchAttractions,
   onLoadChatSettings,
   onUpdateChatSettings,
   onLoadConversations,
@@ -134,12 +90,6 @@ export function TourGroupDetail({
       membership => membership.userId === signedInUser?.userId && membership.status === 'Active',
     ) ?? null
 
-  const mySelections = activeMembership
-    ? details.selections.filter(selection => selection.membershipId === activeMembership.membershipId)
-    : []
-  const linkedSelectionIds = details.selectionOrderLinks.map(link => link.selectionId)
-  const pendingApprovals = details.selections.filter(selection => selection.status === 'Submitted')
-
   useEffect(() => {
     if (!isOrganizer) {
       setWorkspaceMode('member')
@@ -148,85 +98,104 @@ export function TourGroupDetail({
 
   return (
     <section className="grid gap-4">
-      <div className="text-lg font-bold text-slate-950">
-        <div>
-          <p className="text-sm font-bold text-slate-500">{translate('tourGroups.detailEyebrow')}</p>
-          <h2>{details.group.title}</h2>
-          <p>{details.group.description}</p>
-          {details.group.coverImageUrl ? <BackendAssetImage className="mt-3 h-56 w-full object-cover" assetUrl={details.group.coverImageUrl} alt={details.group.title} /> : null}
-          {details.group.tags.length > 0 ? <p className="mt-2 text-sm font-medium text-slate-500">{details.group.tags.join(' / ')}</p> : null}
+      <div className="relative overflow-hidden border border-slate-200 text-slate-950 shadow-sm shadow-slate-200/50">
+        <div className="absolute inset-0">
+          {details.group.coverImageUrl ? (
+            <BackendAssetImage
+              className="absolute inset-0 h-full w-full object-cover"
+              assetUrl={details.group.coverImageUrl}
+              alt={details.group.title}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-slate-200" />
+          )}
+          <div className="absolute inset-0 bg-white/18" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/18 to-white/50" />
         </div>
-        <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">{localizeTourGroupStatus(details.group.status, currentLanguage)}</span>
-      </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.destination')}</span>
-          <strong>{details.group.destination}</strong>
-        </div>
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.dateRange')}</span>
-          <strong>{`${details.group.startDate} - ${details.group.endDate}`}</strong>
-        </div>
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.capacity')}</span>
-          <strong>{`${details.group.usedCapacity} / ${details.group.capacity}`}</strong>
-        </div>
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.organizer')}</span>
-          <strong>{details.group.organizerUserId}</strong>
-        </div>
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.memberCount')}</span>
-          <strong>{details.group.memberCount}</strong>
-        </div>
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.pendingApprovals')}</span>
-          <strong>{details.group.pendingSelectionCount}</strong>
-        </div>
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.confirmedSelectionCount')}</span>
-          <strong>{details.group.confirmedSelectionCount}</strong>
-        </div>
-        <div>
-          <span className="text-sm font-medium text-slate-500">{translate('tourGroups.convertedOrderCount')}</span>
-          <strong>{details.group.convertedOrderCount}</strong>
+        <div className="relative grid gap-6 p-6 md:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div className="max-w-4xl rounded-2xl bg-white/78 p-5 backdrop-blur-sm">
+              <p className="text-sm font-bold text-slate-500">{translate('tourGroups.detailEyebrow')}</p>
+              <h2 className="text-3xl font-bold tracking-tight text-slate-950">{details.group.title}</h2>
+              <p className="mt-2 text-base leading-7 text-slate-700">{details.group.description}</p>
+              {details.group.tags.length > 0 ? <p className="mt-3 text-sm font-medium text-slate-600">{details.group.tags.join(' / ')}</p> : null}
+            </div>
+            <span className="inline-flex min-h-9 items-center justify-center border border-white/60 bg-white/80 px-3 py-1 text-sm font-medium text-slate-950 shadow-sm backdrop-blur-sm">
+              {localizeTourGroupStatus(details.group.status, currentLanguage)}
+            </span>
+          </div>
+
+          <div className="grid gap-3 rounded-2xl bg-white/78 p-5 backdrop-blur-sm md:grid-cols-2">
+            <div>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.destination')}</span>
+              <strong>{details.group.destination}</strong>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.dateRange')}</span>
+              <strong>{`${details.group.startDate} - ${details.group.endDate}`}</strong>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.capacity')}</span>
+              <strong>{`${details.group.usedCapacity} / ${details.group.capacity}`}</strong>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.organizer')}</span>
+              <strong>{details.group.organizerUserId}</strong>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.memberCount')}</span>
+              <strong>{details.group.memberCount}</strong>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.pendingApprovals')}</span>
+              <strong>{details.group.pendingSelectionCount}</strong>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.confirmedSelectionCount')}</span>
+              <strong>{details.group.confirmedSelectionCount}</strong>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.convertedOrderCount')}</span>
+              <strong>{details.group.convertedOrderCount}</strong>
+            </div>
+          </div>
+
+          {isOrganizer ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                className={workspaceMode === 'manage' ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
+                disabled={isBusy}
+                onClick={() => setWorkspaceMode('manage')}
+              >
+                {translate('tourGroups.manageGroup')}
+              </button>
+              <button
+                type="button"
+                className={workspaceMode === 'member' ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
+                disabled={isBusy}
+                onClick={() => setWorkspaceMode('member')}
+              >
+                {translate('tourGroups.enterGroup')}
+              </button>
+              <button
+                type="button"
+                className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 shadow-none transition hover:border-sky-500 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-55"
+                disabled={isBusy}
+                onClick={() => {
+                  const nextUrl = new URL(window.location.href)
+                  nextUrl.searchParams.set('groupId', details.group.groupId)
+                  window.history.replaceState(window.history.state, '', nextUrl)
+                  onNavigate('tourGroupPlanBuilder')
+                }}
+              >
+                {translate('nav.tourGroupPlanBuilder')}
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
-
-      {isOrganizer ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            className={workspaceMode === 'manage' ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
-            disabled={isBusy}
-            onClick={() => setWorkspaceMode('manage')}
-          >
-            {translate('tourGroups.manageGroup')}
-          </button>
-          <button
-            type="button"
-            className={workspaceMode === 'member' ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
-            disabled={isBusy}
-            onClick={() => setWorkspaceMode('member')}
-          >
-            {translate('tourGroups.enterGroup')}
-          </button>
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 shadow-none transition hover:border-sky-500 hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-55"
-            disabled={isBusy}
-            onClick={() => {
-              const nextUrl = new URL(window.location.href)
-              nextUrl.searchParams.set('groupId', details.group.groupId)
-              window.history.replaceState(window.history.state, '', nextUrl)
-              onNavigate('tourGroupPlanBuilder')
-            }}
-          >
-            {translate('nav.tourGroupPlanBuilder')}
-          </button>
-        </div>
-      ) : null}
 
       {isOrganizer && workspaceMode === 'manage' ? (
         <TourGroupOrganizerWorkspace
@@ -235,25 +204,12 @@ export function TourGroupDetail({
           activePlanItem={activePlanItem}
           planItems={details.planItems}
           planOptions={details.planOptions}
-          selectionOrderProjections={details.selectionOrderProjections}
-          pendingApprovals={pendingApprovals}
-          activeMembership={activeMembership}
           memberships={details.memberships}
           blacklists={details.blacklists}
           organizerUserId={details.group.organizerUserId}
           signedInUser={signedInUser}
           translate={translate}
-          onCreatePlanItem={onCreatePlanItem}
           onSelectPlanItem={onSelectPlanItem}
-          onSearchFlights={onSearchFlights}
-          onSearchHotels={onSearchHotels}
-          onSearchTrains={onSearchTrains}
-          onSearchAttractions={onSearchAttractions}
-          onCreateOption={onCreateOption}
-          onConfirmSelection={onConfirmSelection}
-          onRejectSelection={onRejectSelection}
-          onBatchConfirmSelections={onBatchConfirmSelections}
-          onBatchRejectSelections={onBatchRejectSelections}
           onKickMember={onKickMember}
           onBlacklistMember={onBlacklistMember}
           onTransferOrganizer={onTransferOrganizer}
@@ -265,18 +221,12 @@ export function TourGroupDetail({
           signedInUser={signedInUser}
           travelers={travelers}
           activeMembership={activeMembership}
-          mySelections={mySelections}
-          linkedSelectionIds={linkedSelectionIds}
-          selectionOrderProjections={details.selectionOrderProjections}
           isBusy={isBusy}
           translate={translate}
           onJoinGroup={onJoinGroup}
           onLeaveGroup={onLeaveGroup}
           onAddMembershipTraveler={onAddMembershipTraveler}
           onOpenChoose={onOpenChoose}
-          onSubmitSelection={onSubmitSelection}
-          onBatchPaySelections={onBatchPaySelections}
-          onOpenBookings={onOpenBookings}
         />
       )}
 

@@ -4,7 +4,7 @@ import cats.effect.IO
 import com.typesafe.travel.persistence.PlainSqlSupport
 import com.typesafe.travel.shared.kernel.*
 
-import java.sql.{Connection, ResultSet, Timestamp}
+import java.sql.{Connection, ResultSet, Timestamp, Types}
 import java.time.Instant
 import java.security.MessageDigest
 import java.util.HexFormat
@@ -747,10 +747,10 @@ object TourGroupChatPlainSql:
       statement.setTimestamp(6, Timestamp.from(now))
       statement.setString(7, messageType)
       statement.setString(8, request.replyToMessageId.orNull)
-      statement.setString(9, null)
+      statement.setNull(9, Types.VARCHAR)
       statement.setTimestamp(10, Timestamp.from(now))
-      statement.setTimestamp(11, null)
-      statement.setTimestamp(12, null)
+      statement.setNull(11, Types.TIMESTAMP)
+      statement.setNull(12, Types.TIMESTAMP)
       statement.executeUpdate()
     }
     request.attachments.zipWithIndex.foreach { case (attachment, index) =>
@@ -840,22 +840,31 @@ object TourGroupChatPlainSql:
     }
 
   private def countUnreadMessages(connection: Connection, conversationId: String, lastReadAt: Option[Instant], currentUserId: String): Int =
-    PlainSqlSupport.withStatement(
-      connection,
-      """
-        select count(*) as unread_count
-        from tour_group_messages
-        where conversation_id = ?
-          and sender_user_id <> ?
-          and status <> ?
-          and (? is null or created_at > ?)
-      """
-    ) { statement =>
+    val query =
+      lastReadAt match
+        case Some(_) =>
+          """
+            select count(*) as unread_count
+            from tour_group_messages
+            where conversation_id = ?
+              and sender_user_id <> ?
+              and status <> ?
+              and created_at > ?
+          """
+        case None =>
+          """
+            select count(*) as unread_count
+            from tour_group_messages
+            where conversation_id = ?
+              and sender_user_id <> ?
+              and status <> ?
+          """
+
+    PlainSqlSupport.withStatement(connection, query) { statement =>
       statement.setString(1, conversationId)
       statement.setString(2, currentUserId)
       statement.setString(3, TourGroupMessageStatus.Deleted.toString)
-      statement.setTimestamp(4, lastReadAt.map(Timestamp.from).orNull)
-      statement.setTimestamp(5, lastReadAt.map(Timestamp.from).orNull)
+      lastReadAt.foreach(readAt => statement.setTimestamp(4, Timestamp.from(readAt)))
       val resultSet = statement.executeQuery()
       try if resultSet.next() then resultSet.getInt("unread_count") else 0
       finally resultSet.close()

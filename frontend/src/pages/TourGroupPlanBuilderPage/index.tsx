@@ -21,7 +21,8 @@ type TourGroupPlanBuilderPageProps = {
 
 function getGroupIdFromUrl(): string | null {
   if (typeof window === 'undefined') return null
-  return new URLSearchParams(window.location.search).get('groupId')
+  const groupId = new URLSearchParams(window.location.search).get('groupId')
+  return groupId && groupId.trim().length > 0 ? groupId : null
 }
 
 export function TourGroupPlanBuilderPage({
@@ -63,6 +64,20 @@ export function TourGroupPlanBuilderPage({
   const isOrganizer = useMemo(
     () => signedInUser !== null && details?.group.organizerUserId === signedInUser.userId,
     [details?.group.organizerUserId, signedInUser],
+  )
+
+  function goBackToTourGroup() {
+    onNavigate('tourGroups')
+  }
+
+  const backButton = (
+    <button
+      type="button"
+      className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
+      onClick={goBackToTourGroup}
+    >
+      回到旅游团
+    </button>
   )
 
   async function onCreatePlanItem(payload: {
@@ -144,13 +159,7 @@ export function TourGroupPlanBuilderPage({
         <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
           <h1 className="text-2xl font-bold">{translate('nav.tourGroupPlanBuilder')}</h1>
           <p className="text-sm leading-6 text-slate-500">未找到旅游团编号，请从旅游团详情页进入。</p>
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
-            onClick={() => onNavigate('tourGroups')}
-          >
-            返回旅游团
-          </button>
+          {backButton}
         </div>
       </section>
     )
@@ -162,13 +171,7 @@ export function TourGroupPlanBuilderPage({
         <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
           <h1 className="text-2xl font-bold">{translate('nav.tourGroupPlanBuilder')}</h1>
           <p className="text-sm leading-6 text-slate-500">行程项页面加载失败，请返回旅游团详情重新进入。</p>
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
-            onClick={() => onNavigate('tourGroups')}
-          >
-            返回旅游团
-          </button>
+          {backButton}
         </div>
       </section>
     )
@@ -180,6 +183,7 @@ export function TourGroupPlanBuilderPage({
         <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
           <h1 className="text-2xl font-bold">{translate('nav.tourGroupPlanBuilder')}</h1>
           <p className="text-sm leading-6 text-slate-500">正在加载旅游团信息...</p>
+          {backButton}
         </div>
       </section>
     )
@@ -191,13 +195,7 @@ export function TourGroupPlanBuilderPage({
         <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
           <h1 className="text-2xl font-bold">{translate('nav.tourGroupPlanBuilder')}</h1>
           <p className="text-sm leading-6 text-slate-500">只有团长可以添加行程项。</p>
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
-            onClick={() => onNavigate('tourGroups')}
-          >
-            返回旅游团
-          </button>
+          {backButton}
         </div>
       </section>
     )
@@ -214,13 +212,7 @@ export function TourGroupPlanBuilderPage({
               {details.group.destination} / {details.group.startDate} - {details.group.endDate}
             </p>
           </div>
-          <button
-            type="button"
-            className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
-            onClick={() => onNavigate('tourGroups')}
-          >
-            返回旅游团
-          </button>
+          {backButton}
         </div>
       </div>
 

@@ -25,31 +25,45 @@ export function AttractionsPage({
     onShowNotice,
   })
   const attractionAdvertisement = useMemo(() => controller.deliveryAdvertisements[0] ?? null, [controller.deliveryAdvertisements])
+  const displayAttractionResponses =
+    controller.isTourGroupTargetMode && controller.targetAttractionResponses.length > 0
+      ? controller.targetAttractionResponses
+      : controller.attractionResponses
+  const displayHasSearchedAttractions = controller.isTourGroupTargetMode
+    ? displayAttractionResponses.length > 0
+    : controller.hasSearchedAttractions
 
   return (
     <>
       <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
         <AttractionPageHero title={translate('attractions.title')} description={translate('attractions.description')} />
 
-        <AttractionSearchCard
-          hotAttractions={ATTRACTION_HOT_SPOTS}
-          insight={formatAttractionInsight(controller.attractionResponses, translate)}
-          isBusy={controller.isBusy}
-          keyword={controller.keyword}
-          recentSearches={ATTRACTION_RECENT_SEARCHES}
-          searchCity={controller.searchCity}
-          selectedQuickDatePreset={controller.selectedQuickDatePreset}
-          translate={translate}
-          useDateDraft={controller.useDateDraft}
-          onSearchCityChange={controller.setSearchCity}
-          onKeywordChange={controller.setKeyword}
-          onUseDateChange={controller.setUseDateDraft}
-          onSelectQuickDatePreset={controller.handleSelectQuickDatePreset}
-          onSelectHotAttraction={controller.handleSelectHotAttraction}
-          onSearch={controller.handleSearchAttractions}
-        />
+        {!controller.isTourGroupTargetMode ? (
+          <AttractionSearchCard
+            hotAttractions={ATTRACTION_HOT_SPOTS}
+            insight={formatAttractionInsight(controller.attractionResponses, translate)}
+            isBusy={controller.isBusy}
+            keyword={controller.keyword}
+            recentSearches={ATTRACTION_RECENT_SEARCHES}
+            searchCity={controller.searchCity}
+            selectedQuickDatePreset={controller.selectedQuickDatePreset}
+            translate={translate}
+            useDateDraft={controller.useDateDraft}
+            onSearchCityChange={controller.setSearchCity}
+            onKeywordChange={controller.setKeyword}
+            onUseDateChange={controller.setUseDateDraft}
+            onSelectQuickDatePreset={controller.handleSelectQuickDatePreset}
+            onSelectHotAttraction={controller.handleSelectHotAttraction}
+            onSearch={controller.handleSearchAttractions}
+          />
+        ) : (
+          <section className="grid gap-2 border border-sky-100 bg-sky-50 px-6 py-4 text-slate-950">
+            <p className="text-sm font-bold text-sky-700">团内定向预订</p>
+            <p className="text-base text-slate-700">已定位到对应景点票，直接在下方完成预订。</p>
+          </section>
+        )}
 
-        {controller.hasSearchedAttractions ? (
+        {displayHasSearchedAttractions ? (
           <TravelerSelectionPanel
             title="选择出行人"
             hint="这里勾选的出行人会直接带到支付页"
@@ -61,7 +75,7 @@ export function AttractionsPage({
           />
         ) : null}
 
-        {controller.hasSearchedAttractions ? (
+        {displayHasSearchedAttractions ? (
           <DateWindowStrip
             dateWindowStart={controller.dateWindowStart}
             selectedDate={controller.useDateDraft}
@@ -72,7 +86,7 @@ export function AttractionsPage({
           />
         ) : null}
 
-        {attractionAdvertisement ? (
+        {!controller.isTourGroupTargetMode && attractionAdvertisement ? (
           <section className="grid gap-4 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
             <p className="text-sm font-bold text-slate-500">{translate('advertising.deliveryEyebrow')}</p>
             <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.deliveryTitle')}</h3>
@@ -84,23 +98,26 @@ export function AttractionsPage({
           </section>
         ) : null}
 
-        <AttractionFilterBar
-          hasSearchedAttractions={controller.hasSearchedAttractions}
-          sortPreference={controller.sortPreference}
-          translate={translate}
-          onSortPreferenceChange={controller.setSortPreference}
-        />
+        {!controller.isTourGroupTargetMode ? (
+          <AttractionFilterBar
+            hasSearchedAttractions={displayHasSearchedAttractions}
+            sortPreference={controller.sortPreference}
+            translate={translate}
+            onSortPreferenceChange={controller.setSortPreference}
+          />
+        ) : null}
 
         {controller.isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('attractions.guest')}</p> : null}
 
-        {controller.hasSearchedAttractions ? (
+        {displayHasSearchedAttractions ? (
           <AttractionResultsSection
-            attractionResponses={controller.attractionResponses}
+            attractionResponses={displayAttractionResponses}
             currentLanguage={currentLanguage}
             isBusy={controller.isBusy}
             isGuestMode={controller.isGuestMode}
             travelers={controller.travelers}
             selectedTravelerIds={controller.selectedTravelerIds}
+            focusedSessionId={controller.focusedSessionId}
             translate={translate}
             useDateDraft={controller.useDateDraft}
             onToggleTravelerSelection={controller.toggleTravelerSelection}

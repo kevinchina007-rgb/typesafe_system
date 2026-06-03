@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 
-import type { AppLanguage, AppViewKey, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TourGroupDetailsResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AppViewKey, GroupPlanItemResponse, TourGroupDetailsResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { TourGroupDetail } from '@/pages/TourGroupsPage/components/TourGroupDetail'
 
 type TourGroupDetailOverlayProps = {
@@ -15,28 +15,8 @@ type TourGroupDetailOverlayProps = {
   onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
   onNavigate: (viewKey: AppViewKey) => void
-  onCreatePlanItem: (payload: {
-    itemType: string
-    title: string
-    description: string
-    scheduledAt: string
-    endsAt?: string | null
-    sequenceNo: number
-  }) => Promise<GroupPlanItemResponse | null>
   activePlanItem: GroupPlanItemResponse | null
   onSelectPlanItem: (planItem: GroupPlanItemResponse) => void
-  onCreateOption: (
-    planItemId: string,
-    payload: {
-      resourceType: string
-      resourceId: string
-      resourceVariantCode?: string | null
-      resourceContext?: string | null
-      label: string
-      description: string
-      defaultQuantity: number
-    },
-  ) => Promise<void>
   onOpenChoose: (planItem: GroupPlanItemResponse) => void
   onSubmitSelection: (selectionId: string) => Promise<void>
   onConfirmSelection: (selectionId: string, note: string) => Promise<void>
@@ -48,10 +28,6 @@ type TourGroupDetailOverlayProps = {
   onTransferOrganizer: (targetUserId: string) => Promise<void>
   onBatchPaySelections: (selectionIds: string[]) => Promise<void>
   onOpenBookings: () => void
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
-  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
-  onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onLoadChatSettings: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupChatSettingsResponse>
   onUpdateChatSettings: (groupId: string, payload: { allowMemberDirectChat: boolean }) => Promise<import('@/lib/mvp-types/index').TourGroupChatSettingsResponse>
   onLoadConversations: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupConversationListResponse>

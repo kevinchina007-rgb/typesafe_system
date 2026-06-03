@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 
 import { TourGroupsPageShell } from './components'
 import { useTourGroupsPageController } from './hooks'
-import { TOUR_GROUPS_PAGE_REGIONS, type TourGroupsPageProps } from './objects'
+import type { TourGroupsPageProps } from './objects'
 
 export function TourGroupsPage(props: TourGroupsPageProps) {
   const controller = useTourGroupsPageController(props)
@@ -55,14 +55,6 @@ export function TourGroupsPage(props: TourGroupsPageProps) {
           </button>
         </nav>
 
-        <div className="grid gap-3">
-          {TOUR_GROUPS_PAGE_REGIONS.map(region => (
-            <article key={region.key} className="grid gap-1 border border-slate-200 bg-slate-50 p-3">
-              <p className="text-sm font-semibold text-slate-900">{region.title}</p>
-              <p className="text-xs leading-5 text-slate-600">{region.description}</p>
-            </article>
-          ))}
-        </div>
       </aside>
 
       <section className="grid min-w-0 gap-4">

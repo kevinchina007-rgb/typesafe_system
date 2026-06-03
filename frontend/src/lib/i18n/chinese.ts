@@ -156,6 +156,7 @@ export const chineseTranslations: TranslationDictionary = {
   'tourGroups.leaveGroup': '退出旅游团',
   'tourGroups.manageGroup': '管理旅游团',
   'tourGroups.organizer': '团长',
+  'tourGroups.member': '成员',
   'tourGroups.guest': '游客',
   'tourGroups.memberCount': '成员数',
   'tourGroups.joinedAt': '加入时间',

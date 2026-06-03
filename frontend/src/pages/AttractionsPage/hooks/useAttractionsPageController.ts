@@ -4,11 +4,17 @@ import { useAdvertisingStore, useDeliverableAdvertisements } from '@/app/stores/
 import { addHotelDays } from '@/app/stores/models/hotel-booking-model'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
+import { consumeTourGroupBookingTarget } from '@/pages/shared/tour-group-booking/tourGroupBookingTarget'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import type { AttractionResponse } from '@/lib/mvp-types/index'
 import type { AttractionsPageController, AttractionsPageProps } from '../objects'
 import { mapAdvertisementAttractionSelection, loadAttractionReviews, loadAttractionReviewSummary, loadDetailedAttractions, splitAttractionHotSpotSelection } from '../functions'
 import { summarizeAttractionEligibilityFailure } from '@/app/stores/models/attraction-booking-model'
 import { useAttractionsSearchState } from './useAttractionsSearchState'
+
+function normalizeDateOnly(value: string) {
+  return value.trim().slice(0, 10)
+}
 
 export function useAttractionsPageController({
   currentLanguage,
@@ -21,10 +27,60 @@ export function useAttractionsPageController({
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [selectedTravelerIds, setSelectedTravelerIds] = useState<string[]>([])
+  const [focusedSessionId, setFocusedSessionId] = useState<string | null>(null)
+  const [isTourGroupTargetMode, setIsTourGroupTargetMode] = useState(false)
+  const [targetAttractionResponses, setTargetAttractionResponses] = useState<AttractionResponse[]>([])
   const searchState = useAttractionsSearchState()
   const [dateWindowStart, setDateWindowStart] = useState(() => addHotelDays(searchState.useDateDraft, -3))
   const deliveryAdvertisements = useDeliverableAdvertisements('attractionBooking')
   const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
+
+  useEffect(() => {
+    const target = consumeTourGroupBookingTarget('attractions')
+    if (!target) {
+      return
+    }
+
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const useDate = normalizeDateOnly(target.useDate)
+        const nextAttraction = await travelMvpApiClient.getAttraction(target.attractionId, {
+          useDate,
+        })
+        if (cancelled) {
+          return
+        }
+
+        setIsTourGroupTargetMode(true)
+        const { searchCity, keyword } = mapAdvertisementAttractionSelection(nextAttraction)
+        searchState.setSearchCity(searchCity)
+        searchState.setKeyword(keyword)
+        searchState.setUseDateDraft(useDate)
+        searchState.setHasSearchedAttractions(true)
+        const nextTargetAttractionResponses = [
+          {
+            ...nextAttraction,
+            ticketTypes: nextAttraction.ticketTypes.filter(ticketType => ticketType.ticketTypeId === target.ticketTypeId),
+          },
+        ]
+        setTargetAttractionResponses(nextTargetAttractionResponses)
+        searchState.setAttractionResponses(nextTargetAttractionResponses)
+        setFocusedSessionId(target.sessionId)
+        setDateWindowStart(addHotelDays(useDate, -3))
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } catch (error) {
+        if (!cancelled) {
+          onShowNotice('error', translate('error.friendly.default'), error instanceof Error ? error.message : translate('error.friendly.default'))
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [onShowNotice, searchState, translate])
 
   useEffect(() => {
     void loadDeliverableAdvertisements('attractionBooking')
@@ -67,8 +123,10 @@ export function useAttractionsPageController({
     currentLanguage,
     isBusy,
     isGuestMode: signedInUser === null,
+    isTourGroupTargetMode,
     travelers,
     selectedTravelerIds,
+    focusedSessionId,
     deliveryAdvertisements,
     attractionResponses: searchState.attractionResponses,
     hasSearchedAttractions: searchState.hasSearchedAttractions,
@@ -81,6 +139,7 @@ export function useAttractionsPageController({
     selectedQuickDatePreset: searchState.selectedQuickDatePreset,
     dateWindowStart,
     isAuthDialogOpen,
+    targetAttractionResponses,
     setAttractionResponses: searchState.setAttractionResponses,
     setHasSearchedAttractions: searchState.setHasSearchedAttractions,
     setSearchCity: searchState.setSearchCity,
@@ -98,7 +157,10 @@ export function useAttractionsPageController({
         useDate: searchState.useDateDraft,
         sortPreference: searchState.sortPreference,
       })
+      setIsTourGroupTargetMode(false)
+      setTargetAttractionResponses([])
       searchState.setHasSearchedAttractions(true)
+      setFocusedSessionId(null)
       searchState.setAttractionResponses(nextAttractions)
       setDateWindowStart(addHotelDays(searchState.useDateDraft, -3))
     },
@@ -116,12 +178,16 @@ export function useAttractionsPageController({
         useDate: date,
         sortPreference: searchState.sortPreference,
       })
+      setIsTourGroupTargetMode(false)
+      setTargetAttractionResponses([])
       searchState.setHasSearchedAttractions(true)
+      setFocusedSessionId(null)
       searchState.setAttractionResponses(nextAttractions)
       setDateWindowStart(addHotelDays(date, -3))
     },
     handleSelectHotAttraction: value => {
       const { city, keyword } = splitAttractionHotSpotSelection(value)
+      setIsTourGroupTargetMode(false)
       searchState.setSearchCity(city)
       searchState.setKeyword(keyword)
     },
@@ -130,9 +196,12 @@ export function useAttractionsPageController({
         useDate: searchState.useDateDraft,
       })
       const { searchCity, keyword } = mapAdvertisementAttractionSelection(nextAttraction)
+      setIsTourGroupTargetMode(false)
+      setTargetAttractionResponses([])
       searchState.setSearchCity(searchCity)
       searchState.setKeyword(keyword)
       searchState.setHasSearchedAttractions(true)
+      setFocusedSessionId(null)
       searchState.setAttractionResponses([nextAttraction])
       window.scrollTo({ top: 0, behavior: 'smooth' })
     },

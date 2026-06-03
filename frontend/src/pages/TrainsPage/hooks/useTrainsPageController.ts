@@ -4,9 +4,15 @@ import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { addHotelDays } from '@/app/stores/models/hotel-booking-model'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
+import { consumeTourGroupBookingTarget } from '@/pages/shared/tour-group-booking/tourGroupBookingTarget'
 import { formatTrainRecommendation, normalizeTrainSearchRequestStations, sortTrainResponses } from '../functions'
 import type { TrainBookRequest, TrainSortMode, TrainsPageController, TrainsPageProps } from '../objects'
 import { useTrainSearchState } from './useTrainSearchState'
+import type { TrainResponse } from '@/lib/mvp-types/index'
+
+function normalizeDateOnly(value: string) {
+  return value.trim().slice(0, 10)
+}
 
 export function useTrainsPageController({
   currentLanguage,
@@ -33,6 +39,50 @@ export function useTrainsPageController({
   const [trainSortMode, setTrainSortMode] = useState<TrainSortMode>('highSpeedPriority')
   const [dateWindowStart, setDateWindowStart] = useState(() => addHotelDays(searchDate, -3))
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  const [isTourGroupTargetMode, setIsTourGroupTargetMode] = useState(false)
+  const [targetTrainResponses, setTargetTrainResponses] = useState<TrainResponse[]>([])
+
+  useEffect(() => {
+    const target = consumeTourGroupBookingTarget('trains')
+    if (!target) {
+      return
+    }
+
+    setIsTourGroupTargetMode(true)
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const date = normalizeDateOnly(target.date)
+        const train = await travelMvpApiClient.getTrain(target.trainId)
+        if (cancelled) {
+          return
+        }
+
+        const nextTrainResponse = {
+          ...train,
+          seatInventories: train.seatInventories.filter(seatInventory => seatInventory.seatClass === target.seatClass || target.seatClass === null),
+        }
+
+        setSearchFromStation(target.fromStationCode)
+        setSearchToStation(target.toStationCode)
+        setSearchDate(date)
+        setHasSearchedTrains(true)
+        setTargetTrainResponses([nextTrainResponse])
+        setTrainResponses([nextTrainResponse])
+        setDateWindowStart(addHotelDays(date, -3))
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } catch (error) {
+        if (!cancelled) {
+          onShowNotice('error', translate('error.friendly.default'), error instanceof Error ? error.message : translate('error.friendly.default'))
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [onShowNotice, translate])
 
   const sortedTrainResponses = useMemo(
     () => sortTrainResponses(trainResponses, searchFromStation, searchToStation, trainSortMode),
@@ -50,6 +100,8 @@ export function useTrainsPageController({
 
   async function executeTrainSearch() {
     const normalizedStations = normalizeTrainSearchRequestStations(searchFromStation, searchToStation)
+    setIsTourGroupTargetMode(false)
+    setTargetTrainResponses([])
     const resolvedTrainResponses = (
       await travelMvpApiClient.listTrains({
         fromStation: normalizedStations.fromStation,
@@ -72,6 +124,8 @@ export function useTrainsPageController({
 
   async function handleDateSelect(date: string) {
     setSearchDate(date)
+    setIsTourGroupTargetMode(false)
+    setTargetTrainResponses([])
     const normalizedStations = normalizeTrainSearchRequestStations(searchFromStation, searchToStation)
     const resolvedTrainResponses = (
       await travelMvpApiClient.listTrains({
@@ -145,6 +199,8 @@ export function useTrainsPageController({
     selectedTravelerIds,
     isBusy,
     isGuestMode: signedInUser === null,
+    isTourGroupTargetMode,
+    targetTrainResponses,
     trainResponses: sortedTrainResponses,
     hasSearchedTrains,
     searchRecommendation,

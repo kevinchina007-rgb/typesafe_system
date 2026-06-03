@@ -12,12 +12,20 @@ import {
   getMembershipTravelerIds,
   getSelectionDialogOptions,
   getSelectionDialogTravelers,
-  getTourGroupBookingViewKeyForSelectionOption,
-  pickCreatedPlanItem,
+  getTourGroupOrderCategoryForSelectionOption,
   pickInitialActivePlanItem,
   scoreTourGroupSummaryForQuery,
   syncGroupSummary,
 } from '../functions'
+
+function getGroupIdFromUrl(): string | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  const groupId = new URLSearchParams(window.location.search).get('groupId')
+  return groupId && groupId.trim().length > 0 ? groupId : null
+}
 
 export function TourGroupsPanel({
   currentLanguage,
@@ -32,8 +40,6 @@ export function TourGroupsPanel({
   onJoinGroup,
   onLeaveGroup,
   onAddMembershipTraveler,
-  onCreatePlanItem,
-  onCreatePlanOption,
   onCreateSelection,
   onSubmitSelection,
   onConfirmSelection,
@@ -44,10 +50,6 @@ export function TourGroupsPanel({
   onBlacklistMember,
   onTransferOrganizer,
   onBatchPaySelections,
-  onSearchFlights,
-  onSearchHotels,
-  onSearchTrains,
-  onSearchAttractions,
   onOpenBookings,
   onLoadChatSettings,
   onUpdateChatSettings,
@@ -78,6 +80,7 @@ export function TourGroupsPanel({
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [activeOrganizerPlanItem, setActiveOrganizerPlanItem] = useState<GroupPlanItemResponse | null>(null)
   const [selectionPlanItem, setSelectionPlanItem] = useState<GroupPlanItemResponse | null>(null)
+  const [initialGroupId] = useState(() => getGroupIdFromUrl())
 
   useEffect(() => {
     void (async () => {
@@ -90,11 +93,16 @@ export function TourGroupsPanel({
         }),
       )
       setGroupDetailsCache(Object.fromEntries(detailsEntries))
+      if (initialGroupId && groups.some(group => group.groupId === initialGroupId)) {
+        setSelectedGroupId(initialGroupId)
+        setIsGroupDetailOpen(true)
+        return
+      }
       if (groups.length > 0) {
         setSelectedGroupId(currentGroupId => currentGroupId ?? groups[0].groupId)
       }
     })()
-  }, [onListGroups, onLoadGroupDetails])
+  }, [initialGroupId, onListGroups, onLoadGroupDetails])
 
   useEffect(() => {
     if (!selectedGroupId) {
@@ -205,9 +213,9 @@ export function TourGroupsPanel({
 
     applyUpdatedGroupDetails(nextDetails)
     if (submitAfterCreate) {
-      const targetViewKey = getTourGroupBookingViewKeyForSelectionOption(selectedOption)
-      if (targetViewKey) {
-        onNavigate(targetViewKey)
+      const orderCategory = getTourGroupOrderCategoryForSelectionOption(selectedOption)
+      if (orderCategory) {
+        onNavigate(orderCategory)
       }
     }
     setSelectionPlanItem(null)
@@ -329,30 +337,8 @@ export function TourGroupsPanel({
             })
             applyUpdatedGroupDetails(details)
           }}
-          onCreatePlanItem={async payload => {
-            if (!signedInUser) return null
-            const previousPlanItemIds = new Set(selectedGroupDetails.planItems.map(planItem => planItem.planItemId))
-            const details = await onCreatePlanItem(selectedGroupDetails.group.groupId, {
-              organizerUserId: signedInUser.userId,
-              ...payload,
-            })
-            applyUpdatedGroupDetails(details)
-            const createdPlanItem = pickCreatedPlanItem(details, previousPlanItemIds)
-            if (createdPlanItem) {
-              setActiveOrganizerPlanItem(createdPlanItem)
-            }
-            return createdPlanItem
-          }}
           activePlanItem={activeOrganizerPlanItem}
           onSelectPlanItem={setActiveOrganizerPlanItem}
-          onCreateOption={async (planItemId, payload) => {
-            if (!signedInUser || !selectedGroupDetails) return
-            const details = await onCreatePlanOption(planItemId, selectedGroupDetails.group.groupId, {
-              organizerUserId: signedInUser.userId,
-              ...payload,
-            })
-            applyUpdatedGroupDetails(details)
-          }}
           onOpenChoose={setSelectionPlanItem}
           onSubmitSelection={async selectionId => {
             if (!signedInUser) return
@@ -429,10 +415,6 @@ export function TourGroupsPanel({
             })
             applyUpdatedGroupDetails(result.group)
           }}
-          onSearchFlights={onSearchFlights}
-          onSearchHotels={onSearchHotels}
-          onSearchTrains={onSearchTrains}
-          onSearchAttractions={onSearchAttractions}
           onLoadChatSettings={onLoadChatSettings}
           onUpdateChatSettings={onUpdateChatSettings}
           onLoadConversations={onLoadConversations}

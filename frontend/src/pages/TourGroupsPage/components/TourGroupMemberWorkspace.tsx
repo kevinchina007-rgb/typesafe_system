@@ -1,8 +1,6 @@
-﻿import type { AppLanguage, GroupPlanItemResponse, GroupPlanSelectionResponse, GroupSelectionOrderProjectionResponse, TourGroupDetailsResponse, TourGroupMembershipResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
-import { TourGroupBookingSummary } from '@/pages/TourGroupsPage/components/TourGroupBookingSummary'
+import type { AppLanguage, GroupPlanItemResponse, TourGroupDetailsResponse, TourGroupMembershipResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { TourGroupMemberSection } from '@/pages/TourGroupsPage/components/TourGroupMemberSection'
 import { TourGroupPlanSection } from '@/pages/TourGroupsPage/components/TourGroupPlanSection'
-import { TourGroupSelectionList } from '@/pages/TourGroupsPage/components/TourGroupSelectionList'
 
 type TourGroupMemberWorkspaceProps = {
   currentLanguage: AppLanguage
@@ -10,18 +8,12 @@ type TourGroupMemberWorkspaceProps = {
   signedInUser: UserResponse | null
   travelers: TravelerResponse[]
   activeMembership: TourGroupMembershipResponse | null
-  mySelections: GroupPlanSelectionResponse[]
-  linkedSelectionIds: string[]
-  selectionOrderProjections: GroupSelectionOrderProjectionResponse[]
   isBusy: boolean
   translate: (translationKey: string) => string
   onJoinGroup: () => Promise<void>
   onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
   onOpenChoose: (planItem: GroupPlanItemResponse) => void
-  onSubmitSelection: (selectionId: string) => Promise<void>
-  onBatchPaySelections: (selectionIds: string[]) => Promise<void>
-  onOpenBookings: () => void
 }
 
 export function TourGroupMemberWorkspace({
@@ -30,18 +22,12 @@ export function TourGroupMemberWorkspace({
   signedInUser,
   travelers,
   activeMembership,
-  mySelections,
-  linkedSelectionIds,
-  selectionOrderProjections,
   isBusy,
   translate,
   onJoinGroup,
   onLeaveGroup,
   onAddMembershipTraveler,
   onOpenChoose,
-  onSubmitSelection,
-  onBatchPaySelections,
-  onOpenBookings,
 }: TourGroupMemberWorkspaceProps) {
   return (
     <div className="grid gap-4">
@@ -65,27 +51,6 @@ export function TourGroupMemberWorkspace({
         planOptions={details.planOptions}
         translate={translate}
         onOpenChoose={onOpenChoose}
-      />
-      <TourGroupSelectionList
-        currentLanguage={currentLanguage}
-        title={translate('tourGroups.myChoices')}
-        eyebrow={translate('tourGroups.myChoicesEyebrow')}
-        isBusy={isBusy}
-        selections={mySelections}
-        planItems={details.planItems}
-        planOptions={details.planOptions}
-        activeMembership={activeMembership}
-        linkedSelectionIds={linkedSelectionIds}
-        selectionOrderProjections={selectionOrderProjections}
-        translate={translate}
-        onSubmitSelection={onSubmitSelection}
-        onBatchPaySelections={onBatchPaySelections}
-        onOpenBookings={onOpenBookings}
-      />
-      <TourGroupBookingSummary
-        currentLanguage={currentLanguage}
-        bookings={details.bookings}
-        translate={translate}
       />
     </div>
   )

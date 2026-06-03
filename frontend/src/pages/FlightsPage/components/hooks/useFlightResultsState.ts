@@ -26,6 +26,7 @@ export function useFlightResultsState({
   theme,
   onSearchFlights,
   onLoadDailyLowestPrices,
+  initialSelectedCabin = 'all',
 }: {
   route: FlightResultsRoute
   searchedFlights: FlightPlannerResponse[]
@@ -33,6 +34,7 @@ export function useFlightResultsState({
   theme: 'outbound' | 'return' | 'single'
   onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>
   onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>
+  initialSelectedCabin?: string | null
 }) {
   const [selectedAirline, setSelectedAirline] = useState('all')
   const [selectedTimeRange, setSelectedTimeRange] = useState('all')
@@ -48,10 +50,10 @@ export function useFlightResultsState({
     setSelectedTimeRange('all')
     setSelectedDepartureAirport('all')
     setSelectedArrivalAirport('all')
-    setSelectedCabin('all')
+    setSelectedCabin(initialSelectedCabin ?? 'all')
     setSortMode('price')
     setDateWindowOffset(-3)
-  }, [theme])
+  }, [initialSelectedCabin, theme])
 
   const airlineOptions = useMemo(
     () => unique(searchedFlights.map(flight => flight.airlineName || flight.airlineCode)),

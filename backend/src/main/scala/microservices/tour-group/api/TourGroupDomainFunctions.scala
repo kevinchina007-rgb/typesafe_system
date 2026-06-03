@@ -36,8 +36,17 @@ def tourGroupSelectionTravelersFor(details: TourGroupDetails, selectionId: Group
 def ensureTourGroupMembershipOwner(membership: TourGroupMembership, actingUserId: UserId): Either[TourGroupError, TourGroupMembership] =
   Either.cond(membership.userId == actingUserId, membership, TourGroupError.MembershipScopeDidNotMatch(membership.membershipId, actingUserId))
 
-def submitGroupPlanSelection(selection: GroupPlanSelection): Either[TourGroupError, GroupPlanSelection] =
-  Either.cond(selection.status == GroupPlanSelectionStatus.Draft, selection.copy(status = GroupPlanSelectionStatus.Submitted), TourGroupError.SelectionWasNotSubmittable(selection.selectionId, selection.status))
+def submitGroupPlanSelection(selection: GroupPlanSelection, submittedAt: Instant): Either[TourGroupError, GroupPlanSelection] =
+  Either.cond(
+    selection.status == GroupPlanSelectionStatus.Draft,
+    selection.copy(
+      status = GroupPlanSelectionStatus.OrganizerConfirmed,
+      confirmedAt = Some(submittedAt),
+      reviewedByOrganizerUserId = None,
+      reviewNote = None
+    ),
+    TourGroupError.SelectionWasNotSubmittable(selection.selectionId, selection.status)
+  )
 
 def confirmGroupPlanSelection(selection: GroupPlanSelection, organizerUserId: UserId, confirmedAt: Instant, reviewNote: Option[String]): Either[TourGroupError, GroupPlanSelection] =
   Either.cond(

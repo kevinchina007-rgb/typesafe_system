@@ -6,6 +6,8 @@ import type { AdvertisementResponse } from '@/microservices/advertising/objects/
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
+import { consumeTourGroupBookingTarget } from '@/pages/shared/tour-group-booking/tourGroupBookingTarget'
+import type { HotelPlannerResponse } from '@/microservices/hotel/objects/HotelResponse'
 import type {
   HotelBookRequest,
   HotelSearchNotice,
@@ -14,6 +16,10 @@ import type {
 } from '../objects'
 import { formatHotelSearchRequest, getLowestRoomPrice, validateHotelSearchInput } from '../functions'
 import { useHotelSearchState } from '../components/hooks/useHotelSearchState'
+
+function normalizeDateOnly(value: string) {
+  return value.trim().slice(0, 10)
+}
 
 export function useHotelsPageController({
   currentLanguage,
@@ -42,6 +48,8 @@ export function useHotelsPageController({
     setNearbyPreference,
   } = useHotelSearchState()
   const [selectedTravelerIds, setSelectedTravelerIds] = useState<string[]>([])
+  const [isTourGroupTargetMode, setIsTourGroupTargetMode] = useState(false)
+  const [targetHotelResponses, setTargetHotelResponses] = useState<HotelPlannerResponse[]>([])
 
   const deliveryAdvertisements = useDeliverableAdvertisements('hotelBooking')
   const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
@@ -74,6 +82,54 @@ export function useHotelsPageController({
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [loadDeliverableAdvertisements])
+
+  useEffect(() => {
+    const target = consumeTourGroupBookingTarget('hotels')
+    if (!target) {
+      return
+    }
+
+    setIsTourGroupTargetMode(true)
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const checkInDate = normalizeDateOnly(target.checkInDate)
+        const checkOutDate = normalizeDateOnly(target.checkOutDate)
+        const nextHotelPlannerResponse = await travelMvpApiClient.getHotelDetailsPlanner(target.hotelId, {
+          checkInDate,
+          checkOutDate,
+        })
+        if (cancelled) {
+          return
+        }
+
+        const nextHotelResponse = {
+          ...nextHotelPlannerResponse,
+          roomTypes: nextHotelPlannerResponse.roomTypes.filter(roomType => roomType.roomTypeId === target.roomTypeId),
+        }
+
+        setSearchLocation(nextHotelPlannerResponse.location)
+        setSearchCheckInDate(checkInDate)
+        setSearchCheckOutDate(checkOutDate)
+        setHasSearchedHotels(true)
+        setTargetHotelResponses([nextHotelResponse])
+        setHotelPlannerResponses([nextHotelResponse])
+        setSearchNotice(null)
+        setDateWindowStart(addHotelDays(checkInDate, -3))
+        setSearchRevision(revision => revision + 1)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } catch (error) {
+        if (!cancelled) {
+          onShowNotice('error', translate('error.friendly.default'), error instanceof Error ? error.message : translate('error.friendly.default'))
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [onShowNotice, translate])
 
   useEffect(() => {
     setDateWindowStart(addHotelDays(searchCheckInDate, -3))
@@ -124,10 +180,12 @@ export function useHotelsPageController({
 
     try {
       const normalizedSearch = formatHotelSearchRequest(nextLocation, nextCheckInDate, nextCheckOutDate)
+      setIsTourGroupTargetMode(false)
       setSearchLocation(normalizedSearch.location)
       setSearchCheckInDate(normalizedSearch.checkInDate)
       setSearchCheckOutDate(normalizedSearch.checkOutDate)
       setSelectedAdvertisement(null)
+      setTargetHotelResponses([])
 
       const nextHotelPlannerResponses = await travelMvpApiClient.searchHotelsPlanner(normalizedSearch)
 
@@ -146,6 +204,7 @@ export function useHotelsPageController({
     } catch (error) {
       setHasSearchedHotels(false)
       setHotelPlannerResponses([])
+      setTargetHotelResponses([])
       const message = error instanceof Error ? error.message : translate('error.friendly.default')
       const notice = { kind: 'error', message } as const
       setSearchNotice(notice)
@@ -160,12 +219,14 @@ export function useHotelsPageController({
     }
 
     setSelectedAdvertisement(advertisement)
+    setIsTourGroupTargetMode(false)
     const nextHotelPlannerResponse = await travelMvpApiClient.getHotelDetailsPlanner(advertisement.targetResourceId, {
       checkInDate: searchCheckInDate,
       checkOutDate: searchCheckOutDate,
     })
     setSearchLocation(nextHotelPlannerResponse.location)
     setHasSearchedHotels(true)
+    setTargetHotelResponses([])
     setHotelPlannerResponses([nextHotelPlannerResponse])
     setSearchNotice(null)
     setDateWindowStart(addHotelDays(searchCheckInDate, -3))
@@ -233,7 +294,9 @@ export function useHotelsPageController({
     selectedTravelerIds,
     isBusy,
     isGuestMode: signedInUser === null,
+    isTourGroupTargetMode,
     hotelResponses,
+    targetHotelResponses,
     hasSearchedHotels,
     searchLocation,
     searchCheckInDate,

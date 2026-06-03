@@ -8,6 +8,7 @@ export function AttractionResultsSection({
   isGuestMode,
   travelers,
   selectedTravelerIds,
+  focusedSessionId,
   translate,
   useDateDraft,
   onRequireLogin,
@@ -27,6 +28,7 @@ export function AttractionResultsSection({
             isGuestMode={isGuestMode}
             travelers={travelers}
             selectedTravelerIds={selectedTravelerIds}
+            focusedSessionId={focusedSessionId}
             translate={translate}
             useDateDraft={useDateDraft}
             onRequireLogin={onRequireLogin}

@@ -1,8 +1,18 @@
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
+import com.typesafe.travel.attraction.api.BookAttractionItemPlanner
+import com.typesafe.travel.attraction.domain.BookAttractionItemPlannerRequest
+import com.typesafe.travel.flight.api.BookFlightPlanner
+import com.typesafe.travel.flight.objects.BookFlightPlannerRequest
+import com.typesafe.travel.hotel.api.BookHotelPlanner
+import com.typesafe.travel.hotel.objects.BookHotelPlannerRequest
 import com.typesafe.travel.persistence.PlainSqlSupport
+import com.typesafe.travel.persistence.order.OrderPlannerPlainSql
+import com.typesafe.travel.order.domain.CreateOrderPlannerRequest
 import com.typesafe.travel.shared.kernel.*
+import com.typesafe.travel.train.domain.BookTrainItemPlanner
+import com.typesafe.travel.train.domain.BookTrainItemPlannerRequest
 import io.circe.parser.decode
 import io.circe.syntax.*
 
@@ -318,27 +328,33 @@ object TourGroupPlannerPlainSql:
     }
 
   def submitSelection(connection: Connection, input: SubmitTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
-    IO.blocking {
+    val loadedContext = IO.blocking {
       val selection = selectionById(connection, input.selectionId)
       val activeMembershipRow = activeMembership(connection, selection.groupId.value, input.userId)
       if selection.membershipId != activeMembershipRow.membershipId then
         throw TourGroupError.MembershipScopeDidNotMatch(activeMembershipRow.membershipId, UserId(input.userId))
-      val submittedSelection = submitGroupPlanSelection(selection).fold(throw _, identity)
-      PlainSqlSupport.withStatement(
-        connection,
-        """
-          update group_plan_selections
-          set status = ?, created_at = ?
-          where selection_id = ?
-        """
-      ) { statement =>
-        statement.setString(1, submittedSelection.status.toString)
-        statement.setTimestamp(2, Timestamp.from(now))
-        statement.setString(3, submittedSelection.selectionId.value)
-        statement.executeUpdate()
+      val acceptedSelection = submitGroupPlanSelection(selection, now).fold(throw _, identity)
+      val planItem = planItems(connection, selection.groupId.value).find(_.planItemId == selection.planItemId).getOrElse {
+        throw TourGroupError.PlanItemWasNotFound(selection.planItemId)
       }
-      details(connection, selection.groupId.value)
+      val planOption = planOptions(connection, selection.groupId.value).find(_.optionId == selection.optionId).getOrElse {
+        throw TourGroupError.PlanOptionWasNotFound(selection.optionId)
+      }
+      (acceptedSelection, planItem, planOption)
+    }.flatMap { case (acceptedSelection, planItem, planOption) =>
+      existingSelectionOrderId(connection, acceptedSelection.selectionId.value).flatMap {
+        case Some(_) => IO.blocking(details(connection, acceptedSelection.groupId.value))
+        case None =>
+          createOrderForSelection(connection, input.userId, acceptedSelection, planItem, planOption, now).flatMap { orderId =>
+            IO.blocking {
+              insertSelectionOrderLink(connection, acceptedSelection.selectionId.value, orderId, now)
+              updateSelectionAsConvertedToOrder(connection, acceptedSelection.selectionId.value, now)
+              details(connection, acceptedSelection.groupId.value)
+            }
+          }
+      }
     }
+    loadedContext
 
   private def details(connection: Connection, groupId: String): TourGroupDetailsPlannerResponse =
     val group = groupSummary(connection, groupId)
@@ -494,6 +510,149 @@ object TourGroupPlannerPlainSql:
       statement.setString(1, groupId)
       PlainSqlSupport.queryList(statement)(readSelectionOrderLink)
     }
+
+  private def existingSelectionOrderId(connection: Connection, selectionId: String): IO[Option[String]] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          select order_id
+          from group_selection_order_links
+          where selection_id = ?
+          fetch first 1 row only
+        """
+      ) { statement =>
+        statement.setString(1, selectionId)
+        val resultSet = statement.executeQuery()
+        try if resultSet.next() then Some(resultSet.getString("order_id")) else None
+        finally resultSet.close()
+      }
+    }
+
+  private def insertSelectionOrderLink(connection: Connection, selectionId: String, orderId: String, now: Instant): Unit =
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        insert into group_selection_order_links(link_id, selection_id, order_id, created_at)
+        values (?, ?, ?, ?)
+      """
+    ) { statement =>
+      statement.setString(1, nextId("selection-order-link"))
+      statement.setString(2, selectionId)
+      statement.setString(3, orderId)
+      statement.setTimestamp(4, Timestamp.from(now))
+      statement.executeUpdate()
+    }
+
+  private def updateSelectionAsConvertedToOrder(connection: Connection, selectionId: String, now: Instant): Unit =
+    PlainSqlSupport.withStatement(
+      connection,
+      """
+        update group_plan_selections
+        set status = ?, confirmed_at = ?, reviewed_by_organizer_user_id = ?, review_note = ?
+        where selection_id = ?
+      """
+    ) { statement =>
+      statement.setString(1, GroupPlanSelectionStatus.ConvertedToOrder.toString)
+      statement.setTimestamp(2, Timestamp.from(now))
+      statement.setString(3, null)
+      statement.setString(4, null)
+      statement.setString(5, selectionId)
+      statement.executeUpdate()
+    }
+
+  private def createOrderForSelection(
+      connection: Connection,
+      userId: String,
+      selection: GroupPlanSelection,
+      planItem: GroupPlanItem,
+      planOption: GroupPlanOption,
+      now: Instant
+  ): IO[String] =
+    val travelerIds = selection.travelerIds.map(_.value).toList
+    planOption.resourceType match
+      case GroupPlanOptionResourceType.Flight =>
+        val (departureAirport, arrivalAirport, departureDate) = parseTripContext(planOption.resourceContext.getOrElse(throw new IllegalArgumentException("Flight selection is missing resource context")))
+        val cabinClass = planOption.resourceVariantCode.getOrElse(throw new IllegalArgumentException("Flight selection is missing cabin class"))
+        BookFlightPlanner
+          .plan(
+            BookFlightPlannerRequest(
+              userId = userId,
+              flightId = planOption.resourceId,
+              travelerIds = travelerIds,
+              cabinClass = cabinClass
+            ),
+            connection
+          )
+          .map(_.orderId)
+      case GroupPlanOptionResourceType.HotelRoomType =>
+        val (checkInDate, checkOutDate) = parseStayContext(planOption.resourceContext.getOrElse(throw new IllegalArgumentException("Hotel selection is missing stay context")))
+        BookHotelPlanner
+          .plan(
+            BookHotelPlannerRequest(
+              userId = userId,
+              roomTypeId = planOption.resourceId,
+              guestTravelerIds = travelerIds,
+              checkInDate = checkInDate,
+              checkOutDate = checkOutDate,
+              roomCount = selection.quantity
+            ),
+            connection
+          )
+          .map(_.orderId)
+      case GroupPlanOptionResourceType.TrainJourneySeat =>
+        val (fromStationCode, toStationCode, date) = parseTripContext(planOption.resourceContext.getOrElse(throw new IllegalArgumentException("Train selection is missing route context")))
+        val orderCurrency = "CNY"
+        for
+          order <- OrderPlannerPlainSql.create(connection, CreateOrderPlannerRequest(userId, orderCurrency), now)
+          _ <- BookTrainItemPlanner.plan(
+            BookTrainItemPlannerRequest(
+              userId = userId,
+              orderId = order.orderId,
+              trainId = planOption.resourceId,
+              travelerIds = travelerIds,
+              fromStationCode = fromStationCode,
+              toStationCode = toStationCode,
+              seatClass = planOption.resourceVariantCode.getOrElse(throw new IllegalArgumentException("Train selection is missing seat class")),
+              seatPreference = None
+            ),
+            connection
+          )
+        yield order.orderId
+      case GroupPlanOptionResourceType.AttractionTicketType =>
+        val useDate = planItem.scheduledAt.toString.take(10)
+        val attractionId = planOption.resourceContext.map(_.trim).filter(_.nonEmpty).getOrElse {
+          throw new IllegalArgumentException("Attraction selection is missing attraction context")
+        }
+        val orderCurrency = "CNY"
+        for
+          order <- OrderPlannerPlainSql.create(connection, CreateOrderPlannerRequest(userId, orderCurrency), now)
+          _ <- BookAttractionItemPlanner.plan(
+            BookAttractionItemPlannerRequest(
+              userId = userId,
+              orderId = order.orderId,
+              attractionId = attractionId,
+              ticketTypeId = planOption.resourceId,
+              sessionId = planOption.resourceVariantCode,
+              travelerIds = travelerIds,
+              useDate = useDate
+            ),
+            connection
+          )
+        yield order.orderId
+
+  private def parseTripContext(resourceContext: String): (String, String, String) =
+    resourceContext.split('|').map(_.trim) match
+      case Array(left, right, date) => (left, right, normalizeDateOnly(date))
+      case _ => throw new IllegalArgumentException(s"Invalid tour-group resource context: '$resourceContext'")
+
+  private def parseStayContext(resourceContext: String): (String, String) =
+    resourceContext.split('|').map(_.trim) match
+      case Array(checkInDate, checkOutDate) => (normalizeDateOnly(checkInDate), normalizeDateOnly(checkOutDate))
+      case _ => throw new IllegalArgumentException(s"Invalid tour-group hotel context: '$resourceContext'")
+
+  private def normalizeDateOnly(value: String): String =
+    value.trim.take(10)
 
   private def selectionTravelerIds(connection: Connection, groupId: String): Map[String, Vector[TravelerId]] =
     PlainSqlSupport.withStatement(

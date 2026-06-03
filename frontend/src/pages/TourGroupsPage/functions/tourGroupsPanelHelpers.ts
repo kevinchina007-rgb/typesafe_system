@@ -1,4 +1,4 @@
-import type { AppViewKey, GroupPlanItemResponse, GroupPlanOptionResponse, TourGroupDetailsResponse, TourGroupSummaryResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { GroupPlanItemResponse, GroupPlanOptionResponse, TourGroupDetailsResponse, TourGroupSummaryResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 
 export function syncGroupSummary(groups: TourGroupSummaryResponse[], details: TourGroupDetailsResponse): TourGroupSummaryResponse[] {
   const nextGroups = groups.filter(group => group.groupId !== details.group.groupId)
@@ -72,16 +72,20 @@ export function findNewestSelection(
     ?? null
 }
 
-export function getTourGroupBookingViewKeyForSelectionOption(option: GroupPlanOptionResponse | null | undefined): AppViewKey | null {
-  switch (option?.resourceType) {
+export function getTourGroupOrderCategoryForSelectionOption(option: GroupPlanOptionResponse | null | undefined): 'flightOrders' | 'hotelOrders' | 'trainOrders' | 'attractionOrders' | null {
+  if (!option) {
+    return null
+  }
+
+  switch (option.resourceType) {
     case 'Flight':
-      return 'flights'
+      return 'flightOrders'
     case 'HotelRoomType':
-      return 'hotels'
+      return 'hotelOrders'
     case 'TrainJourneySeat':
-      return 'trains'
+      return 'trainOrders'
     case 'AttractionTicketType':
-      return 'attractions'
+      return 'attractionOrders'
     default:
       return null
   }

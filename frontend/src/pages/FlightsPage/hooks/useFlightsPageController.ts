@@ -4,6 +4,7 @@ import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
+import { consumeTourGroupBookingTarget } from '@/pages/shared/tour-group-booking/tourGroupBookingTarget'
 import { loadFlightResultGroups, validateFlightSearchState } from '@/pages/FlightsPage/functions'
 import { useFlightSearchState } from '../components/hooks/useFlightSearchState'
 import type { FlightsPageController, FlightsPageProps } from '../objects'
@@ -20,6 +21,10 @@ export function useFlightsPageController({
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [lateBookingFlight, setLateBookingFlight] = useState<FlightPlannerResponse | null>(null)
   const [selectedTravelerIds, setSelectedTravelerIds] = useState<string[]>([])
+  const [initialSelectedCabin, setInitialSelectedCabin] = useState<string | null>('all')
+  const [isTourGroupTargetMode, setIsTourGroupTargetMode] = useState(false)
+  const [targetFlightResponses, setTargetFlightResponses] = useState<FlightPlannerResponse[]>([])
+  const [targetFlightResultGroups, setTargetFlightResultGroups] = useState<Array<{ id: string; title: string; subtitle: string; flightResponses: FlightPlannerResponse[] }>>([])
   const lastSubmittedSearchKey = useRef<string | null>(null)
   const lastReportedErrorKey = useRef<string | null>(null)
   const searchStateStore = useFlightSearchState()
@@ -54,11 +59,70 @@ export function useFlightsPageController({
   )
 
   useEffect(() => {
+    const target = consumeTourGroupBookingTarget('flights')
+    if (target) {
+      setIsTourGroupTargetMode(true)
+      let cancelled = false
+
+      void (async () => {
+        try {
+          const flight = await travelMvpApiClient.getFlightDetailsPlanner(target.flightId)
+          if (cancelled) {
+            return
+          }
+
+          const departureDate = target.departureDate || flight.departureTime.slice(0, 10)
+          const nextSearchState = {
+            ...searchStateStore.searchState,
+            tripType: 'oneWay' as const,
+            departureAirport: target.departureAirport || flight.departureAirport,
+            arrivalAirport: target.arrivalAirport || flight.arrivalAirport,
+            departureDate,
+            returnDate: '',
+            multiCitySegments: searchStateStore.searchState.multiCitySegments,
+          }
+
+          searchStateStore.setSearchState(nextSearchState)
+          searchStateStore.setFlightResultGroups([
+            {
+              id: 'tour-group-target',
+              title: `${flight.departureAirport} -> ${flight.arrivalAirport}`,
+              subtitle: flight.flightNumber,
+              flightResponses: [flight],
+            },
+          ])
+          searchStateStore.setFlightPlannerResponses([flight])
+          searchStateStore.setHasSearchedFlights(true)
+          setTargetFlightResponses([flight])
+          setTargetFlightResultGroups([
+            {
+              id: 'tour-group-target',
+              title: `${flight.departureAirport} -> ${flight.arrivalAirport}`,
+              subtitle: flight.flightNumber,
+              flightResponses: [flight],
+            },
+          ])
+          setInitialSelectedCabin(target.cabinClass ?? 'all')
+          lastSubmittedSearchKey.current = JSON.stringify(nextSearchState)
+          window.scrollTo({ top: 0, behavior: 'smooth' })
+        } catch (error) {
+          if (!cancelled) {
+            onShowNotice('error', translate('error.friendly.default'), error instanceof Error ? error.message : '鑸璺宠浆澶辫触銆?')
+          }
+        }
+      })()
+
+      return () => {
+        cancelled = true
+      }
+    }
+
     const targetFlightId = window.sessionStorage.getItem('flight-advertisement-target')
     if (!targetFlightId) {
       return
     }
 
+    setIsTourGroupTargetMode(false)
     let cancelled = false
 
     void (async () => {
@@ -90,6 +154,9 @@ export function useFlightsPageController({
         ])
         searchStateStore.setFlightPlannerResponses([flight])
         searchStateStore.setHasSearchedFlights(true)
+        setTargetFlightResponses([])
+        setTargetFlightResultGroups([])
+        setInitialSelectedCabin('all')
         lastSubmittedSearchKey.current = JSON.stringify(nextSearchState)
         window.sessionStorage.removeItem('flight-advertisement-target')
         window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -125,10 +192,14 @@ export function useFlightsPageController({
       const nextFlights = nextResultGroups.flatMap(resultGroup => resultGroup.flightResponses)
       lastReportedErrorKey.current = null
       lastSubmittedSearchKey.current = searchKey
+      setTargetFlightResponses([])
+      setTargetFlightResultGroups([])
       searchStateStore.setFlightResultGroups(nextResultGroups)
       searchStateStore.setFlightPlannerResponses(nextFlights)
       searchStateStore.setHasSearchedFlights(nextResultGroups.length > 0)
     } catch {
+      setTargetFlightResponses([])
+      setTargetFlightResultGroups([])
       searchStateStore.setFlightResultGroups([])
       searchStateStore.setFlightPlannerResponses([])
       searchStateStore.setHasSearchedFlights(false)
@@ -137,6 +208,10 @@ export function useFlightsPageController({
   }, [loadFlightResultGroups, reportErrorOnce, searchKey, searchFlights, searchStateStore])
 
   useEffect(() => {
+    if (isTourGroupTargetMode) {
+      return
+    }
+
     if (!searchStateStore.hasSearchedFlights || lastSubmittedSearchKey.current === searchKey) {
       return
     }
@@ -146,7 +221,7 @@ export function useFlightsPageController({
     }, 250)
 
     return () => window.clearTimeout(timer)
-  }, [searchStateStore.hasSearchedFlights, searchKey, submitSearch])
+  }, [isTourGroupTargetMode, searchStateStore.hasSearchedFlights, searchKey, submitSearch])
 
   const bookFlight = useCallback(
     async (payload: Parameters<typeof travelMvpApiClient.bookFlightPlanner>[0]) => {
@@ -185,6 +260,9 @@ export function useFlightsPageController({
     lateBookingFlight,
     signedInUserId: signedInUser?.userId ?? null,
     isGuestMode: signedInUser === null,
+    isTourGroupTargetMode,
+    targetFlightResponses,
+    targetFlightResultGroups,
     openAuthDialog: () => setIsAuthDialogOpen(true),
     closeAuthDialog: () => setIsAuthDialogOpen(false),
     openLateBookingReview: (flightResponse: FlightPlannerResponse) => setLateBookingFlight(flightResponse),
@@ -194,5 +272,6 @@ export function useFlightsPageController({
     bookFlight,
     submitSearch,
     toggleTravelerSelection,
+    initialSelectedCabin,
   }
 }

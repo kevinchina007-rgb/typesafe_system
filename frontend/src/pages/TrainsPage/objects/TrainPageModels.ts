@@ -88,6 +88,8 @@ export type TrainsPageController = {
   selectedTravelerIds: string[]
   isBusy: boolean
   isGuestMode: boolean
+  isTourGroupTargetMode: boolean
+  targetTrainResponses: TrainResponse[]
   trainResponses: TrainResponse[]
   hasSearchedTrains: boolean
   searchRecommendation: string

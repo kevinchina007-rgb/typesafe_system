@@ -6,12 +6,12 @@ export function formatTravelerChipLabel(traveler: TravelerResponse): string {
 }
 
 export function formatGroupCardSubtitle(group: TourGroupSummaryResponse): string {
-  return `${group.destination} 路 ${group.usedCapacity}/${group.capacity}`
+  return `${group.destination} · ${group.usedCapacity}/${group.capacity}`
 }
 
 export function formatPlanItemSummary(planItem: GroupPlanItemResponse, language: AppLanguage, translate: (key: string) => string): string {
   const scheduleLabel = `${translate('tourGroups.scheduledAt')}: ${formatIsoDateTime(planItem.scheduledAt, '-')}`
-  return `${localizeTourGroupItemType(planItem.itemType, language)} 路 ${scheduleLabel}`
+  return `${localizeTourGroupItemType(planItem.itemType, language)} · ${scheduleLabel}`
 }
 
 export function formatPlanOptionSummary(planOption: GroupPlanOptionResponse, language: AppLanguage): string {
@@ -28,7 +28,7 @@ export function formatSelectionTitle(
   planOption: GroupPlanOptionResponse | undefined,
 ): string {
   if (planItem && planOption) {
-    return `${planItem.title} 路 ${planOption.label}`
+    return `${planItem.title} · ${planOption.label}`
   }
   if (planItem) {
     return planItem.title
@@ -37,7 +37,7 @@ export function formatSelectionTitle(
 }
 
 export function formatBookingSummary(order: OrderResponse, language: AppLanguage, translate: (key: string) => string): string {
-  return `${localizeBookingKind(order.orderType, language)} 路 ${translate('tourGroups.totalPrice')}: ${order.totalPrice} ${order.orderCurrency}`
+  return `${localizeBookingKind(order.orderType, language)} · ${translate('tourGroups.totalPrice')}: ${order.totalPrice} ${order.orderCurrency}`
 }
 
 export function getTourGroupConceptLabel(
@@ -47,12 +47,12 @@ export function getTourGroupConceptLabel(
   void language
 
   const chineseLabels = {
-    group: '???',
-    member: '鎴愬憳',
-    traveler: '?????',
-    planItem: '???',
-    option: '????',
-    selection: '鎴戠殑閫夋嫨',
+    group: '旅游团',
+    member: '成员',
+    traveler: '出行人',
+    planItem: '行程项',
+    option: '选项',
+    selection: '我的选择',
   }
 
   return chineseLabels[concept]

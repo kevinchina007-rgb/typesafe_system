@@ -15,6 +15,7 @@ export function AttractionResultCard({
   isGuestMode,
   travelers,
   selectedTravelerIds,
+  focusedSessionId,
   translate,
   useDateDraft,
   onRequireLogin,
@@ -96,7 +97,7 @@ export function AttractionResultCard({
                 {ticketType.sessions.length > 0 ? (
                   <label>
                     {translate('attractions.session')}
-                    <select name="sessionId" defaultValue="" required disabled={isBusy}>
+                    <select name="sessionId" defaultValue={focusedSessionId ?? ''} required disabled={isBusy}>
                       <option value="" disabled>
                         {translate('attractions.selectSession')}
                       </option>

@@ -90,6 +90,7 @@ export type FlightResultsSectionProps = {
   ) => void
   onRequireLateBookingReview: (flightResponse: FlightPlannerResponse) => void
   getLateBookingNotice: (flightResponse: FlightPlannerResponse) => string
+  initialSelectedCabin?: string | null
 }
 
 export type FlightsPageController = {
@@ -99,6 +100,9 @@ export type FlightsPageController = {
   lateBookingFlight: FlightPlannerResponse | null
   signedInUserId: string | null
   isGuestMode: boolean
+  isTourGroupTargetMode: boolean
+  targetFlightResponses: FlightPlannerResponse[]
+  targetFlightResultGroups: FlightResultGroup[]
   openAuthDialog: () => void
   closeAuthDialog: () => void
   openLateBookingReview: (flightResponse: FlightPlannerResponse) => void
@@ -109,4 +113,5 @@ export type FlightsPageController = {
   bookFlight: (payload: BookFlightPlannerRequest) => Promise<void>
   selectedTravelerIds: string[]
   toggleTravelerSelection: (travelerId: string) => void
+  initialSelectedCabin: string | null
 }
