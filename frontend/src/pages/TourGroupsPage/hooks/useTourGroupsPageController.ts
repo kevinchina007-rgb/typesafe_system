@@ -49,6 +49,12 @@ export function useTourGroupsPageController({
         translate('tourGroups.addMembershipTraveler'),
         translate('notice.actionSuccess'),
       ),
+    onRemoveMembershipTraveler: (groupId, payload) =>
+      runPageActionWithResult(
+        () => travelMvpApiClient.removeTourGroupMembershipTraveler(groupId, payload),
+        translate('tourGroups.removeMembershipTraveler'),
+        translate('notice.actionSuccess'),
+      ),
     onCreatePlanItem: (groupId, payload) =>
       runPageActionWithResult(
         () => travelMvpApiClient.createTourGroupPlanItem(groupId, payload),

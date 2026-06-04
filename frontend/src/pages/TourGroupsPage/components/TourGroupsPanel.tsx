@@ -40,6 +40,7 @@ export function TourGroupsPanel({
   onJoinGroup,
   onLeaveGroup,
   onAddMembershipTraveler,
+  onRemoveMembershipTraveler,
   onCreateSelection,
   onSubmitSelection,
   onConfirmSelection,
@@ -69,6 +70,7 @@ export function TourGroupsPanel({
   onUpdateMuteState,
   onUpdateArchiveState,
   pageMode = 'home',
+  refreshToken = 0,
 }: TourGroupsPanelCommonProps) {
   const [groupSummaries, setGroupSummaries] = useState<TourGroupSummaryResponse[]>([])
   const [groupDetailsCache, setGroupDetailsCache] = useState<Record<string, TourGroupDetailsResponse>>({})
@@ -96,13 +98,9 @@ export function TourGroupsPanel({
       if (initialGroupId && groups.some(group => group.groupId === initialGroupId)) {
         setSelectedGroupId(initialGroupId)
         setIsGroupDetailOpen(true)
-        return
-      }
-      if (groups.length > 0) {
-        setSelectedGroupId(currentGroupId => currentGroupId ?? groups[0].groupId)
       }
     })()
-  }, [initialGroupId, onListGroups, onLoadGroupDetails])
+  }, [initialGroupId, onListGroups, onLoadGroupDetails, refreshToken])
 
   useEffect(() => {
     if (!selectedGroupId) {
@@ -159,15 +157,6 @@ export function TourGroupsPanel({
       .map(({ group }) => group)
   }, [groupDetailsCache, groupSummaries, pageMode, searchQuery, signedInUser?.userId])
 
-  useEffect(() => {
-    if (visibleGroupSummaries.length === 0) {
-      return
-    }
-    if (!selectedGroupId || !visibleGroupSummaries.some(group => group.groupId === selectedGroupId)) {
-      setSelectedGroupId(visibleGroupSummaries[0].groupId)
-    }
-  }, [selectedGroupId, visibleGroupSummaries])
-
   function applyUpdatedGroupDetails(details: TourGroupDetailsResponse) {
     setSelectedGroupDetails(details)
     setSelectedGroupId(details.group.groupId)
@@ -222,33 +211,11 @@ export function TourGroupsPanel({
   }
 
   return (
-    <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
-      <div className="text-lg font-bold text-slate-950">
-        <div>
-          <p className="text-sm font-bold text-slate-500">{translate('nav.tourGroups')}</p>
-          <h2>{translate('tourGroups.title')}</h2>
-        </div>
-        <button
-          type="button"
-          className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-          disabled={isBusy}
-          onClick={async () => {
-            const groups = await onListGroups()
-            setGroupSummaries(groups)
-            if (selectedGroupId) {
-              const details = await onLoadGroupDetails(selectedGroupId)
-              applyUpdatedGroupDetails(details)
-            }
-          }}
-        >
-          {translate('tourGroups.refresh')}
-        </button>
-      </div>
-
+    <section className="grid gap-5 border-y border-sky-200 bg-gradient-to-br from-white via-cyan-50 to-slate-50 p-6 text-slate-950 shadow-sm shadow-sky-100/40">
       <p className="m-0 max-w-3xl text-base leading-7 text-slate-600">{translate('tourGroups.description')}</p>
 
       {pageMode === 'home' ? (
-        <form className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50" onSubmit={handleSearchSubmit}>
+          <form className="grid gap-3 border border-sky-200 bg-white/80 p-4 text-slate-950 shadow-sm shadow-sky-100/40" onSubmit={handleSearchSubmit}>
           <label className="grid gap-2">
             <span className="text-sm font-semibold text-slate-500">{translate('tourGroups.searchGroups')}</span>
             <input
@@ -260,14 +227,14 @@ export function TourGroupsPanel({
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
+              className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
               disabled={isBusy}
             >
               {translate('tourGroups.searchGroupsButton')}
             </button>
             <button
               type="button"
-              className="inline-flex min-h-11 items-center justify-center border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-black hover:bg-white hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-55"
+              className="inline-flex min-h-11 items-center justify-center border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-700 transition hover:border-sky-700 hover:bg-white hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-55"
               disabled={isBusy}
               onClick={() => {
                 setSearchInput('')
@@ -301,8 +268,8 @@ export function TourGroupsPanel({
         />
 
         {visibleGroupSummaries.length === 0 ? (
-          <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
-            <p className="text-sm leading-6 text-slate-500">
+        <section className="grid gap-3 border border-sky-200 bg-white/85 p-4 text-slate-950 shadow-sm shadow-sky-100/40">
+          <p className="text-sm leading-6 text-slate-500">
               {searchQuery.trim().length > 0 ? translate('tourGroups.searchGroupsEmpty') : translate('tourGroups.empty')}
             </p>
           </section>
@@ -332,6 +299,14 @@ export function TourGroupsPanel({
           onAddMembershipTraveler={async travelerId => {
             if (!signedInUser) return
             const details = await onAddMembershipTraveler(selectedGroupDetails.group.groupId, {
+              userId: signedInUser.userId,
+              travelerId,
+            })
+            applyUpdatedGroupDetails(details)
+          }}
+          onRemoveMembershipTraveler={async travelerId => {
+            if (!signedInUser) return
+            const details = await onRemoveMembershipTraveler(selectedGroupDetails.group.groupId, {
               userId: signedInUser.userId,
               travelerId,
             })

@@ -73,7 +73,7 @@ export function TourGroupPlanBuilderPage({
   const backButton = (
     <button
       type="button"
-      className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
+      className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 transition hover:border-sky-700 hover:bg-sky-700 hover:text-white"
       onClick={goBackToTourGroup}
     >
       回到旅游团
@@ -155,8 +155,8 @@ export function TourGroupPlanBuilderPage({
 
   if (!groupId) {
     return (
-      <section className="grid gap-4 px-6 pb-8 pt-6">
-        <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
+      <section className="grid gap-4 bg-gradient-to-br from-slate-50 via-cyan-50 to-sky-100 px-6 pb-8 pt-6">
+        <div className="grid gap-3 border border-sky-200 bg-white/85 p-6 text-slate-950 shadow-sm shadow-sky-100/40">
           <h1 className="text-2xl font-bold">{translate('nav.tourGroupPlanBuilder')}</h1>
           <p className="text-sm leading-6 text-slate-500">未找到旅游团编号，请从旅游团详情页进入。</p>
           {backButton}
@@ -167,8 +167,8 @@ export function TourGroupPlanBuilderPage({
 
   if (loadError) {
     return (
-      <section className="grid gap-4 px-6 pb-8 pt-6">
-        <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
+      <section className="grid gap-4 bg-gradient-to-br from-slate-50 via-cyan-50 to-sky-100 px-6 pb-8 pt-6">
+        <div className="grid gap-3 border border-sky-200 bg-white/85 p-6 text-slate-950 shadow-sm shadow-sky-100/40">
           <h1 className="text-2xl font-bold">{translate('nav.tourGroupPlanBuilder')}</h1>
           <p className="text-sm leading-6 text-slate-500">行程项页面加载失败，请返回旅游团详情重新进入。</p>
           {backButton}
@@ -179,8 +179,8 @@ export function TourGroupPlanBuilderPage({
 
   if (!details) {
     return (
-      <section className="grid gap-4 px-6 pb-8 pt-6">
-        <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
+      <section className="grid gap-4 bg-gradient-to-br from-slate-50 via-cyan-50 to-sky-100 px-6 pb-8 pt-6">
+        <div className="grid gap-3 border border-sky-200 bg-white/85 p-6 text-slate-950 shadow-sm shadow-sky-100/40">
           <h1 className="text-2xl font-bold">{translate('nav.tourGroupPlanBuilder')}</h1>
           <p className="text-sm leading-6 text-slate-500">正在加载旅游团信息...</p>
           {backButton}
@@ -191,8 +191,8 @@ export function TourGroupPlanBuilderPage({
 
   if (!isOrganizer) {
     return (
-      <section className="grid gap-4 px-6 pb-8 pt-6">
-        <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
+      <section className="grid gap-4 bg-gradient-to-br from-slate-50 via-cyan-50 to-sky-100 px-6 pb-8 pt-6">
+        <div className="grid gap-3 border border-sky-200 bg-white/85 p-6 text-slate-950 shadow-sm shadow-sky-100/40">
           <h1 className="text-2xl font-bold">{translate('nav.tourGroupPlanBuilder')}</h1>
           <p className="text-sm leading-6 text-slate-500">只有团长可以添加行程项。</p>
           {backButton}
@@ -202,8 +202,8 @@ export function TourGroupPlanBuilderPage({
   }
 
   return (
-    <section className="grid gap-4 px-6 pb-8 pt-6">
-      <div className="grid gap-3 border border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/50">
+    <section className="grid gap-4 bg-gradient-to-br from-slate-50 via-cyan-50 to-sky-100 px-6 pb-8 pt-6">
+      <div className="grid gap-3 border border-sky-200 bg-white/85 p-6 text-slate-950 shadow-sm shadow-sky-100/40">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="grid gap-1">
             <p className="text-sm font-bold text-slate-500">{translate('nav.tourGroupPlanBuilder')}</p>

@@ -1,30 +1,27 @@
 import type { OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
-import { OrderLineItemDetails } from '@/pages/BookingsPage/components/OrderLineItemDetails'
 import { FlightRoutePoint } from '@/pages/BookingsPage/components/shared/FlightRoutePoint'
 import { FlightTravelerBadges } from '@/pages/BookingsPage/components/shared/FlightTravelerBadges'
-import { OrderMeta } from '@/pages/BookingsPage/components/shared/OrderMeta'
 import type { OrderPanelProps } from '@/pages/BookingsPage/objects'
+import { ArrowRight } from 'lucide-react'
 import {
   buildFlightOrderDisplay,
-  findOrderItemReview,
-  formatFlightDateTimeRange,
   hasFlightSnapshot,
+  isFlightOrderLineItem,
   isOrderPaid,
   isOrderPayable,
   isOrderRefunded,
-  isFlightOrderLineItem,
 } from '@/pages/BookingsPage/functions'
 
 export function FlightOrderCard({
   currentLanguage,
   isBusy,
   order,
-  reviews,
+  reviews: _reviews,
   travelers,
   translate,
   onCancelOrder,
-  onDeleteReview,
+  onDeleteReview: _onDeleteReview,
   onOpenOrderCancellationFeedback,
   onOpenPayment,
 }: {
@@ -42,7 +39,6 @@ export function FlightOrderCard({
   const flightLineItems = (order.orderLineItems ?? []).filter(orderLineItem => isFlightOrderLineItem(orderLineItem) || hasFlightSnapshot(orderLineItem.summaryLabel))
   const flightItem = flightLineItems[0] ?? null
   const displayFlight = flightItem ? buildFlightOrderDisplay(flightItem) : null
-  const existingReview = flightItem ? findOrderItemReview(reviews, flightItem.orderItemId) : null
   const isPayable = isOrderPayable(order.status)
   const isPaid = isOrderPaid(order.status)
   const isRefunded = isOrderRefunded(order.status)
@@ -65,26 +61,25 @@ export function FlightOrderCard({
 
             <div className="grid gap-2">
               <h3 className="m-0 text-4xl font-black tracking-normal text-slate-950">{displayFlight.airlineName || '未填写航司'}</h3>
-              <p className="m-0 text-base font-medium text-slate-600">
-                {displayFlight.flightNumber || '未填写航班号'}
-              </p>
+              <p className="m-0 text-base font-medium text-slate-600">{displayFlight.flightNumber || '未填写航班号'}</p>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-[1fr_auto_1fr]">
+            <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
               <FlightRoutePoint airportCode={displayFlight.departureAirport} city={displayFlight.departureCity} />
-              <span className="mt-9 hidden h-px w-36 bg-slate-200 md:block" />
+              <div className="hidden items-center justify-center md:flex">
+                <ArrowRight className="h-14 w-14 text-sky-500 drop-shadow-sm" strokeWidth={3} />
+              </div>
               <FlightRoutePoint airportCode={displayFlight.arrivalAirport} city={displayFlight.arrivalCity} />
             </div>
 
-            <p className="m-0 text-sm font-medium text-slate-500">{formatFlightDateTimeRange(displayFlight.departureTime, displayFlight.arrivalTime)}</p>
-
-            {isPaid || isRefunded ? <FlightTravelerBadges travelerIds={displayFlight.travelerIds} travelers={travelers} /> : null}
+            <FlightTravelerBadges travelerIds={displayFlight.travelerIds} travelers={travelers} />
           </div>
 
           <div className="grid gap-4 border border-slate-200 bg-slate-50 p-4">
             <div className="grid gap-2">
               <span className="text-sm font-semibold text-slate-500">订单状态</span>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <strong className="text-5xl font-black tracking-normal text-slate-950">{`${order.totalPrice} ${order.orderCurrency}`}</strong>
                 {isPayable ? (
                   <span className="inline-flex min-h-11 items-center border border-amber-200 bg-amber-50 px-4 text-lg font-black text-amber-700">待支付</span>
                 ) : isRefunded ? (
@@ -105,27 +100,12 @@ export function FlightOrderCard({
           </div>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-3">
-          <OrderMeta label={translate('booking.reference')} value={order.orderId} />
-          <OrderMeta label={translate('booking.createdAt')} value={formatIsoDateTime(order.createdAt, translate('booking.notYet'))} />
-          <OrderMeta label={translate('booking.paidAt')} value={formatIsoDateTime(order.paidAt, translate('booking.notYet'))} />
-        </div>
-
-        <ul className="grid gap-3 border-t border-slate-200 pt-4">
-          {flightLineItems.map(orderLineItem => {
-            return (
-              <li key={orderLineItem.orderItemId} className="grid gap-3">
-                <OrderLineItemDetails currentLanguage={currentLanguage} orderLineItem={orderLineItem} existingReview={findOrderItemReview(reviews, orderLineItem.orderItemId)} travelers={travelers} translate={translate} />
-              </li>
-            )
-          })}
-        </ul>
-
         <div className="grid gap-4 border-t border-slate-200 pt-4">
-          <div className="grid gap-3 md:grid-cols-[180px_max-content]">
+          <div className="grid gap-3 md:grid-cols-[max-content_max-content] md:items-start">
             <div className="flex items-center border border-slate-200 bg-white px-4 py-3">
-              <strong className="text-sm font-semibold tracking-normal text-slate-950">{`${order.totalPrice} ${order.orderCurrency}`}</strong>
+              <strong className="text-base font-semibold tracking-normal text-slate-950">{`${order.totalPrice} ${order.orderCurrency}`}</strong>
             </div>
+
             <button
               type="button"
               className="inline-flex min-h-11 w-fit items-center justify-center border border-slate-300 bg-white px-6 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
@@ -156,16 +136,6 @@ export function FlightOrderCard({
                   {translate('bookings.cancel')}
                 </button>
               </>
-            ) : null}
-            {existingReview?.canDelete ? (
-              <button
-                type="button"
-                className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-                disabled={isBusy}
-                onClick={() => void onDeleteReview(existingReview.reviewId)}
-              >
-                {translate('reviews.delete')}
-              </button>
             ) : null}
           </div>
         </div>

@@ -17,6 +17,7 @@ type TourGroupDetailProps = {
   onJoinGroup: () => Promise<void>
   onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
+  onRemoveMembershipTraveler: (travelerId: string) => Promise<void>
   onNavigate: (viewKey: AppViewKey) => void
   activePlanItem: GroupPlanItemResponse | null
   onSelectPlanItem: (planItem: GroupPlanItemResponse) => void
@@ -59,6 +60,7 @@ export function TourGroupDetail({
   onJoinGroup,
   onLeaveGroup,
   onAddMembershipTraveler,
+  onRemoveMembershipTraveler,
   onNavigate,
   onSelectPlanItem,
   onOpenChoose,
@@ -98,7 +100,7 @@ export function TourGroupDetail({
 
   return (
     <section className="grid gap-4">
-      <div className="relative overflow-hidden border border-slate-200 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="relative overflow-hidden border border-sky-200 text-slate-950 shadow-sm shadow-sky-100/50">
         <div className="absolute inset-0">
           {details.group.coverImageUrl ? (
             <BackendAssetImage
@@ -109,54 +111,54 @@ export function TourGroupDetail({
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-white to-slate-200" />
           )}
-          <div className="absolute inset-0 bg-white/18" />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/18 to-white/50" />
+          <div className="absolute inset-0 bg-cyan-950/10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-white/20 to-slate-50/60" />
         </div>
 
         <div className="relative grid gap-6 p-6 md:p-8">
           <div className="flex items-start justify-between gap-4">
-            <div className="max-w-4xl rounded-2xl bg-white/78 p-5 backdrop-blur-sm">
-              <p className="text-sm font-bold text-slate-500">{translate('tourGroups.detailEyebrow')}</p>
-              <h2 className="text-3xl font-bold tracking-tight text-slate-950">{details.group.title}</h2>
-              <p className="mt-2 text-base leading-7 text-slate-700">{details.group.description}</p>
-              {details.group.tags.length > 0 ? <p className="mt-3 text-sm font-medium text-slate-600">{details.group.tags.join(' / ')}</p> : null}
+            <div className="max-w-4xl rounded-2xl border border-sky-100 bg-white/82 p-5 backdrop-blur-sm">
+              <p className="text-sm font-bold text-sky-700">{translate('tourGroups.detailEyebrow')}</p>
+              <h2 className="break-words text-3xl font-bold tracking-tight text-slate-950">{details.group.title}</h2>
+              <p className="mt-2 break-words text-base leading-7 text-slate-700">{details.group.description}</p>
+              {details.group.tags.length > 0 ? <p className="mt-3 break-words text-sm font-medium text-slate-600">{details.group.tags.join(' / ')}</p> : null}
             </div>
-            <span className="inline-flex min-h-9 items-center justify-center border border-white/60 bg-white/80 px-3 py-1 text-sm font-medium text-slate-950 shadow-sm backdrop-blur-sm">
+            <span className="inline-flex min-h-9 items-center justify-center border border-sky-100 bg-white/85 px-3 py-1 text-sm font-medium text-sky-800 shadow-sm backdrop-blur-sm">
               {localizeTourGroupStatus(details.group.status, currentLanguage)}
             </span>
           </div>
 
-          <div className="grid gap-3 rounded-2xl bg-white/78 p-5 backdrop-blur-sm md:grid-cols-2">
-            <div>
-              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.destination')}</span>
-              <strong>{details.group.destination}</strong>
+          <div className="grid gap-3 rounded-2xl border border-sky-100 bg-white/78 p-5 backdrop-blur-sm md:grid-cols-2">
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-sky-700">{translate('tourGroups.destination')}</span>
+              <strong className="break-words">{details.group.destination}</strong>
             </div>
-            <div>
-              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.dateRange')}</span>
-              <strong>{`${details.group.startDate} - ${details.group.endDate}`}</strong>
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-sky-700">{translate('tourGroups.dateRange')}</span>
+              <strong className="break-words">{`${details.group.startDate} - ${details.group.endDate}`}</strong>
             </div>
-            <div>
-              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.capacity')}</span>
-              <strong>{`${details.group.usedCapacity} / ${details.group.capacity}`}</strong>
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-sky-700">{translate('tourGroups.capacity')}</span>
+              <strong className="break-words">{`${details.group.usedCapacity} / ${details.group.capacity}`}</strong>
             </div>
-            <div>
-              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.organizer')}</span>
-              <strong>{details.group.organizerUserId}</strong>
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-sky-700">{translate('tourGroups.organizer')}</span>
+              <strong className="break-words">{details.group.organizerUserId}</strong>
             </div>
-            <div>
-              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.memberCount')}</span>
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-sky-700">{translate('tourGroups.memberCount')}</span>
               <strong>{details.group.memberCount}</strong>
             </div>
-            <div>
-              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.pendingApprovals')}</span>
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-sky-700">{translate('tourGroups.pendingApprovals')}</span>
               <strong>{details.group.pendingSelectionCount}</strong>
             </div>
-            <div>
-              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.confirmedSelectionCount')}</span>
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-sky-700">{translate('tourGroups.confirmedSelectionCount')}</span>
               <strong>{details.group.confirmedSelectionCount}</strong>
             </div>
-            <div>
-              <span className="text-sm font-medium text-slate-500">{translate('tourGroups.convertedOrderCount')}</span>
+            <div className="min-w-0">
+              <span className="text-sm font-medium text-sky-700">{translate('tourGroups.convertedOrderCount')}</span>
               <strong>{details.group.convertedOrderCount}</strong>
             </div>
           </div>
@@ -165,7 +167,7 @@ export function TourGroupDetail({
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                className={workspaceMode === 'manage' ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
+                className={workspaceMode === 'manage' ? 'inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
                 disabled={isBusy}
                 onClick={() => setWorkspaceMode('manage')}
               >
@@ -173,7 +175,7 @@ export function TourGroupDetail({
               </button>
               <button
                 type="button"
-                className={workspaceMode === 'member' ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
+                className={workspaceMode === 'member' ? 'inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
                 disabled={isBusy}
                 onClick={() => setWorkspaceMode('member')}
               >
@@ -226,6 +228,7 @@ export function TourGroupDetail({
           onJoinGroup={onJoinGroup}
           onLeaveGroup={onLeaveGroup}
           onAddMembershipTraveler={onAddMembershipTraveler}
+          onRemoveMembershipTraveler={onRemoveMembershipTraveler}
           onOpenChoose={onOpenChoose}
         />
       )}

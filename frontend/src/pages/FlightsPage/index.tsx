@@ -1,5 +1,5 @@
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
-import { FlightBookingWindowDialog, FlightResultsSection, FlightSearchCard } from './components'
+import { FlightBookingWindowDialog, FlightPageHero, FlightResultsSection, FlightSearchCard } from './components'
 import { buildLateBookingNotice } from './functions'
 import { useFlightsPageController } from './hooks'
 import type { FlightsPageProps } from './objects'
@@ -44,6 +44,8 @@ export function FlightsPage(props: FlightsPageProps) {
   return (
     <>
       <section className="mx-auto flex min-h-[calc(100vh-11rem)] w-full max-w-7xl flex-col bg-white text-slate-950">
+        <FlightPageHero title={translate('flights.title')} description={translate('flights.description')} />
+
         {!isTourGroupTargetMode ? (
           <FlightSearchCard
             tripType={searchState.tripType}

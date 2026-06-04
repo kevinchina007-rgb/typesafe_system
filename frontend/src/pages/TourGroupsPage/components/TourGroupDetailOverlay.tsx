@@ -14,6 +14,7 @@ type TourGroupDetailOverlayProps = {
   onJoinGroup: () => Promise<void>
   onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
+  onRemoveMembershipTraveler: (travelerId: string) => Promise<void>
   onNavigate: (viewKey: AppViewKey) => void
   activePlanItem: GroupPlanItemResponse | null
   onSelectPlanItem: (planItem: GroupPlanItemResponse) => void

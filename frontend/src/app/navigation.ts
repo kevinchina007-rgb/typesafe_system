@@ -55,7 +55,7 @@ export const topNavItems: TopNavItem[] = [
   { key: 'overview', titleKey: 'topnav.overview', icon: 'dashboard', defaultViewKey: 'overview' },
   { key: 'orders', titleKey: 'topnav.orders', icon: 'orders', defaultViewKey: 'flightOrders' },
   { key: 'booking', titleKey: 'topnav.booking', icon: 'flight', defaultViewKey: 'flights' },
-  { key: 'travelManagement', titleKey: 'topnav.travelManagement', icon: 'group', defaultViewKey: 'travelers' },
+  { key: 'travelManagement', titleKey: 'topnav.travelManagement', icon: 'group', defaultViewKey: 'tourGroups' },
   { key: 'community', titleKey: 'topnav.community', icon: 'blog', defaultViewKey: 'blog' },
   { key: 'smartPlanner', titleKey: 'topnav.smartPlanner', icon: 'planner', defaultViewKey: 'smartPlanner' },
   { key: 'customerFeedback', titleKey: 'topnav.customerFeedback', icon: 'review', defaultViewKey: 'customerFeedback' },
@@ -495,6 +495,10 @@ export function getSidebarItemsForTopNav(params: {
 
   return appRoutes
     .filter(route => route.topNav === topNav)
+    .filter(route => topNav !== 'travelManagement' || route.viewKey === 'tourGroups')
+    // "添加行程项" keeps a dedicated in-page entry on the tour group detail screen,
+    // so it should not appear in the travel management dropdown/sidebar.
+    .filter(route => route.viewKey !== 'tourGroupPlanBuilder')
     .filter(route => isRouteVisible({ route, signedInUser, signedInManager }))
     .sort((left, right) => left.sortOrder - right.sortOrder)
     .map(route => ({

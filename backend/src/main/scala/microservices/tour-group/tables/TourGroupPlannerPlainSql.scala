@@ -115,6 +115,27 @@ object TourGroupPlannerPlainSql:
       details(connection, input.groupId)
     }
 
+  def removeMembershipTraveler(connection: Connection, input: RemoveMembershipTravelerPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+    IO.blocking {
+      val membershipId = activeMembershipId(connection, input.groupId, input.userId)
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          update tour_group_membership_travelers
+          set status = ?
+          where membership_id = ? and traveler_id = ? and status = 'Active'
+        """
+      ) { statement =>
+        statement.setString(1, "Removed")
+        statement.setString(2, membershipId)
+        statement.setString(3, input.travelerId)
+        val updatedRows = statement.executeUpdate()
+        if updatedRows == 0 then
+          throw TourGroupError.MembershipTravelerDidNotBelongToUser(TravelerId(input.travelerId), UserId(input.userId))
+      }
+      details(connection, input.groupId)
+    }
+
   def kickMember(connection: Connection, input: KickTourGroupMemberPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
     IO.blocking {
       val tourGroup = loadGroup(connection, input.groupId)

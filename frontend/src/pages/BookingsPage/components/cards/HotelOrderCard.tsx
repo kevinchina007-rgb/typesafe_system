@@ -1,6 +1,6 @@
 ﻿import type { OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
-import { OrderLineItemDetails } from '@/pages/BookingsPage/components/OrderLineItemDetails'
+import { FlightTravelerBadges } from '@/pages/BookingsPage/components/shared/FlightTravelerBadges'
 import { HotelInfoBlock } from '@/pages/BookingsPage/components/shared/HotelInfoBlock'
 import { OrderItemFeedbackActions } from '@/pages/BookingsPage/components/shared/OrderItemFeedbackActions'
 import { formatTravelerIdentity } from '@/pages/BookingsPage/functions'
@@ -80,6 +80,8 @@ export function HotelOrderCard({
               <HotelInfoBlock label={translate('booking.hotel.stay')} value={`${displayHotel.checkInDate} -> ${displayHotel.checkOutDate}`} />
               <HotelInfoBlock label={translate('booking.hotel.roomCount')} value={`${displayHotel.roomCount} 间房`} />
             </div>
+
+            <FlightTravelerBadges travelerIds={displayHotel.guestTravelerIds} travelers={travelers} />
           </div>
 
           <div className="grid gap-4 border border-slate-200 bg-slate-50 p-4">
@@ -112,7 +114,6 @@ export function HotelOrderCard({
             const existingReviewForLineItem = findOrderItemReview(reviews, orderLineItem.orderItemId)
             return (
               <li key={orderLineItem.orderItemId} className="grid gap-3">
-                <OrderLineItemDetails currentLanguage={currentLanguage} orderLineItem={orderLineItem} existingReview={existingReviewForLineItem} travelers={travelers} translate={translate} />
                 <OrderItemFeedbackActions
                   isBusy={isBusy}
                   order={order}

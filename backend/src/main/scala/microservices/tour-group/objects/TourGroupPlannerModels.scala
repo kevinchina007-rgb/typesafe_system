@@ -43,6 +43,11 @@ object AddMembershipTravelerPlannerRequest:
   given sourceEncoder: Encoder[AddMembershipTravelerPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[AddMembershipTravelerPlannerRequest] = deriveDecoder
 
+final case class RemoveMembershipTravelerPlannerRequest(groupId: String, userId: String, travelerId: String)
+object RemoveMembershipTravelerPlannerRequest:
+  given sourceEncoder: Encoder[RemoveMembershipTravelerPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[RemoveMembershipTravelerPlannerRequest] = deriveDecoder
+
 final case class KickTourGroupMemberPlannerRequest(groupId: String, organizerUserId: String, targetUserId: String)
 object KickTourGroupMemberPlannerRequest:
   given sourceEncoder: Encoder[KickTourGroupMemberPlannerRequest] = deriveEncoder

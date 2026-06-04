@@ -7,7 +7,7 @@ import { TravelerSelectionPanel } from '@/pages/shared/travelers/TravelerSelecti
 import { formatAttractionInsight, renderAttractionTravelerOptionLabel } from '@/app/stores/models/attraction-booking-model'
 import type { AttractionsPageProps } from './objects'
 import { ATTRACTION_HOT_SPOTS, ATTRACTION_RECENT_SEARCHES } from './objects'
-import { AttractionFilterBar, AttractionPageHero, AttractionResultsSection, AttractionSearchCard } from './components'
+import { AttractionPageHero, AttractionResultsSection, AttractionSearchCard } from './components'
 import { useAttractionsPageController } from './hooks'
 
 export function AttractionsPage({
@@ -96,15 +96,6 @@ export function AttractionsPage({
               onOpenAdvertisement={controller.handleOpenAdvertisement}
             />
           </section>
-        ) : null}
-
-        {!controller.isTourGroupTargetMode ? (
-          <AttractionFilterBar
-            hasSearchedAttractions={displayHasSearchedAttractions}
-            sortPreference={controller.sortPreference}
-            translate={translate}
-            onSortPreferenceChange={controller.setSortPreference}
-          />
         ) : null}
 
         {controller.isGuestMode ? <p className="text-sm leading-6 text-slate-500">{translate('attractions.guest')}</p> : null}

@@ -13,6 +13,7 @@ type TourGroupMemberWorkspaceProps = {
   onJoinGroup: () => Promise<void>
   onLeaveGroup: () => Promise<void>
   onAddMembershipTraveler: (travelerId: string) => Promise<void>
+  onRemoveMembershipTraveler: (travelerId: string) => Promise<void>
   onOpenChoose: (planItem: GroupPlanItemResponse) => void
 }
 
@@ -27,6 +28,7 @@ export function TourGroupMemberWorkspace({
   onJoinGroup,
   onLeaveGroup,
   onAddMembershipTraveler,
+  onRemoveMembershipTraveler,
   onOpenChoose,
 }: TourGroupMemberWorkspaceProps) {
   return (
@@ -42,6 +44,7 @@ export function TourGroupMemberWorkspace({
         onJoinGroup={onJoinGroup}
         onLeaveGroup={onLeaveGroup}
         onAddMembershipTraveler={onAddMembershipTraveler}
+        onRemoveMembershipTraveler={onRemoveMembershipTraveler}
       />
       <TourGroupPlanSection
         currentLanguage={currentLanguage}

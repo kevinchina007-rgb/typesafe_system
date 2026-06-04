@@ -159,6 +159,7 @@ object PlannerDefinitions:
         WithConnection(JoinTourGroupPlanner),
         WithConnection(LeaveTourGroupPlanner),
         WithConnection(AddMembershipTravelerPlanner),
+        WithConnection(RemoveMembershipTravelerPlanner),
         WithConnection(KickTourGroupMemberPlanner),
         WithConnection(BlacklistTourGroupMemberPlanner),
         WithConnection(TransferTourGroupLeaderPlanner),

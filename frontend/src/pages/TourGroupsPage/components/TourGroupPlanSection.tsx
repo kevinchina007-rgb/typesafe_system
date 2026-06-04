@@ -25,10 +25,10 @@ export function TourGroupPlanSection({
   onOpenChoose,
 }: TourGroupPlanSectionProps) {
   return (
-    <section className="grid gap-3 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+    <section className="grid gap-3 border border-sky-200 bg-white/85 p-4 text-slate-950 shadow-sm shadow-sky-100/40">
       <div className="text-lg font-bold text-slate-950">
         <div>
-          <p className="text-sm font-bold text-slate-500">{translate('tourGroups.planSectionEyebrow')}</p>
+          <p className="text-sm font-bold text-sky-700">{translate('tourGroups.planSectionEyebrow')}</p>
           <h3>{translate('tourGroups.planItems')}</h3>
         </div>
       </div>
@@ -45,7 +45,7 @@ export function TourGroupPlanSection({
             .map(planItem => {
               const itemOptions = planOptions.filter(option => option.planItemId === planItem.planItemId)
               return (
-                <li key={planItem.planItemId} className="grid gap-2 border border-slate-200 bg-white p-4">
+                <li key={planItem.planItemId} className="grid gap-2 border border-sky-200 bg-gradient-to-br from-white via-cyan-50 to-slate-50 p-4">
                   <div className="grid gap-2">
                     <strong>{`${planItem.sequenceNo}. ${planItem.title}`}</strong>
                     <p>{formatPlanItemSummary(planItem, currentLanguage, translate)}</p>
@@ -71,7 +71,7 @@ export function TourGroupPlanSection({
                     {isOrganizer && onSelectPlanItem ? (
                       <button
                         type="button"
-                        className={activePlanItemId === planItem.planItemId ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
+                        className={activePlanItemId === planItem.planItemId ? 'inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55' : undefined}
                         disabled={isBusy}
                         onClick={() => onSelectPlanItem(planItem)}
                       >
@@ -81,7 +81,7 @@ export function TourGroupPlanSection({
                       </button>
                     ) : null}
                     {!isOrganizer && onOpenChoose ? (
-                      <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy || itemOptions.length === 0} onClick={() => onOpenChoose(planItem)}>
+                      <button className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isBusy || itemOptions.length === 0} onClick={() => onOpenChoose(planItem)}>
                         {translate('tourGroups.chooseAction')}
                       </button>
                     ) : null}

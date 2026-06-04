@@ -35,6 +35,11 @@ object AddMembershipTravelerPlanner extends ConnectionApiPlan[AddMembershipTrave
   override def plan(input: AddMembershipTravelerPlannerRequest, connection: Connection): IO[TourGroupDetailsPlannerResponse] =
     TourGroupPlannerPlainSql.addMembershipTraveler(connection, input, java.time.Instant.now())
 
+object RemoveMembershipTravelerPlanner extends ConnectionApiPlan[RemoveMembershipTravelerPlannerRequest, TourGroupDetailsPlannerResponse]:
+  override val name: String = "RemoveMembershipTravelerPlanner"
+  override def plan(input: RemoveMembershipTravelerPlannerRequest, connection: Connection): IO[TourGroupDetailsPlannerResponse] =
+    TourGroupPlannerPlainSql.removeMembershipTraveler(connection, input, java.time.Instant.now())
+
 object KickTourGroupMemberPlanner extends ConnectionApiPlan[KickTourGroupMemberPlannerRequest, TourGroupDetailsPlannerResponse]:
   override val name: String = "KickTourGroupMemberPlanner"
   override def plan(input: KickTourGroupMemberPlannerRequest, connection: Connection): IO[TourGroupDetailsPlannerResponse] =

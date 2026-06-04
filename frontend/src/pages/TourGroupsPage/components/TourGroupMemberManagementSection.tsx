@@ -30,9 +30,9 @@ export function TourGroupMemberManagementSection({
   }
 
   return (
-    <section className="grid gap-4 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
+    <section className="grid gap-4 border border-sky-200 bg-white/85 p-4 text-slate-950 shadow-sm shadow-sky-100/40">
       <div className="grid gap-1">
-        <p className="text-sm font-bold text-slate-500">{translate('tourGroups.memberManagementEyebrow')}</p>
+        <p className="text-sm font-bold text-sky-700">{translate('tourGroups.memberManagementEyebrow')}</p>
         <h4 className="text-lg font-bold text-slate-950">{translate('tourGroups.memberManagementTitle')}</h4>
       </div>
 
@@ -44,7 +44,7 @@ export function TourGroupMemberManagementSection({
             const isSelf = member.userId === signedInUser.userId
             const isOrganizer = member.userId === organizerUserId
             return (
-              <li key={member.membershipId} className="grid gap-3 border border-slate-200 bg-white p-4">
+              <li key={member.membershipId} className="grid gap-3 border border-sky-200 bg-gradient-to-br from-white via-cyan-50 to-slate-50 p-4">
                 <div className="grid gap-1">
                   <strong className="text-base font-semibold text-slate-950">
                     {member.userDisplayName ?? member.userId}
@@ -56,7 +56,7 @@ export function TourGroupMemberManagementSection({
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
+                      className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                       disabled={isBusy}
                       onClick={() => void onTransferOrganizer(member.userId)}
                     >
@@ -64,7 +64,7 @@ export function TourGroupMemberManagementSection({
                     </button>
                     <button
                       type="button"
-                      className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
+                      className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
                       disabled={isBusy}
                       onClick={() => void onKickMember(member.userId)}
                     >

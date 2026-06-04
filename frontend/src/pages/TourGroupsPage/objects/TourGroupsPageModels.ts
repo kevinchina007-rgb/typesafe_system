@@ -44,6 +44,7 @@ export const TOUR_GROUPS_PAGE_REGIONS: TourGroupsPageRegion[] = [
 
 export type TourGroupsPanelCommonProps = {
   pageMode?: TourGroupsPageMode
+  refreshToken?: number
   isBusy: boolean
   currentLanguage: AppLanguage
   travelers: TravelerResponse[]
@@ -66,6 +67,7 @@ export type TourGroupsPanelCommonProps = {
   onJoinGroup: (groupId: string, payload: { userId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
   onLeaveGroup: (groupId: string, payload: { userId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
   onAddMembershipTraveler: (groupId: string, payload: { userId: string; travelerId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
+  onRemoveMembershipTraveler: (groupId: string, payload: { userId: string; travelerId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
   onCreatePlanItem: (groupId: string, payload: {
     organizerUserId: string
     itemType: string

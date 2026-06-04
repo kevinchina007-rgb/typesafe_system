@@ -83,10 +83,11 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
 
   const isOrganizer = signedInUser?.userId === organizerUserId
   const isMember = memberships.some(membership => membership.userId === signedInUser?.userId && membership.status === 'Active')
-  const activeConversation =
-    conversationList?.conversations.find(conversation => conversation.conversationId === activeConversationId) ?? null
   const groupChatConversation =
     conversationList?.conversations.find(conversation => conversation.conversationType === 'GroupPublic') ?? null
+  const effectiveConversationId = activeConversationId ?? groupChatConversation?.conversationId ?? null
+  const activeConversation =
+    conversationList?.conversations.find(conversation => conversation.conversationId === effectiveConversationId) ?? groupChatConversation ?? null
   const hasConversationSelected = activeConversation !== null
 
   const memberDisplayNameMap = useMemo(() => {
@@ -168,6 +169,13 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
     if (!signedInUser || !isMember) return
     void reload()
   }, [groupId, signedInUser?.userId, isMember])
+
+  useEffect(() => {
+    if (activeConversationId || !conversationList?.groupChatConversationId) {
+      return
+    }
+    setActiveConversationId(conversationList.groupChatConversationId)
+  }, [activeConversationId, conversationList?.groupChatConversationId])
 
   useEffect(() => {
     if (!activeConversationId) {
@@ -281,16 +289,16 @@ export function TourGroupChatPanel(props: TourGroupChatPanelProps) {
           <div className="grid gap-2">
             <label>{translate('tourGroups.groupChat')}</label>
             <button
-              className={groupChatConversation?.conversationId === activeConversationId
+              className={groupChatConversation?.conversationId === effectiveConversationId
                 ? 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55 border-black bg-black text-white'
                 : 'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55'}
               type="button"
-              disabled={isBusy || !groupChatConversation}
-              onClick={() => {
-                if (!groupChatConversation) return
-                setActiveConversationId(groupChatConversation.conversationId)
-              }}
-            >
+                disabled={isBusy || !groupChatConversation}
+                onClick={() => {
+                  if (!groupChatConversation) return
+                  setActiveConversationId(groupChatConversation.conversationId)
+                }}
+              >
               {translate('tourGroups.groupChat')}
             </button>
           </div>

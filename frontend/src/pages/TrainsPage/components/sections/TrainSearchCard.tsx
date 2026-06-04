@@ -19,12 +19,6 @@ export function TrainSearchCard({
         await onSearch()
       }}
     >
-      <div className="grid gap-1">
-        <p className="text-sm font-bold text-slate-500">{translate('trains.searchModuleTitle')}</p>
-        <h3 className="m-0 text-2xl font-black text-slate-950">{translate('trains.title')}</h3>
-        <p className="m-0 text-sm leading-6 text-slate-500">{translate('trains.searchHint')}</p>
-      </div>
-
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr_220px_auto]">
         <label className="grid gap-2">
           <span className="text-sm font-medium text-slate-500">{translate('trains.departureStation')}</span>

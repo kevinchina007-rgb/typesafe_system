@@ -74,6 +74,9 @@ export const leaveTourGroup = (groupId: string, payload: { userId: string }): Pr
 export const addTourGroupMembershipTraveler = (groupId: string, payload: { userId: string; travelerId: string }): Promise<TourGroupDetailsResponse> =>
     executeJsonApiRequest<TourGroupDetailsResponse>('/AddMembershipTravelerPlanner', 'POST', { groupId, ...payload }).then(normalizeTourGroupDetails)
 
+export const removeTourGroupMembershipTraveler = (groupId: string, payload: { userId: string; travelerId: string }): Promise<TourGroupDetailsResponse> =>
+    executeJsonApiRequest<TourGroupDetailsResponse>('/RemoveMembershipTravelerPlanner', 'POST', { groupId, ...payload }).then(normalizeTourGroupDetails)
+
 export const kickTourGroupMember = (groupId: string, payload: { organizerUserId: string; targetUserId: string }): Promise<TourGroupDetailsResponse> =>
     executeJsonApiRequest<TourGroupDetailsResponse>('/KickTourGroupMemberPlanner', 'POST', { groupId, ...payload }).then(normalizeTourGroupDetails)
 
