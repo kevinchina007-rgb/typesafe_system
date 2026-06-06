@@ -7,3 +7,8 @@ final case class RegisterSiteAdminPlannerRequest(email: String, displayName: Str
 object RegisterSiteAdminPlannerRequest:
   given sourceEncoder: Encoder[RegisterSiteAdminPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[RegisterSiteAdminPlannerRequest] = deriveDecoder
+
+final case class UpdateSiteAdminManagerProfilePlannerRequest(managerId: String, displayName: String, logoAssetPath: Option[String])
+object UpdateSiteAdminManagerProfilePlannerRequest:
+  given sourceEncoder: Encoder[UpdateSiteAdminManagerProfilePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[UpdateSiteAdminManagerProfilePlannerRequest] = deriveDecoder

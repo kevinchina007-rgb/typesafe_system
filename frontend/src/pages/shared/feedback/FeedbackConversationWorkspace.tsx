@@ -51,6 +51,12 @@ type ChatIdentity = {
   fallback: string
 }
 
+const siteAdminIdentity: ChatIdentity = {
+  name: '网站管理者',
+  logoPath: null,
+  fallback: '网',
+}
+
 const airlineIdentityCatalog: Array<{ name: string; logoPath: string }> = [
   { name: '奶龙航空', logoPath: '/images/airlines/NL.svg' },
   { name: '科比航空', logoPath: '/images/airlines/LD.svg' },
@@ -164,6 +170,13 @@ function getThreadIdentity(
   supportIdentityOverrides: Record<string, SupportIdentityOverride>,
   cancellationOrderTitleById: Map<string, string>,
 ): ChatIdentity {
+  if (thread.kind === 'ManagerEscalation' && audience === 'Manager') {
+    return {
+      ...siteAdminIdentity,
+      logoPath: thread.siteAdminActorLogoAssetPath ?? null,
+    }
+  }
+
   const override = supportIdentityOverrides[thread.threadId]
   if (override) {
     return {
@@ -409,11 +422,17 @@ export function FeedbackConversationWorkspace({
                 {activeThread.messages.map((message, index) => {
                   const ownMessage = isOwnMessage(message.senderRole, audience)
                   const senderName = ownMessage && audience === 'User' ? audienceDisplayName : message.senderDisplayName
+                  const counterpartyAvatar =
+                    activeThread.kind === 'ManagerEscalation' && message.senderRole === 'SiteAdmin'
+                      ? { imageUrl: activeThread.siteAdminActorLogoAssetPath ?? null, fallback: siteAdminIdentity.fallback, useBackendAsset: true }
+                      : activeThread.kind === 'ManagerEscalation' && message.senderRole === 'Manager'
+                        ? { imageUrl: activeThread.managerActorLogoAssetPath ?? null, fallback: senderName.slice(0, 1) || '管', useBackendAsset: true }
+                      : audience === 'Manager'
+                        ? { imageUrl: null, fallback: senderName.slice(0, 1) || '客', useBackendAsset: false }
+                        : { imageUrl: activeIdentity.logoPath, fallback: activeIdentity.fallback, useBackendAsset: false }
                   const avatar = ownMessage
                     ? { imageUrl: audienceAvatarUrl, fallback: audienceDisplayName.slice(0, 1) || '我', useBackendAsset: true }
-                    : audience === 'Manager'
-                      ? { imageUrl: null, fallback: senderName.slice(0, 1) || '客', useBackendAsset: false }
-                      : { imageUrl: activeIdentity.logoPath, fallback: activeIdentity.fallback, useBackendAsset: false }
+                    : counterpartyAvatar
 
                   return (
                     <div key={message.messageId} className="grid gap-3">

@@ -75,7 +75,10 @@ function syncThreadBuckets(state: FeedbackChatState, nextThread: FeedbackThread)
   return {
     ...state,
     userThreads: nextThread.ownerUserId ? upsertThread(state.userThreads, nextThread) : state.userThreads,
-    managerThreads: nextThread.kind === 'ServiceReview' ? upsertThread(state.managerThreads, nextThread) : state.managerThreads,
+    managerThreads:
+      nextThread.kind === 'ServiceReview' || nextThread.kind === 'ManagerEscalation'
+        ? upsertThread(state.managerThreads, nextThread)
+        : state.managerThreads,
     siteAdminUserThreads: nextThread.kind === 'ServiceReview' ? upsertThread(state.siteAdminUserThreads, nextThread) : state.siteAdminUserThreads,
     siteAdminManagerThreads:
       nextThread.kind === 'ManagerEscalation' ? upsertThread(state.siteAdminManagerThreads, nextThread) : state.siteAdminManagerThreads,
@@ -107,7 +110,7 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
     set({ isLoading: true })
     try {
       const manager = getManagerSnap().signedInManagerSession
-      const response = await travelMvpApiClient.listManagerFeedbackThreads(manager?.managerType, manager?.scopeId)
+      const response = await travelMvpApiClient.listManagerFeedbackThreads(manager?.managerType, manager?.scopeId, manager?.managerId)
       const threads = sortThreads(response.threads)
       set({ managerThreads: threads, isLoading: false })
       return threads
@@ -119,7 +122,8 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
   loadSiteAdminThreads: async channel => {
     set({ isLoading: true })
     try {
-      const response = await travelMvpApiClient.listSiteAdminFeedbackThreads(channel)
+      const manager = getManagerSnap().signedInManagerSession
+      const response = await travelMvpApiClient.listSiteAdminFeedbackThreads(channel, manager?.managerId)
       const threads = sortThreads(response.threads)
       if (channel === 'user') {
         set({ siteAdminUserThreads: threads, isLoading: false })

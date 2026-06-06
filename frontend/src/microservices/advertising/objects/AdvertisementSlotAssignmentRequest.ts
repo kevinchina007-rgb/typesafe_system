@@ -1,4 +1,5 @@
 export type AdvertisementSlotAssignmentRequest = {
+  reviewerManagerId?: string
   slotIndex: number
 }
 

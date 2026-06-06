@@ -85,7 +85,7 @@ object GenerateAdvertisementImageCandidatesPlanner extends ConnectionApiPlan[Gen
       supporting.map(value => s"visual elements: $value"),
       advertisementKind.map(value => s"advertisement type: $value"),
       imageFactoryKind.map(value => s"image role: $value"),
-      Option.when(transparentBackground)("transparent background, isolated subject cutout, no scene backdrop"),
+      Option.when(transparentBackground)("transparent background, isolated subject cutout, keep only the requested subject, full object visible, no cropping, no scene backdrop, no shadow plate, no frame, no text"),
       avoidText.map(value => s"avoid: $value"),
       Some("wide advertising banner composition, leave room for editable overlay text, no watermark, no embedded letters")
     ).flatten.mkString(", ")

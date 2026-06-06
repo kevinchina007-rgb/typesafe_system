@@ -46,6 +46,13 @@ export const registerSiteAdmin = (payload: {
   }): Promise<CurrentManagerSessionResponse> =>
     executeJsonApiRequest('/RegisterSiteAdminPlanner', 'POST', payload)
 
+export const updateSiteAdminManagerProfile = (payload: {
+    managerId: string
+    displayName: string
+    logoAssetPath?: string | null
+  }): Promise<ManagerSessionResponse> =>
+    executeJsonApiRequest('/UpdateSiteAdminManagerProfilePlanner', 'POST', payload)
+
 export const registerRailwayManager = (payload: { operatorCode: string; email: string; displayName: string; password: string }): Promise<TrainAdminSessionResponse> =>
     executeJsonApiRequest('/RegisterRailwayManagerPlanner', 'POST', payload)
 

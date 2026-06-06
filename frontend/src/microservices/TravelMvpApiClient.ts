@@ -1,10 +1,12 @@
 import { approveAdvertisement } from '@/microservices/advertising/api/ApproveAdvertisementPlanner'
 import { assignAdvertisementSlot } from '@/microservices/advertising/api/AssignAdvertisementSlotPlanner'
+import { getAdvertisementDeliverySettings, saveAdvertisementDeliverySettings } from '@/microservices/advertising/api/AdvertisementDeliverySettingsPlanners'
 import { createAdvertisement } from '@/microservices/advertising/api/CreateAdvertisementPlanner'
 import { generateAdvertisementImageCandidates } from '@/microservices/advertising/api/GenerateAdvertisementImageCandidatesPlanner'
 import { generateAdvertisementTextCandidates } from '@/microservices/advertising/api/GenerateAdvertisementTextCandidatesPlanner'
 import { listMyAdvertisements, listPendingAdvertisements, listReviewedAdvertisements, listDeliverableAdvertisements } from '@/microservices/advertising/api/ListAdvertisementsPlanner'
 import { pauseAdvertisement } from '@/microservices/advertising/api/PauseAdvertisementPlanner'
+import { pauseAdvertisementDisplay } from '@/microservices/advertising/api/PauseAdvertisementDisplayPlanner'
 import { rejectAdvertisement } from '@/microservices/advertising/api/RejectAdvertisementPlanner'
 import { submitAdvertisementForReview } from '@/microservices/advertising/api/SubmitAdvertisementForReviewPlanner'
 import { updateAdvertisement } from '@/microservices/advertising/api/UpdateAdvertisementPlanner'
@@ -19,7 +21,7 @@ import { listMyReviews, listReviewsByResource, getReviewResourceSummary, getRevi
 import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
 import { searchHotelsPlanner, getHotelDetailsPlanner } from '@/microservices/hotel/api'
 import { createUser, loginUser, getUser, uploadUserAvatar, updateUserProfile } from '@/microservices/identity/api/UserQueryPlanners'
-import { registerAirlineManager, registerHotelManager, registerSiteAdmin, registerRailwayManager, registerAttractionManager, listManagedAttractions, createAttraction, createAttractionTicketType, createAttractionTicketSession, createAttractionTicketRule, listManagedTrains, createTrainJourney, createManagerRoomType, listManagedHotels, listManagerTasks, batchConfirmManagerBookingItems, batchRejectManagerBookingItems, listManagerFlights, listManagerFlightOrders, listManagerRefundTasks, updateAirlineManagerProfile, updateHotelManagerProfile, createManagerFlight, toggleManagerFlightStatus, confirmManagerBookingItem, rejectManagerBookingItem } from '@/microservices/operations/api/ManagerPlanners'
+import { registerAirlineManager, registerHotelManager, registerSiteAdmin, updateSiteAdminManagerProfile, registerRailwayManager, registerAttractionManager, listManagedAttractions, createAttraction, createAttractionTicketType, createAttractionTicketSession, createAttractionTicketRule, listManagedTrains, createTrainJourney, createManagerRoomType, listManagedHotels, listManagerTasks, batchConfirmManagerBookingItems, batchRejectManagerBookingItems, listManagerFlights, listManagerFlightOrders, listManagerRefundTasks, updateAirlineManagerProfile, updateHotelManagerProfile, createManagerFlight, toggleManagerFlightStatus, confirmManagerBookingItem, rejectManagerBookingItem } from '@/microservices/operations/api/ManagerPlanners'
 import { createPaymentLink } from '@/microservices/order/api/FindOrderPaymentPlanner'
 import { createOrder, addTrainItemToOrder, addAttractionItemToOrder, createHotelOrder, getOrder, listOrders, payOrder, cancelOrder, requestRefund, approveRefund, rejectRefund } from '@/microservices/order/api/OrderPlanners'
 import { createTourGroup, listTourGroups, getTourGroup, joinTourGroup, leaveTourGroup, addTourGroupMembershipTraveler, removeTourGroupMembershipTraveler, kickTourGroupMember, blacklistTourGroupMember, transferTourGroupLeader, createTourGroupPlanItem, createTourGroupPlanOption, createTourGroupSelection, submitTourGroupSelection, confirmTourGroupSelection, rejectTourGroupSelection, payTourGroupSelection, batchPayTourGroupSelections, batchConfirmTourGroupSelections, batchRejectTourGroupSelections, listTourGroupBookings, getTourGroupChatSettings, updateTourGroupChatSettings, listTourGroupChatMessages, sendTourGroupChatMessage, listTourGroupDirectConversations, listTourGroupConversations, searchTourGroupConversations, searchTourGroupMessages, getOrCreateTourGroupDirectConversation, listDirectConversationMessages, listConversationMessages, markConversationRead, uploadConversationAttachment, sendConversationMessage, sendDirectConversationMessage, editConversationMessage, deleteConversationMessage, recallConversationMessage, addConversationReaction, removeConversationReaction, updateDirectConversationMuteState, updateDirectConversationArchiveState } from '@/microservices/tour-group/api/TourGroupPlanners'
@@ -29,6 +31,8 @@ import { createTraveler, updateTraveler, listTravelers, deleteTraveler } from '@
 export const travelMvpApiClient = {
   approveAdvertisement,
   assignAdvertisementSlot,
+  getAdvertisementDeliverySettings,
+  saveAdvertisementDeliverySettings,
   createAdvertisement,
   generateAdvertisementImageCandidates,
   generateAdvertisementTextCandidates,
@@ -37,6 +41,7 @@ export const travelMvpApiClient = {
   listReviewedAdvertisements,
   listDeliverableAdvertisements,
   pauseAdvertisement,
+  pauseAdvertisementDisplay,
   rejectAdvertisement,
   submitAdvertisementForReview,
   updateAdvertisement,
@@ -120,6 +125,7 @@ export const travelMvpApiClient = {
   registerAirlineManager,
   registerHotelManager,
   registerSiteAdmin,
+  updateSiteAdminManagerProfile,
   registerRailwayManager,
   registerAttractionManager,
   listManagedAttractions,

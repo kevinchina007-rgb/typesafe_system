@@ -1,4 +1,5 @@
 import { AuthRequiredDialog } from '@/pages/shared/auth/AuthRequiredDialog'
+import { AdvertisementCardRail } from '@/pages/shared/advertising/sections/AdvertisementCardRail'
 import { FlightBookingWindowDialog, FlightPageHero, FlightResultsSection, FlightSearchCard } from './components'
 import { buildLateBookingNotice } from './functions'
 import { useFlightsPageController } from './hooks'
@@ -21,6 +22,8 @@ export function FlightsPage(props: FlightsPageProps) {
     signedInUserId,
     isGuestMode,
     isTourGroupTargetMode,
+    deliveryAdvertisements,
+    handleOpenAdvertisement,
     openAuthDialog,
     closeAuthDialog,
     openLateBookingReview,
@@ -101,7 +104,17 @@ export function FlightsPage(props: FlightsPageProps) {
           initialSelectedCabin={initialSelectedCabin}
         />
 
-        <div className="mt-auto h-36 border-2 border-dashed border-slate-200 bg-white" aria-label="horizontal-ad-slot" />
+        {!isTourGroupTargetMode && deliveryAdvertisements.length > 0 ? (
+          <section className="mt-auto grid gap-4 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
+            <p className="text-sm font-bold text-slate-500">{translate('advertising.deliveryEyebrow')}</p>
+            <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.deliveryTitle')}</h3>
+            <AdvertisementCardRail
+              advertisements={deliveryAdvertisements}
+              translate={translate}
+              onOpenAdvertisement={handleOpenAdvertisement}
+            />
+          </section>
+        ) : null}
       </section>
 
       <FlightBookingWindowDialog

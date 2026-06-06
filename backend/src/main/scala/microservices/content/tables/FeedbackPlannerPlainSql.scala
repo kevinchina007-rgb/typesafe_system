@@ -30,7 +30,8 @@ object FeedbackPlannerPlainSql:
     """
       select ft.thread_id, ft.kind, ft.manager_type, ft.owner_user_id, ft.owner_user_display_name,
              ft.title, ft.subtitle, ft.resource_type, ft.resource_summary_title, ft.order_id, ft.order_item_id,
-             ft.review_id, ft.related_thread_id, ft.unread_by_user, ft.unread_by_manager, ft.unread_by_site_admin,
+             ft.review_id, ft.related_thread_id, ft.manager_actor_id, ft.site_admin_actor_id,
+             ft.unread_by_user, ft.unread_by_manager, ft.unread_by_site_admin,
              ft.created_at, ft.updated_at
       from feedback_threads ft
     """
@@ -90,6 +91,28 @@ object FeedbackPlannerPlainSql:
           queryThreads(connection, selectThreadSql + " where ft.kind = ? and ft.manager_type = ? order by ft.updated_at desc", List(FeedbackThreadKind.ServiceReview.toString, managerType))
         }
 
+  def listManagerParticipantThreads(connection: Connection, managerType: String, managerActorId: String): IO[List[FeedbackThread]] =
+    IO.blocking {
+      queryThreads(
+        connection,
+        selectThreadSql + " where ft.kind = ? and ft.manager_type = ? and ft.manager_actor_id = ? order by ft.updated_at desc",
+        List(FeedbackThreadKind.ManagerEscalation.toString, FeedbackManagerType.fromText(managerType).toString, managerActorId)
+      )
+    }
+
+  def listSiteAdminParticipantThreads(connection: Connection, channel: String, siteAdminActorId: String): IO[List[FeedbackThread]] =
+    val kind = if channel.trim.equalsIgnoreCase("manager") then FeedbackThreadKind.ManagerEscalation else FeedbackThreadKind.ServiceReview
+    IO.blocking {
+      if kind == FeedbackThreadKind.ManagerEscalation then
+        queryThreads(
+          connection,
+          selectThreadSql + " where ft.kind = ? and ft.site_admin_actor_id = ? order by ft.updated_at desc",
+          List(kind.toString, siteAdminActorId)
+        )
+      else
+        queryThreads(connection, selectThreadSql + " where ft.kind = ? order by ft.updated_at desc", List(kind.toString))
+    }
+
   def listByKind(connection: Connection, kind: FeedbackThreadKind): IO[List[FeedbackThread]] =
     IO.blocking {
       queryThreads(connection, selectThreadSql + " where kind = ? order by updated_at desc", List(kind.toString))
@@ -122,6 +145,49 @@ object FeedbackPlannerPlainSql:
         List(orderId)
       ).headOption
     }
+
+  def findManagerSiteAdminThread(connection: Connection, managerActorId: String, siteAdminActorId: String): IO[Option[FeedbackThread]] =
+    IO.blocking {
+      queryThreads(
+        connection,
+        selectThreadSql + " where ft.kind = ? and ft.manager_actor_id = ? and ft.site_admin_actor_id = ? order by ft.updated_at desc",
+        List(FeedbackThreadKind.ManagerEscalation.toString, managerActorId, siteAdminActorId)
+      ).headOption
+    }
+
+  def findManagerActorLogoAssetPath(connection: Connection, managerType: FeedbackManagerType, managerActorId: Option[String]): IO[Option[String]] =
+    (managerType, managerActorId.map(_.trim).filter(_.nonEmpty)) match
+      case (FeedbackManagerType.Airline, Some(actorId)) =>
+        IO.blocking {
+          PlainSqlSupport.withStatement(
+            connection,
+            """
+              select a.logo_asset_path
+              from airline_managers m
+              join airlines a on a.airline_id = m.airline_id
+              where m.manager_id = ?
+            """
+          ) { statement =>
+            statement.setString(1, actorId)
+            val resultSet = statement.executeQuery()
+            try if resultSet.next() then Option(resultSet.getString("logo_asset_path")).map(_.trim).filter(_.nonEmpty) else None
+            finally resultSet.close()
+          }
+        }
+      case _ => IO.pure(None)
+
+  def findSiteAdminActorLogoAssetPath(connection: Connection, siteAdminActorId: Option[String]): IO[Option[String]] =
+    siteAdminActorId.map(_.trim).filter(_.nonEmpty) match
+      case Some(actorId) =>
+        IO.blocking {
+          PlainSqlSupport.withStatement(connection, "select logo_asset_path from site_admin_managers where manager_id = ?") { statement =>
+            statement.setString(1, actorId)
+            val resultSet = statement.executeQuery()
+            try if resultSet.next() then Option(resultSet.getString("logo_asset_path")).map(_.trim).filter(_.nonEmpty) else None
+            finally resultSet.close()
+          }
+        }
+      case None => IO.pure(None)
 
   def listMessages(connection: Connection, threadId: SupportTicketId): IO[List[FeedbackMessage]] =
     IO.blocking {
@@ -314,12 +380,13 @@ object FeedbackPlannerPlainSql:
         update feedback_threads
         set kind = ?, manager_type = ?, owner_user_id = ?, owner_user_display_name = ?, title = ?, subtitle = ?,
             resource_type = ?, resource_summary_title = ?, order_id = ?, order_item_id = ?, review_id = ?,
-            related_thread_id = ?, unread_by_user = ?, unread_by_manager = ?, unread_by_site_admin = ?, created_at = ?, updated_at = ?
+            related_thread_id = ?, manager_actor_id = ?, site_admin_actor_id = ?,
+            unread_by_user = ?, unread_by_manager = ?, unread_by_site_admin = ?, created_at = ?, updated_at = ?
         where thread_id = ?
       """
     ) { statement =>
       setThread(statement, thread, 1)
-      statement.setString(18, thread.threadId.value)
+      statement.setString(20, thread.threadId.value)
       statement.executeUpdate()
     }
     if updatedRows == 0 then
@@ -329,9 +396,10 @@ object FeedbackPlannerPlainSql:
           insert into feedback_threads(
             thread_id, kind, manager_type, owner_user_id, owner_user_display_name,
             title, subtitle, resource_type, resource_summary_title, order_id, order_item_id,
-            review_id, related_thread_id, unread_by_user, unread_by_manager, unread_by_site_admin,
+            review_id, related_thread_id, manager_actor_id, site_admin_actor_id,
+            unread_by_user, unread_by_manager, unread_by_site_admin,
             created_at, updated_at
-          ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
       ) { statement =>
         statement.setString(1, thread.threadId.value)
@@ -353,11 +421,13 @@ object FeedbackPlannerPlainSql:
     statement.setString(start + 9, thread.orderItemId.map(_.value).orNull)
     statement.setString(start + 10, thread.reviewId.map(_.value).orNull)
     statement.setString(start + 11, thread.relatedThreadId.map(_.value).orNull)
-    statement.setInt(start + 12, thread.unreadByUser)
-    statement.setInt(start + 13, thread.unreadByManager)
-    statement.setInt(start + 14, thread.unreadBySiteAdmin)
-    statement.setTimestamp(start + 15, Timestamp.from(thread.createdAt))
-    statement.setTimestamp(start + 16, Timestamp.from(thread.updatedAt))
+    statement.setString(start + 12, thread.managerActorId.orNull)
+    statement.setString(start + 13, thread.siteAdminActorId.orNull)
+    statement.setInt(start + 14, thread.unreadByUser)
+    statement.setInt(start + 15, thread.unreadByManager)
+    statement.setInt(start + 16, thread.unreadBySiteAdmin)
+    statement.setTimestamp(start + 17, Timestamp.from(thread.createdAt))
+    statement.setTimestamp(start + 18, Timestamp.from(thread.updatedAt))
 
   private def readThread(resultSet: ResultSet): FeedbackThread =
     FeedbackThread(
@@ -374,6 +444,8 @@ object FeedbackPlannerPlainSql:
       Option(resultSet.getString("order_item_id")).map(OrderItemId.apply),
       Option(resultSet.getString("review_id")).map(ReviewId.apply),
       Option(resultSet.getString("related_thread_id")).map(SupportTicketId.apply),
+      Option(resultSet.getString("manager_actor_id")),
+      Option(resultSet.getString("site_admin_actor_id")),
       resultSet.getInt("unread_by_user"),
       resultSet.getInt("unread_by_manager"),
       resultSet.getInt("unread_by_site_admin"),

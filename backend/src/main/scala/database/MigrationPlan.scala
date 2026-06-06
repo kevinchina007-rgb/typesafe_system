@@ -47,7 +47,9 @@ object MigrationPlan:
     loadMigrationStep(34, "train_reference_generated_batch_refresh", "V34__train_reference_generated_batch_refresh.sql"),
     loadMigrationStep(35, "remove_legacy_g_train_seed_rows", "V35__remove_legacy_g_train_seed_rows.sql"),
     loadMigrationStep(36, "site_admin_managers", "V36__site_admin_managers.sql"),
-    loadMigrationStep(37, "advertising_creative_layout", "V37__advertising_creative_layout.sql")
+    loadMigrationStep(37, "advertising_creative_layout", "V37__advertising_creative_layout.sql"),
+    loadMigrationStep(38, "advertising_review_feedback_settings", "V38__advertising_review_feedback_settings.sql"),
+    loadMigrationStep(39, "site_admin_profile_logo", "V39__site_admin_profile_logo.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

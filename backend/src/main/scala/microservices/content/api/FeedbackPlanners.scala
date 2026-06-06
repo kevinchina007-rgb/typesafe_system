@@ -16,7 +16,24 @@ object ListFeedbackThreadsPlanner extends ConnectionApiPlan[ListFeedbackThreadsP
     val threads =
       input.userId
         .map(userId => FeedbackPlannerPlainSql.listByOwnerUserId(connection, userId))
-        .orElse(input.managerType.map(managerType => FeedbackPlannerPlainSql.listServiceReviewsByManagerType(connection, managerType, input.scopeId)))
+        .orElse(
+          input.managerType.map { managerType =>
+            input.managerActorId.map(_.trim).filter(_.nonEmpty) match
+              case Some(managerActorId) =>
+                (
+                  FeedbackPlannerPlainSql.listServiceReviewsByManagerType(connection, managerType, input.scopeId),
+                  FeedbackPlannerPlainSql.listManagerParticipantThreads(connection, managerType, managerActorId)
+                ).mapN((serviceThreads, managerThreads) => mergeThreads(serviceThreads, managerThreads))
+              case None =>
+                FeedbackPlannerPlainSql.listServiceReviewsByManagerType(connection, managerType, input.scopeId)
+          }
+        )
+        .orElse(
+          for
+            channel <- input.channel
+            siteAdminActorId <- input.siteAdminActorId.map(_.trim).filter(_.nonEmpty)
+          yield FeedbackPlannerPlainSql.listSiteAdminParticipantThreads(connection, channel, siteAdminActorId)
+        )
         .orElse(input.channel.map(channel => FeedbackPlannerPlainSql.listByKind(connection, feedbackKindForChannel(channel))))
         .getOrElse(FeedbackPlannerPlainSql.listAll(connection))
 
@@ -165,11 +182,20 @@ object EscalateFeedbackThreadPlanner extends ConnectionApiPlan[EscalateFeedbackT
       sourceThread <- requireFeedbackThread(connection, SupportTicketId(input.threadId))
       escalatedThread = createEscalatedFeedbackThread(sourceThread, Instant.now())
       _ <- FeedbackPlannerPlainSql.saveThread(connection, escalatedThread)
-    yield FeedbackThreadDetailsPlannerResponse(escalatedThread, List.empty)
+      response <- toThreadDetailsResponse(connection, escalatedThread)
+    yield response
 
 private def feedbackKindForChannel(channel: String): FeedbackThreadKind =
   if channel.trim.equalsIgnoreCase("manager") then FeedbackThreadKind.ManagerEscalation
   else FeedbackThreadKind.ServiceReview
+
+private def mergeThreads(first: List[FeedbackThread], second: List[FeedbackThread]): List[FeedbackThread] =
+  (first ++ second)
+    .groupBy(_.threadId.value)
+    .values
+    .map(_.maxBy(_.updatedAt))
+    .toList
+    .sortBy(thread => thread.updatedAt)(Ordering[java.time.Instant].reverse)
 
 private def requireFeedbackThread(connection: Connection, threadId: SupportTicketId): IO[FeedbackThread] =
   FeedbackPlannerPlainSql.findByThreadId(connection, threadId).flatMap {
@@ -178,7 +204,11 @@ private def requireFeedbackThread(connection: Connection, threadId: SupportTicke
   }
 
 private def toThreadDetailsResponse(connection: Connection, thread: FeedbackThread): IO[FeedbackThreadDetailsPlannerResponse] =
-  FeedbackPlannerPlainSql.listMessages(connection, thread.threadId).map(messages => FeedbackThreadDetailsPlannerResponse(thread, messages))
+  for
+    messages <- FeedbackPlannerPlainSql.listMessages(connection, thread.threadId)
+    managerActorLogo <- FeedbackPlannerPlainSql.findManagerActorLogoAssetPath(connection, thread.managerType, thread.managerActorId)
+    siteAdminActorLogo <- FeedbackPlannerPlainSql.findSiteAdminActorLogoAssetPath(connection, thread.siteAdminActorId)
+  yield FeedbackThreadDetailsPlannerResponse(thread, messages, managerActorLogo, siteAdminActorLogo)
 
 private def toThreadListResponse(connection: Connection)(threads: List[FeedbackThread]): IO[FeedbackThreadListPlannerResponse] =
   threads.traverse(toThreadDetailsResponse(connection, _)).map(FeedbackThreadListPlannerResponse.apply)

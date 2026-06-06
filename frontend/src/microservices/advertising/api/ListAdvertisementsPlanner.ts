@@ -15,7 +15,7 @@ export const listMyAdvertisements = (ownerManagerId: string, ownerType: string):
 export const listPendingAdvertisements = (): Promise<AdvertisementListResponse> =>
   executeJsonApiRequest('/ListAdvertisementsPlanner', 'POST', {
     placement: undefined,
-    reviewStatus: 'Pending',
+    reviewStatus: 'PendingReview',
     reviewStatuses: undefined,
     ownerManagerId: undefined,
     ownerType: undefined,

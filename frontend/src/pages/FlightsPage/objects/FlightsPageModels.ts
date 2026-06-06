@@ -3,6 +3,7 @@ import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { AppLanguage, AppViewKey, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightPlannerRequest'
+import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
 import type {
   FlightDailyLowestPricesPlannerRequest,
@@ -103,6 +104,7 @@ export type FlightsPageController = {
   isTourGroupTargetMode: boolean
   targetFlightResponses: FlightPlannerResponse[]
   targetFlightResultGroups: FlightResultGroup[]
+  deliveryAdvertisements: AdvertisementResponse[]
   openAuthDialog: () => void
   closeAuthDialog: () => void
   openLateBookingReview: (flightResponse: FlightPlannerResponse) => void
@@ -113,5 +115,6 @@ export type FlightsPageController = {
   bookFlight: (payload: BookFlightPlannerRequest) => Promise<void>
   selectedTravelerIds: string[]
   toggleTravelerSelection: (travelerId: string) => void
+  handleOpenAdvertisement: (advertisement: AdvertisementResponse) => void
   initialSelectedCabin: string | null
 }

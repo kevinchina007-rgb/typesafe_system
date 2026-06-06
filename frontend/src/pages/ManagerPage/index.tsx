@@ -354,7 +354,7 @@ export function ManagerPage(props: ManagerPageProps) {
 
       {shouldShowFeedback ? (
         <SupplierFeedbackSection
-          title={translate('manager.feedback.title')}
+          title={translate('feedback.title')}
           currentManagerSession={currentManagerSession}
           managedFlightPlannerResponses={managedFlightPlannerResponses}
           managerTaskResponses={managerTaskResponses}

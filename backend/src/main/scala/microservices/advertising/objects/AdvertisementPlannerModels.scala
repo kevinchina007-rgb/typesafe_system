@@ -157,6 +157,41 @@ object AdvertisementSlotAssignmentRequest:
   given sourceEncoder: Encoder[AdvertisementSlotAssignmentRequest] = deriveEncoder
   given sourceDecoder: Decoder[AdvertisementSlotAssignmentRequest] = deriveDecoder
 
+final case class AdvertisementDeliverySettingsResponse(
+    placement: String,
+    rotationIntervalSeconds: Int,
+    playOrder: String,
+    startAt: Option[String],
+    endAt: Option[String],
+    updatedByManagerId: Option[String],
+    updatedAt: String
+)
+
+object AdvertisementDeliverySettingsResponse:
+  given sourceEncoder: Encoder[AdvertisementDeliverySettingsResponse] = deriveEncoder
+  given sourceDecoder: Decoder[AdvertisementDeliverySettingsResponse] = deriveDecoder
+
+final case class GetAdvertisementDeliverySettingsRequest(
+    placement: String
+)
+
+object GetAdvertisementDeliverySettingsRequest:
+  given sourceEncoder: Encoder[GetAdvertisementDeliverySettingsRequest] = deriveEncoder
+  given sourceDecoder: Decoder[GetAdvertisementDeliverySettingsRequest] = deriveDecoder
+
+final case class SaveAdvertisementDeliverySettingsRequest(
+    placement: String,
+    rotationIntervalSeconds: Int,
+    playOrder: String,
+    startAt: Option[String],
+    endAt: Option[String],
+    updatedByManagerId: String
+)
+
+object SaveAdvertisementDeliverySettingsRequest:
+  given sourceEncoder: Encoder[SaveAdvertisementDeliverySettingsRequest] = deriveEncoder
+  given sourceDecoder: Decoder[SaveAdvertisementDeliverySettingsRequest] = deriveDecoder
+
 final case class UploadAdvertisementImageRequest(
     originalFileName: String,
     mimeType: String,

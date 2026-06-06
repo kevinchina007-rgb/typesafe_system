@@ -83,6 +83,27 @@ object AdvertisementPlainSql:
       ) values (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
+  private val selectDeliverySettingsSql: String =
+    """
+      select placement, rotation_interval_seconds, play_order, start_at, end_at, updated_by_manager_id, updated_at
+      from advertisement_delivery_settings
+      where placement = ?
+    """
+
+  private val upsertDeliverySettingsSql: String =
+    """
+      insert into advertisement_delivery_settings(
+        placement, rotation_interval_seconds, play_order, start_at, end_at, updated_by_manager_id, updated_at
+      ) values (?, ?, ?, ?, ?, ?, ?)
+      on conflict (placement) do update
+      set rotation_interval_seconds = excluded.rotation_interval_seconds,
+          play_order = excluded.play_order,
+          start_at = excluded.start_at,
+          end_at = excluded.end_at,
+          updated_by_manager_id = excluded.updated_by_manager_id,
+          updated_at = excluded.updated_at
+    """
+
   def list(connection: Connection, request: ListAdvertisementsRequest): IO[ListAdvertisementsResponse] =
     IO.blocking {
       val (sql, parameters) = listSql(request)
@@ -199,6 +220,76 @@ object AdvertisementPlainSql:
         reviewedAt = updatedAt
       )
       readById(connection, request.advertisementId)
+    }
+
+  def pauseDisplayBySiteAdmin(connection: Connection, request: AdvertisementReviewDecisionRequest, updatedAt: Instant): IO[AdvertisementResponse] =
+    IO.blocking {
+      val current = readById(connection, request.advertisementId)
+      val statement = connection.prepareStatement(
+        "update advertisements set delivery_status = ?, slot_index = null, updated_at = ? where advertisement_id = ?"
+      )
+      try
+        statement.setString(1, AdvertisementDeliveryStatus.Paused.toString)
+        statement.setTimestamp(2, Timestamp.from(updatedAt))
+        statement.setString(3, request.advertisementId)
+        val updatedRows = statement.executeUpdate()
+        if updatedRows == 0 then throw AdvertisementError.AdvertisementWasNotFound(AdvertisementId(request.advertisementId))
+      finally statement.close()
+
+      insertReview(
+        connection = connection,
+        advertisementId = request.advertisementId,
+        reviewerManagerId = request.reviewerManagerId,
+        decision = AdvertisementReviewDecision.Approved,
+        reviewNote = request.reviewNote.map(_.trim).filter(_.nonEmpty).orElse(Some("Paused display")),
+        reviewedAt = updatedAt
+      )
+      normalizeActiveSlots(connection, current.placement, updatedAt)
+      readById(connection, request.advertisementId)
+    }
+
+  def findById(connection: Connection, advertisementId: String): IO[AdvertisementResponse] =
+    IO.blocking(readById(connection, advertisementId))
+
+  def getDeliverySettings(connection: Connection, request: GetAdvertisementDeliverySettingsRequest, now: Instant): IO[AdvertisementDeliverySettingsResponse] =
+    IO.blocking {
+      val placement = AdvertisementPlacement.fromText(request.placement).toString
+      val statement = connection.prepareStatement(selectDeliverySettingsSql)
+      try
+        statement.setString(1, placement)
+        val resultSet = statement.executeQuery()
+        try
+          if resultSet.next() then readDeliverySettings(resultSet)
+          else AdvertisementDeliverySettingsResponse(
+            placement = placement,
+            rotationIntervalSeconds = 5,
+            playOrder = "Manual",
+            startAt = None,
+            endAt = None,
+            updatedByManagerId = None,
+            updatedAt = now.toString
+          )
+        finally resultSet.close()
+      finally statement.close()
+    }
+
+  def saveDeliverySettings(connection: Connection, request: SaveAdvertisementDeliverySettingsRequest, updatedAt: Instant): IO[AdvertisementDeliverySettingsResponse] =
+    IO.blocking {
+      val placement = AdvertisementPlacement.fromText(request.placement).toString
+      val statement = connection.prepareStatement(upsertDeliverySettingsSql)
+      try
+        statement.setString(1, placement)
+        statement.setInt(2, request.rotationIntervalSeconds.max(1))
+        statement.setString(3, normalizePlayOrder(request.playOrder))
+        statement.setTimestamp(4, request.startAt.map(Instant.parse).map(Timestamp.from).orNull)
+        statement.setTimestamp(5, request.endAt.map(Instant.parse).map(Timestamp.from).orNull)
+        statement.setString(6, request.updatedByManagerId)
+        statement.setTimestamp(7, Timestamp.from(updatedAt))
+        statement.executeUpdate()
+      finally statement.close()
+      readDeliverySettingsByPlacement(connection, placement).getOrElse(
+        throw new IllegalStateException(s"Delivery settings '$placement' were not saved")
+      )
     }
 
   def uploadImage(connection: Connection, request: UploadAdvertisementImageRequest, createdAt: Instant): IO[UploadAdvertisementImageResponse] =
@@ -415,6 +506,56 @@ object AdvertisementPlainSql:
       finally resultSet.close()
     finally statement.close()
 
+  private def readDeliverySettingsByPlacement(connection: Connection, placement: String): Option[AdvertisementDeliverySettingsResponse] =
+    val statement = connection.prepareStatement(selectDeliverySettingsSql)
+    try
+      statement.setString(1, placement)
+      val resultSet = statement.executeQuery()
+      try
+        if resultSet.next() then Some(readDeliverySettings(resultSet)) else None
+      finally resultSet.close()
+    finally statement.close()
+
+  private def readDeliverySettings(resultSet: ResultSet): AdvertisementDeliverySettingsResponse =
+    AdvertisementDeliverySettingsResponse(
+      placement = resultSet.getString("placement"),
+      rotationIntervalSeconds = resultSet.getInt("rotation_interval_seconds"),
+      playOrder = resultSet.getString("play_order"),
+      startAt = Option(resultSet.getTimestamp("start_at")).map(_.toInstant.toString),
+      endAt = Option(resultSet.getTimestamp("end_at")).map(_.toInstant.toString),
+      updatedByManagerId = Option(resultSet.getString("updated_by_manager_id")),
+      updatedAt = resultSet.getTimestamp("updated_at").toInstant.toString
+    )
+
+  private def normalizeActiveSlots(connection: Connection, placement: String, updatedAt: Instant): Unit =
+    val statement = connection.prepareStatement(
+      """
+        select advertisement_id
+        from advertisements
+        where placement = ? and review_status = ? and delivery_status = ? and slot_index is not null
+        order by slot_index asc, updated_at asc
+      """
+    )
+    try
+      statement.setString(1, placement)
+      statement.setString(2, AdvertisementReviewStatus.Approved.toString)
+      statement.setString(3, AdvertisementDeliveryStatus.Active.toString)
+      val resultSet = statement.executeQuery()
+      try
+        val ids = List.newBuilder[String]
+        while resultSet.next() do ids += resultSet.getString("advertisement_id")
+        ids.result().take(4).zipWithIndex.foreach { case (advertisementId, index) =>
+          val updateStatement = connection.prepareStatement("update advertisements set slot_index = ?, updated_at = ? where advertisement_id = ?")
+          try
+            updateStatement.setInt(1, index + 1)
+            updateStatement.setTimestamp(2, Timestamp.from(updatedAt))
+            updateStatement.setString(3, advertisementId)
+            updateStatement.executeUpdate()
+          finally updateStatement.close()
+        }
+      finally resultSet.close()
+    finally statement.close()
+
   private def listReviews(connection: Connection, advertisementId: String): List[AdvertisementReviewResponse] =
     val statement = connection.prepareStatement(listReviewsSql)
     try
@@ -473,12 +614,9 @@ object AdvertisementPlainSql:
     request.deliverableOnly.getOrElse(false) match
       case false => true
       case true =>
-        val currentTime = request.currentTime.map(Instant.parse).getOrElse(Instant.now())
         advertisement.reviewStatus == AdvertisementReviewStatus.Approved.toString &&
           advertisement.deliveryStatus == AdvertisementDeliveryStatus.Active.toString &&
-          advertisement.slotIndex.nonEmpty &&
-          !currentTime.isBefore(Instant.parse(advertisement.startAt)) &&
-          !currentTime.isAfter(Instant.parse(advertisement.endAt))
+          advertisement.slotIndex.nonEmpty
 
   private def bindStrings(statement: PreparedStatement, values: List[String]): Unit =
     values.zipWithIndex.foreach { case (value, index) => statement.setString(index + 1, value) }
@@ -494,6 +632,11 @@ object AdvertisementPlainSql:
     value.map(_.trim).filter(_.nonEmpty).map(_.toLowerCase) match
       case Some("companypromotion") | Some("company") => "CompanyPromotion"
       case _ => "ResourcePromotion"
+
+  private def normalizePlayOrder(value: String): String =
+    value.trim.toLowerCase match
+      case "random" | "随机" => "Random"
+      case _                => "Manual"
 
   private def extensionFromFileName(fileName: String): String =
     fileName.lastIndexOf('.') match

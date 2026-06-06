@@ -16,6 +16,8 @@ export type FeedbackThreadResponse = {
   orderItemId: string | null
   reviewId: string | null
   relatedThreadId: string | null
+  managerActorLogoAssetPath?: string | null
+  siteAdminActorLogoAssetPath?: string | null
   unreadByUser: number
   unreadByManager: number
   unreadBySiteAdmin: number

@@ -448,9 +448,9 @@ export function useManagerPageController({
   const canSubmitAdvertisements = activeManagerType === 'airline' || activeManagerType === 'hotel' || activeManagerType === 'train' || activeManagerType === 'attraction'
   const shouldShowWorkspace =
     !isSiteAdmin &&
-    (activeSection === 'workspace' || (activeManagerType === 'airline' && activeSection === 'feedback')) &&
+    activeSection === 'workspace' &&
     !(activeManagerType === 'hotel' && currentViewKey === 'managerProfile')
-  const shouldShowFeedback = !isSiteAdmin && activeSection === 'feedback' && activeManagerType !== 'airline'
+  const shouldShowFeedback = !isSiteAdmin && activeSection === 'feedback'
   const shouldShowAdvertising = !isSiteAdmin && activeSection === 'advertising' && canSubmitAdvertisements
   const shouldShowHotelProfile = !isSiteAdmin && currentViewKey === 'managerProfile' && activeManagerType === 'hotel'
   const shouldShowSiteAdminPanel = isSiteAdmin && (activeSection === 'blogAudit' || activeSection === 'advertisingReview' || activeSection === 'siteAdminFeedback')

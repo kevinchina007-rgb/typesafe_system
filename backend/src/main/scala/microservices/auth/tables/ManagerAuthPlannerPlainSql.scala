@@ -15,7 +15,10 @@ object ManagerAuthPlannerPlainSql:
       val managerType = normalizeManagerType(input.managerType)
       val managerTable = tableFor(managerType)
       val scopeColumn = scopeColumnFor(managerType)
-      val logoSelect = if managerType == "Airline" then "a.logo_asset_path as logo_asset_path" else "null as logo_asset_path"
+      val logoSelect =
+        if managerType == "Airline" then "a.logo_asset_path as logo_asset_path"
+        else if managerType == "SiteAdmin" then "m.logo_asset_path as logo_asset_path"
+        else "null as logo_asset_path"
       val logoJoin = if managerType == "Airline" then "left join airlines a on a.airline_id = m.airline_id" else ""
       val scopeSelect = if managerType == "SiteAdmin" then "'site-admin' as scope_id" else s"m.$scopeColumn as scope_id"
       PlainSqlSupport.withStatement(
@@ -51,12 +54,13 @@ object ManagerAuthPlannerPlainSql:
         """
           select s.session_id, s.manager_type, s.expires_at, m.manager_id, m.email, m.display_name, m.status, m.created_at,
                  coalesce(am.airline_id, hm.hotel_id, atm.manager_id) as scope_id,
-                 aa.logo_asset_path as logo_asset_path
+                 coalesce(aa.logo_asset_path, sam.logo_asset_path) as logo_asset_path
           from auth_sessions s
           left join airline_managers am on s.manager_type = 'Airline' and am.manager_id = s.actor_id
           left join airlines aa on aa.airline_id = am.airline_id
           left join hotel_managers hm on s.manager_type = 'Hotel' and hm.manager_id = s.actor_id
           left join attraction_managers atm on s.manager_type = 'Attraction' and atm.manager_id = s.actor_id
+          left join site_admin_managers sam on s.manager_type = 'SiteAdmin' and sam.manager_id = s.actor_id
           left join (
             select manager_id, email, display_name, status, created_at from airline_managers
             union all select manager_id, email, display_name, status, created_at from hotel_managers

@@ -1,4 +1,5 @@
 export type AdvertisementReviewDecisionRequest = {
+  reviewerManagerId?: string
   reviewNote?: string | null
 }
 

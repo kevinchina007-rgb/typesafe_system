@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { useAdvertisingStore, useDeliverableAdvertisements } from '@/app/stores/advertising-store'
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
+import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
@@ -25,6 +27,8 @@ export function useFlightsPageController({
   const [isTourGroupTargetMode, setIsTourGroupTargetMode] = useState(false)
   const [targetFlightResponses, setTargetFlightResponses] = useState<FlightPlannerResponse[]>([])
   const [targetFlightResultGroups, setTargetFlightResultGroups] = useState<Array<{ id: string; title: string; subtitle: string; flightResponses: FlightPlannerResponse[] }>>([])
+  const deliveryAdvertisements = useDeliverableAdvertisements('flightBooking')
+  const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
   const lastSubmittedSearchKey = useRef<string | null>(null)
   const lastReportedErrorKey = useRef<string | null>(null)
   const searchStateStore = useFlightSearchState()
@@ -56,6 +60,42 @@ export function useFlightsPageController({
     (payload: Parameters<typeof travelMvpApiClient.flightDailyLowestPricesPlanner>[0]) =>
       travelMvpApiClient.flightDailyLowestPricesPlanner(payload),
     [],
+  )
+
+  useEffect(() => {
+    void loadDeliverableAdvertisements('flightBooking')
+    const reloadDeliverableAdvertisements = () => {
+      void loadDeliverableAdvertisements('flightBooking')
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        reloadDeliverableAdvertisements()
+      }
+    }
+
+    window.addEventListener('focus', reloadDeliverableAdvertisements)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('focus', reloadDeliverableAdvertisements)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [loadDeliverableAdvertisements])
+
+  const handleOpenAdvertisement = useCallback(
+    (advertisement: AdvertisementResponse) => {
+      if (advertisement.targetResourceType === 'Flight' && advertisement.targetResourceId) {
+        window.sessionStorage.setItem('flight-advertisement-target', advertisement.targetResourceId)
+        onNavigate('flights')
+        return
+      }
+
+      if (advertisement.landingTarget) {
+        window.location.href = advertisement.landingTarget
+      }
+    },
+    [onNavigate],
   )
 
   useEffect(() => {
@@ -263,6 +303,7 @@ export function useFlightsPageController({
     isTourGroupTargetMode,
     targetFlightResponses,
     targetFlightResultGroups,
+    deliveryAdvertisements,
     openAuthDialog: () => setIsAuthDialogOpen(true),
     closeAuthDialog: () => setIsAuthDialogOpen(false),
     openLateBookingReview: (flightResponse: FlightPlannerResponse) => setLateBookingFlight(flightResponse),
@@ -272,6 +313,7 @@ export function useFlightsPageController({
     bookFlight,
     submitSearch,
     toggleTravelerSelection,
+    handleOpenAdvertisement,
     initialSelectedCabin,
   }
 }

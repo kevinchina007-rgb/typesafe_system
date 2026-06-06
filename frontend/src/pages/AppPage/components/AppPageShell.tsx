@@ -121,6 +121,21 @@ export function AppPageShell({ controller }: { controller: AppPageController }) 
         onUpdateManagerProfile: async payload => {
           await controller.runHeaderAccountAction(async () => {
             if (!controller.signedInManagerSessionResponse) throw new Error(controller.translate('error.loginRequired'))
+            if (controller.signedInManagerSessionResponse.managerType === 'SiteAdmin') {
+              const updatedManager = await travelMvpApiClient.updateSiteAdminManagerProfile({
+                managerId: controller.signedInManagerSessionResponse.managerId,
+                displayName: payload.displayName,
+                logoAssetPath: payload.logoAssetPath ?? controller.signedInManagerSessionResponse.logoAssetPath,
+              })
+              controller.setCurrentManagerSession({
+                ...controller.signedInManagerSessionResponse,
+                displayName: updatedManager.displayName,
+                status: updatedManager.status,
+                scopeId: updatedManager.scopeId,
+                logoAssetPath: updatedManager.logoAssetPath ?? null,
+              })
+              return
+            }
             controller.setCurrentManagerSession({
               ...controller.signedInManagerSessionResponse,
               displayName: payload.displayName,

@@ -18,6 +18,8 @@ import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 type FeedbackThreadDetailsPlannerResponse = {
     thread: Omit<FeedbackThreadResponse, 'messages'>
     messages: FeedbackThreadResponse['messages']
+    managerActorLogoAssetPath?: string | null
+    siteAdminActorLogoAssetPath?: string | null
 }
 
 type FeedbackThreadListPlannerResponse = {
@@ -25,22 +27,27 @@ type FeedbackThreadListPlannerResponse = {
 }
 
 function flattenThread(response: FeedbackThreadDetailsPlannerResponse): FeedbackThreadResponse {
-    return { ...response.thread, messages: response.messages }
+    return {
+      ...response.thread,
+      managerActorLogoAssetPath: response.managerActorLogoAssetPath ?? response.thread.managerActorLogoAssetPath ?? null,
+      siteAdminActorLogoAssetPath: response.siteAdminActorLogoAssetPath ?? response.thread.siteAdminActorLogoAssetPath ?? null,
+      messages: response.messages,
+    }
 }
 
 export const ensureOrderCancellationThread = async (payload: EnsureOrderCancellationThreadRequest): Promise<FeedbackThreadResponse> =>
     flattenThread(await executeJsonApiRequest('/EnsureOrderCancellationThreadPlanner', 'POST', payload))
 
 export const listMyFeedbackThreads = (userId?: string): Promise<FeedbackThreadListResponse> =>
-    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId, managerType: null, channel: null })
+    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId, managerType: null, scopeId: null, channel: null, managerActorId: null, siteAdminActorId: null })
       .then(response => ({ threads: response.threads.map(flattenThread) }))
 
-export const listManagerFeedbackThreads = (managerType?: string, scopeId?: string): Promise<FeedbackThreadListResponse> =>
-    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId: null, managerType, scopeId, channel: null })
+export const listManagerFeedbackThreads = (managerType?: string, scopeId?: string, managerActorId?: string): Promise<FeedbackThreadListResponse> =>
+    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId: null, managerType, scopeId, channel: null, managerActorId, siteAdminActorId: null })
       .then(response => ({ threads: response.threads.map(flattenThread) }))
 
-export const listSiteAdminFeedbackThreads = (channel: FeedbackSiteAdminChannel): Promise<FeedbackThreadListResponse> =>
-    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId: null, managerType: null, channel })
+export const listSiteAdminFeedbackThreads = (channel: FeedbackSiteAdminChannel, siteAdminActorId?: string): Promise<FeedbackThreadListResponse> =>
+    executeJsonApiRequest<FeedbackThreadListPlannerResponse>('/ListFeedbackThreadsPlanner', 'POST', { userId: null, managerType: null, scopeId: null, channel, managerActorId: null, siteAdminActorId })
       .then(response => ({ threads: response.threads.map(flattenThread) }))
 
 export const sendFeedbackMessage = (threadId: string, payload: SendFeedbackMessageRequest): Promise<FeedbackThreadResponse> =>

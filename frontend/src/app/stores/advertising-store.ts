@@ -3,6 +3,7 @@
 import { getManagerSnap } from '@/app/stores/manager-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { AdvertisementImageUploadResponse } from '@/microservices/advertising/objects/AdvertisementImageUploadResponse'
+import type { AdvertisementDeliverySettingsResponse } from '@/microservices/advertising/objects/AdvertisementDeliverySettingsResponse'
 import type { GenerateAdvertisementImageCandidatesResponse } from '@/microservices/advertising/objects/GenerateAdvertisementImageCandidatesResponse'
 import type { GenerateAdvertisementTextCandidatesResponse } from '@/microservices/advertising/objects/GenerateAdvertisementTextCandidatesResponse'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
@@ -17,6 +18,7 @@ type AdvertisingState = {
   ownerAdvertisements: AdvertisementResponse[]
   pendingReviewAdvertisements: AdvertisementResponse[]
   reviewedAdvertisements: AdvertisementResponse[]
+  deliverySettingsByPlacement: Record<string, AdvertisementDeliverySettingsResponse>
   flightBookingAdvertisements: AdvertisementResponse[]
   hotelBookingAdvertisements: AdvertisementResponse[]
   trainBookingAdvertisements: AdvertisementResponse[]
@@ -66,6 +68,15 @@ type AdvertisingActions = {
   approveAdvertisement: (advertisementId: string, payload: AdvertisementReviewDecisionRequest) => Promise<AdvertisementResponse>
   rejectAdvertisement: (advertisementId: string, payload: AdvertisementReviewDecisionRequest) => Promise<AdvertisementResponse>
   assignAdvertisementSlot: (advertisementId: string, payload: AdvertisementSlotAssignmentRequest) => Promise<AdvertisementResponse>
+  pauseAdvertisementDisplay: (advertisementId: string, reviewNote?: string | null) => Promise<AdvertisementResponse>
+  loadAdvertisementDeliverySettings: (placement: string) => Promise<AdvertisementDeliverySettingsResponse>
+  saveAdvertisementDeliverySettings: (payload: {
+    placement: string
+    rotationIntervalSeconds: number
+    playOrder: string
+    startAt: string | null
+    endAt: string | null
+  }) => Promise<AdvertisementDeliverySettingsResponse>
 }
 
 type AdvertisingStore = AdvertisingState & AdvertisingActions
@@ -91,6 +102,14 @@ function sortAdvertisements(advertisements: AdvertisementResponse[]) {
       return right.priority - left.priority
     }
 
+    return Date.parse(right.updatedAt) - Date.parse(left.updatedAt)
+  })
+}
+
+function sortDeliverableAdvertisements(advertisements: AdvertisementResponse[]) {
+  return [...advertisements].sort((left, right) => {
+    const slotDelta = (left.slotIndex ?? 999) - (right.slotIndex ?? 999)
+    if (slotDelta !== 0) return slotDelta
     return Date.parse(right.updatedAt) - Date.parse(left.updatedAt)
   })
 }
@@ -139,6 +158,7 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   ownerAdvertisements: [],
   pendingReviewAdvertisements: [],
   reviewedAdvertisements: [],
+  deliverySettingsByPlacement: {},
   flightBookingAdvertisements: [],
   hotelBookingAdvertisements: [],
   trainBookingAdvertisements: [],
@@ -183,7 +203,7 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   },
   loadDeliverableAdvertisements: async placement => {
     const response = await travelMvpApiClient.listDeliverableAdvertisements(toPlacementValue(placement))
-    const advertisements = sortAdvertisements(response.advertisements)
+    const advertisements = sortDeliverableAdvertisements(response.advertisements)
     if (placement === 'flightBooking') {
       set({ flightBookingAdvertisements: advertisements })
     } else if (placement === 'hotelBooking') {
@@ -257,7 +277,11 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   approveAdvertisement: async (advertisementId, payload) => {
-    const advertisement = await travelMvpApiClient.approveAdvertisement(advertisementId, payload)
+    const manager = requireSignedInManager()
+    const advertisement = await travelMvpApiClient.approveAdvertisement(advertisementId, {
+      ...payload,
+      reviewerManagerId: manager.managerId,
+    })
     set(state => ({
       pendingReviewAdvertisements: removeAdvertisement(state.pendingReviewAdvertisements, advertisementId),
       reviewedAdvertisements: upsertAdvertisement(state.reviewedAdvertisements, advertisement),
@@ -282,7 +306,11 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   rejectAdvertisement: async (advertisementId, payload) => {
-    const advertisement = await travelMvpApiClient.rejectAdvertisement(advertisementId, payload)
+    const manager = requireSignedInManager()
+    const advertisement = await travelMvpApiClient.rejectAdvertisement(advertisementId, {
+      ...payload,
+      reviewerManagerId: manager.managerId,
+    })
     set(state => ({
       pendingReviewAdvertisements: removeAdvertisement(state.pendingReviewAdvertisements, advertisementId),
       reviewedAdvertisements: upsertAdvertisement(state.reviewedAdvertisements, advertisement),
@@ -295,7 +323,11 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   assignAdvertisementSlot: async (advertisementId, payload) => {
-    const advertisement = await travelMvpApiClient.assignAdvertisementSlot(advertisementId, payload)
+    const manager = requireSignedInManager()
+    const advertisement = await travelMvpApiClient.assignAdvertisementSlot(advertisementId, {
+      ...payload,
+      reviewerManagerId: manager.managerId,
+    })
     set(state => {
       const deliverableTargetKey =
         advertisement.placement === 'FlightBookingPage'
@@ -325,6 +357,36 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
       }
     })
     return advertisement
+  },
+  pauseAdvertisementDisplay: async (advertisementId, reviewNote) => {
+    const manager = requireSignedInManager()
+    const advertisement = await travelMvpApiClient.pauseAdvertisementDisplay(advertisementId, {
+      reviewerManagerId: manager.managerId,
+      reviewNote,
+    })
+    set(state => ({
+      ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
+      reviewedAdvertisements: upsertAdvertisement(state.reviewedAdvertisements, advertisement),
+      flightBookingAdvertisements: removeAdvertisement(state.flightBookingAdvertisements, advertisementId),
+      hotelBookingAdvertisements: removeAdvertisement(state.hotelBookingAdvertisements, advertisementId),
+      trainBookingAdvertisements: removeAdvertisement(state.trainBookingAdvertisements, advertisementId),
+      attractionBookingAdvertisements: removeAdvertisement(state.attractionBookingAdvertisements, advertisementId),
+    }))
+    return advertisement
+  },
+  loadAdvertisementDeliverySettings: async placement => {
+    const settings = await travelMvpApiClient.getAdvertisementDeliverySettings(placement)
+    set(state => ({ deliverySettingsByPlacement: { ...state.deliverySettingsByPlacement, [placement]: settings } }))
+    return settings
+  },
+  saveAdvertisementDeliverySettings: async payload => {
+    const manager = requireSignedInManager()
+    const settings = await travelMvpApiClient.saveAdvertisementDeliverySettings({
+      ...payload,
+      updatedByManagerId: manager.managerId,
+    })
+    set(state => ({ deliverySettingsByPlacement: { ...state.deliverySettingsByPlacement, [settings.placement]: settings } }))
+    return settings
   },
 }))
 

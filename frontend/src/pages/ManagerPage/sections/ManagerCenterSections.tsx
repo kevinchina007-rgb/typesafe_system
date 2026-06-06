@@ -46,6 +46,7 @@ export function SupplierFeedbackSection({
 }: SupplierFeedbackSectionProps) {
   const loadManagerThreads = useFeedbackChatStore(state => state.loadManagerThreads)
   const managerThreads = useFeedbackChatStore(state => state.managerThreads)
+  void title
   void managedFlightPlannerResponses
   void managerTaskResponses
   void managerRefundTaskResponses
@@ -58,22 +59,19 @@ export function SupplierFeedbackSection({
     }
 
     void loadManagerThreads()
+    const refreshTimer = window.setInterval(() => {
+      void loadManagerThreads()
+    }, 8000)
+
+    return () => window.clearInterval(refreshTimer)
   }, [currentManagerSession?.managerId, loadManagerThreads])
 
   return (
     <section className="grid gap-5">
-      <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-sm font-bold text-slate-500">{translate('manager.userFeedback')}</p>
-            <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{title}</h2>
-          </div>
-        </div>
-      </section>
-
       <FeedbackConversationWorkspace
         audience="Manager"
         audienceDisplayName={currentManagerSession?.displayName ?? ''}
+        audienceAvatarUrl={currentManagerSession?.logoAssetPath ?? null}
         emptyTitle={translate('feedback.managerTitle')}
         emptyDescription={translate('feedback.managerEmpty')}
         threads={managerThreads}
@@ -146,19 +144,20 @@ export function SiteAdminPanel({ section, advertisingModule, currentManagerSessi
 
 function SiteAdminFeedbackWorkspace({ currentManagerSession, translate }: { currentManagerSession: CurrentManagerSessionResponse | null; translate: (translationKey: string) => string }) {
   const loadSiteAdminThreads = useFeedbackChatStore(state => state.loadSiteAdminThreads)
-  const siteAdminUserThreads = useFeedbackChatStore(state => state.siteAdminUserThreads)
+  const siteAdminManagerThreads = useFeedbackChatStore(state => state.siteAdminManagerThreads)
 
   useEffect(() => {
-    void loadSiteAdminThreads('user')
+    void loadSiteAdminThreads('manager')
   }, [loadSiteAdminThreads])
 
   return (
     <FeedbackConversationWorkspace
       audience="SiteAdmin"
       audienceDisplayName={currentManagerSession?.displayName ?? translate('manager.siteAdmin.title')}
+      audienceAvatarUrl={currentManagerSession?.logoAssetPath ?? null}
       emptyTitle={translate('feedback.title')}
       emptyDescription={translate('feedback.siteAdminEmpty')}
-      threads={siteAdminUserThreads}
+      threads={siteAdminManagerThreads}
       translate={translate}
       unreadCountSelector={thread => thread.unreadBySiteAdmin}
       onMarkRead={markFeedbackThreadRead}

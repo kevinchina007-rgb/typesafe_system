@@ -10,5 +10,14 @@ object ApproveAdvertisementPlanner extends ConnectionApiPlan[AdvertisementReview
   override val name: String = "ApproveAdvertisementPlanner"
 
   override def plan(input: AdvertisementReviewDecisionRequest, connection: Connection): IO[AdvertisementResponse] =
-    AdvertisementPlainSql.approve(connection, input, Instant.now())
-
+    val now = Instant.now()
+    for
+      advertisement <- AdvertisementPlainSql.approve(connection, input, now)
+      _ <- AdvertisementFeedbackNotifications.notifyOwner(
+        connection,
+        advertisement,
+        input.reviewerManagerId,
+        s"广告「${advertisement.title}」已通过审核，可以进入投放。",
+        now
+      )
+    yield advertisement

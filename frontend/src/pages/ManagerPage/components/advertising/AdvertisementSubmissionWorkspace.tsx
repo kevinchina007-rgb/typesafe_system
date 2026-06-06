@@ -3,6 +3,7 @@
 import { useAdvertisingStore } from '@/app/stores/advertising-store'
 import { toBackendAssetUrl } from '@/lib/presenters/view-models'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
+import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 
 type CanvasElementType = 'text' | 'image' | 'shape' | 'field'
 type PlacementValue = 'FlightBookingPage' | 'HotelBookingPage' | 'TrainBookingPage' | 'AttractionBookingPage'
@@ -26,6 +27,14 @@ type VisualStyleKey =
   | 'travel'
   | 'fashion'
 type ImageFactoryKind = 'background' | 'element'
+type ResizeDirection = 'n' | 'e' | 's' | 'w' | 'ne' | 'nw' | 'se' | 'sw'
+type CanvasContextMenuState = {
+  x: number
+  y: number
+  targetElementId: string | null
+  canvasX: number | null
+  canvasY: number | null
+} | null
 
 type AdvertisementSubmissionWorkspaceProps = {
   defaultPlacement: PlacementValue
@@ -49,6 +58,7 @@ type CreativeElement = {
   type: CanvasElementType
   text: string
   src?: string
+  contentMode?: 'cover' | 'contain'
   x: number
   y: number
   width: number
@@ -127,6 +137,7 @@ function parseCreativeJson(creativeJson: string | null | undefined): CreativeSta
         type: element.type ?? 'text',
         text: element.text ?? '',
         src: element.src,
+        contentMode: element.contentMode === 'contain' ? 'contain' : 'cover',
         x: typeof element.x === 'number' ? element.x : 0,
         y: typeof element.y === 'number' ? element.y : 0,
         width: typeof element.width === 'number' ? element.width : 240,
@@ -164,6 +175,40 @@ function inferResourceLabel(
 
 function escapeSvgText(value: string) {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+function escapeSvgAttribute(value: string) {
+  return escapeSvgText(value).replace(/"/g, '&quot;')
+}
+
+function blobToDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(blob)
+  })
+}
+
+async function makeEmbeddableImageSource(imageSource: string) {
+  const normalizedSource = imageSource.trim()
+  if (!normalizedSource) {
+    return ''
+  }
+
+  if (normalizedSource.startsWith('data:image/')) {
+    return normalizedSource
+  }
+
+  try {
+    const response = await fetch(normalizedSource)
+    if (!response.ok) {
+      return ''
+    }
+    return await blobToDataUrl(await response.blob())
+  } catch {
+    return ''
+  }
 }
 
 function makeImageDataUrl(_prompt: string, tone: ToneKey, index: number, transparentBackground = false) {
@@ -211,6 +256,7 @@ function buildTextCandidates(prompt: string, tone: ToneKey, resourceLabel: strin
     type: 'image',
     text: baseText,
     src: makeTextArtDataUrl(baseText, tone),
+    contentMode: 'contain',
     x: 96,
     y: 44,
     width: 520,
@@ -231,6 +277,7 @@ function buildImageCandidates(prompt: string, tone: ToneKey, imageFactoryKind: I
     type: 'image',
     text: prompt.trim() || tonePalettes[tone].label,
     src: makeImageDataUrl(prompt, tone, index, transparentBackground),
+    contentMode: imageFactoryKind === 'background' ? 'cover' : 'contain',
     x: imageFactoryKind === 'background' ? (index % 2 === 0 ? 0 : 520) : (index % 2 === 0 ? 72 : 456),
     y: imageFactoryKind === 'background' ? (index < 2 ? 0 : 72) : (index < 2 ? 28 : 116),
     width: imageFactoryKind === 'background' ? (index % 2 === 0 ? 960 : 360) : 240,
@@ -267,6 +314,7 @@ function buildRemoteImageCandidates(
     type: 'image',
     text: candidate.prompt,
     src: toBackendAssetUrl(candidate.publicUrl),
+    contentMode: imageFactoryKind === 'background' ? 'cover' : 'contain',
     x: imageFactoryKind === 'background' ? (index % 2 === 0 ? 0 : 520) : (index % 2 === 0 ? 72 : 456),
     y: imageFactoryKind === 'background' ? (index < 2 ? 0 : 72) : (index < 2 ? 28 : 116),
     width: imageFactoryKind === 'background' ? (index % 2 === 0 ? 960 : 360) : 240,
@@ -290,6 +338,7 @@ function buildRemoteTextCandidates(
     type: 'image',
     text: sourceText,
     src: toBackendAssetUrl(candidate.publicUrl),
+    contentMode: 'contain',
     x: 96,
     y: 44,
     width: 520,
@@ -304,11 +353,16 @@ function buildRemoteTextCandidates(
   }))
 }
 
-function renderCreativeSvg(creative: CreativeState) {
-  const elements = creative.elements.map(element => {
+async function renderCreativeSvg(creative: CreativeState) {
+  const elements = await Promise.all(creative.elements.map(async element => {
     const opacity = Math.max(0, Math.min(1, element.opacity))
     if (element.type === 'image' && element.src) {
-      return `<image href="${element.src}" x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" preserveAspectRatio="xMidYMid slice" opacity="${opacity}" />`
+      const embeddedSource = await makeEmbeddableImageSource(element.src)
+      if (!embeddedSource) {
+        return ''
+      }
+      const preserveAspectRatio = element.contentMode === 'contain' ? 'xMidYMid meet' : 'xMidYMid slice'
+      return `<image href="${escapeSvgAttribute(embeddedSource)}" x="${element.x}" y="${element.y}" width="${element.width}" height="${element.height}" preserveAspectRatio="${preserveAspectRatio}" opacity="${opacity}" />`
     }
 
     if (element.backgroundColor !== 'transparent') {
@@ -317,9 +371,9 @@ function renderCreativeSvg(creative: CreativeState) {
     }
 
     return `<text x="${element.x}" y="${element.y + element.fontSize}" fill="${element.color}" font-size="${element.fontSize}" font-weight="${element.fontWeight}" font-family="Arial, sans-serif" opacity="${opacity}">${escapeSvgText(element.text)}</text>`
-  }).join('')
+  }))
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${creative.width}" height="${creative.height}" viewBox="0 0 ${creative.width} ${creative.height}"><rect width="100%" height="100%" fill="${creative.backgroundColor}" />${elements}</svg>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${creative.width}" height="${creative.height}" viewBox="0 0 ${creative.width} ${creative.height}"><rect width="100%" height="100%" fill="${escapeSvgAttribute(creative.backgroundColor)}" />${elements.join('')}</svg>`
 }
 
 function svgToFile(svg: string) {
@@ -328,7 +382,9 @@ function svgToFile(svg: string) {
 
 function getPrimaryCopy(creative: CreativeState) {
   const textElements = creative.elements.filter(element => element.type !== 'image').map(element => element.text.trim()).filter(Boolean)
-  const imageTextFallback = creative.elements.find(element => element.type === 'image' && element.text.trim())?.text.trim()
+  const imageTextFallback = creative.elements
+    .find(element => element.type === 'image' && element.contentMode === 'contain' && element.text.trim())
+    ?.text.trim()
   const primaryText = textElements[0] ?? imageTextFallback
   const secondaryText = textElements[1] ?? primaryText
   return {
@@ -336,6 +392,48 @@ function getPrimaryCopy(creative: CreativeState) {
     subtitle: secondaryText ?? '精选推荐',
     ctaLabel: textElements.find(text => text.length <= 8) ?? '查看详情',
   }
+}
+
+function limitText(value: string, maxLength: number) {
+  const normalized = value.trim()
+  return normalized.length > maxLength ? normalized.slice(0, maxLength) : normalized
+}
+
+function upsertLocalAdvertisement(advertisements: AdvertisementResponse[], nextAdvertisement: AdvertisementResponse) {
+  const filtered = advertisements.filter(advertisement => advertisement.advertisementId !== nextAdvertisement.advertisementId)
+  return [nextAdvertisement, ...filtered].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+}
+
+function mergeAdvertisements(primary: AdvertisementResponse[], secondary: AdvertisementResponse[]) {
+  const byId = new Map<string, AdvertisementResponse>()
+  secondary.forEach(advertisement => byId.set(advertisement.advertisementId, advertisement))
+  primary.forEach(advertisement => byId.set(advertisement.advertisementId, advertisement))
+  return [...byId.values()].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
+}
+
+function cursorForResizeDirection(direction: ResizeDirection) {
+  if (direction === 'n' || direction === 's') return 'ns-resize'
+  if (direction === 'e' || direction === 'w') return 'ew-resize'
+  if (direction === 'ne' || direction === 'sw') return 'nesw-resize'
+  return 'nwse-resize'
+}
+
+function resizeDirectionFromPointer(event: React.MouseEvent<HTMLElement>, rect: DOMRect): ResizeDirection | null {
+  const edgeThreshold = Math.max(10, Math.min(18, Math.min(rect.width, rect.height) * 0.18))
+  const nearLeft = event.clientX <= rect.left + edgeThreshold
+  const nearRight = event.clientX >= rect.right - edgeThreshold
+  const nearTop = event.clientY <= rect.top + edgeThreshold
+  const nearBottom = event.clientY >= rect.bottom - edgeThreshold
+
+  if (nearTop && nearLeft) return 'nw'
+  if (nearTop && nearRight) return 'ne'
+  if (nearBottom && nearLeft) return 'sw'
+  if (nearBottom && nearRight) return 'se'
+  if (nearTop) return 'n'
+  if (nearRight) return 'e'
+  if (nearBottom) return 's'
+  if (nearLeft) return 'w'
+  return null
 }
 
 export function AdvertisementSubmissionWorkspace({
@@ -357,6 +455,10 @@ export function AdvertisementSubmissionWorkspace({
 
   const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>('create')
   const [editingAdvertisementId, setEditingAdvertisementId] = useState<string | null>(null)
+  const [localDraftAdvertisements, setLocalDraftAdvertisements] = useState<AdvertisementResponse[]>([])
+  const [draftName, setDraftName] = useState('')
+  const [draftNameInput, setDraftNameInput] = useState('')
+  const [isDraftNameDialogOpen, setIsDraftNameDialogOpen] = useState(false)
   const [targetResourceId, setTargetResourceId] = useState(resourceOptions[0]?.value ?? '')
   const [creative, setCreative] = useState<CreativeState>(() => cloneCreative(defaultCreative))
   const [tone] = useState<ToneKey>('clean')
@@ -366,12 +468,10 @@ export function AdvertisementSubmissionWorkspace({
   const [avoidPrompt, setAvoidPrompt] = useState('')
   const [textPrompt, setTextPrompt] = useState('')
   const [textVisualStyles, setTextVisualStyles] = useState<VisualStyleKey[]>(['realistic'])
-  const [textNotes, setTextNotes] = useState('')
   const [imagePrompt, setImagePrompt] = useState('')
   const [imageFactoryKind, setImageFactoryKind] = useState<ImageFactoryKind>('background')
   const [shouldCutoutImageElement, setShouldCutoutImageElement] = useState(true)
   const [imageVisualStyles, setImageVisualStyles] = useState<VisualStyleKey[]>(['realistic'])
-  const [imageNotes, setImageNotes] = useState('')
   const [backgroundAutoFit, setBackgroundAutoFit] = useState(true)
   const [textCandidates, setTextCandidates] = useState<CreativeElement[]>([])
   const [imageCandidates, setImageCandidates] = useState<CreativeElement[]>([])
@@ -380,7 +480,19 @@ export function AdvertisementSubmissionWorkspace({
   const [dragTemplate, setDragTemplate] = useState<CreativeElement | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [dragState, setDragState] = useState<{ elementId: string; offsetX: number; offsetY: number } | null>(null)
-  const [resizeState, setResizeState] = useState<{ elementId: string; startClientX: number; startClientY: number; startWidth: number; startHeight: number } | null>(null)
+  const [resizeState, setResizeState] = useState<{
+    elementId: string
+    startClientX: number
+    startClientY: number
+    startX: number
+    startY: number
+    startWidth: number
+    startHeight: number
+    direction: ResizeDirection
+  } | null>(null)
+  const [hoverResizeDirectionByElementId, setHoverResizeDirectionByElementId] = useState<Record<string, ResizeDirection | null>>({})
+  const [copiedElement, setCopiedElement] = useState<CreativeElement | null>(null)
+  const [canvasContextMenu, setCanvasContextMenu] = useState<CanvasContextMenuState>(null)
   const [factoryPanelWidth, setFactoryPanelWidth] = useState(320)
   const [isResizingFactoryPanel, setIsResizingFactoryPanel] = useState(false)
   const splitContainerRef = useRef<HTMLDivElement | null>(null)
@@ -392,8 +504,8 @@ export function AdvertisementSubmissionWorkspace({
   const [hasSearchedFlights, setHasSearchedFlights] = useState(false)
   const selectedResourceLabel = inferResourceLabel(resourceOptions, targetResourceId)
   const draftAdvertisements = useMemo(
-    () => [...ownerAdvertisements].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt)),
-    [ownerAdvertisements],
+    () => mergeAdvertisements(ownerAdvertisements, localDraftAdvertisements),
+    [localDraftAdvertisements, ownerAdvertisements],
   )
 
   useEffect(() => {
@@ -455,18 +567,55 @@ export function AdvertisementSubmissionWorkspace({
       if (dragState) {
         moveElement(
           dragState.elementId,
-          Math.max(0, Math.round((event.clientX - rect.left - dragState.offsetX) * scale)),
-          Math.max(0, Math.round((event.clientY - rect.top - dragState.offsetY) * scale)),
+          Math.round((event.clientX - rect.left - dragState.offsetX) * scale),
+          Math.round((event.clientY - rect.top - dragState.offsetY) * scale),
         )
       }
 
       if (resizeState) {
         const widthDelta = Math.round((event.clientX - resizeState.startClientX) * scale)
         const heightDelta = Math.round((event.clientY - resizeState.startClientY) * scale)
+        const direction = resizeState.direction
+        let nextX = resizeState.startX
+        let nextY = resizeState.startY
+        let nextWidth = resizeState.startWidth
+        let nextHeight = resizeState.startHeight
+
+        if (direction.includes('e')) {
+          nextWidth = resizeState.startWidth + widthDelta
+        }
+        if (direction.includes('s')) {
+          nextHeight = resizeState.startHeight + heightDelta
+        }
+        if (direction.includes('w')) {
+          nextX = resizeState.startX + widthDelta
+          nextWidth = resizeState.startWidth - widthDelta
+        }
+        if (direction.includes('n')) {
+          nextY = resizeState.startY + heightDelta
+          nextHeight = resizeState.startHeight - heightDelta
+        }
+
+        const minWidth = 40
+        const minHeight = 32
+        if (nextWidth < minWidth) {
+          if (direction.includes('w')) nextX -= minWidth - nextWidth
+          nextWidth = minWidth
+        }
+        if (nextHeight < minHeight) {
+          if (direction.includes('n')) nextY -= minHeight - nextHeight
+          nextHeight = minHeight
+        }
+
+        nextWidth = Math.max(minWidth, nextWidth)
+        nextHeight = Math.max(minHeight, nextHeight)
+
         resizeElement(
           resizeState.elementId,
-          Math.max(80, resizeState.startWidth + widthDelta),
-          Math.max(44, resizeState.startHeight + heightDelta),
+          nextX,
+          nextY,
+          nextWidth,
+          nextHeight,
         )
       }
     }
@@ -479,13 +628,35 @@ export function AdvertisementSubmissionWorkspace({
     window.addEventListener('mousemove', handleMouseMove)
     window.addEventListener('mouseup', handleMouseUp)
     document.body.style.userSelect = 'none'
+    document.body.style.cursor = resizeState ? cursorForResizeDirection(resizeState.direction) : 'grabbing'
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
       document.body.style.userSelect = ''
+      document.body.style.cursor = ''
     }
   }, [dragState, resizeState])
+
+  useEffect(() => {
+    if (!canvasContextMenu) return
+
+    function closeContextMenu() {
+      setCanvasContextMenu(null)
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') closeContextMenu()
+    }
+
+    window.addEventListener('click', closeContextMenu)
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('click', closeContextMenu)
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [canvasContextMenu])
 
   function addTemplateToCanvas(template: CreativeElement, placement?: { x: number; y: number }) {
     const nextElement = {
@@ -497,6 +668,64 @@ export function AdvertisementSubmissionWorkspace({
     setCreative(current => ({ ...current, backgroundColor: tonePalettes[tone].bg, elements: [...current.elements, nextElement] }))
   }
 
+  function canvasPointFromMouseEvent(event: React.MouseEvent<HTMLElement>) {
+    if (!canvasRef.current) {
+      return { canvasX: null, canvasY: null }
+    }
+    const rect = canvasRef.current.getBoundingClientRect()
+    const scale = canvasWidth / rect.width
+    return {
+      canvasX: Math.round((event.clientX - rect.left) * scale),
+      canvasY: Math.round((event.clientY - rect.top) * scale),
+    }
+  }
+
+  function openCanvasContextMenu(event: React.MouseEvent<HTMLElement>, targetElementId: string | null) {
+    event.preventDefault()
+    event.stopPropagation()
+    const point = canvasPointFromMouseEvent(event)
+    setCanvasContextMenu({
+      x: event.clientX,
+      y: event.clientY,
+      targetElementId,
+      canvasX: point.canvasX,
+      canvasY: point.canvasY,
+    })
+  }
+
+  function copyCanvasElement(elementId: string) {
+    const element = creative.elements.find(currentElement => currentElement.id === elementId)
+    if (!element) return
+    setCopiedElement({ ...element })
+    setCanvasContextMenu(null)
+  }
+
+  function cutCanvasElement(elementId: string) {
+    const element = creative.elements.find(currentElement => currentElement.id === elementId)
+    if (!element) return
+    setCopiedElement({ ...element })
+    removeElement(elementId)
+    setCanvasContextMenu(null)
+  }
+
+  function pasteCanvasElement() {
+    if (!copiedElement) return
+    const pastedWidth = copiedElement.width
+    const pastedHeight = copiedElement.height
+    const requestedX = canvasContextMenu?.canvasX ?? copiedElement.x + 24
+    const requestedY = canvasContextMenu?.canvasY ?? copiedElement.y + 24
+    const nextElement: CreativeElement = {
+      ...copiedElement,
+      id: `${copiedElement.type}-${Date.now()}`,
+      width: pastedWidth,
+      height: pastedHeight,
+      x: requestedX,
+      y: requestedY,
+    }
+    setCreative(current => ({ ...current, elements: [...current.elements, nextElement] }))
+    setCanvasContextMenu(null)
+  }
+
   function moveElement(elementId: string, x: number, y: number) {
     setCreative(current => ({
       ...current,
@@ -504,13 +733,15 @@ export function AdvertisementSubmissionWorkspace({
     }))
   }
 
-  function resizeElement(elementId: string, width: number, height: number) {
+  function resizeElement(elementId: string, x: number, y: number, width: number, height: number) {
     setCreative(current => ({
       ...current,
       elements: current.elements.map(element =>
         element.id === elementId
           ? {
               ...element,
+              x,
+              y,
               width,
               height,
               fontSize: element.type === 'image' ? element.fontSize : Math.max(18, Math.round(height * 0.42)),
@@ -580,9 +811,10 @@ export function AdvertisementSubmissionWorkspace({
   function buildAdvertisementPayload(uploadedImageUrl: string) {
     const { startAt, endAt } = defaultWindow()
     const copy = getPrimaryCopy(creative)
+    const advertisementName = draftName.trim() || copy.title
     const fallbackTargetId = targetResourceId || resourceOptions[0]?.value || `${defaultTargetResourceType.toLowerCase()}-draft`
     const targetId = hyperlinkEnabled ? fallbackTargetId : fallbackTargetId
-    const resourceSummaryTitle = hyperlinkEnabled ? (selectedResourceLabel || copy.title) : copy.title
+    const resourceSummaryTitle = hyperlinkEnabled ? (selectedResourceLabel || advertisementName) : advertisementName
     const landingTarget =
       hyperlinkEnabled && defaultTargetResourceType === 'Flight'
         ? `flight:${fallbackTargetId}`
@@ -590,14 +822,14 @@ export function AdvertisementSubmissionWorkspace({
 
     return {
       advertisementKind: 'ResourcePromotion',
-      title: copy.title,
-      subtitle: copy.subtitle,
-      description: `${copy.title} ${copy.subtitle}`.trim(),
+      title: limitText(advertisementName, 120),
+      subtitle: limitText(copy.subtitle, 120),
+      description: limitText(`${copy.title} ${copy.subtitle}`.trim(), 1200),
       imageUrl: uploadedImageUrl,
-      ctaLabel: copy.ctaLabel,
+      ctaLabel: limitText(copy.ctaLabel, 24),
       targetResourceType: defaultTargetResourceType,
       targetResourceId: targetId,
-      resourceSummaryTitle,
+      resourceSummaryTitle: limitText(resourceSummaryTitle, 160),
       landingTarget,
       placement: defaultPlacement,
       creativeJson: JSON.stringify(creative),
@@ -611,6 +843,8 @@ export function AdvertisementSubmissionWorkspace({
 
   function resetComposer() {
     setEditingAdvertisementId(null)
+    setDraftName('')
+    setDraftNameInput('')
     setTargetResourceId(resourceOptions[0]?.value ?? '')
     setHyperlinkEnabled(false)
     setCreative(cloneCreative(defaultCreative))
@@ -622,8 +856,6 @@ export function AdvertisementSubmissionWorkspace({
     setImagePrompt('')
     setTextVisualStyles(['realistic'])
     setImageVisualStyles(['realistic'])
-    setTextNotes('')
-    setImageNotes('')
     setImageFactoryKind('background')
     setShouldCutoutImageElement(true)
     setBackgroundAutoFit(true)
@@ -637,6 +869,8 @@ export function AdvertisementSubmissionWorkspace({
   function openAdvertisementDraft(advertisement: AdvertisementResponse) {
     const restoredCreative = parseCreativeJson(advertisement.creativeJson)
     setEditingAdvertisementId(advertisement.advertisementId)
+    setDraftName(advertisement.title)
+    setDraftNameInput(advertisement.title)
     setTargetResourceId(advertisement.targetResourceId)
     setHyperlinkEnabled(advertisement.landingTarget !== 'disabled')
     setCreative(restoredCreative ? cloneCreative(restoredCreative) : cloneCreative(defaultCreative))
@@ -647,27 +881,46 @@ export function AdvertisementSubmissionWorkspace({
     setWorkspaceTab('create')
   }
 
+  function openNewDraftDialog() {
+    setDraftNameInput('')
+    setIsDraftNameDialogOpen(true)
+  }
+
+  function confirmNewDraft() {
+    const nextName = draftNameInput.trim()
+    if (!nextName) {
+      onShowNotice?.('error', '需要广告名字', '先给这条广告起个名字，后面草稿页会用它来展示。')
+      return
+    }
+    resetComposer()
+    setDraftName(nextName)
+    setDraftNameInput(nextName)
+    setIsDraftNameDialogOpen(false)
+    setWorkspaceTab('create')
+  }
+
   async function generateTextStyles() {
     const linkedResourceLabel = hyperlinkEnabled ? selectedResourceLabel : ''
     const sourceText = textPrompt.trim() || linkedResourceLabel
     const styleRequirement = [
       textVisualStyles.length > 0 ? `画风：${textVisualStyles.map(style => visualStyleLabels[style]).join('、')}` : null,
-      textNotes.trim() ? `补充要求：${textNotes.trim()}` : null,
     ].filter(Boolean).join('；') || '做成适合广告横幅的艺术字体'
 
     const textSource = [
       `我希望得到当前文本：“${sourceText}”的艺术字体。`,
       `要求：“${styleRequirement}”。`,
       '输出内容必须包含这句完整文字。',
-      '除文字本身与必要装饰外，其余背景全部透明并抠掉。',
-      '不要生成额外人物、风景、按钮、边框、底板、海报背景。',
-      '这是一个可拖拽到广告画布里的独立文字元素，不是整张海报。',
+      '只生成独立艺术字元素，不要生成整张海报。',
+      '除文字本身和紧贴文字的少量装饰笔触外，其余全部做成透明背景并抠掉。',
+      '不要出现天空、地面、色块底板、相框、人物、动物、建筑、风景、按钮、贴纸边框。',
+      '文字四周必须留出完整边界，不能裁切，不能超出画面。',
+      '这是一个可拖拽到广告画布里的独立文字元素。',
     ].join('')
     setIsGeneratingText(true)
     try {
       const response = await generateAdvertisementImageCandidates({
         prompt: textSource,
-        supportingCopy: textNotes.trim() || null,
+        supportingCopy: null,
         tone: tonePalettes[tone].label,
         resourceLabel: linkedResourceLabel || sourceText,
         advertisementKind: 'ResourcePromotion',
@@ -708,8 +961,10 @@ export function AdvertisementSubmissionWorkspace({
       imageFactoryKind === 'element' ? 'image usage: element' : 'image usage: background',
       imageFactoryKind === 'element' ? `cutout subject: ${shouldCutoutImageElement ? 'yes' : 'no'}` : null,
       imageFactoryKind === 'element' && shouldCutoutImageElement ? 'transparent background' : null,
-      imageNotes.trim() ? `notes: ${imageNotes.trim()}` : null,
       imageFactoryKind === 'background' && backgroundAutoFit && canvasDescription ? `fit around ${canvasDescription}` : null,
+      imageFactoryKind === 'element' && shouldCutoutImageElement
+        ? 'only keep the requested subject, isolate the main object, remove every background area, output a clean transparent cutout with full subject visible'
+        : null,
     ].filter(Boolean).join(', ')
     const supportingCopy = [focusPrompt.trim(), visualElementsPrompt.trim()].filter(Boolean).join('，')
     setIsGeneratingImages(true)
@@ -743,16 +998,20 @@ export function AdvertisementSubmissionWorkspace({
   async function saveDraft(submitForReview = false) {
     setIsSubmitting(true)
     try {
-      const svg = renderCreativeSvg(creative)
+      const svg = await renderCreativeSvg(creative)
       const uploadedImage = await uploadAdvertisementImage(svgToFile(svg))
       const payload = buildAdvertisementPayload(uploadedImage.publicUrl)
       const savedAdvertisement = editingAdvertisementId
         ? await updateAdvertisement(editingAdvertisementId, payload)
         : await createAdvertisement(payload)
+      setLocalDraftAdvertisements(current => upsertLocalAdvertisement(current, savedAdvertisement))
       if (submitForReview) {
-        await submitAdvertisementForReview(savedAdvertisement.advertisementId)
+        const submittedAdvertisement = await submitAdvertisementForReview(savedAdvertisement.advertisementId)
+        setLocalDraftAdvertisements(current => upsertLocalAdvertisement(current, submittedAdvertisement))
       }
-      await loadOwnerAdvertisements()
+      await loadOwnerAdvertisements().catch(error => {
+        console.warn('Failed to refresh advertisements after saving draft', error)
+      })
       onShowNotice?.(
         'success',
         submitForReview ? translate('advertising.createSuccess') : '草稿已保存',
@@ -760,13 +1019,16 @@ export function AdvertisementSubmissionWorkspace({
       )
       setWorkspaceTab('drafts')
       setEditingAdvertisementId(savedAdvertisement.advertisementId)
+    } catch (error) {
+      onShowNotice?.('error', '草稿保存失败', error instanceof Error ? error.message : '保存时出现未知错误。')
+      throw error
     } finally {
       setIsSubmitting(false)
     }
   }
 
   async function withdrawAdvertisement(advertisement: AdvertisementResponse) {
-    await updateAdvertisement(advertisement.advertisementId, {
+    const withdrawnAdvertisement = await updateAdvertisement(advertisement.advertisementId, {
       advertisementKind: advertisement.advertisementKind,
       title: advertisement.title,
       subtitle: advertisement.subtitle,
@@ -785,8 +1047,21 @@ export function AdvertisementSubmissionWorkspace({
       startAt: advertisement.startAt,
       endAt: advertisement.endAt,
     })
-    await loadOwnerAdvertisements()
+    await loadOwnerAdvertisements().catch(error => {
+      console.warn('Failed to refresh advertisements after withdrawing draft', error)
+    })
+    setLocalDraftAdvertisements(current => upsertLocalAdvertisement(current, withdrawnAdvertisement))
     onShowNotice?.('success', '已撤稿', '广告已恢复为未提交状态。')
+  }
+
+  async function submitDraftAdvertisement(advertisementId: string) {
+    const submittedAdvertisement = await submitAdvertisementForReview(advertisementId)
+    setLocalDraftAdvertisements(current => upsertLocalAdvertisement(current, submittedAdvertisement))
+    await loadOwnerAdvertisements().catch(error => {
+      console.warn('Failed to refresh advertisements after submitting draft', error)
+    })
+    onShowNotice?.('success', '已提交', '广告已提交给网站管理者审核。')
+    return submittedAdvertisement
   }
 
   return (
@@ -795,6 +1070,7 @@ export function AdvertisementSubmissionWorkspace({
         <div>
           <p className="text-sm font-bold text-slate-500">{translate('advertising.submitEyebrow')}</p>
           <h2 className="m-0 text-2xl font-bold leading-tight text-slate-950">{translate('advertising.submitTitle')}</h2>
+          {workspaceTab === 'create' && draftName ? <p className="m-0 mt-2 text-sm font-semibold text-slate-500">当前草稿：{draftName}</p> : null}
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -821,7 +1097,7 @@ export function AdvertisementSubmissionWorkspace({
                 <button
                   type="button"
                   className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white"
-                  onClick={resetComposer}
+                  onClick={openNewDraftDialog}
                 >
                   新建草稿
                 </button>
@@ -889,13 +1165,21 @@ export function AdvertisementSubmissionWorkspace({
                           ))}
                         </div>
                       </label>
-                      <label className="grid gap-2">
-                        <span className="text-sm font-semibold text-slate-700">备注</span>
-                        <textarea rows={2} value={textNotes} onChange={event => setTextNotes(event.target.value)} placeholder="比如：更有速度感、标题更夸张、适合年轻人" />
-                      </label>
-                      <button type="button" className="inline-flex min-h-10 items-center justify-center border border-black bg-black px-3 text-sm font-semibold text-white disabled:opacity-60" disabled={isGeneratingText} onClick={() => void generateTextStyles()}>
-                        {isGeneratingText ? translate('search.loading') : translate('advertising.factory.generateText')}
-                      </button>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button type="button" className="inline-flex min-h-10 items-center justify-center border border-black bg-black px-3 text-sm font-semibold text-white disabled:opacity-60" disabled={isGeneratingText} onClick={() => void generateTextStyles()}>
+                          {isGeneratingText ? translate('search.loading') : translate('advertising.factory.generateText')}
+                        </button>
+                        <button
+                          type="button"
+                          className="inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-950 disabled:opacity-60"
+                          disabled={isGeneratingText}
+                          onClick={() => {
+                            void generateTextStyles()
+                          }}
+                        >
+                          切换风格
+                        </button>
+                      </div>
                       <div className="grid gap-2">
                         {textCandidates.map(candidate => (
                           <button key={candidate.id} type="button" draggable className="grid gap-1 border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-950" onDragStart={() => setDragTemplate(candidate)} onClick={() => addTemplateToCanvas(candidate)}>
@@ -954,10 +1238,6 @@ export function AdvertisementSubmissionWorkspace({
                               ))}
                             </div>
                           </label>
-                          <label className="grid gap-2">
-                            <span className="text-sm font-semibold text-slate-700">备注</span>
-                            <textarea rows={2} value={imageNotes} onChange={event => setImageNotes(event.target.value)} placeholder="比如：只要飞机主体、边缘干净、适合贴在右侧" />
-                          </label>
                         </>
                       ) : (
                         <>
@@ -975,10 +1255,6 @@ export function AdvertisementSubmissionWorkspace({
                                 </button>
                               ))}
                             </div>
-                          </label>
-                          <label className="grid gap-2">
-                            <span className="text-sm font-semibold text-slate-700">备注</span>
-                            <textarea rows={2} value={imageNotes} onChange={event => setImageNotes(event.target.value)} placeholder="比如：给左侧文字留白、天空更通透、不要太花" />
                           </label>
                           <label className="grid gap-2">
                             <span className="text-sm font-semibold text-slate-700">是否自动适应文字、元素</span>
@@ -1007,7 +1283,7 @@ export function AdvertisementSubmissionWorkspace({
                       <div className="grid gap-2">
                         {imageCandidates.map(candidate => (
                           <button key={candidate.id} type="button" draggable className="overflow-hidden border border-slate-200 bg-white text-left transition hover:border-slate-950" onDragStart={() => setDragTemplate(candidate)} onClick={() => addTemplateToCanvas(candidate)}>
-                            {candidate.src ? <img src={candidate.src} alt="" className="aspect-video w-full object-cover" /> : null}
+                            {candidate.src ? <img src={candidate.src} alt="" className={`aspect-video w-full ${candidate.contentMode === 'contain' ? 'object-contain bg-slate-50' : 'object-cover'}`} /> : null}
                           </button>
                         ))}
                       </div>
@@ -1038,6 +1314,7 @@ export function AdvertisementSubmissionWorkspace({
                     ref={canvasRef}
                     className="relative overflow-hidden border border-slate-300"
                     style={{ width: '100%', aspectRatio: `${canvasWidth} / ${canvasHeight}`, backgroundColor: creative.backgroundColor }}
+                    onContextMenu={event => openCanvasContextMenu(event, null)}
                     onDragOver={event => event.preventDefault()}
                     onDrop={event => {
                       event.preventDefault()
@@ -1045,14 +1322,15 @@ export function AdvertisementSubmissionWorkspace({
                       const rect = canvasRef.current.getBoundingClientRect()
                       const scale = canvasWidth / rect.width
                       addTemplateToCanvas(dragTemplate, {
-                        x: Math.max(0, Math.round((event.clientX - rect.left) * scale)),
-                        y: Math.max(0, Math.round((event.clientY - rect.top) * scale)),
+                        x: Math.round((event.clientX - rect.left) * scale),
+                        y: Math.round((event.clientY - rect.top) * scale),
                       })
                       setDragTemplate(null)
                     }}
                   >
                     {creative.elements.map(element => {
                       const scale = 100 / canvasWidth
+                      const hoverResizeDirection = hoverResizeDirectionByElementId[element.id]
                       const style = {
                         left: `${element.x * scale}%`,
                         top: `${element.y / canvasHeight * 100}%`,
@@ -1064,15 +1342,49 @@ export function AdvertisementSubmissionWorkspace({
                         borderRadius: element.borderRadius,
                         fontSize: `${Math.max(10, element.fontSize * 0.42)}px`,
                         fontWeight: element.fontWeight,
+                        cursor: hoverResizeDirection
+                          ? cursorForResizeDirection(hoverResizeDirection)
+                          : 'move',
                       }
                       return (
                         <div
                           key={element.id}
-                          className="absolute overflow-hidden border border-transparent text-left transition hover:border-white hover:ring-2 hover:ring-pink-500"
+                          className="group absolute overflow-hidden border border-transparent text-left transition hover:border-white hover:ring-2 hover:ring-pink-500"
                           style={style}
+                          onMouseMove={event => {
+                            if (dragState || resizeState) return
+                            if ((event.target as HTMLElement).closest('[data-remove-handle="true"]')) {
+                              setHoverResizeDirectionByElementId(current => current[element.id] ? { ...current, [element.id]: null } : current)
+                              return
+                            }
+                            const direction = resizeDirectionFromPointer(event, event.currentTarget.getBoundingClientRect())
+                            setHoverResizeDirectionByElementId(current =>
+                              current[element.id] === direction ? current : { ...current, [element.id]: direction },
+                            )
+                          }}
+                          onMouseLeave={() => {
+                            setHoverResizeDirectionByElementId(current => current[element.id] ? { ...current, [element.id]: null } : current)
+                          }}
+                          onContextMenu={event => openCanvasContextMenu(event, element.id)}
                           onMouseDown={event => {
                             if (!canvasRef.current) return
-                            if ((event.target as HTMLElement).closest('[data-resize-handle="true"]') || (event.target as HTMLElement).closest('[data-remove-handle="true"]')) {
+                            if ((event.target as HTMLElement).closest('[data-remove-handle="true"]')) {
+                              return
+                            }
+                            event.preventDefault()
+                            const elementRect = event.currentTarget.getBoundingClientRect()
+                            const resizeDirection = hoverResizeDirection ?? resizeDirectionFromPointer(event, elementRect)
+                            if (resizeDirection) {
+                              setResizeState({
+                                elementId: element.id,
+                                startClientX: event.clientX,
+                                startClientY: event.clientY,
+                                startX: element.x,
+                                startY: element.y,
+                                startWidth: element.width,
+                                startHeight: element.height,
+                                direction: resizeDirection,
+                              })
                               return
                             }
                             const rect = canvasRef.current.getBoundingClientRect()
@@ -1082,36 +1394,55 @@ export function AdvertisementSubmissionWorkspace({
                           <button
                             type="button"
                             data-remove-handle="true"
-                            className="absolute right-1 top-1 z-20 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-xs font-bold text-white"
+                            className="absolute right-1 top-1 z-20 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-xs font-bold text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
                             onClick={() => removeElement(element.id)}
                           >
                             ×
                           </button>
                           {element.type === 'image' && element.src ? (
-                            <img src={element.src} alt="" className="h-full w-full object-cover" />
+                            <img src={element.src} alt="" className={`h-full w-full ${element.contentMode === 'contain' ? 'object-contain' : 'object-cover'}`} />
                           ) : (
                             <div className="grid h-full w-full place-items-center px-3 text-center">{element.text}</div>
                           )}
-                          <button
-                            type="button"
-                            data-resize-handle="true"
-                            className="absolute bottom-1 right-1 z-20 grid h-6 w-6 place-items-center rounded-full bg-white/90 text-[10px] font-bold text-slate-950 shadow"
-                            onMouseDown={event => {
-                              event.stopPropagation()
-                              setResizeState({
-                                elementId: element.id,
-                                startClientX: event.clientX,
-                                startClientY: event.clientY,
-                                startWidth: element.width,
-                                startHeight: element.height,
-                              })
-                            }}
-                          >
-                            ↘
-                          </button>
+                          <div className="pointer-events-none absolute inset-0 border border-transparent transition group-hover:border-white/70" />
                         </div>
                       )
                     })}
+                    {canvasContextMenu ? (
+                      <div
+                        className="fixed z-50 min-w-32 border border-slate-200 bg-white p-1 text-sm font-semibold text-slate-950 shadow-xl shadow-slate-900/15"
+                        style={{ left: canvasContextMenu.x, top: canvasContextMenu.y }}
+                        onClick={event => event.stopPropagation()}
+                        onContextMenu={event => event.preventDefault()}
+                      >
+                        {canvasContextMenu.targetElementId ? (
+                          <>
+                            <button
+                              type="button"
+                              className="block w-full px-3 py-2 text-left hover:bg-slate-100"
+                              onClick={() => copyCanvasElement(canvasContextMenu.targetElementId!)}
+                            >
+                              复制
+                            </button>
+                            <button
+                              type="button"
+                              className="block w-full px-3 py-2 text-left hover:bg-slate-100"
+                              onClick={() => cutCanvasElement(canvasContextMenu.targetElementId!)}
+                            >
+                              剪切
+                            </button>
+                          </>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="block w-full px-3 py-2 text-left hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-400 disabled:hover:bg-white"
+                          disabled={!copiedElement}
+                          onClick={pasteCanvasElement}
+                        >
+                          粘贴
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                   <p className="m-0 text-sm leading-6 text-slate-500">{translate('advertising.factory.canvasHint')}</p>
                 </div>
@@ -1202,12 +1533,54 @@ export function AdvertisementSubmissionWorkspace({
             </section>
 
             <div className="flex flex-wrap gap-3">
-              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white disabled:opacity-50" disabled={isLoading || isSubmitting || creative.elements.length === 0} onClick={() => void saveDraft(false)}>保存草稿</button>
-              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-5 py-2 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600 disabled:opacity-50" disabled={isLoading || isSubmitting || creative.elements.length === 0} onClick={() => void saveDraft(true)}>{isSubmitting ? translate('advertising.submitting') : '提交给网站管理者'}</button>
+              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white disabled:opacity-50" disabled={isLoading || isSubmitting || creative.elements.length === 0} onClick={() => {
+                if (!draftName.trim()) {
+                  setIsDraftNameDialogOpen(true)
+                  return
+                }
+                void saveDraft(false)
+              }}>保存草稿</button>
+              <button type="button" className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-5 py-2 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600 disabled:opacity-50" disabled={isLoading || isSubmitting || creative.elements.length === 0} onClick={() => {
+                if (!draftName.trim()) {
+                  setIsDraftNameDialogOpen(true)
+                  return
+                }
+                void saveDraft(true)
+              }}>{isSubmitting ? translate('advertising.submitting') : '提交给网站管理者'}</button>
             </div>
           </div>
         ) : null}
       </section>
+
+      {isDraftNameDialogOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/40 px-4">
+          <section className="grid w-full max-w-md gap-4 border border-slate-200 bg-white p-6 text-slate-950 shadow-xl">
+            <div className="grid gap-1">
+              <strong className="text-xl">给广告起个名字</strong>
+              <span className="text-sm leading-6 text-slate-500">这个名字会显示在草稿列表里，也会作为广告标题保存。</span>
+            </div>
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-slate-700">广告名字</span>
+              <input
+                autoFocus
+                value={draftNameInput}
+                onChange={event => setDraftNameInput(event.target.value)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter') {
+                    confirmNewDraft()
+                  }
+                }}
+                maxLength={120}
+                placeholder="比如：科比航空六月直飞广告"
+              />
+            </label>
+            <div className="flex flex-wrap justify-end gap-3">
+              <button type="button" className="inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => setIsDraftNameDialogOpen(false)}>取消</button>
+              <button type="button" className="inline-flex min-h-10 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600" onClick={confirmNewDraft}>开始创作</button>
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {workspaceTab === 'drafts' ? (
         <AdvertisementDraftSection
@@ -1216,7 +1589,7 @@ export function AdvertisementSubmissionWorkspace({
           onEdit={openAdvertisementDraft}
           onOpenResource={onOpenResource}
           onWithdraw={withdrawAdvertisement}
-          onSubmitReview={submitAdvertisementForReview}
+          onSubmitReview={submitDraftAdvertisement}
         />
       ) : null}
     </section>
@@ -1272,7 +1645,16 @@ function AdvertisementAdminCard({ advertisement, translate, onEdit, onOpenResour
   const hasHyperlink = advertisement.landingTarget !== 'disabled'
   return (
     <article className="grid gap-4 border border-slate-200 bg-white p-4 text-slate-950 shadow-sm shadow-slate-200/50">
-      {advertisement.imageUrl ? <img src={advertisement.imageUrl} alt={advertisement.title} className="aspect-[960/240] w-full object-cover" /> : null}
+      {advertisement.imageUrl ? (
+        <div className="overflow-hidden border border-slate-200 bg-slate-50">
+          <BackendAssetImage
+            assetUrl={advertisement.imageUrl}
+            alt={advertisement.title}
+            className="aspect-[960/240] w-full object-contain"
+            fallbackContent={advertisement.title}
+          />
+        </div>
+      ) : null}
       <div className="grid gap-3">
         <div className="grid gap-1">
           <strong>{advertisement.title}</strong>

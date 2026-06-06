@@ -140,6 +140,8 @@ final case class FeedbackThread(
     orderItemId: Option[OrderItemId],
     reviewId: Option[ReviewId],
     relatedThreadId: Option[SupportTicketId],
+    managerActorId: Option[String],
+    siteAdminActorId: Option[String],
     unreadByUser: Int,
     unreadByManager: Int,
     unreadBySiteAdmin: Int,
