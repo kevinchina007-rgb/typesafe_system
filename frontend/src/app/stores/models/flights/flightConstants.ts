@@ -18,6 +18,7 @@ export const flightCities: FlightCity[] = [
   { cityName: '长沙', airports: [{ airportCode: 'CSX', cityName: '长沙', airportName: '黄花国际机场' }] },
   { cityName: '青岛', airports: [{ airportCode: 'TAO', cityName: '青岛', airportName: '胶东国际机场' }] },
   { cityName: '厦门', airports: [{ airportCode: 'XMN', cityName: '厦门', airportName: '高崎国际机场' }] },
+  { cityName: '\u7ebd\u7ea6', airports: [{ airportCode: 'JFK', cityName: '\u7ebd\u7ea6', airportName: '\u7ea6\u7ff0\u00b7F.\u80af\u5c3c\u8fea\u56fd\u9645\u673a\u573a' }] },
 ]
 
 export const flightCityOptions = flightCities.map(city => city.cityName)

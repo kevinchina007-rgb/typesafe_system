@@ -49,7 +49,8 @@ object MigrationPlan:
     loadMigrationStep(36, "site_admin_managers", "V36__site_admin_managers.sql"),
     loadMigrationStep(37, "advertising_creative_layout", "V37__advertising_creative_layout.sql"),
     loadMigrationStep(38, "advertising_review_feedback_settings", "V38__advertising_review_feedback_settings.sql"),
-    loadMigrationStep(39, "site_admin_profile_logo", "V39__site_admin_profile_logo.sql")
+    loadMigrationStep(39, "site_admin_profile_logo", "V39__site_admin_profile_logo.sql"),
+    loadMigrationStep(40, "flight_add_new_york_search_city", "V40__flight_add_new_york_search_city.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =
