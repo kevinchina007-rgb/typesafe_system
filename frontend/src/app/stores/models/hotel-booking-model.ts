@@ -4,7 +4,7 @@ export type HotelQuickDatePreset = 'tonight' | 'weekend' | 'nextWeek' | 'holiday
 export type HotelPreference = 'Economy' | 'Luxury' | 'Homestay' | 'Family' | 'Business'
 
 export const defaultHotelSearchState = {
-  location: '杭州',
+  location: '',
   checkInDate: '2026-06-01',
   checkOutDate: '2026-06-03',
   roomCount: 1,
@@ -14,8 +14,8 @@ export const defaultHotelSearchState = {
   selectedQuickDatePreset: null as HotelQuickDatePreset | null,
 }
 
-export const hotelHotDestinations = ['北京', '上海', '广州', '深圳', '成都', '重庆', '杭州', '南京', '武汉', '西安', '天津', '郑州', '长沙', '青岛', '厦门']
-export const hotelRecentSearches = ['杭州', '上海', '北京', '深圳']
+export const hotelHotDestinations = ['\u7ebd\u7ea6', '北京', '上海', '广州', '深圳', '成都', '重庆', '杭州', '南京', '武汉', '西安', '天津', '郑州', '长沙', '青岛', '厦门']
+export const hotelRecentSearches = ['\u7ebd\u7ea6', '杭州', '上海', '北京', '深圳']
 export const hotelNearbyOptions = ['ScenicSpot', 'Metro', 'Station', 'BusinessDistrict'] as const
 export const hotelPreferenceOptions: HotelPreference[] = ['Economy', 'Luxury', 'Homestay', 'Family', 'Business']
 export const hotelFilterOptions = ['priceRange', 'starLevel', 'guestRating', 'distance', 'breakfast', 'freeCancellation', 'stayDeal', 'brand'] as const

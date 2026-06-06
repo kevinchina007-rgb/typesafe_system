@@ -50,6 +50,8 @@ type FeedbackChatActions = {
   }) => Promise<FeedbackThread>
   markThreadRead: (threadId: string, audience: FeedbackAudience) => Promise<FeedbackThread | null>
   escalateThread: (params: { threadId: string; senderDisplayName: string; body: string }) => Promise<FeedbackThread>
+  createComplaint: (params: { sourceThreadId: string; selectedMessageIds: string[]; userExplanation: string; userDisplayName: string }) => Promise<FeedbackThread>
+  openComplaintManagerThread: (params: { complaintMessageId: string; siteAdminActorId: string }) => Promise<FeedbackThread>
   setActiveMiniThread: (thread: FeedbackThread | null) => void
   clearAllThreads: () => void
 }
@@ -206,6 +208,16 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
     set(state => syncThreadBuckets(state, nextThread))
     return nextThread
   },
+  createComplaint: async params => {
+    const nextThread = await travelMvpApiClient.createFeedbackComplaint(params)
+    set(state => syncThreadBuckets(state, nextThread))
+    return nextThread
+  },
+  openComplaintManagerThread: async params => {
+    const nextThread = await travelMvpApiClient.openComplaintManagerThread(params)
+    set(state => syncThreadBuckets(state, nextThread))
+    return nextThread
+  },
   setActiveMiniThread: thread => set({ activeMiniThread: thread }),
   clearAllThreads: () =>
     set({
@@ -272,6 +284,14 @@ export function markFeedbackThreadRead(threadId: string, audience: FeedbackAudie
 
 export function createManagerEscalationThread(params: { threadId: string; senderDisplayName: string; body: string }) {
   return useFeedbackChatStore.getState().escalateThread(params)
+}
+
+export function createFeedbackComplaint(params: { sourceThreadId: string; selectedMessageIds: string[]; userExplanation: string; userDisplayName: string }) {
+  return useFeedbackChatStore.getState().createComplaint(params)
+}
+
+export function openComplaintManagerThread(params: { complaintMessageId: string; siteAdminActorId: string }) {
+  return useFeedbackChatStore.getState().openComplaintManagerThread(params)
 }
 
 export function setActiveFeedbackMiniThread(thread: FeedbackThread | null) {

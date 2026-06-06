@@ -33,6 +33,7 @@ object AdvertisementFeedbackNotifications:
         messageType = FeedbackMessageType.System,
         content = messageBody.trim,
         payload = None,
+        complaintPayload = None,
         isRead = false,
         createdAt = now
       )

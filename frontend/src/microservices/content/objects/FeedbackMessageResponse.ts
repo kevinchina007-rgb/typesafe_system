@@ -1,6 +1,7 @@
 import type { FeedbackSenderRole } from './FeedbackSenderRole'
 import type { FeedbackMessageType } from './FeedbackMessageType'
 import type { OrderCancellationRequestPayload } from './OrderCancellationRequestPayload'
+import type { ComplaintCardPayload } from './ComplaintCardPayload'
 
 export type FeedbackMessageResponse = {
   messageId: string
@@ -11,6 +12,7 @@ export type FeedbackMessageResponse = {
   messageType: FeedbackMessageType
   content: string
   payload: OrderCancellationRequestPayload | null
+  complaintPayload?: ComplaintCardPayload | null
   isRead: boolean
   createdAt: string
 }

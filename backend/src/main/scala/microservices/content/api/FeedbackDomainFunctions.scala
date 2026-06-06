@@ -121,6 +121,7 @@ def createFeedbackMessage(
         messageType = FeedbackMessageType.Text,
         content = body.trim,
         payload = None,
+        complaintPayload = None,
         isRead = false,
         createdAt = sentAt
       )
@@ -169,6 +170,7 @@ def createOrderCancellationMessage(
         messageType = FeedbackMessageType.OrderCancellationRequest,
         content = "申请取消订单",
         payload = Some(payload),
+        complaintPayload = None,
         isRead = false,
         createdAt = createdAt
       )
@@ -225,6 +227,47 @@ def createOrderCancellationSystemMessage(
     messageType = FeedbackMessageType.System,
     content = content,
     payload = None,
+    complaintPayload = None,
+    isRead = false,
+    createdAt = createdAt
+  )
+
+def createComplaintCardMessage(
+    messageId: SupportMessageId,
+    threadId: SupportTicketId,
+    payload: ComplaintCardPayload,
+    createdAt: Instant
+): FeedbackMessage =
+  FeedbackMessage(
+    messageId = messageId,
+    threadId = threadId,
+    senderId = "site-admin",
+    senderRole = FeedbackSenderRole.SiteAdmin,
+    senderDisplayName = "网站管理者",
+    messageType = FeedbackMessageType.ComplaintCard,
+    content = payload.summary,
+    payload = None,
+    complaintPayload = Some(payload),
+    isRead = false,
+    createdAt = createdAt
+  )
+
+def createComplaintSystemMessage(
+    messageId: SupportMessageId,
+    threadId: SupportTicketId,
+    content: String,
+    createdAt: Instant
+): FeedbackMessage =
+  FeedbackMessage(
+    messageId = messageId,
+    threadId = threadId,
+    senderId = "system",
+    senderRole = FeedbackSenderRole.System,
+    senderDisplayName = "系统",
+    messageType = FeedbackMessageType.System,
+    content = content,
+    payload = None,
+    complaintPayload = None,
     isRead = false,
     createdAt = createdAt
   )

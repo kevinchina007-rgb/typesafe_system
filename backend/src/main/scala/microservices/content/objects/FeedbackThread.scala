@@ -44,6 +44,7 @@ final case class FeedbackMessageType(value: String):
 object FeedbackMessageType:
   val Text: FeedbackMessageType = FeedbackMessageType("text")
   val OrderCancellationRequest: FeedbackMessageType = FeedbackMessageType("orderCancellationRequest")
+  val ComplaintCard: FeedbackMessageType = FeedbackMessageType("complaintCard")
   val System: FeedbackMessageType = FeedbackMessageType("system")
   given sourceEncoder: Encoder[FeedbackMessageType] = Encoder.encodeString.contramap(_.toString)
   given sourceDecoder: Decoder[FeedbackMessageType] = Decoder.decodeString.map(fromText)
@@ -51,6 +52,7 @@ object FeedbackMessageType:
   def fromText(value: String): FeedbackMessageType =
     value.trim match
       case "orderCancellationRequest" => OrderCancellationRequest
+      case "complaintCard"            => ComplaintCard
       case "system"                   => System
       case _                          => Text
 
@@ -89,6 +91,34 @@ object OrderCancellationRequestPayload:
   given sourceEncoder: Encoder[OrderCancellationRequestPayload] = deriveEncoder
   given sourceDecoder: Decoder[OrderCancellationRequestPayload] = deriveDecoder
 
+final case class ComplaintMessageSnapshot(
+    messageId: String,
+    senderRole: FeedbackSenderRole,
+    senderDisplayName: String,
+    content: String,
+    messageType: FeedbackMessageType,
+    createdAt: String
+)
+object ComplaintMessageSnapshot:
+  import ContentSourceJsonCodecs.given
+  given sourceEncoder: Encoder[ComplaintMessageSnapshot] = deriveEncoder
+  given sourceDecoder: Decoder[ComplaintMessageSnapshot] = deriveDecoder
+
+final case class ComplaintCardPayload(
+    complaintId: String,
+    sourceThreadId: String,
+    managerThreadId: Option[String],
+    userExplanation: String,
+    summary: String,
+    targetDisplayName: String,
+    selectedMessages: List[ComplaintMessageSnapshot],
+    createdAt: String
+)
+object ComplaintCardPayload:
+  import ContentSourceJsonCodecs.given
+  given sourceEncoder: Encoder[ComplaintCardPayload] = deriveEncoder
+  given sourceDecoder: Decoder[ComplaintCardPayload] = deriveDecoder
+
 final case class FeedbackManagerType(value: String):
   override def toString: String = value
 
@@ -118,6 +148,7 @@ final case class FeedbackMessage(
     messageType: FeedbackMessageType,
     content: String,
     payload: Option[OrderCancellationRequestPayload],
+    complaintPayload: Option[ComplaintCardPayload],
     isRead: Boolean,
     createdAt: Instant
 )

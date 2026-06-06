@@ -102,6 +102,8 @@ object PlannerDefinitions:
         WithConnection(HandleOrderCancellationRequestPlanner),
         WithConnection(MarkFeedbackThreadReadPlanner),
         WithConnection(EscalateFeedbackThreadPlanner),
+        WithConnection(CreateFeedbackComplaintPlanner),
+        WithConnection(OpenComplaintManagerThreadPlanner),
         WithConnection(ExploreSuggestionsPlanner),
         WithConnection(ExploreSearchPlanner),
         WithConnection(CreateUserPlanner),

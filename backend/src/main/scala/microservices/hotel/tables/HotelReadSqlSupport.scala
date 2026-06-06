@@ -13,10 +13,10 @@ object HotelReadSqlSupport:
   def listHotels(connection: Connection, location: Option[String]): List[Hotel] =
     val statement =
       location.map(_.trim).filter(_.nonEmpty) match
-        case Some(_) => connection.prepareStatement(selectHotelSql + " where location = ? order by name, hotel_id")
+        case Some(_) => connection.prepareStatement(selectHotelSql + " where lower(location) like ? order by name, hotel_id")
         case None => connection.prepareStatement(selectHotelSql + " order by name, hotel_id")
     try
-      location.map(_.trim).filter(_.nonEmpty).foreach(statement.setString(1, _))
+      location.map(_.trim).filter(_.nonEmpty).foreach(value => statement.setString(1, s"%${value.toLowerCase}%"))
       val resultSet = statement.executeQuery()
       try readHotels(connection, resultSet)
       finally resultSet.close()

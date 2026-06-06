@@ -5,7 +5,7 @@ export type AttractionTypePreference = 'Nature' | 'Museum' | 'ThemePark' | 'Perf
 export type AttractionSortPreference = 'Popular' | 'Rating' | 'Price'
 
 export const defaultAttractionSearchState = {
-  city: '上海',
+  city: '',
   keyword: '',
   useDate: '2026-04-10',
   travelerCount: 2,
@@ -14,8 +14,8 @@ export const defaultAttractionSearchState = {
   selectedQuickDatePreset: null as AttractionQuickDatePreset | null,
 }
 
-export const attractionHotSpots = ['上海 迪士尼', '杭州 西湖', '东京 迪士尼海洋', '北京 故宫']
-export const attractionRecentSearches = ['上海 迪士尼乐园', '北京 环球影城', '杭州 灵隐寺']
+export const attractionHotSpots = ['\u7ebd\u7ea6 \u53cc\u5b50\u5854', '上海 迪士尼', '杭州 西湖', '东京 迪士尼海洋', '北京 故宫']
+export const attractionRecentSearches = ['\u7ebd\u7ea6 \u53cc\u5b50\u5854', '上海 迪士尼乐园', '北京 环球影城', '杭州 灵隐寺']
 export const attractionTypeOptions: AttractionTypePreference[] = ['Nature', 'Museum', 'ThemePark', 'Performance', 'DayTour']
 export const attractionSortOptions: AttractionSortPreference[] = ['Popular', 'Rating', 'Price']
 export const attractionFilterOptions = ['priceRange', 'type', 'rating', 'distance', 'refundable', 'show', 'familyFriendly', 'tripLength'] as const

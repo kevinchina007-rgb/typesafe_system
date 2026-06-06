@@ -16,7 +16,7 @@ import { getHealth, signupUser, loginUserWithPassword, logoutUser, getCurrentUse
 import { loginManagerAuth, logoutManagerAuth, getCurrentManagerSession, changeManagerPassword, listManagerSessions, logoutCurrentManagerSession, logoutOtherManagerSessions } from '@/microservices/auth/api/ManagerAuthPlanners'
 import { listBlogPosts, listShortBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, saveBlogDraft, publishBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost, likeBlogComment, unlikeBlogComment, favoriteBlogPost, unfavoriteBlogPost, followBlogUser, blockBlogUser, listBlogNotifications, getBlogProfile, updateBlogProfilePrivacy, listBlogFollowers, listBlogFollowing } from '@/microservices/content/api/BlogPlanners'
 import { listExploreSuggestions, searchExplore } from '@/microservices/content/api/ExplorePlanners'
-import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedbackThreads, listSiteAdminFeedbackThreads, sendFeedbackMessage, createOrderCancellationMessage, handleOrderCancellationRequest, markFeedbackThreadRead, escalateFeedbackThread } from '@/microservices/content/api/FeedbackPlanners'
+import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedbackThreads, listSiteAdminFeedbackThreads, sendFeedbackMessage, createOrderCancellationMessage, handleOrderCancellationRequest, markFeedbackThreadRead, escalateFeedbackThread, createFeedbackComplaint, openComplaintManagerThread } from '@/microservices/content/api/FeedbackPlanners'
 import { listMyReviews, listReviewsByResource, getReviewResourceSummary, getReviewEligibility, createReview, updateReview, uploadReviewImage, deleteReview } from '@/microservices/content/api/ReviewPlanners'
 import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
 import { searchHotelsPlanner, getHotelDetailsPlanner, uploadHotelRoomTypeImage } from '@/microservices/hotel/api'
@@ -104,6 +104,8 @@ export const travelMvpApiClient = {
   handleOrderCancellationRequest,
   markFeedbackThreadRead,
   escalateFeedbackThread,
+  createFeedbackComplaint,
+  openComplaintManagerThread,
   listMyReviews,
   listReviewsByResource,
   getReviewResourceSummary,

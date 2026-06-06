@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { handleOrderCancellationRequest, markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
+import { handleOrderCancellationRequest, markFeedbackThreadRead, openComplaintManagerThread, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
 import { AdvertisementReviewWorkspace } from '@/pages/ManagerPage/components/advertising/AdvertisementReviewWorkspace'
@@ -144,11 +144,17 @@ export function SiteAdminPanel({ section, advertisingModule, currentManagerSessi
 
 function SiteAdminFeedbackWorkspace({ currentManagerSession, translate }: { currentManagerSession: CurrentManagerSessionResponse | null; translate: (translationKey: string) => string }) {
   const loadSiteAdminThreads = useFeedbackChatStore(state => state.loadSiteAdminThreads)
+  const siteAdminUserThreads = useFeedbackChatStore(state => state.siteAdminUserThreads)
   const siteAdminManagerThreads = useFeedbackChatStore(state => state.siteAdminManagerThreads)
+  const [preferredThreadId, setPreferredThreadId] = useState<string | null>(null)
 
   useEffect(() => {
+    void loadSiteAdminThreads('user')
     void loadSiteAdminThreads('manager')
   }, [loadSiteAdminThreads])
+
+  const siteAdminThreads = [...siteAdminUserThreads, ...siteAdminManagerThreads]
+    .sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
 
   return (
     <FeedbackConversationWorkspace
@@ -157,7 +163,8 @@ function SiteAdminFeedbackWorkspace({ currentManagerSession, translate }: { curr
       audienceAvatarUrl={currentManagerSession?.logoAssetPath ?? null}
       emptyTitle={translate('feedback.title')}
       emptyDescription={translate('feedback.siteAdminEmpty')}
-      threads={siteAdminManagerThreads}
+      threads={siteAdminThreads}
+      preferredThreadId={preferredThreadId}
       translate={translate}
       unreadCountSelector={thread => thread.unreadBySiteAdmin}
       onMarkRead={markFeedbackThreadRead}
@@ -169,6 +176,15 @@ function SiteAdminFeedbackWorkspace({ currentManagerSession, translate }: { curr
           body,
         })
       }
+      onOpenComplaintManagerThread={async complaintMessageId => {
+        const thread = await openComplaintManagerThread({
+          complaintMessageId,
+          siteAdminActorId: currentManagerSession?.managerId ?? '',
+        })
+        await loadSiteAdminThreads('manager')
+        setPreferredThreadId(thread.threadId)
+        return thread
+      }}
     />
   )
 }

@@ -1,11 +1,13 @@
 import type { CreateOrderCancellationMessageRequest } from '@/microservices/content/objects/CreateOrderCancellationMessageRequest'
 import type { EnsureOrderCancellationThreadRequest } from '@/microservices/content/objects/EnsureOrderCancellationThreadRequest'
 import type { EscalateFeedbackThreadRequest } from '@/microservices/content/objects/EscalateFeedbackThreadRequest'
+import type { CreateFeedbackComplaintRequest } from '@/microservices/content/objects/CreateFeedbackComplaintRequest'
 import type { FeedbackThreadListResponse } from '@/microservices/content/objects/FeedbackThreadListResponse'
 import type { FeedbackThreadResponse } from '@/microservices/content/objects/FeedbackThreadResponse'
 import type { FeedbackSiteAdminChannel } from '@/microservices/content/objects/FeedbackSiteAdminChannel'
 import type { HandleOrderCancellationRequest } from '@/microservices/content/objects/HandleOrderCancellationRequest'
 import type { MarkFeedbackThreadReadRequest } from '@/microservices/content/objects/MarkFeedbackThreadReadRequest'
+import type { OpenComplaintManagerThreadRequest } from '@/microservices/content/objects/OpenComplaintManagerThreadRequest'
 
 
 
@@ -64,3 +66,9 @@ export const markFeedbackThreadRead = (threadId: string, payload: MarkFeedbackTh
 
 export const escalateFeedbackThread = (threadId: string, payload: EscalateFeedbackThreadRequest): Promise<FeedbackThreadResponse> =>
     executeJsonApiRequest<FeedbackThreadDetailsPlannerResponse>('/EscalateFeedbackThreadPlanner', 'POST', { threadId, ...payload }).then(flattenThread)
+
+export const createFeedbackComplaint = (payload: CreateFeedbackComplaintRequest): Promise<FeedbackThreadResponse> =>
+    executeJsonApiRequest<FeedbackThreadDetailsPlannerResponse>('/CreateFeedbackComplaintPlanner', 'POST', payload).then(flattenThread)
+
+export const openComplaintManagerThread = (payload: OpenComplaintManagerThreadRequest): Promise<FeedbackThreadResponse> =>
+    executeJsonApiRequest<FeedbackThreadDetailsPlannerResponse>('/OpenComplaintManagerThreadPlanner', 'POST', payload).then(flattenThread)

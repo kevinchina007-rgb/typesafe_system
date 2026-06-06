@@ -1,4 +1,4 @@
-import { createOrderCancellationMessage, markFeedbackThreadRead, sendFeedbackMessage } from '@/app/stores/feedback-chat-store'
+import { createFeedbackComplaint, createOrderCancellationMessage, markFeedbackThreadRead, sendFeedbackMessage } from '@/app/stores/feedback-chat-store'
 import type { UserResponse } from '@/lib/mvp-types/index'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
 import type { CancellationOrderOption } from '@/pages/CustomerFeedbackPage/objects'
@@ -45,6 +45,7 @@ export function CustomerFeedbackWorkspace({
           reason,
         })
       }
+      onCreateComplaint={createFeedbackComplaint}
     />
   )
 }

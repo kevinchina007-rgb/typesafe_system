@@ -155,6 +155,79 @@ object FeedbackPlannerPlainSql:
       ).headOption
     }
 
+  def findDefaultSiteAdminActorId(connection: Connection): IO[Option[String]] =
+    IO.blocking {
+      PlainSqlSupport.withStatement(
+        connection,
+        """
+          select manager_id
+          from site_admin_managers
+          where coalesce(status, 'Active') = 'Active'
+          order by created_at asc
+          limit 1
+        """
+      ) { statement =>
+        val resultSet = statement.executeQuery()
+        try if resultSet.next() then Option(resultSet.getString("manager_id")).map(_.trim).filter(_.nonEmpty) else None
+        finally resultSet.close()
+      }
+    }
+
+  def findManagerActorForFeedbackThread(connection: Connection, thread: FeedbackThread): IO[Option[String]] =
+    thread.managerActorId.map(_.trim).filter(_.nonEmpty) match
+      case Some(actorId) => IO.pure(Some(actorId))
+      case None =>
+        thread.managerType match
+          case FeedbackManagerType.Airline =>
+            thread.orderId.map(_.value).filter(_.trim.nonEmpty) match
+              case Some(orderId) =>
+                IO.blocking {
+                  PlainSqlSupport.withStatement(
+                    connection,
+                    """
+                      select am.manager_id
+                      from order_line_items li
+                      left join airlines a on a.airline_id = li.snapshot_json::jsonb ->> 'airlineId'
+                        or a.code = li.snapshot_json::jsonb ->> 'airlineCode'
+                      join airline_managers am on am.airline_id = a.airline_id
+                      where li.order_id = ?
+                      order by am.created_at asc
+                      limit 1
+                    """
+                  ) { statement =>
+                    statement.setString(1, orderId)
+                    val resultSet = statement.executeQuery()
+                    try if resultSet.next() then Option(resultSet.getString("manager_id")).map(_.trim).filter(_.nonEmpty) else None
+                    finally resultSet.close()
+                  }
+                }
+              case None => IO.pure(None)
+          case _ => IO.pure(None)
+
+  def listMessagesByIds(connection: Connection, threadId: SupportTicketId, messageIds: List[String]): IO[List[FeedbackMessage]] =
+    IO.blocking {
+      val wantedIds = messageIds.map(_.trim).filter(_.nonEmpty)
+      if wantedIds.isEmpty then Nil
+      else
+        val placeholders = wantedIds.map(_ => "?").mkString(", ")
+        PlainSqlSupport.withStatement(
+          connection,
+          s"""
+             select message_id, thread_id, sender_role, sender_display_name, body, sent_at,
+                    coalesce(message_type, 'text') as message_type,
+                    payload_json,
+                    coalesce(is_read, false) as is_read
+             from feedback_messages
+             where thread_id = ? and message_id in ($placeholders)
+             order by sent_at asc
+           """
+        ) { statement =>
+          statement.setString(1, threadId.value)
+          wantedIds.zipWithIndex.foreach { case (messageId, index) => statement.setString(index + 2, messageId) }
+          PlainSqlSupport.queryList(statement)(readMessage)
+        }
+    }
+
   def findManagerActorLogoAssetPath(connection: Connection, managerType: FeedbackManagerType, managerActorId: Option[String]): IO[Option[String]] =
     (managerType, managerActorId.map(_.trim).filter(_.nonEmpty)) match
       case (FeedbackManagerType.Airline, Some(actorId)) =>
@@ -226,7 +299,11 @@ object FeedbackPlannerPlainSql:
         statement.setString(5, message.content)
         statement.setTimestamp(6, Timestamp.from(message.createdAt))
         statement.setString(7, message.messageType.toString)
-        statement.setString(8, message.payload.map(_.asJson.noSpaces).orNull)
+        val payloadJson =
+          message.messageType match
+            case FeedbackMessageType.ComplaintCard => message.complaintPayload.map(_.asJson.noSpaces)
+            case _                                 => message.payload.map(_.asJson.noSpaces)
+        statement.setString(8, payloadJson.orNull)
         statement.setBoolean(9, message.isRead)
         statement.executeUpdate()
       }
@@ -236,7 +313,11 @@ object FeedbackPlannerPlainSql:
   def updateMessagePayload(connection: Connection, message: FeedbackMessage): IO[Unit] =
     IO.blocking {
       PlainSqlSupport.withStatement(connection, "update feedback_messages set payload_json = ?, body = ?, message_type = ?, is_read = ? where thread_id = ? and message_id = ?") { statement =>
-        statement.setString(1, message.payload.map(_.asJson.noSpaces).orNull)
+        val payloadJson =
+          message.messageType match
+            case FeedbackMessageType.ComplaintCard => message.complaintPayload.map(_.asJson.noSpaces)
+            case _                                 => message.payload.map(_.asJson.noSpaces)
+        statement.setString(1, payloadJson.orNull)
         statement.setString(2, message.content)
         statement.setString(3, message.messageType.toString)
         statement.setBoolean(4, message.isRead)
@@ -457,17 +538,24 @@ object FeedbackPlannerPlainSql:
     val messageId = SupportMessageId(resultSet.getString("message_id"))
     val threadId = SupportTicketId(resultSet.getString("thread_id"))
     val senderDisplayName = resultSet.getString("sender_display_name")
+    val messageType = FeedbackMessageType.fromText(resultSet.getString("message_type"))
+    val payloadJson = Option(resultSet.getString("payload_json"))
     FeedbackMessage(
       messageId = messageId,
       threadId = threadId,
       senderId = senderDisplayName,
       senderRole = FeedbackSenderRole.fromText(resultSet.getString("sender_role")),
       senderDisplayName = senderDisplayName,
-      messageType = FeedbackMessageType.fromText(resultSet.getString("message_type")),
+      messageType = messageType,
       content = resultSet.getString("body"),
-      payload = Option(resultSet.getString("payload_json")).flatMap { json =>
-        decode[OrderCancellationRequestPayload](json).toOption
-      },
+      payload =
+        if messageType == FeedbackMessageType.OrderCancellationRequest then
+          payloadJson.flatMap(json => decode[OrderCancellationRequestPayload](json).toOption)
+        else None,
+      complaintPayload =
+        if messageType == FeedbackMessageType.ComplaintCard then
+          payloadJson.flatMap(json => decode[ComplaintCardPayload](json).toOption)
+        else None,
       isRead = resultSet.getBoolean("is_read"),
       createdAt = resultSet.getTimestamp("sent_at").toInstant
     )

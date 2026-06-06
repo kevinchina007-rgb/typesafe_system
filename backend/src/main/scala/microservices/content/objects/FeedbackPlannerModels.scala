@@ -50,6 +50,24 @@ object EscalateFeedbackThreadPlannerRequest:
   given sourceEncoder: Encoder[EscalateFeedbackThreadPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[EscalateFeedbackThreadPlannerRequest] = deriveDecoder
 
+final case class CreateFeedbackComplaintPlannerRequest(
+    sourceThreadId: String,
+    selectedMessageIds: List[String],
+    userExplanation: String,
+    userDisplayName: String
+)
+object CreateFeedbackComplaintPlannerRequest:
+  given sourceEncoder: Encoder[CreateFeedbackComplaintPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[CreateFeedbackComplaintPlannerRequest] = deriveDecoder
+
+final case class OpenComplaintManagerThreadPlannerRequest(
+    complaintMessageId: String,
+    siteAdminActorId: String
+)
+object OpenComplaintManagerThreadPlannerRequest:
+  given sourceEncoder: Encoder[OpenComplaintManagerThreadPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[OpenComplaintManagerThreadPlannerRequest] = deriveDecoder
+
 final case class FeedbackThreadDetailsPlannerResponse(
     thread: FeedbackThread,
     messages: List[FeedbackMessage],

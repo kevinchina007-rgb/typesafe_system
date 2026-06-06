@@ -100,7 +100,7 @@ def hasBookableRoomTypeForStay(hotel: Hotel, stayPeriod: StayPeriod): Boolean =
   hotel.roomTypes.exists(roomType => ensureRoomTypeBookableForStay(roomType, stayPeriod, RoomCount.unsafe(1)).isRight)
 
 def hotelIsSearchMatch(hotel: Hotel, locationFilter: Option[HotelLocation], stayPeriod: Option[StayPeriod]): Boolean =
-  locationFilter.forall(filterLocation => filterLocation.value.equalsIgnoreCase(hotel.hotelLocation.value)) &&
+  locationFilter.forall(filterLocation => hotel.hotelLocation.value.toLowerCase.contains(filterLocation.value.toLowerCase)) &&
     stayPeriod.forall(hasBookableRoomTypeForStay(hotel, _))
 
 def ensureHotelRoomTypeBookableForStay(

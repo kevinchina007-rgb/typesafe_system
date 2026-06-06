@@ -34,18 +34,32 @@ export function ManagerAuthCard({
   translate,
 }: ManagerAuthCardProps) {
   const [authMode, setAuthMode] = useState<ManagerAuthMode>(initialAuthMode)
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
   const registerFormRef = useRef<HTMLFormElement>(null)
   const loginFormRef = useRef<HTMLFormElement>(null)
 
   function resetManagerAuthForms() {
     registerFormRef.current?.reset()
     loginFormRef.current?.reset()
+    setLoginEmail('')
+    setLoginPassword('')
   }
 
   useEffect(() => {
     setAuthMode(initialAuthMode)
     resetManagerAuthForms()
   }, [initialAuthMode, loginManagerType])
+
+  useEffect(() => {
+    if (authMode !== 'login') {
+      return
+    }
+
+    resetManagerAuthForms()
+    const clearAutofillHandle = window.setTimeout(resetManagerAuthForms, 0)
+    return () => window.clearTimeout(clearAutofillHandle)
+  }, [authMode, loginManagerType])
 
   return (
     <article className={managerAuthCardClassName}>
@@ -146,11 +160,10 @@ export function ManagerAuthCard({
           autoComplete="off"
           onSubmit={async event => {
             event.preventDefault()
-            const formData = new FormData(event.currentTarget)
             await onLogin({
               managerType: loginManagerType,
-              email: String(formData.get('email') ?? '').trim(),
-              password: String(formData.get('password') ?? ''),
+              email: loginEmail.trim(),
+              password: loginPassword,
             })
             resetManagerAuthForms()
           }}
@@ -158,11 +171,29 @@ export function ManagerAuthCard({
           <h4 className={managerFormTitleClassName}>{loginTitle}</h4>
           <label className={managerLabelClassName}>
             {translate('manager.email')}
-            <input className={managerInputClassName} name="email" type="email" autoComplete="off" required disabled={isBusy} />
+            <input
+              className={managerInputClassName}
+              name="manager-login-email"
+              type="email"
+              autoComplete="new-password"
+              value={loginEmail}
+              onChange={event => setLoginEmail(event.target.value)}
+              required
+              disabled={isBusy}
+            />
           </label>
           <label className={managerLabelClassName}>
             {translate('account.password')}
-            <input className={managerInputClassName} name="password" type="password" autoComplete="off" required disabled={isBusy} />
+            <input
+              className={managerInputClassName}
+              name="manager-login-password"
+              type="password"
+              autoComplete="new-password"
+              value={loginPassword}
+              onChange={event => setLoginPassword(event.target.value)}
+              required
+              disabled={isBusy}
+            />
           </label>
           <button type="submit" className={managerAuthPrimaryButtonClassName} disabled={isBusy}>
             {translate('manager.login')}
