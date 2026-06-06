@@ -3,7 +3,7 @@ package com.typesafe.travel.api.routes
 import com.typesafe.travel.advertising.domain.*
 import com.typesafe.travel.api.{ExploreSearchPlanner, ExploreSuggestionsPlanner}
 import com.typesafe.travel.attraction.api.BookAttractionItemPlanner
-import com.typesafe.travel.attraction.domain.{AttractionSuggestionsPlanner, CreateAttractionPlanner, CreateAttractionTicketRulePlanner, CreateAttractionTicketSessionPlanner, CreateAttractionTicketTypePlanner, GetAttractionDetailsPlanner, ListAttractionsPlanner, ListManagedAttractionsPlanner}
+import com.typesafe.travel.attraction.domain.{AttractionSuggestionsPlanner, CreateAttractionPlanner, CreateAttractionTicketRulePlanner, CreateAttractionTicketSessionPlanner, CreateAttractionTicketTypePlanner, GetAttractionDetailsPlanner, ListAttractionsPlanner, ListManagedAttractionsPlanner, UploadAttractionImagePlanner}
 import com.typesafe.travel.auth.domain.*
 import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.flight.api.{BookFlightPlanner, FlightDailyLowestPricesPlanner, FlightSuggestionsPlanner, GetFlightDetailsPlanner, SearchFlightsPlanner}
@@ -50,6 +50,7 @@ object PlannerDefinitions:
         WithConnection(GetAttractionDetailsPlanner),
         WithConnection(ListManagedAttractionsPlanner),
         WithConnection(CreateAttractionPlanner),
+        WithConnection(UploadAttractionImagePlanner),
         WithConnection(CreateAttractionTicketTypePlanner),
         WithConnection(CreateAttractionTicketSessionPlanner),
         WithConnection(CreateAttractionTicketRulePlanner),
@@ -131,6 +132,7 @@ object PlannerDefinitions:
         WithConnection(CreateManagerFlightPlanner),
         WithConnection(ToggleManagerFlightStatusPlanner),
         WithConnection(CreateManagerRoomTypePlanner),
+        WithConnection(UploadHotelRoomTypeImagePlanner),
         WithConnection(ConfirmManagerBookingItemPlanner),
         WithConnection(RejectManagerBookingItemPlanner),
         WithConnection(ApproveManagerRefundPlanner),
@@ -158,6 +160,7 @@ object PlannerDefinitions:
         WithConnection(GetTrainDetailsPlanner),
         WithConnection(BookTrainItemPlanner),
         WithConnection(CreateTourGroupPlanner),
+        WithConnection(UploadTourGroupCoverImagePlanner),
         WithConnection(ListTourGroupsPlanner),
         WithConnection(GetTourGroupDetailsPlanner),
         WithConnection(JoinTourGroupPlanner),

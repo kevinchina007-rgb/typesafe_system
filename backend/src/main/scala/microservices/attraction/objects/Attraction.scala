@@ -177,6 +177,7 @@ final case class Attraction(
     city: String,
     location: String,
     description: String,
+    imageUrl: Option[String],
     attractionStatus: AttractionStatus,
     ticketTypes: Vector[TicketType],
     createdAt: Instant

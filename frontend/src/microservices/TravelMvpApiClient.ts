@@ -11,7 +11,7 @@ import { rejectAdvertisement } from '@/microservices/advertising/api/RejectAdver
 import { submitAdvertisementForReview } from '@/microservices/advertising/api/SubmitAdvertisementForReviewPlanner'
 import { updateAdvertisement } from '@/microservices/advertising/api/UpdateAdvertisementPlanner'
 import { uploadAdvertisementImage } from '@/microservices/advertising/api/UploadAdvertisementImagePlanner'
-import { listAttractions, getAttraction } from '@/microservices/attraction/api/AttractionPlanners'
+import { listAttractions, getAttraction, uploadAttractionImage } from '@/microservices/attraction/api/AttractionPlanners'
 import { getHealth, signupUser, loginUserWithPassword, logoutUser, getCurrentUserSession, changeUserPassword, listUserSessions, logoutCurrentUserSession, logoutOtherUserSessions } from '@/microservices/auth/api/AuthPlanners'
 import { loginManagerAuth, logoutManagerAuth, getCurrentManagerSession, changeManagerPassword, listManagerSessions, logoutCurrentManagerSession, logoutOtherManagerSessions } from '@/microservices/auth/api/ManagerAuthPlanners'
 import { listBlogPosts, listShortBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, saveBlogDraft, publishBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost, likeBlogComment, unlikeBlogComment, favoriteBlogPost, unfavoriteBlogPost, followBlogUser, blockBlogUser, listBlogNotifications, getBlogProfile, updateBlogProfilePrivacy, listBlogFollowers, listBlogFollowing } from '@/microservices/content/api/BlogPlanners'
@@ -19,12 +19,12 @@ import { listExploreSuggestions, searchExplore } from '@/microservices/content/a
 import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedbackThreads, listSiteAdminFeedbackThreads, sendFeedbackMessage, createOrderCancellationMessage, handleOrderCancellationRequest, markFeedbackThreadRead, escalateFeedbackThread } from '@/microservices/content/api/FeedbackPlanners'
 import { listMyReviews, listReviewsByResource, getReviewResourceSummary, getReviewEligibility, createReview, updateReview, uploadReviewImage, deleteReview } from '@/microservices/content/api/ReviewPlanners'
 import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
-import { searchHotelsPlanner, getHotelDetailsPlanner } from '@/microservices/hotel/api'
+import { searchHotelsPlanner, getHotelDetailsPlanner, uploadHotelRoomTypeImage } from '@/microservices/hotel/api'
 import { createUser, loginUser, getUser, uploadUserAvatar, updateUserProfile } from '@/microservices/identity/api/UserQueryPlanners'
 import { registerAirlineManager, registerHotelManager, registerSiteAdmin, updateSiteAdminManagerProfile, registerRailwayManager, registerAttractionManager, listManagedAttractions, createAttraction, createAttractionTicketType, createAttractionTicketSession, createAttractionTicketRule, listManagedTrains, createTrainJourney, createManagerRoomType, listManagedHotels, listManagerTasks, batchConfirmManagerBookingItems, batchRejectManagerBookingItems, listManagerFlights, listManagerFlightOrders, listManagerRefundTasks, updateAirlineManagerProfile, updateHotelManagerProfile, createManagerFlight, toggleManagerFlightStatus, confirmManagerBookingItem, rejectManagerBookingItem } from '@/microservices/operations/api/ManagerPlanners'
 import { createPaymentLink } from '@/microservices/order/api/FindOrderPaymentPlanner'
 import { createOrder, addTrainItemToOrder, addAttractionItemToOrder, createHotelOrder, getOrder, listOrders, payOrder, cancelOrder, requestRefund, approveRefund, rejectRefund } from '@/microservices/order/api/OrderPlanners'
-import { createTourGroup, listTourGroups, getTourGroup, joinTourGroup, leaveTourGroup, addTourGroupMembershipTraveler, removeTourGroupMembershipTraveler, kickTourGroupMember, blacklistTourGroupMember, transferTourGroupLeader, createTourGroupPlanItem, createTourGroupPlanOption, createTourGroupSelection, submitTourGroupSelection, confirmTourGroupSelection, rejectTourGroupSelection, payTourGroupSelection, batchPayTourGroupSelections, batchConfirmTourGroupSelections, batchRejectTourGroupSelections, listTourGroupBookings, getTourGroupChatSettings, updateTourGroupChatSettings, listTourGroupChatMessages, sendTourGroupChatMessage, listTourGroupDirectConversations, listTourGroupConversations, searchTourGroupConversations, searchTourGroupMessages, getOrCreateTourGroupDirectConversation, listDirectConversationMessages, listConversationMessages, markConversationRead, uploadConversationAttachment, sendConversationMessage, sendDirectConversationMessage, editConversationMessage, deleteConversationMessage, recallConversationMessage, addConversationReaction, removeConversationReaction, updateDirectConversationMuteState, updateDirectConversationArchiveState } from '@/microservices/tour-group/api/TourGroupPlanners'
+import { createTourGroup, uploadTourGroupCoverImage, listTourGroups, getTourGroup, joinTourGroup, leaveTourGroup, addTourGroupMembershipTraveler, removeTourGroupMembershipTraveler, kickTourGroupMember, blacklistTourGroupMember, transferTourGroupLeader, createTourGroupPlanItem, createTourGroupPlanOption, createTourGroupSelection, submitTourGroupSelection, confirmTourGroupSelection, rejectTourGroupSelection, payTourGroupSelection, batchPayTourGroupSelections, batchConfirmTourGroupSelections, batchRejectTourGroupSelections, listTourGroupBookings, getTourGroupChatSettings, updateTourGroupChatSettings, listTourGroupChatMessages, sendTourGroupChatMessage, listTourGroupDirectConversations, listTourGroupConversations, searchTourGroupConversations, searchTourGroupMessages, getOrCreateTourGroupDirectConversation, listDirectConversationMessages, listConversationMessages, markConversationRead, uploadConversationAttachment, sendConversationMessage, sendDirectConversationMessage, editConversationMessage, deleteConversationMessage, recallConversationMessage, addConversationReaction, removeConversationReaction, updateDirectConversationMuteState, updateDirectConversationArchiveState } from '@/microservices/tour-group/api/TourGroupPlanners'
 import { listTrains, getTrain } from '@/microservices/train/api/TrainPlanners'
 import { createTraveler, updateTraveler, listTravelers, deleteTraveler } from '@/microservices/traveler/api/TravelerPlanners'
 
@@ -48,6 +48,7 @@ export const travelMvpApiClient = {
   uploadAdvertisementImage,
   listAttractions,
   getAttraction,
+  uploadAttractionImage,
   getHealth,
   signupUser,
   loginUserWithPassword,
@@ -117,6 +118,7 @@ export const travelMvpApiClient = {
   bookFlightPlanner,
   searchHotelsPlanner,
   getHotelDetailsPlanner,
+  uploadHotelRoomTypeImage,
   createUser,
   loginUser,
   getUser,
@@ -162,6 +164,7 @@ export const travelMvpApiClient = {
   approveRefund,
   rejectRefund,
   createTourGroup,
+  uploadTourGroupCoverImage,
   listTourGroups,
   getTourGroup,
   joinTourGroup,

@@ -23,10 +23,30 @@ object ListManagedAttractionsPlannerRequest:
   given sourceEncoder: Encoder[ListManagedAttractionsPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[ListManagedAttractionsPlannerRequest] = deriveDecoder
 
-final case class CreateAttractionPlannerRequest(managerId: String, attractionName: String, city: String, location: String, description: String)
+final case class CreateAttractionPlannerRequest(managerId: String, attractionName: String, city: String, location: String, description: String, imageUrl: Option[String])
 object CreateAttractionPlannerRequest:
   given sourceEncoder: Encoder[CreateAttractionPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[CreateAttractionPlannerRequest] = deriveDecoder
+
+final case class UploadAttractionImagePlannerRequest(
+    originalFileName: String,
+    mimeType: String,
+    fileContentBase64: String
+)
+object UploadAttractionImagePlannerRequest:
+  given sourceEncoder: Encoder[UploadAttractionImagePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[UploadAttractionImagePlannerRequest] = deriveDecoder
+
+final case class UploadAttractionImagePlannerResponse(
+    assetId: String,
+    publicUrl: String,
+    originalFileName: String,
+    mimeType: String,
+    fileSize: Long
+)
+object UploadAttractionImagePlannerResponse:
+  given sourceEncoder: Encoder[UploadAttractionImagePlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[UploadAttractionImagePlannerResponse] = deriveDecoder
 
 final case class CreateAttractionTicketTypePlannerRequest(
     managerId: String,

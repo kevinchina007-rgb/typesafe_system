@@ -50,7 +50,9 @@ object MigrationPlan:
     loadMigrationStep(37, "advertising_creative_layout", "V37__advertising_creative_layout.sql"),
     loadMigrationStep(38, "advertising_review_feedback_settings", "V38__advertising_review_feedback_settings.sql"),
     loadMigrationStep(39, "site_admin_profile_logo", "V39__site_admin_profile_logo.sql"),
-    loadMigrationStep(40, "flight_add_new_york_search_city", "V40__flight_add_new_york_search_city.sql")
+    loadMigrationStep(40, "flight_add_new_york_search_city", "V40__flight_add_new_york_search_city.sql"),
+    loadMigrationStep(41, "hotel_room_type_images", "V41__hotel_room_type_images.sql"),
+    loadMigrationStep(42, "attraction_images", "V42__attraction_images.sql")
   )
 
   private def loadMigrationStep(version: Int, description: String, resourcePath: String): MigrationStep =

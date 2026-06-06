@@ -23,12 +23,22 @@ export function AttractionResultCard({
   onLoadReviewSummary,
   onLoadReviews,
 }: AttractionResultCardProps) {
+  const imageSrc = attractionResponse.imageUrl?.trim() || null
+
   return (
-    <article className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
-      <div className="flex flex-wrap items-start justify-between gap-3 text-lg font-bold text-slate-950">
-        <div>
-          <strong>{attractionResponse.attractionName}</strong>
-          <p>{`${attractionResponse.city} | ${attractionResponse.location}`}</p>
+    <article className="grid gap-5 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] lg:items-start">
+        <div className="grid gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3 text-lg font-bold text-slate-950">
+            <div>
+              <strong>{attractionResponse.attractionName}</strong>
+              <p>{`${attractionResponse.city} | ${attractionResponse.location}`}</p>
+            </div>
+            <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">
+              {mapBackendStatusToProductLabel(attractionResponse.status, currentLanguage)}
+            </span>
+          </div>
+
           <ResourceReviewSummaryLoader
             currentLanguage={currentLanguage}
             isBusy={isBusy}
@@ -40,13 +50,24 @@ export function AttractionResultCard({
             onLoadSummary={onLoadReviewSummary}
             onLoadReviews={onLoadReviews}
           />
-        </div>
-        <span className="inline-flex min-h-9 items-center justify-center border border-slate-300 bg-white px-3 py-1 text-sm font-medium text-slate-950">
-          {mapBackendStatusToProductLabel(attractionResponse.status, currentLanguage)}
-        </span>
-      </div>
 
-      <p>{attractionResponse.description}</p>
+          <p className="text-base leading-7 text-slate-700">{attractionResponse.description}</p>
+        </div>
+
+        <div className="overflow-hidden border border-slate-200 bg-slate-100">
+          {imageSrc ? (
+            <img
+              alt={attractionResponse.attractionName}
+              className="h-full min-h-[220px] w-full object-cover"
+              src={imageSrc}
+            />
+          ) : (
+            <div className="flex min-h-[220px] items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-cyan-50 text-sm font-medium text-slate-500">
+              {translate('attractionAdmin.attractionImageEmpty')}
+            </div>
+          )}
+        </div>
+      </div>
 
       <ul className="grid gap-3">
         {attractionResponse.ticketTypes.map(ticketType => {
@@ -124,7 +145,7 @@ export function AttractionResultCard({
                   {translate('attractions.bookNow')}
                 </button>
                 {selectedTravelerIds.length > 0 && !hasEligibleSelectedTraveler ? (
-                  <p className="text-sm text-rose-600">当前已选出行人都不符合该票型条件。</p>
+                  <p className="text-sm text-rose-600">当前已选出行人都不符合该票种条件。</p>
                 ) : null}
               </form>
             </li>

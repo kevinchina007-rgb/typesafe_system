@@ -62,7 +62,7 @@ export const registerAttractionManager = (payload: RegisterAttractionManagerPlan
 export const listManagedAttractions = (managerId: string): Promise<AttractionListResponse> =>
     executeJsonApiRequest<BackendAttractionListResponse>('/ListManagedAttractionsPlanner', 'POST', { managerId }).then(response => mapAttractionListResponseFromBackend(response))
 
-export const createAttraction = (payload: { managerId: string; attractionName: string; city: string; location: string; description: string }) =>
+export const createAttraction = (payload: { managerId: string; attractionName: string; city: string; location: string; description: string; imageUrl?: string | null }) =>
     executeJsonApiRequest('/CreateAttractionPlanner', 'POST', payload)
 
 export const createAttractionTicketType = (payload: CreateAttractionTicketTypePlannerRequest) =>
@@ -98,6 +98,7 @@ export const createManagerRoomType = (payload: {
     availableRooms: number
     inventoryStartDate: string
     inventoryEndDate: string
+    roomImageUrl?: string | null
   }): Promise<HotelPlannerResponse> =>
     executeJsonApiRequest('/CreateManagerRoomTypePlanner', 'POST', payload)
 

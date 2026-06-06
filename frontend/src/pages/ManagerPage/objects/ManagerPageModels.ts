@@ -122,6 +122,7 @@ export type ManagerPageController = {
     availableRooms: number
     inventoryStartDate: string
     inventoryEndDate: string
+    roomImageFile?: File | null
   }) => Promise<void>
   registerRailwayManager: (payload: {
     operatorCode: string
@@ -192,6 +193,7 @@ export type ManagerPageController = {
     city: string
     location: string
     description: string
+    attractionImageFile?: File | null
   }) => Promise<void>
   createAttractionTicketType: (payload: {
     attractionId: string

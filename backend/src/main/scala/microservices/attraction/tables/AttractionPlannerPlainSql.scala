@@ -65,7 +65,7 @@ object AttractionPlannerPlainSql:
         .getOrElse("")
       val sql =
         s"""
-           select attraction_id, manager_id, name, city, location, description, status, created_at
+           select attraction_id, manager_id, name, city, location, description, image_url, status, created_at
            from attractions
            where status = ?$cityFilterSql$keywordFilterSql
            order by ${citySortSql}${keywordSortSql}created_at, attraction_id
@@ -108,7 +108,7 @@ object AttractionPlannerPlainSql:
     IO.blocking {
       PlainSqlSupport.withStatement(
         connection,
-        "select attraction_id, manager_id, name, city, location, description, status, created_at from attractions where manager_id = ? order by created_at, attraction_id"
+        "select attraction_id, manager_id, name, city, location, description, image_url, status, created_at from attractions where manager_id = ? order by created_at, attraction_id"
       ) { statement =>
         statement.setString(1, input.managerId)
         AttractionListPlannerResponse(PlainSqlSupport.queryList(statement)(readAttraction(connection)))
@@ -124,13 +124,14 @@ object AttractionPlannerPlainSql:
         city = input.city.trim,
         location = input.location.trim,
         description = input.description.trim,
+        imageUrl = input.imageUrl.map(_.trim).filter(_.nonEmpty),
         attractionStatus = AttractionStatus.Published,
         ticketTypes = Vector.empty,
         createdAt = now
       )
       PlainSqlSupport.withStatement(
         connection,
-        "insert into attractions(attraction_id, manager_id, name, city, location, description, status, created_at) values (?, ?, ?, ?, ?, ?, ?, ?)"
+        "insert into attractions(attraction_id, manager_id, name, city, location, description, image_url, status, created_at) values (?, ?, ?, ?, ?, ?, ?, ?, ?)"
       ) { statement =>
         statement.setString(1, attraction.attractionId.value)
         statement.setString(2, attraction.managerId.value)
@@ -138,8 +139,9 @@ object AttractionPlannerPlainSql:
         statement.setString(4, attraction.city)
         statement.setString(5, attraction.location)
         statement.setString(6, attraction.description)
-        statement.setString(7, attraction.attractionStatus.toString)
-        statement.setTimestamp(8, Timestamp.from(now))
+        statement.setString(7, attraction.imageUrl.orNull)
+        statement.setString(8, attraction.attractionStatus.toString)
+        statement.setTimestamp(9, Timestamp.from(now))
         statement.executeUpdate()
       }
       attraction
@@ -230,7 +232,7 @@ object AttractionPlannerPlainSql:
   private def readDetails(connection: Connection, attractionId: String): Attraction =
     PlainSqlSupport.withStatement(
       connection,
-      "select attraction_id, manager_id, name, city, location, description, status, created_at from attractions where attraction_id = ?"
+      "select attraction_id, manager_id, name, city, location, description, image_url, status, created_at from attractions where attraction_id = ?"
     ) { statement =>
       statement.setString(1, attractionId)
       val resultSet = statement.executeQuery()
@@ -409,6 +411,7 @@ object AttractionPlannerPlainSql:
       city = resultSet.getString("city"),
       location = resultSet.getString("location"),
       description = resultSet.getString("description"),
+      imageUrl = Option(resultSet.getString("image_url")).filter(_.nonEmpty),
       attractionStatus = AttractionStatus.fromText(resultSet.getString("status")),
       ticketTypes = loadTicketTypes(connection, attractionId),
       createdAt = resultSet.getTimestamp("created_at").toInstant

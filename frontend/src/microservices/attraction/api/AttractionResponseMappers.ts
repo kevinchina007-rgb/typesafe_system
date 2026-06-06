@@ -52,6 +52,7 @@ export type BackendAttractionResponse = {
   city: string
   location: string
   description: string
+  imageUrl: string | null
   attractionStatus: string
   ticketTypes: BackendAttractionTicketType[]
   createdAt: string
@@ -189,6 +190,7 @@ function mapAttractionResponse(attraction: BackendAttractionResponse, useDate?: 
     city: attraction.city,
     location: attraction.location,
     description: attraction.description,
+    imageUrl: attraction.imageUrl ?? null,
     status: attraction.attractionStatus,
     ticketTypes: attraction.ticketTypes.map(ticketType => mapAttractionTicketType(ticketType, useDate)),
   }

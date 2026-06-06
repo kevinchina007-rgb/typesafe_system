@@ -22,6 +22,7 @@ type AttractionAdminPanelProps = {
     city: string
     location: string
     description: string
+    attractionImageFile?: File | null
   }) => Promise<void>
   onCreateTicketType: (payload: {
     attractionId: string
@@ -195,11 +196,13 @@ export function AttractionAdminPanel({
               onSubmit={async event => {
                 event.preventDefault()
                 const formData = new FormData(event.currentTarget)
+                const attractionImageEntry = formData.get('attractionImageFile')
                 await onCreateAttraction({
                   attractionName: String(formData.get('attractionName') ?? '').trim(),
                   city: String(formData.get('city') ?? '').trim(),
                   location: String(formData.get('location') ?? '').trim(),
                   description: String(formData.get('description') ?? '').trim(),
+                  attractionImageFile: attractionImageEntry instanceof File && attractionImageEntry.size > 0 ? attractionImageEntry : null,
                 })
                 event.currentTarget.reset()
               }}
@@ -220,6 +223,11 @@ export function AttractionAdminPanel({
               <label>
                 {translate('attractionAdmin.descriptionField')}
                 <input name="description" required />
+              </label>
+              <label>
+                {translate('attractionAdmin.attractionImage')}
+                <input name="attractionImageFile" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" />
+                <span className="text-sm font-medium text-slate-500">{translate('attractionAdmin.attractionImageHint')}</span>
               </label>
               <button className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-none transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55" type="submit" disabled={isBusy}>
                 {translate('attractionAdmin.createAttraction')}
@@ -477,5 +485,4 @@ export function AttractionAdminPanel({
     </section>
   )
 }
-
 

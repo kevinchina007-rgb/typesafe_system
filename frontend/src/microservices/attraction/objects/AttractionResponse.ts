@@ -6,6 +6,7 @@ export type AttractionResponse = {
   city: string
   location: string
   description: string
+  imageUrl: string | null
   status: string
   ticketTypes: AttractionTicketTypeResponse[]
 }

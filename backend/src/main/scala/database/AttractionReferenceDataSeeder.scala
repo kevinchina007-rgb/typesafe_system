@@ -210,7 +210,16 @@ object AttractionReferenceDataSeeder:
   ): List[ConnectionIO[Int]] =
     val attractionStatements =
       List(
-        insertOrUpsertAttraction(attractionId, managerId, attractionName, citySeed.cityName, location, description, SeededAt),
+        insertOrUpsertAttraction(
+          attractionId = attractionId,
+          managerId = managerId,
+          name = attractionName,
+          city = citySeed.cityName,
+          location = location,
+          description = description,
+          imageUrl = imageUrlForAttractionTemplate(attractionTemplate.suffix),
+          createdAt = SeededAt
+        ),
         insertOrUpsertAttractionManager(managerId, managerEmail, managerDisplayName, SeededAt),
         insertOrUpsertManagerCredential("Attraction", managerId, managerEmail, passwordHash, SeededAt)
       )
@@ -277,6 +286,19 @@ object AttractionReferenceDataSeeder:
   private def computeCapacity(ticketTemplate: TicketTemplate, cityIndex: Int, attractionIndex: Int): Int =
     ticketTemplate.capacityBase + cityIndex * ticketTemplate.capacityCityStep + attractionIndex * ticketTemplate.capacityAttractionStep
 
+  private def imageUrlForAttractionTemplate(templateSuffix: String): Option[String] =
+    val imageUrl = templateSuffix match
+      case "ocean-park"  => "/images/home-hero-candidates/01_大海_葡萄牙Praia da Marinha_海与岩壁在这里相爱.jpg"
+      case "museum"      => "/images/home-hero-candidates/09_白昼都市_日本东京_在白昼的楼宇间重新出发.jpg"
+      case "garden"      => "/images/home-hero-candidates/04_大山_瑞士Oeschinensee_湖光把山色轻轻收藏.jpg"
+      case "theme-park"  => "/images/home-hero-candidates/11_白昼都市_美国西雅图_晨光落在每一段旅程上.jpg"
+      case "night-tour"  => "/images/home-hero-candidates/12_夜晚都市_中国上海_灯火把黄浦江写成诗.jpg"
+      case "science"     => "/images/home-hero-candidates/10_白昼都市_中国香港_海风也穿过城市.jpg"
+      case "art"         => "/images/home-hero-candidates/13_夜晚都市_美国洛杉矶_夜色仍在奔赴远方.jpg"
+      case "ancient"     => "/images/home-hero-candidates/03_大山_瑞士Matterhorn_群山把黄昏留给旅人.jpg"
+      case _             => "/images/home-hero-candidates/14_夜晚都市_澳大利亚悉尼_港湾把星光留给归途.jpg"
+    Option(imageUrl)
+
   private def dateRange(): Vector[LocalDate] =
     Iterator.iterate(AvailabilityStartDate)(_.plusDays(1)).takeWhile(date => !date.isAfter(AvailabilityEndDate)).toVector
 
@@ -290,18 +312,20 @@ object AttractionReferenceDataSeeder:
       city: String,
       location: String,
       description: String,
+      imageUrl: Option[String],
       createdAt: Instant
   ): ConnectionIO[Int] =
     val createdAtValue = createdAt.toString
     sql"""
-      insert into attractions (attraction_id, manager_id, name, city, location, description, status, created_at)
-      values ($attractionId, $managerId, $name, $city, $location, $description, ${"Published"}, cast($createdAtValue as timestamptz))
+      insert into attractions (attraction_id, manager_id, name, city, location, description, image_url, status, created_at)
+      values ($attractionId, $managerId, $name, $city, $location, $description, ${imageUrl.orNull}, ${"Published"}, cast($createdAtValue as timestamptz))
       on conflict (attraction_id) do update set
         manager_id = excluded.manager_id,
         name = excluded.name,
         city = excluded.city,
         location = excluded.location,
         description = excluded.description,
+        image_url = excluded.image_url,
         status = excluded.status,
         created_at = excluded.created_at
     """.update.run

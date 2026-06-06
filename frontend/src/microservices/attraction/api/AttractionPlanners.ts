@@ -16,3 +16,5 @@ export const getAttraction = (attractionId: string, query?: Pick<AttractionSearc
     attractionId,
     useDate: query?.useDate,
   }).then(response => mapAttractionResponseFromBackend(response, query?.useDate))
+
+export { uploadAttractionImage } from './UploadAttractionImagePlanner'

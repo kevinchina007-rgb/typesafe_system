@@ -41,6 +41,7 @@ def createAttraction(
     city: String,
     location: String,
     description: String,
+    imageUrl: Option[String],
     createdAt: Instant
 ): Either[AttractionError, Attraction] =
   for
@@ -55,6 +56,7 @@ def createAttraction(
     city = validatedCity,
     location = validatedLocation,
     description = validatedDescription,
+    imageUrl = imageUrl.map(_.trim).filter(_.nonEmpty),
     attractionStatus = AttractionStatus.Published,
     ticketTypes = Vector.empty,
     createdAt = createdAt
@@ -68,11 +70,12 @@ def restorePersistedAttraction(
     city: String,
     location: String,
     description: String,
+    imageUrl: Option[String],
     attractionStatus: AttractionStatus,
     ticketTypes: Vector[TicketType],
     createdAt: Instant
 ): Attraction =
-  Attraction(attractionId, managerId, attractionName, city, location, description, attractionStatus, ticketTypes, createdAt)
+  Attraction(attractionId, managerId, attractionName, city, location, description, imageUrl.map(_.trim).filter(_.nonEmpty), attractionStatus, ticketTypes, createdAt)
 
 def addTicketType(attraction: Attraction, ticketType: TicketType): Either[AttractionError, Attraction] =
   if ticketType.attractionId != attraction.attractionId then Left(AttractionError.TicketTypeDidNotBelongToAttraction(ticketType.ticketTypeId, attraction.attractionId))
@@ -248,4 +251,3 @@ private def validateTicketEligibilityRuleConfig(
 
   if configMatchesRuleType then Right(())
   else Left(AttractionError.AttractionTravelerSelectionWasInvalid(s"Eligibility rule config did not match $ruleType"))
-

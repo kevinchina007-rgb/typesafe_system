@@ -489,8 +489,22 @@ export function useManagerPageController({
     availableRooms: number
     inventoryStartDate: string
     inventoryEndDate: string
+    roomImageFile?: File | null
   }) {
-    await travelMvpApiClient.createManagerRoomType(payload)
+    const roomImageFile = payload.roomImageFile ?? null
+    const roomImageUrl = roomImageFile ? (await travelMvpApiClient.uploadHotelRoomTypeImage(roomImageFile)).publicUrl : null
+    await travelMvpApiClient.createManagerRoomType({
+      managerId: payload.managerId,
+      roomTypeName: payload.roomTypeName,
+      capacity: payload.capacity,
+      bedType: payload.bedType,
+      nightlyPrice: payload.nightlyPrice,
+      currency: payload.currency,
+      availableRooms: payload.availableRooms,
+      inventoryStartDate: payload.inventoryStartDate,
+      inventoryEndDate: payload.inventoryEndDate,
+      roomImageUrl,
+    })
     await reloadManagedHotels(payload.managerId)
   }
 
@@ -673,13 +687,20 @@ export function useManagerPageController({
     city: string
     location: string
     description: string
+    attractionImageFile?: File | null
   }) {
     if (!currentAttractionAdminSession) {
       throw new Error(translate('error.managerNotFound'))
     }
+    const attractionImageFile = payload.attractionImageFile ?? null
+    const attractionImageUrl = attractionImageFile ? (await travelMvpApiClient.uploadAttractionImage(attractionImageFile)).publicUrl : null
     await travelMvpApiClient.createAttraction({
       managerId: currentAttractionAdminSession.managerId,
-      ...payload,
+      attractionName: payload.attractionName,
+      city: payload.city,
+      location: payload.location,
+      description: payload.description,
+      imageUrl: attractionImageUrl,
     })
     await reloadManagedAttractions(currentAttractionAdminSession.managerId)
   }
