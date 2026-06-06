@@ -1,5 +1,5 @@
 import { formatIsoDateTime, localizeBedType, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
-import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
+import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { HotelResultsSectionProps } from '@/pages/HotelsPage/objects'
 
 export function HotelResultsSection({
@@ -14,8 +14,6 @@ export function HotelResultsSection({
   translate,
   onRequireLogin,
   onBookHotel,
-  onLoadReviewSummary,
-  onLoadReviews,
 }: HotelResultsSectionProps) {
   return (
     <div className="grid gap-4">
@@ -29,17 +27,6 @@ export function HotelResultsSection({
                   <span className="inline-flex w-fit bg-sky-500 px-3 py-1 text-xs font-black uppercase tracking-[0.16em] text-white">{translate('hotels.status')}</span>
                 </div>
                 <p className="text-lg font-medium text-slate-600">{hotelResponse.location}</p>
-                <ResourceReviewSummaryLoader
-                  currentLanguage={currentLanguage}
-                  isBusy={isBusy}
-                  isEnabled={!isGuestMode}
-                  resourceType="Hotel"
-                  resourceId={hotelResponse.hotelId}
-                  title={hotelResponse.hotelName}
-                  translate={translate}
-                  onLoadSummary={onLoadReviewSummary}
-                  onLoadReviews={onLoadReviews}
-                />
               </div>
               <span className="inline-flex min-h-10 items-center justify-center border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700">
                 {mapBackendStatusToProductLabel(hotelResponse.status, currentLanguage)}
@@ -60,7 +47,7 @@ export function HotelResultsSection({
             <ul className="grid gap-4">
               {hotelResponse.roomTypes.map(roomTypeResponse => (
                 <li key={roomTypeResponse.roomTypeId} className="border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/40">
-                  <div className="grid gap-3 md:grid-cols-[1.4fr_1fr]">
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(220px,0.82fr)_minmax(300px,1fr)] lg:items-center">
                     <div className="grid gap-2">
                       <div className="flex flex-wrap items-center gap-3">
                         <strong className="text-2xl font-black text-slate-950">{roomTypeResponse.roomTypeName}</strong>
@@ -72,6 +59,15 @@ export function HotelResultsSection({
                       <p className="text-lg font-black text-orange-500">
                         {`${translate('hotels.priceFrom')}: ${roomTypeResponse.basePrice} ${roomTypeResponse.currency}`}
                       </p>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <BackendAssetImage
+                        assetUrl={roomTypeResponse.imageUrl}
+                        alt={roomTypeResponse.roomTypeName}
+                        className="flex aspect-[4/3] w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 object-cover text-sm font-semibold text-slate-400 shadow-sm shadow-slate-200/40"
+                        fallbackContent="暂无图片"
+                      />
                     </div>
 
                     <form

@@ -18,6 +18,27 @@ object CreateTourGroupPlannerRequest:
   given sourceEncoder: Encoder[CreateTourGroupPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[CreateTourGroupPlannerRequest] = deriveDecoder
 
+final case class UploadTourGroupCoverImagePlannerRequest(
+    ownerUserId: String,
+    originalFileName: String,
+    mimeType: String,
+    fileContentBase64: String
+)
+object UploadTourGroupCoverImagePlannerRequest:
+  given sourceEncoder: Encoder[UploadTourGroupCoverImagePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[UploadTourGroupCoverImagePlannerRequest] = deriveDecoder
+
+final case class UploadTourGroupCoverImagePlannerResponse(
+    assetId: String,
+    publicUrl: String,
+    originalFileName: String,
+    mimeType: String,
+    fileSize: Long
+)
+object UploadTourGroupCoverImagePlannerResponse:
+  given sourceEncoder: Encoder[UploadTourGroupCoverImagePlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[UploadTourGroupCoverImagePlannerResponse] = deriveDecoder
+
 final case class ListTourGroupsPlannerRequest()
 object ListTourGroupsPlannerRequest:
   given sourceEncoder: Encoder[ListTourGroupsPlannerRequest] = deriveEncoder

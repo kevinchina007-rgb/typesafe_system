@@ -23,10 +23,11 @@ def createRoomType(
     roomCapacity: Capacity,
     bedType: BedType,
     basePrice: Money,
+    roomImageUrl: Option[String],
     roomTypeStatus: RoomTypeStatus,
     roomInventories: Vector[RoomInventory]
 ): RoomType =
-  RoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
+  RoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomImageUrl, roomTypeStatus, roomInventories)
 
 def restorePersistedRoomType(
     roomTypeId: RoomTypeId,
@@ -35,10 +36,11 @@ def restorePersistedRoomType(
     roomCapacity: Capacity,
     bedType: BedType,
     basePrice: Money,
+    roomImageUrl: Option[String],
     roomTypeStatus: RoomTypeStatus,
     roomInventories: Vector[RoomInventory]
 ): RoomType =
-  RoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomTypeStatus, roomInventories)
+  RoomType(roomTypeId, hotelId, roomTypeName, roomCapacity, bedType, basePrice, roomImageUrl, roomTypeStatus, roomInventories)
 
 def createHotel(
     hotelId: HotelId,

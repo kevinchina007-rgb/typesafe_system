@@ -1,10 +1,11 @@
 import type { HomePageController } from '../objects'
+import type { HomePageProps } from '../objects'
 
 type HomePageShellProps = {
   controller: HomePageController
-}
+} & HomePageProps
 
-export function HomePageShell({ controller }: HomePageShellProps) {
+export function HomePageShell({ controller, onNavigate }: HomePageShellProps) {
   return (
     <div className="bg-slate-50">
       <section className="relative min-h-screen overflow-hidden bg-slate-950">
@@ -52,17 +53,22 @@ export function HomePageShell({ controller }: HomePageShellProps) {
 
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           {controller.homeFeaturePlaceholders.map(feature => (
-            <article key={feature} className="grid gap-5 border border-slate-200 bg-white p-5">
+            <button
+              key={feature.targetViewKey}
+              type="button"
+              className="grid gap-5 border border-slate-200 bg-white p-5 text-left transition duration-200 hover:-translate-y-1 hover:border-sky-400 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
+              onClick={() => onNavigate(feature.targetViewKey)}
+              aria-label={`前往${feature.label}预订界面`}
+            >
               <div className="aspect-[16/10] bg-slate-100" />
               <div className="text-left">
-                <h3 className="text-xl font-medium tracking-[0] text-slate-900">{feature}</h3>
+                <h3 className="text-xl font-medium tracking-[0] text-slate-900">{feature.label}</h3>
                 <p className="mt-2 text-sm text-slate-500">内容待定</p>
               </div>
-            </article>
+            </button>
           ))}
         </div>
       </section>
     </div>
   )
 }
-

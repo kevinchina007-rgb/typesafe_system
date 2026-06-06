@@ -1211,6 +1211,7 @@ function HotelWorkspace({
         onSubmit={async event => {
           event.preventDefault()
           const formData = new FormData(event.currentTarget)
+          const roomImageEntry = formData.get('roomImageFile')
           await onCreateManagerRoomType({
             managerId: managerSession.managerId,
             roomTypeName: String(formData.get('roomTypeName') ?? ''),
@@ -1221,6 +1222,7 @@ function HotelWorkspace({
             availableRooms: Number(formData.get('availableRooms') ?? 5),
             inventoryStartDate: String(formData.get('inventoryStartDate') ?? ''),
             inventoryEndDate: String(formData.get('inventoryEndDate') ?? ''),
+            roomImageFile: roomImageEntry instanceof File && roomImageEntry.size > 0 ? roomImageEntry : null,
           })
           event.currentTarget.reset()
         }}
@@ -1233,6 +1235,11 @@ function HotelWorkspace({
           <label>{translate('manager.availableRooms')}<input name="availableRooms" type="number" min={1} defaultValue={5} required /></label>
           <label>{translate('manager.inventoryStartDate')}<input name="inventoryStartDate" type="date" defaultValue="2026-04-01" required /></label>
           <label>{translate('manager.inventoryEndDate')}<input name="inventoryEndDate" type="date" defaultValue="2026-04-30" required /></label>
+          <label className="md:col-span-3 grid gap-2">
+            <span>{translate('manager.roomImage')}</span>
+            <input name="roomImageFile" type="file" accept="image/png,image/jpeg,image/jpg,image/webp" />
+            <span className="text-sm font-medium text-slate-500">可选，上传后会显示在房型卡片中间。</span>
+          </label>
         </div>
         <button className="inline-flex min-h-11 w-fit items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" type="submit" disabled={isBusy}>
           {translate('manager.createRoomType')}

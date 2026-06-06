@@ -12,7 +12,7 @@ type CreateTourGroupDialogProps = {
     startDate: string
     endDate: string
     capacity: number
-    coverImageUrl?: string | null
+    coverImageFile?: File | null
     tags?: string[]
   }) => Promise<void>
 }
@@ -30,7 +30,7 @@ export function CreateTourGroupDialog({
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [capacity, setCapacity] = useState(4)
-  const [coverImageUrl, setCoverImageUrl] = useState('')
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null)
   const [tagsText, setTagsText] = useState('')
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export function CreateTourGroupDialog({
       setStartDate('')
       setEndDate('')
       setCapacity(4)
-      setCoverImageUrl('')
+      setCoverImageFile(null)
       setTagsText('')
     }
   }, [isOpen])
@@ -76,7 +76,7 @@ export function CreateTourGroupDialog({
               startDate,
               endDate,
               capacity,
-              coverImageUrl: coverImageUrl.trim() || null,
+              coverImageFile,
               tags: tagsText
                 .split(',')
                 .map(tag => tag.trim())
@@ -110,8 +110,13 @@ export function CreateTourGroupDialog({
               <input value={description} onChange={event => setDescription(event.target.value)} required />
             </label>
             <label className="md:col-span-2">
-              封面图 URL
-              <input value={coverImageUrl} onChange={event => setCoverImageUrl(event.target.value)} placeholder="https://..." />
+              封面图
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/webp"
+                onChange={event => setCoverImageFile(event.target.files?.[0] ?? null)}
+              />
+              {coverImageFile ? <span className="mt-2 block text-sm text-slate-500">{`已选择：${coverImageFile.name}`}</span> : null}
             </label>
             <label className="md:col-span-3">
               标签

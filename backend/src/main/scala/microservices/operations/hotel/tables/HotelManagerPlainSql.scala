@@ -143,7 +143,7 @@ object HotelManagerPlainSql:
 
   def insertRoomType(connection: Connection, hotelId: String, roomTypeId: String, input: CreateManagerRoomTypePlannerRequest): IO[Unit] =
     IO.blocking {
-      PlainSqlSupport.withStatement(connection, "insert into hotel_room_types(room_type_id, hotel_id, name, capacity, bed_type, base_price_amount, base_price_currency, status) values (?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
+      PlainSqlSupport.withStatement(connection, "insert into hotel_room_types(room_type_id, hotel_id, name, capacity, bed_type, base_price_amount, base_price_currency, image_url, status) values (?, ?, ?, ?, ?, ?, ?, ?, ?)") { statement =>
         statement.setString(1, roomTypeId)
         statement.setString(2, hotelId)
         statement.setString(3, input.roomTypeName.trim)
@@ -151,7 +151,8 @@ object HotelManagerPlainSql:
         statement.setString(5, input.bedType.trim)
         statement.setBigDecimal(6, BigDecimal(input.nightlyPrice).bigDecimal)
         statement.setString(7, input.currency.trim.toUpperCase)
-        statement.setString(8, "OpenForBooking")
+        statement.setString(8, input.roomImageUrl.map(_.trim).filter(_.nonEmpty).orNull)
+        statement.setString(9, "OpenForBooking")
         statement.executeUpdate()
       }
     }
@@ -197,7 +198,7 @@ object HotelManagerPlainSql:
     PlainSqlSupport.withStatement(
       connection,
       """
-        select room_type_id, name, capacity, bed_type, base_price_amount, base_price_currency, status
+        select room_type_id, name, capacity, bed_type, base_price_amount, base_price_currency, image_url, status
         from hotel_room_types
         where hotel_id = ?
         order by room_type_id
@@ -215,6 +216,7 @@ object HotelManagerPlainSql:
       bedType = resultSet.getString("bed_type"),
       basePrice = resultSet.getBigDecimal("base_price_amount").toString,
       currency = resultSet.getString("base_price_currency"),
+      imageUrl = Option(resultSet.getString("image_url")).map(_.trim).filter(_.nonEmpty),
       status = resultSet.getString("status"),
       isBookableForRequestedStay = resultSet.getString("status") == "OpenForBooking",
       availableRoomsForRequestedStay = None

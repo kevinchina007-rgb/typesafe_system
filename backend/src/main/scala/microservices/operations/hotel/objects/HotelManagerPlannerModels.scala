@@ -28,7 +28,8 @@ final case class CreateManagerRoomTypePlannerRequest(
     currency: String,
     availableRooms: Int,
     inventoryStartDate: String,
-    inventoryEndDate: String
+    inventoryEndDate: String,
+    roomImageUrl: Option[String]
 )
 object CreateManagerRoomTypePlannerRequest:
   given sourceEncoder: Encoder[CreateManagerRoomTypePlannerRequest] = deriveEncoder
@@ -41,6 +42,7 @@ final case class ManagerHotelRoomTypePlannerResponse(
     bedType: String,
     basePrice: String,
     currency: String,
+    imageUrl: Option[String],
     status: String,
     isBookableForRequestedStay: Boolean,
     availableRoomsForRequestedStay: Option[Int]
@@ -65,3 +67,23 @@ final case class ManagerHotelListPlannerResponse(hotels: List[ManagerHotelPlanne
 object ManagerHotelListPlannerResponse:
   given sourceEncoder: Encoder[ManagerHotelListPlannerResponse] = deriveEncoder
   given sourceDecoder: Decoder[ManagerHotelListPlannerResponse] = deriveDecoder
+
+final case class UploadHotelRoomTypeImagePlannerRequest(
+    originalFileName: String,
+    mimeType: String,
+    fileContentBase64: String
+)
+object UploadHotelRoomTypeImagePlannerRequest:
+  given sourceEncoder: Encoder[UploadHotelRoomTypeImagePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[UploadHotelRoomTypeImagePlannerRequest] = deriveDecoder
+
+final case class UploadHotelRoomTypeImagePlannerResponse(
+    assetId: String,
+    publicUrl: String,
+    originalFileName: String,
+    mimeType: String,
+    fileSize: Long
+)
+object UploadHotelRoomTypeImagePlannerResponse:
+  given sourceEncoder: Encoder[UploadHotelRoomTypeImagePlannerResponse] = deriveEncoder
+  given sourceDecoder: Decoder[UploadHotelRoomTypeImagePlannerResponse] = deriveDecoder

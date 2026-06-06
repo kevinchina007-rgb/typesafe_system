@@ -61,7 +61,7 @@ export type TourGroupsPanelCommonProps = {
     startDate: string
     endDate: string
     capacity: number
-    coverImageUrl?: string | null
+    coverImageFile?: File | null
     tags?: string[]
   }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>
   onJoinGroup: (groupId: string, payload: { userId: string }) => Promise<import('@/lib/mvp-types/index').TourGroupDetailsResponse>

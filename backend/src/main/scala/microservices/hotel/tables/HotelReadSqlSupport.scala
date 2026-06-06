@@ -70,7 +70,7 @@ object HotelReadSqlSupport:
   private def readRoomTypes(connection: Connection, hotelId: HotelId): Vector[RoomType] =
     val statement = connection.prepareStatement(
       """
-        select room_type_id, name, capacity, bed_type, base_price_amount, base_price_currency, status
+        select room_type_id, name, capacity, bed_type, base_price_amount, base_price_currency, image_url, status
         from hotel_room_types
         where hotel_id = ?
         order by room_type_id
@@ -91,6 +91,7 @@ object HotelReadSqlSupport:
             roomCapacity = Capacity.unsafe(resultSet.getInt("capacity")),
             bedType = BedType.unsafe(resultSet.getString("bed_type")),
             basePrice = Money.unsafe(resultSet.getBigDecimal("base_price_amount"), Currency.fromText(resultSet.getString("base_price_currency"))),
+            roomImageUrl = Option(resultSet.getString("image_url")).map(_.trim).filter(_.nonEmpty),
             roomTypeStatus = RoomTypeStatus.fromText(resultSet.getString("status")),
             roomInventories = inventories
           )

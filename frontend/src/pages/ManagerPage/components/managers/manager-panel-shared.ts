@@ -53,6 +53,7 @@ export type ManagerPanelProps = {
     availableRooms: number
     inventoryStartDate: string
     inventoryEndDate: string
+    roomImageFile?: File | null
   }) => Promise<void>
   onLoginManager: (payload: { managerType: ManagerType; email: string; password: string }) => Promise<void>
   onValidationError: (message: string) => void

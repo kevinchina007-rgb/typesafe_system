@@ -99,6 +99,7 @@ final case class RoomType(
     roomCapacity: Capacity,
     bedType: BedType,
     basePrice: Money,
+    roomImageUrl: Option[String],
     roomTypeStatus: RoomTypeStatus,
     roomInventories: Vector[RoomInventory]
 )

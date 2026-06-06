@@ -57,7 +57,6 @@ export const topNavItems: TopNavItem[] = [
   { key: 'booking', titleKey: 'topnav.booking', icon: 'flight', defaultViewKey: 'flights' },
   { key: 'travelManagement', titleKey: 'topnav.travelManagement', icon: 'group', defaultViewKey: 'tourGroups' },
   { key: 'community', titleKey: 'topnav.community', icon: 'blog', defaultViewKey: 'blog' },
-  { key: 'smartPlanner', titleKey: 'topnav.smartPlanner', icon: 'planner', defaultViewKey: 'smartPlanner' },
   { key: 'customerFeedback', titleKey: 'topnav.customerFeedback', icon: 'review', defaultViewKey: 'customerFeedback' },
   { key: 'managerCenter', titleKey: 'topnav.managerCenter', icon: 'account', defaultViewKey: 'manager' },
   { key: 'managerWorkspace', titleKey: 'topnav.managerWorkspace', icon: 'operations', defaultViewKey: 'managerWorkspace' },

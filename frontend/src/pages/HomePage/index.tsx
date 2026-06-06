@@ -1,8 +1,8 @@
 import { HomePageShell } from './components/HomePageShell'
 import { useHomePageController } from './hooks'
-import { HOME_PAGE_REGIONS } from './objects'
+import { HOME_PAGE_REGIONS, type HomePageProps } from './objects'
 
-export function HomePage() {
+export function HomePage({ onNavigate }: HomePageProps) {
   const controller = useHomePageController()
 
   return (
@@ -13,8 +13,7 @@ export function HomePage() {
           <span key={region}>{region}</span>
         ))}
       </div>
-      <HomePageShell controller={controller} />
+      <HomePageShell controller={controller} onNavigate={onNavigate} />
     </>
   )
 }
-

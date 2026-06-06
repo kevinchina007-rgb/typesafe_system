@@ -27,7 +27,13 @@ export function useTourGroupsPageController({
     onLoadGroupDetails: groupId => travelMvpApiClient.getTourGroup(groupId),
     onCreateGroup: payload =>
       runPageActionWithResult(
-        () => travelMvpApiClient.createTourGroup(payload),
+        async () => {
+          const { coverImageFile, ...groupPayload } = payload
+          const coverImageUrl = coverImageFile
+            ? (await travelMvpApiClient.uploadTourGroupCoverImage(payload.organizerUserId, coverImageFile)).publicUrl
+            : null
+          return travelMvpApiClient.createTourGroup({ ...groupPayload, coverImageUrl })
+        },
         translate('tourGroups.createGroup'),
         translate('notice.actionSuccess'),
       ),

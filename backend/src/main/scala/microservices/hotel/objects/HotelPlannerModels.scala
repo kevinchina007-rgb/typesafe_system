@@ -49,6 +49,7 @@ final case class RoomTypeSummaryPlannerResponse(
     bedType: String,
     basePrice: String,
     currency: String,
+    imageUrl: Option[String],
     status: String,
     isBookableForRequestedStay: Boolean,
     availableRoomsForRequestedStay: Option[Int]

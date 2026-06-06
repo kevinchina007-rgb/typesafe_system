@@ -30,7 +30,7 @@ function renderCurrentPage(controller: ReturnType<typeof useAppPageController>) 
   } = controller
 
   if (normalizedViewKey === 'smartPlanner') return <SmartTripPlannerPage translate={controller.translate} onSelectView={setAppView} />
-  if (normalizedViewKey === 'overview') return <HomePage />
+  if (normalizedViewKey === 'overview') return <HomePage onNavigate={setAppView} />
   if (normalizedViewKey === 'blog') return <BlogPage currentLanguage={currentLanguage} signedInUser={signedInUserResponse} translate={controller.translate} onShowNotice={showNotice} />
   if (normalizedViewKey === 'reviews') return <ReviewsPage currentLanguage={currentLanguage} signedInUser={signedInUserResponse} translate={controller.translate} onShowNotice={showNotice} />
   if (normalizedViewKey === 'account') return <AccountPage currentLanguage={currentLanguage} signedInManager={signedInManagerSessionResponse} signedInUser={signedInUserResponse} requestedEntryMode="login" translate={controller.translate} onSignedInManagerChange={controller.setCurrentManagerSession} onSignedInUserChange={controller.setCurrentUserSession} onNavigate={setAppView} onShowNotice={showNotice} />

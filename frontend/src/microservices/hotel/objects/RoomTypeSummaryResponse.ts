@@ -6,6 +6,7 @@
   nightlyPrice: string
   basePrice: string
   currency: string
+  imageUrl: string | null
   availableRooms: number
   availableRoomsForRequestedStay: number | null
   isBookableForRequestedStay: boolean

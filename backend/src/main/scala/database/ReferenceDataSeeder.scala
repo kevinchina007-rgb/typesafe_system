@@ -108,9 +108,9 @@ object ReferenceDataSeeder:
 
     val insertRoomTypes =
       List(
-        insertRoomType("roomtype-westlake-deluxe", "hotel-hz-westlake", "Deluxe Twin", 2, "TWIN", 860, "OpenForBooking"),
-        insertRoomType("roomtype-westlake-family", "hotel-hz-westlake", "Family Suite", 4, "FAMILY", 1280, "OpenForBooking"),
-        insertRoomType("roomtype-bund-queen", "hotel-sh-bund", "City Queen", 2, "QUEEN", 980, "OpenForBooking")
+        insertRoomType("roomtype-westlake-deluxe", "hotel-hz-westlake", "Deluxe Twin", 2, "TWIN", 860, "/images/home-hero-candidates/05_公路_冰岛Road 1_沿着风的方向继续出发.jpg", "OpenForBooking"),
+        insertRoomType("roomtype-westlake-family", "hotel-hz-westlake", "Family Suite", 4, "FAMILY", 1280, "/images/home-hero-candidates/12_夜晚都市_中国上海_灯火把黄浦江写成诗.jpg", "OpenForBooking"),
+        insertRoomType("roomtype-bund-queen", "hotel-sh-bund", "City Queen", 2, "QUEEN", 980, "/images/home-hero-candidates/04_大山_瑞士Oeschinensee_湖光把山色轻轻收藏.jpg", "OpenForBooking")
       )
 
     val insertInventories =
@@ -155,9 +155,9 @@ object ReferenceDataSeeder:
   private val hotelInventoryDates =
     Iterator.iterate(hotelInventoryStartDate)(_.plusDays(1)).takeWhile(!_.isAfter(hotelInventoryEndDate)).toVector
   private val hotelRoomTypeTemplates = List(
-    RoomTypeTemplate("standard", "标准大床房", 2, "KING", 18, BigDecimal(0)),
-    RoomTypeTemplate("twin", "高级双床房", 2, "TWIN", 14, BigDecimal(180)),
-    RoomTypeTemplate("suite", "家庭套房", 4, "SUITE", 8, BigDecimal(420))
+    RoomTypeTemplate("standard", "标准大床房", 2, "KING", 18, BigDecimal(0), "/images/home-hero-candidates/04_大山_瑞士Oeschinensee_湖光把山色轻轻收藏.jpg"),
+    RoomTypeTemplate("twin", "高级双床房", 2, "TWIN", 14, BigDecimal(180), "/images/home-hero-candidates/05_公路_冰岛Road 1_沿着风的方向继续出发.jpg"),
+    RoomTypeTemplate("suite", "家庭套房", 4, "SUITE", 8, BigDecimal(420), "/images/home-hero-candidates/12_夜晚都市_中国上海_灯火把黄浦江写成诗.jpg")
   )
   private def hotelSeed(hotelId: String, hotelName: String, managerId: String, managerEmail: String, managerDisplayName: String): HotelSeed =
     HotelSeed(hotelId, hotelName, managerId, managerEmail, managerDisplayName)
@@ -317,7 +317,7 @@ object ReferenceDataSeeder:
       hotelRoomTypeTemplates.zipWithIndex.map { case (template, roomTypeIndex) =>
         val roomTypeId = s"roomtype-$hotelIdPrefix-${template.suffix}"
         val roomTypeBasePrice = (baseNightlyPrice + template.basePriceOffset + BigDecimal(roomTypeIndex * 25)).setScale(2, BigDecimal.RoundingMode.HALF_UP)
-        insertOrUpdateHotelRoomType(roomTypeId, hotelSeed.hotelId, template.roomTypeName, template.capacity, template.bedType, roomTypeBasePrice, "OpenForBooking")
+        insertOrUpdateHotelRoomType(roomTypeId, hotelSeed.hotelId, template.roomTypeName, template.capacity, template.bedType, roomTypeBasePrice, template.imageUrl, "OpenForBooking")
       }
     val inventoryStatements =
       hotelRoomTypeTemplates.zipWithIndex.flatMap { case (template, roomTypeIndex) =>
@@ -367,7 +367,8 @@ object ReferenceDataSeeder:
       capacity: Int,
       bedType: String,
       baseAvailableRooms: Int,
-      basePriceOffset: BigDecimal
+      basePriceOffset: BigDecimal,
+      imageUrl: String
   )
 
   private def seedAirlineManagerRecord(transactor: Transactor[IO], seed: AirlineManagerSeed): IO[Unit] =
@@ -488,13 +489,14 @@ object ReferenceDataSeeder:
       capacity: Int,
       bedType: String,
       basePriceAmount: BigDecimal,
+      imageUrl: String,
       status: String
   ): ConnectionIO[Int] =
     sql"""
       insert into hotel_room_types (
-        room_type_id, hotel_id, name, capacity, bed_type, base_price_amount, base_price_currency, status
+        room_type_id, hotel_id, name, capacity, bed_type, base_price_amount, base_price_currency, image_url, status
       ) values (
-        $roomTypeId, $hotelId, $roomTypeName, $capacity, $bedType, $basePriceAmount, ${"CNY"}, $status
+        $roomTypeId, $hotelId, $roomTypeName, $capacity, $bedType, $basePriceAmount, ${"CNY"}, $imageUrl, $status
       )
       on conflict (room_type_id) do update set
         hotel_id = excluded.hotel_id,
@@ -503,6 +505,7 @@ object ReferenceDataSeeder:
         bed_type = excluded.bed_type,
         base_price_amount = excluded.base_price_amount,
         base_price_currency = excluded.base_price_currency,
+        image_url = excluded.image_url,
         status = excluded.status
     """.update.run
 
@@ -552,13 +555,14 @@ object ReferenceDataSeeder:
       capacity: Int,
       bedType: String,
       basePriceAmount: BigDecimal,
+      imageUrl: String,
       status: String
   ): ConnectionIO[Int] =
     sql"""
       insert into hotel_room_types (
-        room_type_id, hotel_id, name, capacity, bed_type, base_price_amount, base_price_currency, status
+        room_type_id, hotel_id, name, capacity, bed_type, base_price_amount, base_price_currency, image_url, status
       ) values (
-        $roomTypeId, $hotelId, $roomTypeName, $capacity, $bedType, $basePriceAmount, 'CNY', $status
+        $roomTypeId, $hotelId, $roomTypeName, $capacity, $bedType, $basePriceAmount, 'CNY', $imageUrl, $status
       )
     """.update.run
 

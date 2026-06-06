@@ -1,3 +1,5 @@
+import type { AppViewKey } from '@/lib/mvp-types/index'
+
 export type HomeHeroSlide = {
   image: string
   location: string
@@ -5,7 +7,14 @@ export type HomeHeroSlide = {
   tagline: string
 }
 
-export type HomePageProps = Record<string, never>
+export type HomeFeature = {
+  label: string
+  targetViewKey: Extract<AppViewKey, 'flights' | 'hotels' | 'trains' | 'attractions'>
+}
+
+export type HomePageProps = {
+  onNavigate: (viewKey: AppViewKey) => void
+}
 
 export type HomePageController = {
   activeIndex: number
@@ -13,7 +22,7 @@ export type HomePageController = {
   activeSlide: HomeHeroSlide
   typedTagline: string
   homeHeroSlides: HomeHeroSlide[]
-  homeFeaturePlaceholders: string[]
+  homeFeaturePlaceholders: HomeFeature[]
 }
 
 export type HomePageRegion = 'hero' | 'features'
@@ -37,5 +46,9 @@ export const HOME_HERO_SLIDES: HomeHeroSlide[] = [
   { image: '/images/home-hero-candidates/14_夜晚都市_澳大利亚悉尼_港湾把星光留给归途.jpg', location: '澳大利亚 悉尼', nativeLocation: 'Sydney', tagline: '港湾把星光留给归途' },
 ]
 
-export const HOME_FEATURE_PLACEHOLDERS = ['航班', '酒店', '火车票', '景点']
-
+export const HOME_FEATURE_PLACEHOLDERS: HomeFeature[] = [
+  { label: '航班', targetViewKey: 'flights' },
+  { label: '酒店', targetViewKey: 'hotels' },
+  { label: '火车票', targetViewKey: 'trains' },
+  { label: '景点', targetViewKey: 'attractions' },
+]

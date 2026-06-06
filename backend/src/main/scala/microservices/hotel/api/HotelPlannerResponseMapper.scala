@@ -24,6 +24,7 @@ object HotelPlannerResponseMapper:
       bedType = roomType.bedType.value,
       basePrice = roomType.basePrice.amount.toString,
       currency = roomType.basePrice.currency.toString,
+      imageUrl = roomType.roomImageUrl,
       status = roomType.roomTypeStatus.value,
       isBookableForRequestedStay = availableRooms.exists(_ > 0),
       availableRoomsForRequestedStay = availableRooms

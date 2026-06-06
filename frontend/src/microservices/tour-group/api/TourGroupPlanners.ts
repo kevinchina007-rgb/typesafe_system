@@ -59,6 +59,25 @@ export const createTourGroup = (payload: {
   }): Promise<TourGroupDetailsResponse> =>
     executeJsonApiRequest<TourGroupDetailsResponse>('/CreateTourGroupPlanner', 'POST', payload).then(normalizeTourGroupDetails)
 
+export type TourGroupCoverImageUploadResponse = {
+  assetId: string
+  publicUrl: string
+  originalFileName: string
+  mimeType: string
+  fileSize: number
+}
+
+export const uploadTourGroupCoverImage = async (
+  ownerUserId: string,
+  imageFile: File,
+): Promise<TourGroupCoverImageUploadResponse> =>
+  executeJsonApiRequest('/UploadTourGroupCoverImagePlanner', 'POST', {
+    ownerUserId,
+    originalFileName: imageFile.name,
+    mimeType: imageFile.type || 'application/octet-stream',
+    fileContentBase64: await readFileAsBase64(imageFile),
+  })
+
 export const listTourGroups = (): Promise<TourGroupListResponse> =>
     executeJsonApiRequest('/ListTourGroupsPlanner', 'POST', {})
 
