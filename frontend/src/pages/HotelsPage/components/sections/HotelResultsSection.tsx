@@ -83,21 +83,13 @@ export function HotelResultsSection({
                         await onBookHotel({
                           roomTypeId: roomTypeResponse.roomTypeId,
                           guestTravelerIds: selectedTravelerIds,
-                          checkInDate: String(formData.get('checkInDate') ?? searchCheckInDate),
-                          checkOutDate: String(formData.get('checkOutDate') ?? searchCheckOutDate),
+                          checkInDate: searchCheckInDate,
+                          checkOutDate: searchCheckOutDate,
                           roomCount: Number(formData.get('roomCount') ?? 1),
                         })
                       }}
                     >
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <label className="grid gap-2 text-sm font-black text-slate-700">
-                          <span className="text-xs uppercase tracking-[0.14em] text-cyan-600">{translate('hotels.checkInDate')}</span>
-                          <input name="checkInDate" type="date" defaultValue={searchCheckInDate} className="min-h-12 border-2 border-cyan-200 bg-cyan-50/70 px-4 text-base font-semibold text-slate-950 outline-none focus:border-cyan-500 focus:bg-white" />
-                        </label>
-                        <label className="grid gap-2 text-sm font-black text-slate-700">
-                          <span className="text-xs uppercase tracking-[0.14em] text-violet-600">{translate('hotels.checkOutDate')}</span>
-                          <input name="checkOutDate" type="date" defaultValue={searchCheckOutDate} className="min-h-12 border-2 border-violet-200 bg-violet-50/70 px-4 text-base font-semibold text-slate-950 outline-none focus:border-violet-500 focus:bg-white" />
-                        </label>
+                      <div className="grid gap-3">
                         <label className="grid gap-2 text-sm font-black text-slate-700">
                           <span className="text-xs uppercase tracking-[0.14em] text-amber-600">{translate('hotels.roomCount')}</span>
                           <input

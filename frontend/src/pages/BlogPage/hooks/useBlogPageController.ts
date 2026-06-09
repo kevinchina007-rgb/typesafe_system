@@ -252,20 +252,24 @@ export function useBlogPageController({
     }
   }
 
-  async function saveDraft(status: 'draft' | 'publish') {
+  async function saveDraft(
+    status: 'draft' | 'publish',
+    editorDraft?: Pick<BlogDraft, 'title' | 'summary' | 'content' | 'images'>,
+  ) {
     const user = requireUser()
     await runPageAction(async () => {
+      const currentDraft = editorDraft ? { ...draft, ...editorDraft } : draft
       const payload = {
         userId: user.userId,
-        postId: draft.postId || null,
-        title: draft.title,
-        summary: draft.summary || draft.coverText,
-        coverText: draft.coverText || draft.summary,
-        content: draft.content,
-        images: draft.images,
-        tags: draft.tags,
-        travelCity: draft.travelCities[0] ?? null,
-        travelCities: draft.travelCities,
+        postId: currentDraft.postId || null,
+        title: currentDraft.title,
+        summary: currentDraft.summary || currentDraft.coverText,
+        coverText: currentDraft.coverText || currentDraft.summary,
+        content: currentDraft.content,
+        images: currentDraft.images,
+        tags: currentDraft.tags,
+        travelCity: currentDraft.travelCities[0] ?? null,
+        travelCities: currentDraft.travelCities,
       }
       if (status === 'draft') {
         const response = await travelMvpApiClient.saveBlogDraft(payload)

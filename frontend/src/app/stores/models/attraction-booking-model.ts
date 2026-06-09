@@ -4,10 +4,17 @@ export type AttractionQuickDatePreset = 'today' | 'tomorrow' | 'weekend' | 'holi
 export type AttractionTypePreference = 'Nature' | 'Museum' | 'ThemePark' | 'Performance' | 'DayTour'
 export type AttractionSortPreference = 'Popular' | 'Rating' | 'Price'
 
+function formatLocalDate(date: Date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export const defaultAttractionSearchState = {
   city: '',
   keyword: '',
-  useDate: '2026-04-10',
+  useDate: formatLocalDate(new Date()),
   travelerCount: 2,
   attractionType: 'ThemePark' as AttractionTypePreference,
   sortPreference: 'Popular' as AttractionSortPreference,
@@ -57,7 +64,7 @@ export function applyAttractionQuickDatePreset(preset: AttractionQuickDatePreset
   if (preset === 'holiday') {
     baseDate.setDate(baseDate.getDate() + 14)
   }
-  return baseDate.toISOString().slice(0, 10)
+  return formatLocalDate(baseDate)
 }
 
 export function formatAttractionInsight(attractions: AttractionResponse[], translate: (translationKey: string) => string) {

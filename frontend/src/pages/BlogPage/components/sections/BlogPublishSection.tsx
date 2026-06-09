@@ -64,7 +64,7 @@ export function BlogPublishSection({ controller, translate }: BlogPublishSection
         onUploadImage={uploadDraftImage}
         onSubmit={async payload => {
           setDraft(current => ({ ...current, title: payload.title, summary: payload.summary, content: payload.content, images: payload.images }))
-          await saveDraft('publish')
+          await saveDraft('publish', payload)
         }}
         onCancel={() => setActiveTab('home')}
       />

@@ -86,7 +86,10 @@ export type BlogPageController = {
   closeProfileOverlay: () => void
   openProfileRelation: (nextTab: ProfileRelationTab) => Promise<void>
   updateProfilePrivacy: (hideRelations: boolean) => Promise<void>
-  saveDraft: (status: 'draft' | 'publish') => Promise<void>
+  saveDraft: (
+    status: 'draft' | 'publish',
+    editorDraft?: Pick<BlogDraft, 'title' | 'summary' | 'content' | 'images'>,
+  ) => Promise<void>
   likePost: (post: BlogPostSummaryResponse) => Promise<void>
   favoritePost: (post: BlogPostSummaryResponse) => Promise<void>
   followAuthor: (post: BlogPostSummaryResponse) => Promise<void>

@@ -1,12 +1,13 @@
 import type { AttractionResultCardProps } from '../../objects'
 import { mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
-import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
 import {
   evaluateAttractionTravelersEligibility,
   filterAttractionSessionsForUseDate,
   formatAttractionRules,
 } from '@/app/stores/models/attraction-booking-model'
 import { readAttractionTicketBookingForm } from '../../functions'
+
+const WEEKDAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
 export function AttractionResultCard({
   attractionResponse,
@@ -20,8 +21,6 @@ export function AttractionResultCard({
   useDateDraft,
   onRequireLogin,
   onBookAttraction,
-  onLoadReviewSummary,
-  onLoadReviews,
 }: AttractionResultCardProps) {
   const imageSrc = attractionResponse.imageUrl?.trim() || null
 
@@ -38,18 +37,6 @@ export function AttractionResultCard({
               {mapBackendStatusToProductLabel(attractionResponse.status, currentLanguage)}
             </span>
           </div>
-
-          <ResourceReviewSummaryLoader
-            currentLanguage={currentLanguage}
-            isBusy={isBusy}
-            isEnabled={!isGuestMode}
-            resourceType="Attraction"
-            resourceId={attractionResponse.attractionId}
-            title={attractionResponse.attractionName}
-            translate={translate}
-            onLoadSummary={onLoadReviewSummary}
-            onLoadReviews={onLoadReviews}
-          />
 
           <p className="text-base leading-7 text-slate-700">{attractionResponse.description}</p>
         </div>
@@ -84,7 +71,8 @@ export function AttractionResultCard({
                 <p>{`${translate('attractions.availableDateRange')}: ${ticketType.availableFromDate} - ${ticketType.availableToDate}`}</p>
                 <p>{`${translate('attractions.totalQuantity')}: ${ticketType.totalQuantity}`}</p>
                 <p>{`${translate('attractions.remainingTickets')}: ${ticketType.availableQuantityForRequestedDate ?? '-'}`}</p>
-                <p>{`${translate('attractions.validWeekdays')}: ${ticketType.validWeekdays
+                <p>{`${translate('attractions.validWeekdays')}: ${[...ticketType.validWeekdays]
+                  .sort((left, right) => WEEKDAY_ORDER.indexOf(left.toLowerCase()) - WEEKDAY_ORDER.indexOf(right.toLowerCase()))
                   .map(weekday => translate(`weekdays.${weekday.toLowerCase()}`))
                   .join(' / ')}`}</p>
                 {!ticketType.isAvailableForRequestedDate ? <p>{translate('attractions.unavailableForDate')}</p> : null}
