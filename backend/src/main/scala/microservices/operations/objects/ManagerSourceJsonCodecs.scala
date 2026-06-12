@@ -1,3 +1,5 @@
+// ManagerSourceJsonCodecs 定义operations模块的源数据 JSON codec。
+
 package com.typesafe.travel.operations.domain
 
 import com.typesafe.travel.shared.kernel.*

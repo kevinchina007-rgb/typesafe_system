@@ -5,6 +5,7 @@ import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { AttractionQuickDatePreset, AttractionSortPreference, AttractionTypePreference } from '@/app/stores/models/attraction-booking-model'
 import type { AttractionTicketTypeRuleResponse } from '@/lib/mvp-types/resources'
 
+// AttractionsPage 的页面级输入参数，负责承接语言、用户和导航能力。
 export type AttractionsPageProps = {
   currentLanguage: AppLanguage
   signedInUser: UserResponse | null
@@ -13,6 +14,7 @@ export type AttractionsPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
+// AttractionsPage 的搜索请求对象，只包含页面会发送到后端的筛选字段。
 export type AttractionsSearchRequest = {
   city?: string
   keyword?: string
@@ -20,6 +22,7 @@ export type AttractionsSearchRequest = {
   sortPreference?: AttractionSortPreference
 }
 
+// AttractionsPage 的下单载荷，负责把景点、票种、日期和出行人打包给预订流程。
 export type AttractionBookingPayload = {
   attractionId: string
   attractionName: string
@@ -32,6 +35,7 @@ export type AttractionBookingPayload = {
   rules: AttractionTicketTypeRuleResponse[]
 }
 
+// AttractionsPage 的控制器对页面暴露的状态和动作集合。
 export type AttractionsPageController = {
   currentLanguage: AppLanguage
   isBusy: boolean
@@ -78,11 +82,13 @@ export type AttractionsPageController = {
   handleConfirmAuthDialog: () => void
 }
 
+// AttractionPage 顶部英雄区参数，只负责标题和说明。
 export type AttractionPageHeroProps = {
   title: string
   description: string
 }
 
+// AttractionSearchCard 的参数，负责承接搜索表单和搜索建议。
 export type AttractionSearchCardProps = {
   isBusy: boolean
   searchCity: string
@@ -101,6 +107,7 @@ export type AttractionSearchCardProps = {
   onSearch: () => void
 }
 
+// AttractionFilterBar 的参数，只承接筛选项和变更事件。
 export type AttractionFilterBarProps = {
   hasSearchedAttractions: boolean
   sortPreference: AttractionSortPreference
@@ -108,6 +115,7 @@ export type AttractionFilterBarProps = {
   onSortPreferenceChange: (value: AttractionSortPreference) => void
 }
 
+// AttractionResultsSection 的参数，负责承接结果列表和预订动作。
 export type AttractionResultsSectionProps = {
   attractionResponses: AttractionResponse[]
   currentLanguage: AppLanguage
@@ -125,6 +133,7 @@ export type AttractionResultsSectionProps = {
   onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
+// AttractionResultCard 的参数，负责单条景点结果的展示和操作。
 export type AttractionResultCardProps = {
   attractionResponse: AttractionResponse
   currentLanguage: AppLanguage
@@ -141,18 +150,21 @@ export type AttractionResultCardProps = {
   onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
+// AttractionTypeSelector 的参数，只负责切换景点类型筛选。
 export type AttractionTypeSelectorProps = {
   value: AttractionTypePreference
   translate: (translationKey: string) => string
   onChange: (value: AttractionTypePreference) => void
 }
 
+// AttractionKeywordInput 的参数，只负责关键字输入。
 export type AttractionKeywordInputProps = {
   value: string
   translate: (translationKey: string) => string
   onChange: (value: string) => void
 }
 
+// CitySelector 的参数，只负责城市选择和建议项。
 export type CitySelectorProps = {
   value: string
   translate: (translationKey: string) => string
@@ -160,28 +172,36 @@ export type CitySelectorProps = {
   onChange: (value: string) => void
 }
 
+// DateSelector 的参数，只负责日期输入。
 export type DateSelectorProps = {
   value: string
   translate: (translationKey: string) => string
   onChange: (value: string) => void
 }
 
+// HotAttractions 的参数，只负责热门景点按钮列表。
 export type HotAttractionsProps = {
   items: string[]
   translate: (translationKey: string) => string
   onSelect: (value: string) => void
 }
 
+// TravelerCountSelector 的参数，只负责出行人数选择。
 export type TravelerCountSelectorProps = {
   value: number
   translate: (translationKey: string) => string
   onChange: (value: number) => void
 }
 
+// AttractionsPage 的分区顺序定义，只用于页面内部布局和调试。
 export const ATTRACTIONS_PAGE_REGIONS = ['hero', 'search', 'advertising', 'filter', 'guest', 'results', 'auth'] as const
 
+// AttractionsPage 的分区 key 联合类型，供页面布局复用。
 export type AttractionsPageRegion = (typeof ATTRACTIONS_PAGE_REGIONS)[number]
 
+// 景点页的快捷日期预设，只保留页面上可点击的几个固定入口。
 export const ATTRACTION_QUICK_DATE_PRESETS: AttractionQuickDatePreset[] = ['today', 'tomorrow', 'weekend', 'holiday']
+// 热门景点快捷词，只用于搜索卡片的快捷入口。
 export const ATTRACTION_HOT_SPOTS = ['上海 迪士尼', '杭州 西湖', '东京 迪士尼海洋', '北京 故宫']
+// 最近搜索词，只用于搜索卡片的辅助推荐。
 export const ATTRACTION_RECENT_SEARCHES = ['上海 迪士尼乐园', '北京 环球影城', '杭州 灵隐寺']

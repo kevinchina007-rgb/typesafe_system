@@ -1,3 +1,5 @@
+// 本文件定义 attraction 模块的 `AttractionSearchQuery`，作为查询条件并提供 JSON 编解码。
+
 export type AttractionSearchQuery = {
   city?: string
   keyword?: string

@@ -1,5 +1,6 @@
-import type { ChangeEventHandler } from 'react'
+﻿import type { ChangeEventHandler } from 'react'
 
+// 往返搜索行的联动逻辑，负责把去程和返程的机场字段互相映射好。
 export function useRoundTripSearchRows({
   departureAirport,
   arrivalAirport,
@@ -51,3 +52,4 @@ export function useRoundTripSearchRows({
     },
   }
 }
+

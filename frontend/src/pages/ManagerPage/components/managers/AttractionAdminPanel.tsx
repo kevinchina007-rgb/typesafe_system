@@ -4,6 +4,7 @@ import type { AppLanguage, AttractionAdminSessionResponse } from '@/lib/mvp-type
 
 import { getPasswordValidationMessage } from '@/pages/shared/auth/passwordValidation'
 
+// 景点管理员后台面板，负责注册、登录、景点创建和票种配置。
 type AttractionAdminPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean

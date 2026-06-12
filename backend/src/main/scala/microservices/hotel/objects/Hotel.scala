@@ -1,3 +1,5 @@
+// Hotel 定义酒店模块的数据模型。
+
 package com.typesafe.travel.hotel.objects
 
 import com.typesafe.travel.shared.kernel.*

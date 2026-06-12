@@ -6,6 +6,7 @@ import { formatIsoDateTime } from '@/lib/presenters/view-models'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import { ContentImageGallery } from '@/pages/shared/content/ContentImageGallery'
 
+// Blog 详情页参数，覆盖正文、评论和操作按钮。
 type BlogDetailProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
@@ -20,6 +21,7 @@ type BlogDetailProps = {
   onArchive: () => Promise<void>
 }
 
+// Blog 详情组件，展示文章正文、图片和评论区。
 export function BlogDetail({
   currentLanguage,
   isBusy,
@@ -34,13 +36,21 @@ export function BlogDetail({
   onArchive,
 }: BlogDetailProps) {
   const [commentDraft, setCommentDraft] = useState('')
+  // 当前帖子是否已经点赞。
   const liked = post.post.likedByCurrentUser
+  // 帖子标题兜底文本。
   const postTitle = post.post.title?.trim() || '未命名文章'
+  // 帖子摘要兜底文本。
   const postSummary = post.post.summary?.trim() || '这篇文章暂时还没有摘要。'
+  // 帖子正文内容。
   const postContent = post.content ?? ''
+  // 帖子图片列表。
   const postImages = post.post.images ?? []
+  // 帖子评论列表。
   const postComments = post.comments ?? []
+  // 作者名称兜底文本。
   const postAuthorName = post.post.authorDisplayName?.trim() || '匿名用户'
+  // 作者头像首字母兜底。
   const postAuthorInitial = postAuthorName.slice(0, 1).toUpperCase()
 
   return (

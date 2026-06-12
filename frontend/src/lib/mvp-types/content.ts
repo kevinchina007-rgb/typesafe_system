@@ -1,4 +1,6 @@
-﻿export type { ContentImageResponse } from '@/microservices/content/objects/ContentImageResponse'
+// 本文件定义内容服务前端传输类型，覆盖博客、评论、反馈和点评接口。
+
+export type { ContentImageResponse } from '@/microservices/content/objects/ContentImageResponse'
 export type { BlogCommentResponse } from '@/microservices/content/objects/BlogCommentResponse'
 export type { BlogPostListResponse } from '@/microservices/content/objects/BlogPostListResponse'
 export type { BlogPostResponse } from '@/microservices/content/objects/BlogPostResponse'

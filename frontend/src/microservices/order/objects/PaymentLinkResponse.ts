@@ -1,4 +1,6 @@
-﻿export type PaymentLinkResponse = {
+// 本文件定义 order 模块的 `PaymentLinkResponse`，作为响应数据并提供 JSON 编解码。
+
+export type PaymentLinkResponse = {
   paymentUrl: string
   expiresAt: string
 }

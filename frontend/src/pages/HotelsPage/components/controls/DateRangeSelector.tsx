@@ -1,4 +1,5 @@
-﻿type DateRangeSelectorProps = {
+// 入住和离店日期选择器参数。
+type DateRangeSelectorProps = {
   checkInDate: string
   checkOutDate: string
   translate: (translationKey: string) => string
@@ -6,6 +7,7 @@
   onCheckOutDateChange: (value: string) => void
 }
 
+// 日期范围选择器，负责入住和离店日期。
 export function DateRangeSelector({
   checkInDate,
   checkOutDate,

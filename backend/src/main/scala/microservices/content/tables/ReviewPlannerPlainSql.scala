@@ -1,3 +1,5 @@
+// ReviewPlannerPlainSql 封装内容模块的plain SQL 实现。
+
 package com.typesafe.travel.content.domain
 
 import cats.effect.IO

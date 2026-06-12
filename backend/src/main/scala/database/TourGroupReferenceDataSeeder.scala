@@ -1,3 +1,5 @@
+// TourGroupReferenceDataSeeder 负责写入参考数据。
+
 package com.typesafe.travel.persistence
 
 import cats.effect.IO
@@ -21,6 +23,7 @@ object TourGroupReferenceDataSeeder:
   private val SeededAt = Instant.parse("2026-05-18T00:00:00Z")
   private val BaseStartDate = LocalDate.parse("2026-06-01")
   private val StartDateSpanDays = 57L
+  private val ExpectedDemoGroupCount = 90L
 
   private def sqlStringLiteral(value: String): Fragment =
     Fragment.const("'" + value.replace("'", "''") + "'")
@@ -264,6 +267,12 @@ object TourGroupReferenceDataSeeder:
     for
       _ <- ensureTourGroupColumns(transactor)
       _ <- ensureBlacklistsTable(transactor)
+      demoGroupCount <- sql"select count(*) from tour_groups where group_id like 'tour-group-demo-%'".query[Long].unique.transact(transactor)
+      _ <- if demoGroupCount >= ExpectedDemoGroupCount then IO.unit else seedDemoData(transactor)
+    yield ()
+
+  private def seedDemoData(transactor: Transactor[IO]): IO[Unit] =
+    for
       _ <- cleanupDemoData(transactor)
       userSeeds = buildUserSeeds()
       hashedUsers <- userSeeds.traverse { seed =>

@@ -17,10 +17,12 @@ import type {
 import { formatHotelSearchRequest, getLowestRoomPrice, validateHotelSearchInput } from '../functions'
 import { useHotelSearchState } from '../components/hooks/useHotelSearchState'
 
+// 规范化日期字符串，只保留年月日部分。
 function normalizeDateOnly(value: string) {
   return value.trim().slice(0, 10)
 }
 
+// 酒店页面总控制器，负责搜索、广告、预订和评论加载。
 export function useHotelsPageController({
   currentLanguage,
   signedInUser,
@@ -30,6 +32,7 @@ export function useHotelsPageController({
 }: HotelsPageProps): HotelsPageController {
   const { travelers } = useSignedInTravelers(signedInUser)
   const { isBusy, runPageAction } = usePageActions(currentLanguage, translate, onShowNotice)
+  // 搜索态由独立 hook 维护。
   const {
     hotelResponses,
     hasSearchedHotels,
@@ -47,20 +50,33 @@ export function useHotelsPageController({
     setHotelPreference,
     setNearbyPreference,
   } = useHotelSearchState()
+  // 已选出行人列表。
   const [selectedTravelerIds, setSelectedTravelerIds] = useState<string[]>([])
+  // 当前是否处于团体定向预订模式。
   const [isTourGroupTargetMode, setIsTourGroupTargetMode] = useState(false)
+  // 团体定向模式下的酒店结果。
   const [targetHotelResponses, setTargetHotelResponses] = useState<HotelPlannerResponse[]>([])
 
+  // 当前可展示的广告列表。
   const deliveryAdvertisements = useDeliverableAdvertisements('hotelBooking')
+  // 加载广告的方法。
   const loadDeliverableAdvertisements = useAdvertisingStore(state => state.loadDeliverableAdvertisements)
+  // 当前选中的广告。
   const [selectedAdvertisement, setSelectedAdvertisement] = useState<AdvertisementResponse | null>(null)
+  // 搜索提示信息。
   const [searchNotice, setSearchNotice] = useState<HotelSearchNotice | null>(null)
+  // 搜索轮次，用于触发滚动定位。
   const [searchRevision, setSearchRevision] = useState(0)
+  // 日期价格条起始日期。
   const [dateWindowStart, setDateWindowStart] = useState(() => addHotelDays(searchCheckInDate, -3))
+  // 登录拦截弹窗是否打开。
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
+  // 结果区滚动锚点。
   const resultsSectionRef = useRef<HTMLDivElement | null>(null)
+  // 提示区滚动锚点。
   const noticeSectionRef = useRef<HTMLDivElement | null>(null)
 
+  // 广告位变化时刷新当前可展示的酒店广告。
   useEffect(() => {
     void loadDeliverableAdvertisements('hotelBooking')
 
@@ -83,6 +99,7 @@ export function useHotelsPageController({
     }
   }, [loadDeliverableAdvertisements])
 
+  // 如果是旅游团定向预订，就先回填酒店搜索条件。
   useEffect(() => {
     const target = consumeTourGroupBookingTarget('hotels')
     if (!target) {
@@ -106,7 +123,7 @@ export function useHotelsPageController({
 
         const nextHotelResponse = {
           ...nextHotelPlannerResponse,
-          roomTypes: nextHotelPlannerResponse.roomTypes.filter(roomType => roomType.roomTypeId === target.roomTypeId),
+          roomTypes: nextHotelPlannerResponse.roomTypes.filter((roomType: (typeof nextHotelPlannerResponse.roomTypes)[number]) => roomType.roomTypeId === target.roomTypeId),
         }
 
         setSearchLocation(nextHotelPlannerResponse.location)
@@ -131,10 +148,12 @@ export function useHotelsPageController({
     }
   }, [onShowNotice, translate])
 
+  // 入住日期变化时，重置日期条起点。
   useEffect(() => {
     setDateWindowStart(addHotelDays(searchCheckInDate, -3))
   }, [searchCheckInDate])
 
+  // 搜索轮次变化后滚动到结果区。
   useEffect(() => {
     if (searchRevision <= 0) {
       return
@@ -143,6 +162,7 @@ export function useHotelsPageController({
     resultsSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [searchRevision])
 
+  // 搜索提示出现时滚动到提示区。
   useEffect(() => {
     if (!searchNotice) {
       return
@@ -151,6 +171,7 @@ export function useHotelsPageController({
     noticeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [searchNotice])
 
+  // 过滤掉当前不可用的出行人，并保证至少保留一组可选对象。
   useEffect(() => {
     const availableTravelerIds = travelers.map(traveler => traveler.travelerId)
     setSelectedTravelerIds(currentIds => {
@@ -160,16 +181,19 @@ export function useHotelsPageController({
   }, [travelers])
 
   const featuredAdvertisement = deliveryAdvertisements[0] ?? null
+  // 页面展示的最低房价。
   const hotelLowestNightlyPrice = useMemo(() => getLowestRoomPrice(hotelResponses), [hotelResponses])
 
+  // 切换行人勾选状态。
   const toggleTravelerSelection = useCallback((travelerId: string) => {
     setSelectedTravelerIds(currentIds =>
       currentIds.includes(travelerId)
         ? currentIds.filter(nextTravelerId => nextTravelerId !== travelerId)
         : [...currentIds, travelerId],
     )
-  }, [])
+    }, [])
 
+  // 执行一次酒店搜索并刷新页面状态。
   async function executeHotelSearch(nextLocation: string, nextCheckInDate: string, nextCheckOutDate: string) {
     const validationNotice = validateHotelSearchInput(translate, nextLocation, nextCheckInDate, nextCheckOutDate)
     if (validationNotice) {
@@ -212,6 +236,7 @@ export function useHotelsPageController({
     }
   }
 
+  // 打开某个广告对应的酒店详情。
   async function openAdvertisement(advertisementId: string) {
     const advertisement = deliveryAdvertisements.find(item => item.advertisementId === advertisementId) ?? null
     if (!advertisement) {
@@ -234,19 +259,23 @@ export function useHotelsPageController({
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // 选择某一天后重新发起搜索。
   async function handleDateSelect(nextCheckInDate: string) {
     const nextCheckOutDate = addHotelDays(nextCheckInDate, 1)
     await executeHotelSearch(searchLocation, nextCheckInDate, nextCheckOutDate)
   }
 
+  // 日期条向前移动一天。
   function onPreviousDateWindow() {
     setDateWindowStart(date => addHotelDays(date, -1))
   }
 
+  // 日期条向后移动一天。
   function onNextDateWindow() {
     setDateWindowStart(date => addHotelDays(date, 1))
   }
 
+  // 提交酒店预订。
   async function bookHotel(payload: HotelBookRequest) {
     if (!signedInUser) {
       setIsAuthDialogOpen(true)
@@ -266,6 +295,7 @@ export function useHotelsPageController({
     }, translate('hotels.bookNow'), translate('notice.bookingCreated'))
   }
 
+  // 加载资源评论摘要。
   async function loadReviewSummary(payload: { resourceType: string; resourceId: string }) {
     if (!signedInUser) {
       throw new Error(translate('error.loginRequired'))
@@ -277,6 +307,7 @@ export function useHotelsPageController({
     })
   }
 
+  // 加载资源下的评论列表。
   async function loadReviewsByResource(payload: { resourceType: string; resourceId: string }) {
     if (!signedInUser) {
       throw new Error(translate('error.loginRequired'))

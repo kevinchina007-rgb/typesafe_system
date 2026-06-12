@@ -1,3 +1,5 @@
+// 本文件定义 content 模块的 `BlogCommentResponse`，作为响应数据并提供 JSON 编解码。
+
 export type BlogCommentResponse = {
   commentId: string
   postId: string

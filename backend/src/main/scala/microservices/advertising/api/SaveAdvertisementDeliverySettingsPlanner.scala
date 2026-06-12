@@ -1,3 +1,5 @@
+// SaveAdvertisementDeliverySettingsPlanner 是广告模块的保存入口，负责请求校验、流程编排和结果返回。
+
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO

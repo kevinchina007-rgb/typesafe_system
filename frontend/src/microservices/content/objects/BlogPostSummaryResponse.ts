@@ -1,3 +1,5 @@
+// 本文件定义 content 模块的 `BlogPostSummaryResponse`，作为摘要响应数据并提供 JSON 编解码。
+
 import type { ContentImageResponse } from './ContentImageResponse'
 
 export type BlogTagResponse = {

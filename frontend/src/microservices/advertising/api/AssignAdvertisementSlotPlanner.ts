@@ -1,3 +1,5 @@
+// 本文件定义 AssignAdvertisementSlotPlanner，负责 advertising 模块的分配编排和接口入口。
+
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 
 import type { AdvertisementSlotAssignmentRequest } from '@/microservices/advertising/objects/AdvertisementSlotAssignmentRequest'

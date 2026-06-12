@@ -1,13 +1,18 @@
-﻿export type TrainHotRoute = {
+// 火车热门路线的数据结构，只承接 ID 和起终点文本。
+export type TrainHotRoute = {
   id: string
   departureLabel: string
   arrivalLabel: string
 }
+
+// 热门路线控件参数，只负责路线列表和选择动作。
 type HotRoutesProps = {
   routes: TrainHotRoute[]
   translate: (translationKey: string) => string
   onSelectRoute: (route: TrainHotRoute) => void
 }
+
+// 火车热门路线快捷入口，只负责展示可点击的推荐路线。
 export function HotRoutes({ routes, translate, onSelectRoute }: HotRoutesProps) {
   return (
     <div className="grid gap-2">

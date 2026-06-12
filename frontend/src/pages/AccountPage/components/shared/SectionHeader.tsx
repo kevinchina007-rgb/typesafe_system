@@ -1,3 +1,5 @@
+// 本文件定义 AccountPage 页面的头部组件，负责标题和摘要信息展示。
+
 import type { ReactNode } from 'react'
 
 type SectionHeaderProps = {

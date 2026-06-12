@@ -1,3 +1,5 @@
+// 本文件定义航班服务前端传输类型，覆盖航班查询、预订和价格相关接口。
+
 export type { FlightBookingWindowStatus } from '@/microservices/flight/objects/FlightBookingWindowStatus'
 export type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightPlannerRequest'
 export type { CabinInventoryResponse } from '@/microservices/flight/objects/CabinInventoryResponse'

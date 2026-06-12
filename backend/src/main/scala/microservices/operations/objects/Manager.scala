@@ -1,3 +1,5 @@
+// Manager 定义operations模块的数据模型。
+
 package com.typesafe.travel.operations.domain
 
 import com.typesafe.travel.shared.kernel.*

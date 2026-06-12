@@ -1,3 +1,5 @@
-﻿export { TravelerPanel } from './TravelerPanel'
+// 本目录统一导出组件，方便上层按模块引用。
+
+export { TravelerPanel } from './TravelerPanel'
 export { TravelersPageShell } from './TravelersPageShell'
 

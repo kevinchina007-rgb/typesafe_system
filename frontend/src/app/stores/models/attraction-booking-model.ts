@@ -1,3 +1,5 @@
+// 本文件定义景点预订模型，用于预订流程的数据传递。
+
 import type { AttractionTicketTypeRuleResponse, AttractionResponse, TravelerResponse } from '@/lib/mvp-types/index'
 
 export type AttractionQuickDatePreset = 'today' | 'tomorrow' | 'weekend' | 'holiday'

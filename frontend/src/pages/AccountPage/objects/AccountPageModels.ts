@@ -1,8 +1,10 @@
 import type { AppLanguage, AppViewKey, CurrentManagerSessionResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
+// 账号页支持的入口模式。
 export type AccountEntryMode = 'register' | 'login'
 
+// 账号页向外暴露的页面参数。
 export type AccountPageProps = {
   currentLanguage: AppLanguage
   signedInUser: UserResponse | null
@@ -15,11 +17,13 @@ export type AccountPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
+// 账号页中可编辑的个人资料草稿。
 export type AccountProfileDraft = {
   nickname: string
   phone: string
 }
 
+// 账号页控制器对组件暴露的状态和动作。
 export type AccountPageController = {
   isBusy: boolean
   accountEntryMode: AccountEntryMode

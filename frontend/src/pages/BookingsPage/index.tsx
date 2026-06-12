@@ -3,6 +3,7 @@ import type { BookingsPageProps } from './objects'
 import { useBookingsPageController } from './hooks'
 import { OrderPanel, PaymentModal } from './components'
 
+// BookingsPage 页面入口，只负责把控制器结果交给各个子组件。
 export function BookingsPage(props: BookingsPageProps) {
   const controller = useBookingsPageController(props)
   const { currentLanguage, orderCategory, isSessionReady, translate } = props

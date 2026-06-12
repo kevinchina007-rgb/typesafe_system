@@ -1,3 +1,5 @@
+// 本文件定义 traveler 模块的 `TravelerProfileInput`，作为输入模型并提供 JSON 编解码。
+
 import type {
   TravelerBasicInfo,
   TravelerContactInfo,

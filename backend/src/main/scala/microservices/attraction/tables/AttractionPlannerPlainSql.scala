@@ -1,3 +1,5 @@
+// AttractionPlannerPlainSql 封装景点模块的plain SQL 实现。
+
 package com.typesafe.travel.persistence.attraction
 
 import cats.effect.IO

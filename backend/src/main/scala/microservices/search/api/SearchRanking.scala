@@ -1,3 +1,5 @@
+// SearchRanking 定义search模块的业务入口。
+
 package com.typesafe.travel.api.application
 
 object SearchRanking:

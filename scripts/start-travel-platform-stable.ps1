@@ -338,7 +338,7 @@ function Get-BackendDatabaseSettings {
     if (Test-PostgresPortReady) {
       Write-LauncherLog "local postgres ready on 127.0.0.1:5432"
       return @{
-        Url = 'jdbc:postgresql://127.0.0.1:5432/travel_platform'
+        Url = 'jdbc:postgresql://127.0.0.1:5432/travel_platform?sslmode=disable'
         Driver = 'org.postgresql.Driver'
         User = 'postgres'
         Password = 'root'
@@ -367,7 +367,7 @@ function Get-BackendDatabaseSettings {
       if ($env:TRAVEL_DB_URL -and $env:TRAVEL_DB_URL.Trim().Length -gt 0) {
         $env:TRAVEL_DB_URL.Trim()
       } else {
-        'jdbc:postgresql://127.0.0.1:5432/travel_platform'
+        'jdbc:postgresql://127.0.0.1:5432/travel_platform?sslmode=disable'
       }
     Driver =
       if ($env:TRAVEL_DB_DRIVER -and $env:TRAVEL_DB_DRIVER.Trim().Length -gt 0) {

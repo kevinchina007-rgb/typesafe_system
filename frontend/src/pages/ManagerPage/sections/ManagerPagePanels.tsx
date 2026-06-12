@@ -3,6 +3,7 @@ import { ManagerPanel } from '@/pages/ManagerPage/components/managers/ManagerPan
 import { TrainAdminPanel } from '@/pages/ManagerPage/components/managers/TrainAdminPanel'
 import type { AppLanguage, AttractionAdminSessionResponse, FlightPlannerResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
 
+// 管理后台不同业务面板的分发层，按是否展示来决定渲染哪个面板。
 type BasePanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean

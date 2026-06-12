@@ -1,5 +1,6 @@
 import { useTrainSearchStore } from '@/app/stores/train-search-store'
 
+// TrainsPage 搜索状态的薄封装，只把 store 里的字段和动作暴露出来。
 export function useTrainSearchState() {
   const trainResponses = useTrainSearchStore(state => state.trainResponses)
   const hasSearchedTrains = useTrainSearchStore(state => state.hasSearchedTrains)

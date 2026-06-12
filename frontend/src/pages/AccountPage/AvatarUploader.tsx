@@ -13,9 +13,12 @@ type AvatarUploaderProps = {
   onValidationError: (message: string) => void
 }
 
+// 头像上传允许的最大字节数。
 const maximumAvatarBytes = 2 * 1024 * 1024
+// 头像上传允许的 MIME 类型。
 const allowedAvatarMimeTypes = new Set(['image/png', 'image/jpeg', 'image/jpg'])
 
+// 默认头像候选项列表。
 const defaultAvatarOptions = Array.from({ length: 8 }, (_, index) => {
   const avatarIndex = index + 1
   return {
@@ -24,12 +27,15 @@ const defaultAvatarOptions = Array.from({ length: 8 }, (_, index) => {
   }
 })
 
+// 次要按钮样式。
 const secondaryButtonClassName =
   'inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white disabled:cursor-not-allowed disabled:opacity-55'
 
+// 主要按钮样式。
 const primaryButtonClassName =
   'inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-55'
 
+// 头像上传和默认头像选择弹窗。
 export function AvatarUploader({
   account,
   isBusy,
@@ -42,8 +48,10 @@ export function AvatarUploader({
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false)
   const hiddenFileInputRef = useRef<HTMLInputElement | null>(null)
 
+  // 头像缺省展示用的首字母。
   const avatarFallbackLabel = account.nickname.trim().slice(0, 1).toUpperCase() || 'U'
 
+  // 清空当前选择的本地文件。
   function resetSelectedFile() {
     setSelectedAvatarFile(null)
     if (hiddenFileInputRef.current) {
@@ -51,11 +59,13 @@ export function AvatarUploader({
     }
   }
 
+  // 关闭头像弹窗并恢复初始状态。
   function closeAvatarDialog() {
     resetSelectedFile()
     setIsAvatarDialogOpen(false)
   }
 
+  // 处理用户选择的头像文件。
   function handleSelectedFile(nextAvatarFile: File | null) {
     if (!nextAvatarFile) {
       setSelectedAvatarFile(null)
@@ -75,11 +85,13 @@ export function AvatarUploader({
     setSelectedAvatarFile(nextAvatarFile)
   }
 
+  // 上传某个默认头像。
   async function uploadDefaultAvatar(src: string) {
     await onUseDefaultAvatar(src)
     closeAvatarDialog()
   }
 
+  // 上传当前选择的本地头像文件。
   async function uploadSelectedAvatar() {
     if (!selectedAvatarFile) {
       onValidationError(translate('error.avatarMissing'))

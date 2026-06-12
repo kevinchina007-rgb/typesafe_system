@@ -1,3 +1,5 @@
+// ExplorePlannerModels 定义 content 模块探索页使用的搜索请求、推荐结果和搜索结果响应模型。
+
 package com.typesafe.travel.api
 
 import io.circe.{Decoder, Encoder}

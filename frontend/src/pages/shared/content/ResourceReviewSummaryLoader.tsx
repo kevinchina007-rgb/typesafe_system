@@ -1,9 +1,12 @@
-﻿import { useEffect, useState } from 'react'
+// 本文件定义共享页面组件或工具，负责页面间复用逻辑。
+
+import { useEffect, useState } from 'react'
 
 import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse } from '@/lib/mvp-types/index'
 import { ResourceReviewSummary } from '@/pages/shared/content/ResourceReviewSummary'
 import { ReviewListDialog } from '@/pages/shared/content/ReviewListDialog'
 
+// 资源评价汇总加载器的输入参数。
 type ResourceReviewSummaryLoaderProps = {
   currentLanguage: AppLanguage
   isBusy?: boolean
@@ -16,6 +19,7 @@ type ResourceReviewSummaryLoaderProps = {
   onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
+// 资源评价汇总加载器，负责先加载摘要，再按需打开评论列表。
 export function ResourceReviewSummaryLoader({
   currentLanguage,
   isBusy = false,
@@ -31,6 +35,7 @@ export function ResourceReviewSummaryLoader({
   const [reviews, setReviews] = useState<ReviewResponse[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
+  // 资源启用时自动加载评价摘要。
   useEffect(() => {
     if (!isEnabled) {
       setSummary(null)
@@ -45,6 +50,7 @@ export function ResourceReviewSummaryLoader({
 
   return (
     <>
+      {/* 上方区域负责展示摘要并提供“查看评价”入口。 */}
       <div className="flex flex-wrap items-center gap-3">
         <ResourceReviewSummary currentLanguage={currentLanguage} summary={summary} translate={translate} />
         <button
@@ -62,6 +68,7 @@ export function ResourceReviewSummaryLoader({
         </button>
       </div>
 
+      {/* 明细对话框使用单独弹窗承载评论列表。 */}
       <ReviewListDialog
         currentLanguage={currentLanguage}
         isBusy={isBusy}

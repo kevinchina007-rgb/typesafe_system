@@ -1,8 +1,10 @@
+// FlightsPage 页面头图参数，只包含标题和说明。
 type FlightPageHeroProps = {
   title: string
   description: string
 }
 
+// FlightsPage 头图区域，只负责展示页面标题和简介。
 export function FlightPageHero({ title, description }: FlightPageHeroProps) {
   return (
     <section className="grid gap-4 border border-sky-200 bg-gradient-to-r from-sky-50 via-white to-amber-50 p-6 shadow-sm shadow-sky-100/50">

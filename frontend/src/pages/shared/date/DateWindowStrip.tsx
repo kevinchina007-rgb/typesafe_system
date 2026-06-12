@@ -1,7 +1,10 @@
+// 本文件定义日期窗口条，负责展示当前日期范围并切换上一页和下一页。
+
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 import { addHotelDays, formatHotelDateLabel, formatHotelWeekdayLabel } from '@/app/stores/models/hotel-booking-model'
 
+// 日期窗口条的输入参数。
 type DateWindowStripProps = {
   dateWindowStart: string
   selectedDate: string
@@ -11,7 +14,9 @@ type DateWindowStripProps = {
   onDateSelect: (date: string) => void
 }
 
+// 日期窗口条，负责左右翻页和选择具体日期。
 export function DateWindowStrip({ dateWindowStart, selectedDate, isBusy = false, onPrevious, onNext, onDateSelect }: DateWindowStripProps) {
+  // 从起始日期开始展开 7 天的可选日期。
   const dates = Array.from({ length: 7 }, (_, index) => addHotelDays(dateWindowStart, index))
 
   return (
@@ -43,6 +48,7 @@ export function DateWindowStrip({ dateWindowStart, selectedDate, isBusy = false,
   )
 }
 
+// 左右翻页按钮，放在日期窗口的两侧。
 function WindowButton({
   direction,
   disabled,
@@ -60,7 +66,7 @@ function WindowButton({
       }`}
       disabled={disabled}
       onClick={onClick}
-      aria-label={direction === 'left' ? '查看前一日' : '查看后一日'}
+      aria-label={direction === 'left' ? '查看前一页' : '查看后一页'}
     >
       {direction === 'left' ? (
         <ChevronLeft className="h-5 w-5 text-sky-700 transition group-hover:text-white" />

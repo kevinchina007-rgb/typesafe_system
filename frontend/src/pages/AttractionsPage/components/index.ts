@@ -1,3 +1,5 @@
+// 本目录统一导出组件，方便上层按模块引用。
+
 export { AttractionFilterBar } from './sections/AttractionFilterBar'
 export { AttractionPageHero } from './sections/AttractionPageHero'
 export { AttractionResultsSection } from './sections/AttractionResultsSection'

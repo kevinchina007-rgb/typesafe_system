@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
@@ -19,6 +19,7 @@ import {
 } from '@/pages/FlightsPage/functions'
 import type { FlightResultsRoute, FlightSortMode } from '@/pages/FlightsPage/objects'
 
+// FlightsPage 结果区的状态钩子，负责筛选、排序和日期窗口数据组织。
 export function useFlightResultsState({
   route,
   searchedFlights,
@@ -178,3 +179,4 @@ export function useFlightResultsState({
     formatRouteDate,
   }
 }
+

@@ -1,4 +1,6 @@
-﻿import { StrictMode } from 'react'
+// 本文件定义前端应用入口，负责挂载根组件、路由和全局样式。
+
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { MvpApp } from '@/pages/AppPage'

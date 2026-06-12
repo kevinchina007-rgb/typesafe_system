@@ -1,4 +1,6 @@
-﻿export type TourGroupChatSettingsResponse = {
+// 本文件定义 tour-group 模块的 `TourGroupChatSettingsResponse`，作为响应数据并提供 JSON 编解码。
+
+export type TourGroupChatSettingsResponse = {
   groupId: string
   allowMemberDirectChat: boolean
   updatedAt: string

@@ -1,3 +1,5 @@
+// 本文件作为当前目录的入口导出文件。
+
 import { useMemo, useState } from 'react'
 
 import { TourGroupsPageShell } from './components'

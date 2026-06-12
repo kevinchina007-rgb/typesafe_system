@@ -1,3 +1,5 @@
+// ManagerAuthPlannerModels 定义认证模块的请求和响应模型。
+
 package com.typesafe.travel.auth.domain
 
 import io.circe.{Decoder, Encoder}

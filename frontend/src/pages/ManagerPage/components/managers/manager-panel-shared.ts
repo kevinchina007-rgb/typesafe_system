@@ -3,6 +3,7 @@ import type { ManagerCabinPricingInput } from '@/microservices/operations/object
 
 import type { ManagerFlightOrderResponse } from '@/lib/mvp-types/index'
 
+// 把可能输入的日期时间统一归一成 ISO 字符串，保证后端接收格式一致。
 export function normalizeDateTimeInput(rawValue: string): string {
   const trimmedValue = rawValue.trim()
   if (!trimmedValue) {
@@ -17,8 +18,10 @@ export function normalizeDateTimeInput(rawValue: string): string {
   return parsedDate.toISOString()
 }
 
+// 航空管理后台内部使用的分区名称。
 export type AirlineWorkspaceSection = 'createFlight' | 'flightManagement' | 'userFeedback' | 'managerProfile'
 
+// 管理后台主面板需要的全部 props，尽量集中在这里对齐。
 export type ManagerPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean

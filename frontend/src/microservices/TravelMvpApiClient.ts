@@ -1,3 +1,6 @@
+// 本文件集中汇总前端可调用的后端 Planner 接口。
+
+// 广告相关 API。
 import { approveAdvertisement } from '@/microservices/advertising/api/ApproveAdvertisementPlanner'
 import { assignAdvertisementSlot } from '@/microservices/advertising/api/AssignAdvertisementSlotPlanner'
 import { getAdvertisementDeliverySettings, saveAdvertisementDeliverySettings } from '@/microservices/advertising/api/AdvertisementDeliverySettingsPlanners'
@@ -11,13 +14,21 @@ import { rejectAdvertisement } from '@/microservices/advertising/api/RejectAdver
 import { submitAdvertisementForReview } from '@/microservices/advertising/api/SubmitAdvertisementForReviewPlanner'
 import { updateAdvertisement } from '@/microservices/advertising/api/UpdateAdvertisementPlanner'
 import { uploadAdvertisementImage } from '@/microservices/advertising/api/UploadAdvertisementImagePlanner'
+
+// 景点相关 API。
 import { listAttractions, getAttraction, uploadAttractionImage } from '@/microservices/attraction/api/AttractionPlanners'
+
+// 账号与登录相关 API。
 import { getHealth, signupUser, loginUserWithPassword, logoutUser, getCurrentUserSession, changeUserPassword, listUserSessions, logoutCurrentUserSession, logoutOtherUserSessions } from '@/microservices/auth/api/AuthPlanners'
 import { loginManagerAuth, logoutManagerAuth, getCurrentManagerSession, changeManagerPassword, listManagerSessions, logoutCurrentManagerSession, logoutOtherManagerSessions } from '@/microservices/auth/api/ManagerAuthPlanners'
+
+// 内容与社区相关 API。
 import { listBlogPosts, listShortBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, saveBlogDraft, publishBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost, likeBlogComment, unlikeBlogComment, favoriteBlogPost, unfavoriteBlogPost, followBlogUser, blockBlogUser, listBlogNotifications, getBlogProfile, updateBlogProfilePrivacy, listBlogFollowers, listBlogFollowing } from '@/microservices/content/api/BlogPlanners'
 import { listExploreSuggestions, searchExplore } from '@/microservices/content/api/ExplorePlanners'
 import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedbackThreads, listSiteAdminFeedbackThreads, sendFeedbackMessage, createOrderCancellationMessage, handleOrderCancellationRequest, markFeedbackThreadRead, escalateFeedbackThread, createFeedbackComplaint, openComplaintManagerThread } from '@/microservices/content/api/FeedbackPlanners'
 import { listMyReviews, listReviewsByResource, getReviewResourceSummary, getReviewEligibility, createReview, updateReview, uploadReviewImage, deleteReview } from '@/microservices/content/api/ReviewPlanners'
+
+// 航班、酒店、订单、旅游团和出行人相关 API。
 import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
 import { searchHotelsPlanner, getHotelDetailsPlanner, uploadHotelRoomTypeImage } from '@/microservices/hotel/api'
 import { createUser, loginUser, getUser, uploadUserAvatar, updateUserProfile } from '@/microservices/identity/api/UserQueryPlanners'
@@ -28,6 +39,7 @@ import { createTourGroup, uploadTourGroupCoverImage, listTourGroups, getTourGrou
 import { listTrains, getTrain } from '@/microservices/train/api/TrainPlanners'
 import { createTraveler, updateTraveler, listTravelers, deleteTraveler } from '@/microservices/traveler/api/TravelerPlanners'
 
+// 把所有 Planner 方法按对象汇总成统一客户端。
 export const travelMvpApiClient = {
   approveAdvertisement,
   assignAdvertisementSlot,

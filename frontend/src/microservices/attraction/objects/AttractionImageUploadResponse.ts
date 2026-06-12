@@ -1,3 +1,5 @@
+// 本文件定义 attraction 模块的 `AttractionImageUploadResponse`，作为响应数据并提供 JSON 编解码。
+
 export type AttractionImageUploadResponse = {
   assetId: string
   publicUrl: string

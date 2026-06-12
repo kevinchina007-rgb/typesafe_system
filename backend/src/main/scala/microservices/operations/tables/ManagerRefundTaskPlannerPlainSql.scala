@@ -1,3 +1,5 @@
+// ManagerRefundTaskPlannerPlainSql 封装operations模块的plain SQL 实现。
+
 package com.typesafe.travel.persistence.operations
 
 import cats.effect.IO

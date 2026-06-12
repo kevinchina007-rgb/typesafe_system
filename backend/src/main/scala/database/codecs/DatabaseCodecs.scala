@@ -1,3 +1,5 @@
+// DatabaseCodecs 定义数据库 codec 映射。
+
 package com.typesafe.travel.persistence.codecs
 
 import cats.effect.IO
@@ -8,23 +10,14 @@ import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.train.domain.*
 import com.typesafe.travel.traveler.domain.*
-import doobie.implicits.javasql.DateMeta
-import doobie.implicits.javatimedrivernative.JavaOffsetDateTimeMeta
-import doobie.util.meta.Meta
 import io.circe.{Decoder, Encoder, HCursor, Json}
 import io.circe.generic.semiauto.*
 import io.circe.parser.decode
 import io.circe.syntax.*
 
-import java.sql.Date
 import java.time.{Instant, LocalDate, OffsetDateTime, ZoneOffset}
 
 object DatabaseCodecs:
-  given Meta[OffsetDateTime] = JavaOffsetDateTimeMeta
-  given Meta[Date] = DateMeta
-  given Meta[Instant] = summon[Meta[OffsetDateTime]].timap(_.toInstant)(_.atOffset(ZoneOffset.UTC))
-  given Meta[LocalDate] = summon[Meta[Date]].timap(_.toLocalDate)((localDate: LocalDate) => Date.valueOf(localDate))
-
   final case class SerializedTravelerIdentityDocument(
       travelerDocumentType: String,
       travelerDocumentNumber: String,

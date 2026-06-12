@@ -1,3 +1,5 @@
+// UserPlannerPlainSql 封装身份模块的plain SQL 实现。
+
 package com.typesafe.travel.persistence.identity
 
 import cats.effect.IO

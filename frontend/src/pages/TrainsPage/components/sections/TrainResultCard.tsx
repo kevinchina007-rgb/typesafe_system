@@ -12,6 +12,7 @@ import {
   resolveTrainSearchSegment,
 } from '@/app/stores/models/train-booking-model'
 
+// 列车结果卡片参数，负责承接列车、搜索条件和预订动作。
 type TrainResultCardProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
@@ -35,6 +36,7 @@ type TrainResultCardProps = {
   onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
+// 列车结果卡片，只负责展示路线、座位和下单动作。
 export function TrainResultCard({
   currentLanguage,
   isBusy,

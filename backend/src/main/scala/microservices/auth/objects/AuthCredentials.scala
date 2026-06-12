@@ -1,3 +1,5 @@
+// AuthCredentials 定义认证模块的数据模型。
+
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*

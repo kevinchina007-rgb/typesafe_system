@@ -1,4 +1,6 @@
-﻿export type AttractionItemDetailsResponse = {
+// 本文件定义 order 模块的 `AttractionItemDetailsResponse`，作为详情响应数据并提供 JSON 编解码。
+
+export type AttractionItemDetailsResponse = {
   attractionId: string
   attractionName: string
   ticketTypeId: string

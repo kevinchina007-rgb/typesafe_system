@@ -1,3 +1,5 @@
+// 本文件定义酒店预订模型，用于预订流程的数据传递。
+
 import type { HotelPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
 
 export type HotelQuickDatePreset = 'tonight' | 'weekend' | 'nextWeek' | 'holiday'

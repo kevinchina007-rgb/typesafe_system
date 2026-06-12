@@ -14,6 +14,7 @@ import type {
   TrainSnapshotSummary,
 } from '@/pages/BookingsPage/objects'
 
+// 解析航班快照文本，提取航班订单展示所需字段。
 export function parseFlightSnapshot(summaryLabel: string): FlightSnapshotSummary | null {
   if (!summaryLabel.trim().startsWith('{')) {
     return null
@@ -57,6 +58,7 @@ export function parseFlightSnapshot(summaryLabel: string): FlightSnapshotSummary
   }
 }
 
+// 解析酒店快照文本，提取酒店订单展示所需字段。
 export function parseHotelSnapshot(summaryLabel: string): HotelSnapshotSummary | null {
   if (!summaryLabel.trim().startsWith('{')) {
     return null
@@ -86,6 +88,7 @@ export function parseHotelSnapshot(summaryLabel: string): HotelSnapshotSummary |
   }
 }
 
+// 景点订单的快照摘要结构，只承接展示用字段。
 export type AttractionSnapshotSummary = {
   attractionId?: string
   attractionName?: string
@@ -103,6 +106,7 @@ export type AttractionSnapshotSummary = {
   eligibilityRuleSummaries: string[]
 }
 
+// 解析景点快照文本，提取景点订单展示所需字段。
 export function parseAttractionSnapshot(summaryLabel: string): AttractionSnapshotSummary | null {
   if (!summaryLabel.trim().startsWith('{')) {
     return null
@@ -145,6 +149,7 @@ export function parseAttractionSnapshot(summaryLabel: string): AttractionSnapsho
   }
 }
 
+// 解析火车快照文本，提取火车订单展示所需字段。
 export function parseTrainSnapshot(summaryLabel: string): TrainSnapshotSummary | null {
   if (!summaryLabel.trim().startsWith('{')) {
     return null
@@ -230,6 +235,7 @@ export function parseTrainSnapshot(summaryLabel: string): TrainSnapshotSummary |
   }
 }
 
+// 判断火车快照文本里是否包含可用信息。
 export function hasTrainSnapshot(summaryLabel: string) {
   const snapshot = parseTrainSnapshot(summaryLabel)
   return !!snapshot && (
@@ -247,6 +253,8 @@ export function hasTrainSnapshot(summaryLabel: string) {
   )
 }
 
+// 把景点订单行项目转换成页面展示对象。
+// 把景点订单行项目转换成页面展示对象。
 export function buildAttractionOrderDisplay(orderLineItem: OrderLineItemResponse) {
   const snapshot = parseAttractionSnapshot(orderLineItem.summaryLabel)
   const attractionDetails = orderLineItem.attractionDetails
@@ -273,6 +281,7 @@ export function buildAttractionOrderDisplay(orderLineItem: OrderLineItemResponse
   }
 }
 
+// 把航班订单行项目转换成页面展示对象。
 export function buildFlightOrderDisplay(orderLineItem: OrderLineItemResponse): FlightOrderDisplay {
   const snapshot = parseFlightSnapshot(orderLineItem.summaryLabel)
   const flightDetails = orderLineItem.flightDetails
@@ -293,6 +302,7 @@ export function buildFlightOrderDisplay(orderLineItem: OrderLineItemResponse): F
   }
 }
 
+// 把酒店订单行项目转换成页面展示对象。
 export function buildHotelOrderDisplay(orderLineItem: OrderLineItemResponse): HotelOrderDisplay {
   const snapshot = parseHotelSnapshot(orderLineItem.summaryLabel)
   const hotelDetails = orderLineItem.hotelDetails
@@ -307,6 +317,7 @@ export function buildHotelOrderDisplay(orderLineItem: OrderLineItemResponse): Ho
   }
 }
 
+// 把火车订单行项目转换成页面展示对象。
 export function buildTrainOrderDisplay(orderLineItem: OrderLineItemResponse): TrainOrderDisplay {
   const snapshot = parseTrainSnapshot(orderLineItem.summaryLabel)
   const trainDetails = orderLineItem.trainDetails
@@ -340,6 +351,7 @@ export function buildTrainOrderDisplay(orderLineItem: OrderLineItemResponse): Tr
   }
 }
 
+// 生成订单行标题，优先使用快照信息。
 export function formatOrderLineItemTitle(orderLineItem: OrderLineItemResponse, snapshotDetails: FlightSnapshotSummary | null, currentLanguage: AppLanguage) {
   const hotelSnapshot = parseHotelSnapshot(orderLineItem.summaryLabel)
   const attractionSnapshot = parseAttractionSnapshot(orderLineItem.summaryLabel)
@@ -379,6 +391,7 @@ export function formatOrderLineItemTitle(orderLineItem: OrderLineItemResponse, s
   return localizeBookingKind(orderLineItem.orderItemKind, currentLanguage)
 }
 
+// 格式化航班时间显示。
 export function formatFlightClock(value: string) {
   if (!value) {
     return ''
@@ -386,14 +399,17 @@ export function formatFlightClock(value: string) {
   return value.replace('T', ' ').slice(0, 16)
 }
 
+// 格式化航班时间区间。
 export function formatFlightDateTimeRange(departureTime: string, arrivalTime: string) {
   return `${formatFlightClock(departureTime)} → ${formatFlightClock(arrivalTime)}`
 }
 
+// 格式化火车时间区间。
 export function formatTrainDateTimeRange(departureTime: string, arrivalTime: string) {
   return `${formatFlightClock(departureTime)} → ${formatFlightClock(arrivalTime)}`
 }
 
+// 格式化航班日期显示。
 export function formatFlightDate(value: string) {
   if (!value) {
     return ''
@@ -402,6 +418,7 @@ export function formatFlightDate(value: string) {
   return datePart ?? value
 }
 
+// 格式化火车座位标签。
 export function formatTrainSeatLabel(carriageNo: number, seatNo: string, seatLabel?: string | null) {
   const normalizedSeatLabel = seatLabel?.trim() ?? ''
   if (/^\d{2}\u8f66\s+/.test(normalizedSeatLabel)) {
@@ -415,6 +432,7 @@ export function formatTrainSeatLabel(carriageNo: number, seatNo: string, seatLab
   return normalizedCarriageNo && normalizedSeatNo ? `${normalizedCarriageNo}\u8f66 ${normalizedSeatNo}` : normalizedSeatLabel || normalizedSeatNo || '--'
 }
 
+// 生成订单分类标题。
 export function getOrderCategoryTitle(orderCategory: string) {
   if (orderCategory === 'flightOrders') {
     return '航班订单'
@@ -428,6 +446,7 @@ export function getOrderCategoryTitle(orderCategory: string) {
   return '景点订单'
 }
 
+// 生成订单分类描述文案的 key。
 export function getOrderCategoryDescriptionKey(orderCategory: string) {
   if (orderCategory === 'flightOrders') {
     return 'bookings.flightDescription'
@@ -441,21 +460,25 @@ export function getOrderCategoryDescriptionKey(orderCategory: string) {
   return 'bookings.attractionDescription'
 }
 
+// 读取对象里的字符串字段，只做类型安全转换。
 function getStringField(record: Record<string, unknown>, key: string) {
   const value = record[key]
   return typeof value === 'string' ? value : undefined
 }
 
+// 读取对象里的可空字符串字段，只做类型安全转换。
 function getNullableStringField(record: Record<string, unknown>, key: string) {
   const value = record[key]
   return typeof value === 'string' ? value : value === null ? null : undefined
 }
 
+// 读取对象里的字符串数组字段，只做类型安全转换。
 function getStringArrayField(record: Record<string, unknown>, key: string) {
   const value = record[key]
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
 }
 
+// 读取对象里的数值字段，只做类型安全转换。
 function getNumberField(record: Record<string, unknown>, key: string) {
   const value = record[key]
   return typeof value === 'number' ? value : undefined

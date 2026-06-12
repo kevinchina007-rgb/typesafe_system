@@ -1,4 +1,6 @@
-﻿import type { TourGroupDetailsResponse } from './TourGroupDetailsResponse'
+// 本文件定义 tour-group 模块的 `TourGroupPaySelectionResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { TourGroupDetailsResponse } from './TourGroupDetailsResponse'
 
 import type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
 

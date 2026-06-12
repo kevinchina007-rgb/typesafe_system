@@ -1,12 +1,16 @@
-﻿import type { AppLanguage, ResourceReviewSummaryResponse } from '@/lib/mvp-types/index'
+// 本文件定义共享页面组件或工具，负责页面间复用逻辑。
+
+import type { AppLanguage, ResourceReviewSummaryResponse } from '@/lib/mvp-types/index'
 import { summarizeReviewAggregate } from '@/lib/presenters/content-presenter'
 
+// 资源评价汇总组件的输入参数。
 type ResourceReviewSummaryProps = {
   currentLanguage: AppLanguage
   summary: ResourceReviewSummaryResponse | null
   translate: (translationKey: string) => string
 }
 
+// 评价汇总组件，没有数据时显示空态，有数据时显示统计结果。
 export function ResourceReviewSummary({
   currentLanguage,
   summary,

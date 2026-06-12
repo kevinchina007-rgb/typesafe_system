@@ -1,3 +1,5 @@
+// 本文件定义 TourGroupsPage 页面的弹窗组件，负责临时表单或确认交互。
+
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 

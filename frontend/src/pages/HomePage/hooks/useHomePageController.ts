@@ -1,3 +1,5 @@
+// 本文件定义 HomePage 页面的状态控制逻辑，负责条件维护、请求触发和动作调度。
+
 import { useEffect, useMemo, useState } from 'react'
 
 import { buildHomeTypedTagline, getNextHomeSlideIndex } from '../functions'

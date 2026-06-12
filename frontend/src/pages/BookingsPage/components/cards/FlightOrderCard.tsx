@@ -13,6 +13,7 @@ import {
   isOrderRefunded,
 } from '@/pages/BookingsPage/functions'
 
+// 航班订单卡片，用于展示航班订单的价格、航线和操作入口。
 export function FlightOrderCard({
   currentLanguage,
   isBusy,

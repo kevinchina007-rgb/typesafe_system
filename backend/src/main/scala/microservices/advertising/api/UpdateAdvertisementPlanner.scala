@@ -1,3 +1,5 @@
+// UpdateAdvertisementPlanner 是广告模块的更新入口，负责请求校验、流程编排和结果返回。
+
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO

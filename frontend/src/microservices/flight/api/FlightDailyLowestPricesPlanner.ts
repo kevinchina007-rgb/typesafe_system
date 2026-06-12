@@ -1,3 +1,5 @@
+// 本文件定义 FlightDailyLowestPricesPlanner，负责 flight 模块的处理编排和接口入口。
+
 import type {
   FlightDailyLowestPricesPlannerRequest,
   FlightDailyLowestPricesPlannerResponse,

@@ -1,3 +1,5 @@
+// 本文件定义 SmartTripPlannerPage 页面的页面壳层，负责页面头部、内容区和操作入口布局。
+
 import { SearchPanel, AppCard, PrimaryButton, SecondaryButton, SectionHeader, StatCard, ActionBar, EmptyState } from '@/app/ui/UIComponents'
 import type { SmartTripPlannerPageProps } from '../objects'
 

@@ -1,3 +1,4 @@
+// 酒店页面模型统一导出。
 export type {
   HotelAdvertisingSectionProps,
   HotelBookRequest,

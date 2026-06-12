@@ -1,6 +1,7 @@
 import type { HotelPreference } from '@/app/stores/models/hotel-booking-model'
 import { hotelNearbyOptions, hotelPreferenceOptions } from '@/app/stores/models/hotel-booking-model'
 
+// 酒店偏好筛选参数。
 type HotelPreferenceSelectorProps = {
   hotelPreference: HotelPreference
   nearbyPreference: string
@@ -10,6 +11,7 @@ type HotelPreferenceSelectorProps = {
   disabled?: boolean
 }
 
+// 酒店偏好筛选器，负责房型和周边条件。
 export function HotelPreferenceSelector({
   hotelPreference,
   nearbyPreference,

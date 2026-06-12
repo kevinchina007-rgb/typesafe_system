@@ -1,6 +1,7 @@
 import { attractionFilterOptions, attractionSortOptions } from '@/app/stores/models/attraction-booking-model'
 import type { AttractionFilterBarProps } from '../../objects'
 
+// 景点结果筛选条，只负责切换排序方式。
 export function AttractionFilterBar({ hasSearchedAttractions, sortPreference, translate, onSortPreferenceChange }: AttractionFilterBarProps) {
   return (
     <section className="grid gap-4 border border-slate-200 bg-white p-5 text-slate-950 shadow-sm shadow-slate-200/50">

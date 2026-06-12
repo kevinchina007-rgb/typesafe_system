@@ -1,7 +1,8 @@
-﻿import { ManagerPanelAuth } from '@/pages/ManagerPage/components/managers/manager-panel-auth'
+import { ManagerPanelAuth } from '@/pages/ManagerPage/components/managers/manager-panel-auth'
 import { ManagerPanelWorkspace } from '@/pages/ManagerPage/components/managers/manager-panel-workspace'
 import type { ManagerPanelProps } from '@/pages/ManagerPage/components/managers/manager-panel-shared'
 
+// 管理后台主容器，根据是否已登录切换认证页和工作区。
 export function ManagerPanel({
   managerSession,
   isBusy,

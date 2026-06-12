@@ -36,6 +36,7 @@ type CanvasContextMenuState = {
   canvasY: number | null
 } | null
 
+// 广告创作工作台组件参数，包含默认投放位、可选资源和回调函数。
 type AdvertisementSubmissionWorkspaceProps = {
   defaultPlacement: PlacementValue
   defaultTargetResourceType: TargetResourceType
@@ -53,6 +54,7 @@ type AdvertisementSubmissionWorkspaceProps = {
   onShowNotice?: (kind: 'success' | 'error', title: string, description: string) => void
 }
 
+// 画布元素的统一数据结构，文本、图片、形状和字段都复用这一套。
 type CreativeElement = {
   id: string
   type: CanvasElementType
@@ -72,6 +74,7 @@ type CreativeElement = {
   effect: 'none' | 'fadeIn' | 'slideUp' | 'pulse'
 }
 
+// 当前创意画布的完整状态，包含尺寸、背景色和所有元素。
 type CreativeState = {
   width: number
   height: number
@@ -79,10 +82,12 @@ type CreativeState = {
   elements: CreativeElement[]
 }
 
+// 画布和候选数据的基础配置。
 const canvasWidth = 960
 const canvasHeight = 240
 const timeWindows = ['00:00-03:59', '04:00-07:59', '08:00-11:59', '12:00-15:59', '16:00-19:59', '20:00-23:59']
 const flightCityOptions = ['北京', '上海', '武汉', '南京', '杭州', '深圳', '重庆', '广州', '成都', '长沙', '厦门', '西安', '天津', '青岛']
+// 画风色板，控制工作台生成文案和示意图的整体气质。
 const tonePalettes: Record<ToneKey, { label: string; bg: string; fg: string; accent: string; soft: string }> = {
   clean: { label: '清爽', bg: '#075985', fg: '#ffffff', accent: '#38bdf8', soft: '#dbeafe' },
   premium: { label: '高级', bg: '#111827', fg: '#f8fafc', accent: '#d4af37', soft: '#e5e7eb' },
@@ -90,6 +95,7 @@ const tonePalettes: Record<ToneKey, { label: string; bg: string; fg: string; acc
   warm: { label: '温暖', bg: '#166534', fg: '#ffffff', accent: '#facc15', soft: '#dcfce7' },
 }
 
+// 画风名称映射，用于页面下拉框和生成提示。
 const visualStyleLabels: Record<VisualStyleKey, string> = {
   cartoon: '卡通',
   realistic: '写实',
@@ -107,6 +113,7 @@ const visualStyleLabels: Record<VisualStyleKey, string> = {
   fashion: '时尚',
 }
 
+// 默认创意内容，进入工作台时直接复用这份空白状态。
 const defaultCreative: CreativeState = {
   width: canvasWidth,
   height: canvasHeight,
@@ -114,10 +121,12 @@ const defaultCreative: CreativeState = {
   elements: [],
 }
 
+// 深拷贝一份创意状态，避免直接修改原对象。
 function cloneCreative(creative: CreativeState): CreativeState {
   return { ...creative, elements: creative.elements.map(element => ({ ...element })) }
 }
 
+// 把草稿 JSON 恢复成工作台可编辑的创意状态。
 function parseCreativeJson(creativeJson: string | null | undefined): CreativeState | null {
   if (!creativeJson) {
     return null
@@ -156,6 +165,7 @@ function parseCreativeJson(creativeJson: string | null | undefined): CreativeSta
   }
 }
 
+// 默认投放窗口，起始时间从当前时间开始，结束时间往后推 30 天。
 function defaultWindow() {
   const startAt = new Date()
   const endAt = new Date()
@@ -163,6 +173,7 @@ function defaultWindow() {
   return { startAt: startAt.toISOString(), endAt: endAt.toISOString() }
 }
 
+// 根据资源 ID 推断页面上展示的资源名称。
 function inferResourceLabel(
   resourceOptions: Array<{
     value: string
@@ -173,14 +184,17 @@ function inferResourceLabel(
   return resourceOptions.find(option => option.value === resourceId)?.label ?? resourceId
 }
 
+// 把普通文本转成可安全塞进 SVG 的内容。
 function escapeSvgText(value: string) {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
+// 把文本转成 SVG 属性可用的安全字符串。
 function escapeSvgAttribute(value: string) {
   return escapeSvgText(value).replace(/"/g, '&quot;')
 }
 
+// 把 Blob 转成 data URL，供本地预览使用。
 function blobToDataUrl(blob: Blob) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -190,6 +204,7 @@ function blobToDataUrl(blob: Blob) {
   })
 }
 
+// 把远程图片地址转换成可直接嵌进画布的图片源。
 async function makeEmbeddableImageSource(imageSource: string) {
   const normalizedSource = imageSource.trim()
   if (!normalizedSource) {
@@ -211,6 +226,7 @@ async function makeEmbeddableImageSource(imageSource: string) {
   }
 }
 
+// 根据当前画风和背景模式生成一张 SVG 示例图。
 function makeImageDataUrl(_prompt: string, tone: ToneKey, index: number, transparentBackground = false) {
   const palette = tonePalettes[tone]
   const backgroundLayer = transparentBackground ? '' : `<rect width="960" height="240" fill="url(#g)"/>`
@@ -232,6 +248,7 @@ function makeImageDataUrl(_prompt: string, tone: ToneKey, index: number, transpa
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
+// 根据文字和画风生成一张独立的 SVG 艺术字示意图。
 function makeTextArtDataUrl(text: string, tone: ToneKey) {
   const palette = tonePalettes[tone]
   const safeText = escapeSvgText(text.trim() || '广告标题')
@@ -249,6 +266,7 @@ function makeTextArtDataUrl(text: string, tone: ToneKey) {
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
+// 生成文本候选元素，供工作台直接拖进画布。
 function buildTextCandidates(prompt: string, tone: ToneKey, resourceLabel: string): CreativeElement[] {
   const baseText = prompt.trim() || `${resourceLabel} 即刻出发`
   return [{
@@ -271,6 +289,7 @@ function buildTextCandidates(prompt: string, tone: ToneKey, resourceLabel: strin
   }]
 }
 
+// 生成图片候选元素，背景图和独立元素共用。
 function buildImageCandidates(prompt: string, tone: ToneKey, imageFactoryKind: ImageFactoryKind, transparentBackground = false): CreativeElement[] {
   return [0].map(index => ({
     id: `image-candidate-${Date.now()}-${index}`,
@@ -292,6 +311,7 @@ function buildImageCandidates(prompt: string, tone: ToneKey, imageFactoryKind: I
   }))
 }
 
+// 本地生成图片失败时，用输入内容拼一个兜底标签。
 function makeLocalImageFallbackLabel(input: {
   imagePrompt: string
   visualElementsPrompt: string
@@ -304,6 +324,7 @@ function makeLocalImageFallbackLabel(input: {
   return primary.slice(0, 24)
 }
 
+// 把远程图片候选转换成画布可直接使用的元素。
 function buildRemoteImageCandidates(
   candidates: Array<{ assetId: string; publicUrl: string; prompt: string; seed: number }>,
   tone: ToneKey,
@@ -329,6 +350,7 @@ function buildRemoteImageCandidates(
   }))
 }
 
+// 把远程文本候选转换成可直接编辑的图片元素。
 function buildRemoteTextCandidates(
   candidates: Array<{ assetId: string; publicUrl: string; prompt: string; seed: number }>,
   sourceText: string,
@@ -658,6 +680,7 @@ export function AdvertisementSubmissionWorkspace({
     }
   }, [canvasContextMenu])
 
+  // 把一个候选模板落到当前画布上。
   function addTemplateToCanvas(template: CreativeElement, placement?: { x: number; y: number }) {
     const nextElement = {
       ...template,
@@ -668,6 +691,7 @@ export function AdvertisementSubmissionWorkspace({
     setCreative(current => ({ ...current, backgroundColor: tonePalettes[tone].bg, elements: [...current.elements, nextElement] }))
   }
 
+  // 把鼠标坐标换算成画布内坐标。
   function canvasPointFromMouseEvent(event: React.MouseEvent<HTMLElement>) {
     if (!canvasRef.current) {
       return { canvasX: null, canvasY: null }
@@ -680,6 +704,7 @@ export function AdvertisementSubmissionWorkspace({
     }
   }
 
+  // 打开画布右键菜单，并记录当前操作的元素。
   function openCanvasContextMenu(event: React.MouseEvent<HTMLElement>, targetElementId: string | null) {
     event.preventDefault()
     event.stopPropagation()
@@ -693,6 +718,7 @@ export function AdvertisementSubmissionWorkspace({
     })
   }
 
+  // 复制当前画布里的元素。
   function copyCanvasElement(elementId: string) {
     const element = creative.elements.find(currentElement => currentElement.id === elementId)
     if (!element) return
@@ -700,6 +726,7 @@ export function AdvertisementSubmissionWorkspace({
     setCanvasContextMenu(null)
   }
 
+  // 剪切当前画布里的元素。
   function cutCanvasElement(elementId: string) {
     const element = creative.elements.find(currentElement => currentElement.id === elementId)
     if (!element) return
@@ -708,6 +735,7 @@ export function AdvertisementSubmissionWorkspace({
     setCanvasContextMenu(null)
   }
 
+  // 把刚复制或剪切的元素粘贴回画布。
   function pasteCanvasElement() {
     if (!copiedElement) return
     const pastedWidth = copiedElement.width
@@ -726,6 +754,7 @@ export function AdvertisementSubmissionWorkspace({
     setCanvasContextMenu(null)
   }
 
+  // 拖拽后更新元素位置。
   function moveElement(elementId: string, x: number, y: number) {
     setCreative(current => ({
       ...current,
@@ -733,6 +762,7 @@ export function AdvertisementSubmissionWorkspace({
     }))
   }
 
+  // 调整元素尺寸时同步更新宽高和字体大小。
   function resizeElement(elementId: string, x: number, y: number, width: number, height: number) {
     setCreative(current => ({
       ...current,
@@ -751,6 +781,7 @@ export function AdvertisementSubmissionWorkspace({
     }))
   }
 
+  // 从画布中删除一个元素。
   function removeElement(elementId: string) {
     setCreative(current => ({
       ...current,
@@ -758,6 +789,7 @@ export function AdvertisementSubmissionWorkspace({
     }))
   }
 
+  // 摘要当前画布内容，给图片生成接口当上下文提示。
   function describeCanvasContent() {
     const textSummary = creative.elements
       .filter(element => element.type !== 'image')
@@ -771,6 +803,7 @@ export function AdvertisementSubmissionWorkspace({
       .join(', ')
   }
 
+  // 切换一个画风标签的选中状态。
   function toggleStyleSelection(
     styles: VisualStyleKey[],
     nextStyle: VisualStyleKey,
@@ -785,11 +818,13 @@ export function AdvertisementSubmissionWorkspace({
     updateStyles([...styles, nextStyle])
   }
 
+  // 更新航班搜索条件，并重置已搜索标记。
   function updateSearchDraftField(nextField: Partial<typeof searchDraft>) {
     setSearchDraft(current => ({ ...current, ...nextField }))
     setHasSearchedFlights(false)
   }
 
+  // 根据筛选条件搜索可跳转的航班资源。
   function runFlightSearch() {
     if (defaultTargetResourceType !== 'Flight') {
       return
@@ -808,6 +843,7 @@ export function AdvertisementSubmissionWorkspace({
     }
   }
 
+  // 把当前草稿和画布状态组装成后端广告提交参数。
   function buildAdvertisementPayload(uploadedImageUrl: string) {
     const { startAt, endAt } = defaultWindow()
     const copy = getPrimaryCopy(creative)
@@ -841,6 +877,7 @@ export function AdvertisementSubmissionWorkspace({
     }
   }
 
+  // 清空创作区，重新回到一张白纸。
   function resetComposer() {
     setEditingAdvertisementId(null)
     setDraftName('')
@@ -866,6 +903,7 @@ export function AdvertisementSubmissionWorkspace({
     setHasSearchedFlights(false)
   }
 
+  // 载入一条已有草稿到当前编辑器。
   function openAdvertisementDraft(advertisement: AdvertisementResponse) {
     const restoredCreative = parseCreativeJson(advertisement.creativeJson)
     setEditingAdvertisementId(advertisement.advertisementId)
@@ -881,11 +919,13 @@ export function AdvertisementSubmissionWorkspace({
     setWorkspaceTab('create')
   }
 
+  // 打开新建草稿弹窗。
   function openNewDraftDialog() {
     setDraftNameInput('')
     setIsDraftNameDialogOpen(true)
   }
 
+  // 确认创建新草稿并进入创作态。
   function confirmNewDraft() {
     const nextName = draftNameInput.trim()
     if (!nextName) {
@@ -899,6 +939,7 @@ export function AdvertisementSubmissionWorkspace({
     setWorkspaceTab('create')
   }
 
+  // 调用文案生成接口，产出可拖拽的艺术字候选。
   async function generateTextStyles() {
     const linkedResourceLabel = hyperlinkEnabled ? selectedResourceLabel : ''
     const sourceText = textPrompt.trim() || linkedResourceLabel
@@ -944,6 +985,7 @@ export function AdvertisementSubmissionWorkspace({
     }
   }
 
+  // 调用图片生成接口，产出可拖拽的图片候选。
   async function generateImageStyles(styleOverride?: VisualStyleKey[]) {
     const activeStyles = styleOverride ?? imageVisualStyles
     const linkedResourceLabel = hyperlinkEnabled ? selectedResourceLabel : ''
@@ -995,6 +1037,7 @@ export function AdvertisementSubmissionWorkspace({
     }
   }
 
+  // 保存当前草稿，必要时同步提交审核。
   async function saveDraft(submitForReview = false) {
     setIsSubmitting(true)
     try {
@@ -1027,6 +1070,7 @@ export function AdvertisementSubmissionWorkspace({
     }
   }
 
+  // 撤回一条已经提交的广告，让它回到草稿状态。
   async function withdrawAdvertisement(advertisement: AdvertisementResponse) {
     const withdrawnAdvertisement = await updateAdvertisement(advertisement.advertisementId, {
       advertisementKind: advertisement.advertisementKind,
@@ -1054,6 +1098,7 @@ export function AdvertisementSubmissionWorkspace({
     onShowNotice?.('success', '已撤稿', '广告已恢复为未提交状态。')
   }
 
+  // 提交草稿给网站管理者审核。
   async function submitDraftAdvertisement(advertisementId: string) {
     const submittedAdvertisement = await submitAdvertisementForReview(advertisementId)
     setLocalDraftAdvertisements(current => upsertLocalAdvertisement(current, submittedAdvertisement))
@@ -1596,6 +1641,7 @@ export function AdvertisementSubmissionWorkspace({
   )
 }
 
+// 草稿列表区块参数，负责展示用户已有广告草稿。
 type AdvertisementDraftSectionProps = {
   advertisements: AdvertisementResponse[]
   translate: (translationKey: string) => string
@@ -1605,6 +1651,7 @@ type AdvertisementDraftSectionProps = {
   onSubmitReview: (advertisementId: string) => Promise<AdvertisementResponse>
 }
 
+// 草稿列表区块，负责把所有草稿按卡片方式展示出来。
 function AdvertisementDraftSection({ advertisements, translate, onEdit, onOpenResource, onWithdraw, onSubmitReview }: AdvertisementDraftSectionProps) {
   return (
     <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
@@ -1631,6 +1678,7 @@ function AdvertisementDraftSection({ advertisements, translate, onEdit, onOpenRe
   )
 }
 
+// 单条广告草稿卡片参数。
 type AdvertisementAdminCardProps = {
   advertisement: AdvertisementResponse
   translate: (translationKey: string) => string
@@ -1640,6 +1688,7 @@ type AdvertisementAdminCardProps = {
   onSubmitReview: (advertisementId: string) => Promise<AdvertisementResponse>
 }
 
+// 单条广告草稿卡片，负责展示封面、状态和操作按钮。
 function AdvertisementAdminCard({ advertisement, translate, onEdit, onOpenResource, onWithdraw, onSubmitReview }: AdvertisementAdminCardProps) {
   const isSubmitted = advertisement.reviewStatus !== 'Draft' && advertisement.reviewStatus !== 'Rejected'
   const hasHyperlink = advertisement.landingTarget !== 'disabled'
@@ -1662,6 +1711,7 @@ function AdvertisementAdminCard({ advertisement, translate, onEdit, onOpenResour
           <span className="text-sm font-semibold text-slate-700">{advertisement.advertisementKind} / {isSubmitted ? '已提交' : '未提交'} / {advertisement.deliveryStatus}</span>
           {advertisement.rejectionNote ? <span className="text-sm font-medium text-slate-500">{`${translate('advertising.rejectionNote')}: ${advertisement.rejectionNote}`}</span> : null}
         </div>
+        {/* 这里的按钮分别用于编辑、跳转目标页、提交审核和撤稿。 */}
         <div className="flex flex-wrap items-center gap-3">
           <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => onEdit(advertisement)}>编辑</button>
           {hasHyperlink ? <button type="button" className="inline-flex min-h-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950 transition hover:border-black hover:bg-black hover:text-white" onClick={() => onOpenResource(advertisement.targetResourceId)}>打开目标页</button> : null}

@@ -4,8 +4,9 @@ import type { BlogNotificationResponse } from '@/microservices/content/objects/B
 import type { BlogPostResponse } from '@/microservices/content/objects/BlogPostResponse'
 import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
 import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/content/objects/BlogProfileResponse'
-import type { ContentImageResponse } from '@/microservices/content/objects/ContentImageResponse'
+import type { ContentImageResponse } from '@/lib/mvp-types/index'
 
+// Blog 页面顶层参数，负责把语言、登录用户和通知回调传给整页。
 export type BlogPageProps = {
   currentLanguage: AppLanguage
   signedInUser: UserResponse | null
@@ -13,11 +14,16 @@ export type BlogPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
+// Blog 页面顶部导航标签。
 export type BlogTab = 'home' | 'publish' | 'notifications' | 'mine'
+// “我的”页面内部的二级标签。
 export type MineTab = 'published' | 'favorites'
+// 通知列表的筛选标签。
 export type NotificationFilter = 'comments' | 'likes' | 'followers'
+// 个人主页关系列表标签。
 export type ProfileRelationTab = 'followers' | 'following'
 
+// Blog 草稿编辑态的数据结构。
 export type BlogDraft = {
   postId: string
   title: string
@@ -29,6 +35,7 @@ export type BlogDraft = {
   tags: BlogTagResponse[]
 }
 
+// Blog 页面 controller 暴露给视图层的完整状态和动作集合。
 export type BlogPageController = {
   isBusy: boolean
   activeTab: BlogTab

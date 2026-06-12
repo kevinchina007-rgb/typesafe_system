@@ -15,6 +15,7 @@ import {
   parseHotelSnapshot,
 } from '@/pages/BookingsPage/functions'
 
+// 酒店订单卡片，用于展示酒店订单的入住信息和评价入口。
 export function HotelOrderCard({
   currentLanguage,
   isBusy,

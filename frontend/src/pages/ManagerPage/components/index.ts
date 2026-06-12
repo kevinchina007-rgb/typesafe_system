@@ -1,3 +1,4 @@
+// 管理后台页面下的所有组件统一从这里导出，方便上层按模块引用。
 export { AdvertisementReviewWorkspace } from './advertising/AdvertisementReviewWorkspace'
 export { AdvertisementSubmissionWorkspace } from './advertising/AdvertisementSubmissionWorkspace'
 export { ManagerAuthCard } from './managers/ManagerAuthCard'

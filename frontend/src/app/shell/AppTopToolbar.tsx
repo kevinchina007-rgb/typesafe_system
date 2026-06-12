@@ -1,4 +1,6 @@
-﻿import type { AppViewKey } from '@/lib/mvp-types/index'
+// 本文件定义顶部工具栏，负责全局搜索、快捷操作和当前页面入口。
+
+import type { AppViewKey } from '@/lib/mvp-types/index'
 import { ActionBar, AppCard, PrimaryButton, SectionHeader } from '@/app/ui/UIComponents'
 
 type AppTopToolbarProps = {

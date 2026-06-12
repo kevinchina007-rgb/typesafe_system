@@ -1,3 +1,5 @@
+// UploadedBinaryAssetPlainSql 封装对应的数据库查询和更新。
+
 package com.typesafe.travel.persistence
 
 import cats.effect.IO

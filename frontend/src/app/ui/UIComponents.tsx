@@ -1,4 +1,6 @@
-﻿import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
+// 本文件定义应用级通用 UI 组件，供页面壳层和业务模块复用。
+
+import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react'
 
 type AppCardProps = {
   children: ReactNode

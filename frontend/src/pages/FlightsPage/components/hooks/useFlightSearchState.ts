@@ -1,5 +1,6 @@
 import { useFlightSearchStore } from '@/app/stores/flight-search-store'
 
+// FlightsPage 搜索态的轻封装，只把 store 里的字段和动作暴露出来。
 export function useFlightSearchState() {
   const searchState = useFlightSearchStore(state => state.searchState)
   const flightResponses = useFlightSearchStore(state => state.flightResponses)

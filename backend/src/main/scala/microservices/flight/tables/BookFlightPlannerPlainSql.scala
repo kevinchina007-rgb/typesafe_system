@@ -1,3 +1,5 @@
+// BookFlightPlannerPlainSql 封装航班模块的plain SQL 实现。
+
 package com.typesafe.travel.flight.tables
 
 import cats.effect.IO

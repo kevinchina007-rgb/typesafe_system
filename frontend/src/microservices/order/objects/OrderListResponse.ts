@@ -1,4 +1,6 @@
-﻿import type { OrderResponse } from './OrderResponse'
+// 本文件定义 order 模块的 `OrderListResponse`，作为列表响应数据并提供 JSON 编解码。
+
+import type { OrderResponse } from './OrderResponse'
 
 export type OrderListResponse = {
   orders: OrderResponse[]

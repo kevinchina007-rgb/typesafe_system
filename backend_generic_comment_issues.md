@@ -1,0 +1,1278 @@
+﻿- [E:\typesafe\backend\src\main\scala\app\ApplicationWiring.scala](/E:\typesafe\backend\src\main\scala\app\ApplicationWiring.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它装配了哪些 planner、routes、数据库和配置。
+- [E:\typesafe\backend\src\main\scala\app\ApplicationWiringPaths.scala](/E:\typesafe\backend\src\main\scala\app\ApplicationWiringPaths.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它集中定义了哪些后端路径常量。
+- [E:\typesafe\backend\src\main\scala\app\Main.scala](/E:\typesafe\backend\src\main\scala\app\Main.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它装配了哪些 wiring、router、数据库和服务启动流程。
+- [E:\typesafe\backend\src\main\scala\app\PersistenceApplicationWiring.scala](/E:\typesafe\backend\src\main\scala\app\PersistenceApplicationWiring.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它装配了哪些 planner、routes、数据库和配置。
+- [E:\typesafe\backend\src\main\scala\database\AttractionReferenceDataSeeder.scala](/E:\typesafe\backend\src\main\scala\database\AttractionReferenceDataSeeder.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它初始化/写入的是哪类业务参考数据。
+- [E:\typesafe\backend\src\main\scala\database\DatabaseConfig.scala](/E:\typesafe\backend\src\main\scala\database\DatabaseConfig.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它提供的是配置、连接、事务还是初始化能力。
+- [E:\typesafe\backend\src\main\scala\database\DatabaseConnection.scala](/E:\typesafe\backend\src\main\scala\database\DatabaseConnection.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它提供的是配置、连接、事务还是初始化能力。
+- [E:\typesafe\backend\src\main\scala\database\DatabaseTransactor.scala](/E:\typesafe\backend\src\main\scala\database\DatabaseTransactor.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它提供的是配置、连接、事务还是初始化能力。
+- [E:\typesafe\backend\src\main\scala\database\ExplorePlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\database\ExplorePlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它面向哪张表、哪类 CRUD 动作，以及给哪个 planner 用。
+- [E:\typesafe\backend\src\main\scala\database\MigrationPlan.scala](/E:\typesafe\backend\src\main\scala\database\MigrationPlan.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它的具体数据库职责。
+- [E:\typesafe\backend\src\main\scala\database\PlainSqlSupport.scala](/E:\typesafe\backend\src\main\scala\database\PlainSqlSupport.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它面向哪张表、哪类 CRUD 动作，以及给哪个 planner 用。
+- [E:\typesafe\backend\src\main\scala\database\ReferenceDataSeeder.scala](/E:\typesafe\backend\src\main\scala\database\ReferenceDataSeeder.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它初始化/写入的是哪类业务参考数据。
+- [E:\typesafe\backend\src\main\scala\database\ReferenceDataSeederFlights.scala](/E:\typesafe\backend\src\main\scala\database\ReferenceDataSeederFlights.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它的具体数据库职责。
+- [E:\typesafe\backend\src\main\scala\database\ReferenceDataSeederHotels.scala](/E:\typesafe\backend\src\main\scala\database\ReferenceDataSeederHotels.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它的具体数据库职责。
+- [E:\typesafe\backend\src\main\scala\database\SchemaInitializer.scala](/E:\typesafe\backend\src\main\scala\database\SchemaInitializer.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它的具体数据库职责。
+- [E:\typesafe\backend\src\main\scala\database\TourGroupReferenceDataSeeder.scala](/E:\typesafe\backend\src\main\scala\database\TourGroupReferenceDataSeeder.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它初始化/写入的是哪类业务参考数据。
+- [E:\typesafe\backend\src\main\scala\database\TourGroupReferenceDataSeederSupport.scala](/E:\typesafe\backend\src\main\scala\database\TourGroupReferenceDataSeederSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它的具体数据库职责。
+- [E:\typesafe\backend\src\main\scala\database\TrainReferenceDataSeeder.scala](/E:\typesafe\backend\src\main\scala\database\TrainReferenceDataSeeder.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它初始化/写入的是哪类业务参考数据。
+- [E:\typesafe\backend\src\main\scala\database\TrainReferenceDataSeederSupport.scala](/E:\typesafe\backend\src\main\scala\database\TrainReferenceDataSeederSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它的具体数据库职责。
+- [E:\typesafe\backend\src\main\scala\database\UploadedBinaryAssetPlainSql.scala](/E:\typesafe\backend\src\main\scala\database\UploadedBinaryAssetPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它面向哪张表、哪类 CRUD 动作，以及给哪个 planner 用。
+- [E:\typesafe\backend\src\main\scala\database\codecs\BookingDatabaseCodecs.scala](/E:\typesafe\backend\src\main\scala\database\codecs\BookingDatabaseCodecs.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它提供的是配置、连接、事务还是初始化能力。
+- [E:\typesafe\backend\src\main\scala\database\codecs\DatabaseCodecs.scala](/E:\typesafe\backend\src\main\scala\database\codecs\DatabaseCodecs.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它提供的是配置、连接、事务还是初始化能力。
+- [E:\typesafe\backend\src\main\scala\database\codecs\TrainDatabaseCodecs.scala](/E:\typesafe\backend\src\main\scala\database\codecs\TrainDatabaseCodecs.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它提供的是配置、连接、事务还是初始化能力。
+- [E:\typesafe\backend\src\main\scala\database\codecs\TravelerDatabaseCodecs.scala](/E:\typesafe\backend\src\main\scala\database\codecs\TravelerDatabaseCodecs.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它提供的是配置、连接、事务还是初始化能力。
+- [E:\typesafe\backend\src\main\scala\doobie\ConnectionIO.scala](/E:\typesafe\backend\src\main\scala\doobie\ConnectionIO.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它暴露的是 ConnectionIO、Transactor、Update0 还是 fragment 支撑能力。
+- [E:\typesafe\backend\src\main\scala\doobie\implicits.scala](/E:\typesafe\backend\src\main\scala\doobie\implicits.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它暴露的是 ConnectionIO、Transactor、Update0 还是 fragment 支撑能力。
+- [E:\typesafe\backend\src\main\scala\doobie\Transactor.scala](/E:\typesafe\backend\src\main\scala\doobie\Transactor.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它暴露的是 ConnectionIO、Transactor、Update0 还是 fragment 支撑能力。
+- [E:\typesafe\backend\src\main\scala\doobie\Update0.scala](/E:\typesafe\backend\src\main\scala\doobie\Update0.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它暴露的是 ConnectionIO、Transactor、Update0 还是 fragment 支撑能力。
+- [E:\typesafe\backend\src\main\scala\doobie\util\fragment\Fragment.scala](/E:\typesafe\backend\src\main\scala\doobie\util\fragment\Fragment.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它暴露的是 ConnectionIO、Transactor、Update0 还是 fragment 支撑能力。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\AdvertisementFeedbackNotifications.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\AdvertisementFeedbackNotifications.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\ApproveAdvertisementPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\ApproveAdvertisementPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\AssignAdvertisementSlotPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\AssignAdvertisementSlotPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\CreateAdvertisementPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\CreateAdvertisementPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\GenerateAdvertisementImageCandidatesPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\GenerateAdvertisementImageCandidatesPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\GenerateAdvertisementTextCandidatesPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\GenerateAdvertisementTextCandidatesPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\GetAdvertisementDeliverySettingsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\GetAdvertisementDeliverySettingsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\ListAdvertisementsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\ListAdvertisementsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\PauseAdvertisementDisplayPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\PauseAdvertisementDisplayPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\PauseAdvertisementPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\PauseAdvertisementPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\RejectAdvertisementPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\RejectAdvertisementPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\SaveAdvertisementDeliverySettingsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\SaveAdvertisementDeliverySettingsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\SubmitAdvertisementForReviewPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\SubmitAdvertisementForReviewPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\UpdateAdvertisementPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\UpdateAdvertisementPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\api\UploadAdvertisementImagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\api\UploadAdvertisementImagePlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\objects\Advertisement.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\objects\Advertisement.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementDomainFunctions.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\objects\AdvertisementStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\advertising\tables\AdvertisementPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\advertising\tables\AdvertisementPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\AttractionDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\AttractionDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\AttractionPlannerWorkflow.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\AttractionPlannerWorkflow.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它编排的是哪条具体业务流程。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\AttractionRuleJson.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\AttractionRuleJson.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\AttractionSuggestionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\AttractionSuggestionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\BookAttractionItemPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\BookAttractionItemPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\CreateAttractionPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\CreateAttractionPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\CreateAttractionTicketRulePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\CreateAttractionTicketRulePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\CreateAttractionTicketSessionPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\CreateAttractionTicketSessionPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\CreateAttractionTicketTypePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\CreateAttractionTicketTypePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\GetAttractionDetailsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\GetAttractionDetailsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\ListAttractionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\ListAttractionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\ListManagedAttractionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\ListManagedAttractionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\api\UploadAttractionImagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\api\UploadAttractionImagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\objects\Attraction.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\objects\Attraction.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\objects\AttractionErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\objects\AttractionErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\objects\AttractionPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\objects\AttractionPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\objects\AttractionSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\objects\AttractionSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\objects\AttractionStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\objects\AttractionStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\attraction\tables\AttractionPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\attraction\tables\AttractionPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\AuthDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\AuthDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\ChangeManagerPasswordPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\ChangeManagerPasswordPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\ChangePasswordPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\ChangePasswordPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\CurrentManagerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\CurrentManagerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\CurrentUserPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\CurrentUserPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\ListAuthSessionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\ListAuthSessionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\ListManagerSessionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\ListManagerSessionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\LoginPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\LoginPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\LogoutOtherSessionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\LogoutOtherSessionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\LogoutPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\LogoutPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\ManagerLoginPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\ManagerLoginPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\ManagerLogoutOtherSessionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\ManagerLogoutOtherSessionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\ManagerLogoutPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\ManagerLogoutPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\api\SignupPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\api\SignupPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\objects\AuthCredentials.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\objects\AuthCredentials.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\objects\AuthErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\objects\AuthErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\objects\AuthSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\objects\AuthSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\objects\ManagerAuthPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\objects\ManagerAuthPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\tables\AuthPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\tables\AuthPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\auth\tables\ManagerAuthPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\auth\tables\ManagerAuthPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ApproveBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ApproveBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ArchiveBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ArchiveBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\BlockBlogUserPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\BlockBlogUserPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\BlogDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\BlogDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\BlogSuggestionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\BlogSuggestionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\CheckReviewEligibilityPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\CheckReviewEligibilityPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\CreateBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\CreateBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\CreateFeedbackComplaintPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\CreateFeedbackComplaintPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\CreateOrderCancellationMessagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\CreateOrderCancellationMessagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\CreateReviewPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\CreateReviewPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\DeleteBlogCommentPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\DeleteBlogCommentPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\DeleteReviewPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\DeleteReviewPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\EnsureOrderCancellationThreadPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\EnsureOrderCancellationThreadPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\EnsureReviewFeedbackThreadPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\EnsureReviewFeedbackThreadPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\EscalateFeedbackThreadPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\EscalateFeedbackThreadPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ExploreSearchPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ExploreSearchPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ExploreSuggestionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ExploreSuggestionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\FavoriteBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\FavoriteBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\FeedbackDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\FeedbackDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\FollowBlogUserPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\FollowBlogUserPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\GetBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\GetBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\GetBlogProfilePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\GetBlogProfilePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\GetReviewSummaryPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\GetReviewSummaryPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\LikeBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\LikeBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ListBlogFollowersPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ListBlogFollowersPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ListBlogFollowingPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ListBlogFollowingPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ListBlogNotificationsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ListBlogNotificationsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ListBlogPostsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ListBlogPostsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ListFeedbackThreadsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ListFeedbackThreadsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ListMyReviewsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ListMyReviewsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ListReviewsByResourcePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ListReviewsByResourcePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\LocalContentImageStorage.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\LocalContentImageStorage.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\MarkFeedbackThreadReadPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\MarkFeedbackThreadReadPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\OpenComplaintManagerThreadPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\OpenComplaintManagerThreadPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\PublishBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\PublishBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\RejectBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\RejectBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ReviewDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ReviewDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\ReviewPlannerWorkflow.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\ReviewPlannerWorkflow.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它编排的是哪条具体业务流程。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\SaveBlogDraftPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\SaveBlogDraftPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\SendFeedbackMessagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\SendFeedbackMessagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\UnfavoriteBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\UnfavoriteBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\UnlikeBlogCommentPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\UnlikeBlogCommentPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\UnlikeBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\UnlikeBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\UpdateBlogPostPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\UpdateBlogPostPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\UpdateBlogProfilePrivacyPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\UpdateBlogProfilePrivacyPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\UpdateReviewPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\UpdateReviewPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\api\UploadReviewImagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\content\api\UploadReviewImagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\Blog.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\Blog.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\BlogErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\BlogErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\BlogPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\BlogPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\BlogStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\BlogStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\ContentSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\ContentSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\ExplorePlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\ExplorePlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\FeedbackErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\FeedbackErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\FeedbackPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\FeedbackPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\FeedbackStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\FeedbackStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\FeedbackThread.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\FeedbackThread.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\Review.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\Review.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\ReviewErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\ReviewErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\ReviewPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\ReviewPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\objects\ReviewStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\content\objects\ReviewStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\content\tables\BlogPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\content\tables\BlogPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\content\tables\FeedbackPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\content\tables\FeedbackPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\content\tables\ReviewPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\content\tables\ReviewPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\api\AirlineDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\api\AirlineDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\api\BookFlightPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\api\BookFlightPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\api\FlightDailyLowestPricesPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\api\FlightDailyLowestPricesPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\api\FlightDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\api\FlightDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\api\FlightSuggestionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\api\FlightSuggestionsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\api\GetFlightDetailsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\api\GetFlightDetailsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\api\SearchFlightsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\api\SearchFlightsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\objects\Airline.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\objects\Airline.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\objects\AirlineSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\objects\AirlineSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\objects\Flight.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\objects\Flight.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightCatalog.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightCatalog.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\objects\FlightStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\tables\BookFlightPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\tables\BookFlightPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\tables\FlightCabinPlainSqlRows.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\tables\FlightCabinPlainSqlRows.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\tables\FlightDailyLowestPricesPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\tables\FlightDailyLowestPricesPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\tables\FlightPlainSqlRows.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\tables\FlightPlainSqlRows.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\tables\FlightSuggestionsPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\tables\FlightSuggestionsPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\tables\GetFlightDetailsPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\tables\GetFlightDetailsPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\flight\tables\SearchFlightsPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\flight\tables\SearchFlightsPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\api\BookHotelPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\api\BookHotelPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\api\GetHotelDetailsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\api\GetHotelDetailsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\api\HotelDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\api\HotelDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\api\HotelPlannerResponseMapper.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\api\HotelPlannerResponseMapper.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\api\HotelSuggestionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\api\HotelSuggestionsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\api\SearchHotelsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\api\SearchHotelsPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\objects\Hotel.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\objects\Hotel.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\objects\HotelStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\tables\BookHotelPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\tables\BookHotelPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\tables\GetHotelDetailsPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\tables\GetHotelDetailsPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\tables\HotelReadSqlSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\tables\HotelReadSqlSupport.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\tables\HotelSuggestionsPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\tables\HotelSuggestionsPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\hotel\tables\SearchHotelsPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\hotel\tables\SearchHotelsPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\api\CreateUserPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\api\CreateUserPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\api\GetUserPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\api\GetUserPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\api\LoginUserPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\api\LoginUserPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\api\UpdateUserProfilePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\api\UpdateUserProfilePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\api\UploadUserAvatarPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\api\UploadUserAvatarPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\api\UserDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\api\UserDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\objects\User.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\objects\User.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\objects\UserStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\identity\tables\UserPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\identity\tables\UserPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\inventory\api\InventoryReservationDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\inventory\api\InventoryReservationDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservation.scala](/E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservation.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservationErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservationErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservationSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservationSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservationStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservationStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservationStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\inventory\objects\InventoryReservationStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\AirlineManagerPlannerSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\AirlineManagerPlannerSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它支撑的是哪一组 planner、哪类动作。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\CreateManagerFlightPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\CreateManagerFlightPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\ListManagerFlightOrdersPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\ListManagerFlightOrdersPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\ListManagerFlightsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\ListManagerFlightsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\RegisterAirlineManagerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\RegisterAirlineManagerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\ToggleManagerFlightStatusPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\ToggleManagerFlightStatusPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\UpdateAirlineManagerProfilePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\api\UpdateAirlineManagerProfilePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\objects\AirlineManagerPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\objects\AirlineManagerPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\airline\tables\AirlineManagerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\airline\tables\AirlineManagerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\ApproveManagerRefundPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\ApproveManagerRefundPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\BatchConfirmManagerTasksPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\BatchConfirmManagerTasksPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\BatchRejectManagerTasksPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\BatchRejectManagerTasksPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\ConfirmManagerBookingItemPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\ConfirmManagerBookingItemPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\ListManagerRefundTasksPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\ListManagerRefundTasksPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\ListManagerTasksPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\ListManagerTasksPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\ManagerDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\ManagerDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\RejectManagerBookingItemPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\RejectManagerBookingItemPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\api\RejectManagerRefundPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\api\RejectManagerRefundPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\attraction\api\AttractionManagerPlannerSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\attraction\api\AttractionManagerPlannerSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它支撑的是哪一组 planner、哪类动作。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\attraction\api\RegisterAttractionManagerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\attraction\api\RegisterAttractionManagerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\attraction\objects\AttractionManagerPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\attraction\objects\AttractionManagerPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\attraction\tables\AttractionManagerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\attraction\tables\AttractionManagerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\CreateManagerRoomTypePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\CreateManagerRoomTypePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\HotelManagerPlannerSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\HotelManagerPlannerSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它支撑的是哪一组 planner、哪类动作。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\ListManagerHotelsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\ListManagerHotelsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\RegisterHotelManagerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\RegisterHotelManagerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\UpdateHotelManagerProfilePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\UpdateHotelManagerProfilePlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\UploadHotelRoomTypeImagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\hotel\api\UploadHotelRoomTypeImagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\hotel\objects\HotelManagerPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\hotel\objects\HotelManagerPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\hotel\tables\HotelManagerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\hotel\tables\HotelManagerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\objects\Manager.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\objects\Manager.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\objects\ManagerStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\api\RegisterSiteAdminPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\api\RegisterSiteAdminPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\api\SiteAdminManagerPlannerSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\api\SiteAdminManagerPlannerSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它支撑的是哪一组 planner、哪类动作。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\api\UpdateSiteAdminManagerProfilePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\api\UpdateSiteAdminManagerProfilePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\objects\SiteAdminManagerPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\objects\SiteAdminManagerPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\tables\SiteAdminManagerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\siteadmin\tables\SiteAdminManagerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\tables\ManagerBookingTaskPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\tables\ManagerBookingTaskPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\operations\tables\ManagerRefundTaskPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\operations\tables\ManagerRefundTaskPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\ApproveRefundPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\ApproveRefundPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\CancelOrderPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\CancelOrderPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\CreateOrderPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\CreateOrderPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\CreatePaymentLinkPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\CreatePaymentLinkPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\FindOrderPaymentPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\FindOrderPaymentPlanner.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\GetOrderPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\GetOrderPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\ListOrdersPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\ListOrdersPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\OrderDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\OrderDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\OrderPlannerWorkflow.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\OrderPlannerWorkflow.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它编排的是哪条具体业务流程。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\PayOrderPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\PayOrderPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\RequestRefundPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\RequestRefundPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\SettleRefundPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\SettleRefundPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\api\SubmitOrderPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\order\api\SubmitOrderPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderFinancials.scala](/E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderFinancials.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderLineItems.scala](/E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderLineItems.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderSnapshots.scala](/E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderSnapshots.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderTypes.scala](/E:\typesafe\backend\src\main\scala\microservices\order\objects\OrderTypes.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\order\tables\OrderPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\order\tables\OrderPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\order\tables\OrderPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\order\tables\OrderPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\order\tables\TrainOrderExpirySweeper.scala](/E:\typesafe\backend\src\main\scala\microservices\order\tables\TrainOrderExpirySweeper.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\planner\objects\PlannerErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\planner\objects\PlannerErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\planner\objects\PlannerStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\planner\objects\PlannerStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\planner\objects\PlannerStatusSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\planner\objects\PlannerStatusSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\search\api\SearchModels.scala](/E:\typesafe\backend\src\main\scala\microservices\search\api\SearchModels.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\search\api\SearchRanking.scala](/E:\typesafe\backend\src\main\scala\microservices\search\api\SearchRanking.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\search\api\TravelSearchAliases.scala](/E:\typesafe\backend\src\main\scala\microservices\search\api\TravelSearchAliases.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\AddMembershipTravelerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\AddMembershipTravelerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\AddTourGroupMessageReactionPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\AddTourGroupMessageReactionPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\BlacklistTourGroupMemberPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\BlacklistTourGroupMemberPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\CreateTourGroupPlanItemPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\CreateTourGroupPlanItemPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\CreateTourGroupPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\CreateTourGroupPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\CreateTourGroupPlanOptionPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\CreateTourGroupPlanOptionPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\CreateTourGroupSelectionPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\CreateTourGroupSelectionPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\DeleteTourGroupMessagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\DeleteTourGroupMessagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\EditTourGroupMessagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\EditTourGroupMessagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\GetOrCreateTourGroupDirectConversationPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\GetOrCreateTourGroupDirectConversationPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\GetTourGroupDetailsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\GetTourGroupDetailsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\JoinTourGroupPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\JoinTourGroupPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\KickTourGroupMemberPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\KickTourGroupMemberPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\LeaveTourGroupPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\LeaveTourGroupPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupChatMessagesPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupChatMessagesPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupConversationMessagesPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupConversationMessagesPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupConversationsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupConversationsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupDirectConversationsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupDirectConversationsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\ListTourGroupsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\LoadTourGroupChatSettingsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\LoadTourGroupChatSettingsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\LocalTourGroupChatAttachmentStorage.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\LocalTourGroupChatAttachmentStorage.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\MarkTourGroupConversationReadPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\MarkTourGroupConversationReadPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\RecallTourGroupMessagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\RecallTourGroupMessagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\RemoveMembershipTravelerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\RemoveMembershipTravelerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\RemoveTourGroupMessageReactionPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\RemoveTourGroupMessageReactionPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SearchTourGroupConversationsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SearchTourGroupConversationsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SearchTourGroupMessagesPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SearchTourGroupMessagesPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SendTourGroupChatMessagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SendTourGroupChatMessagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SendTourGroupConversationMessagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SendTourGroupConversationMessagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SubmitTourGroupSelectionPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\SubmitTourGroupSelectionPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\TourGroupDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\TourGroupDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\TourGroupPlannerWorkflow.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\TourGroupPlannerWorkflow.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它编排的是哪条具体业务流程。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\TransferTourGroupLeaderPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\TransferTourGroupLeaderPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UpdateTourGroupChatSettingsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UpdateTourGroupChatSettingsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UpdateTourGroupDirectConversationArchiveStatePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UpdateTourGroupDirectConversationArchiveStatePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UpdateTourGroupDirectConversationMuteStatePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UpdateTourGroupDirectConversationMuteStatePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UploadTourGroupConversationAttachmentPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UploadTourGroupConversationAttachmentPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UploadTourGroupCoverImagePlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\api\UploadTourGroupCoverImagePlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupChatPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupChatPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupChatSettings.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupChatSettings.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupConversation.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupConversation.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupErrors.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupMembershipModels.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupMembershipModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupMessages.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupMessages.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupPlanningModels.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupPlanningModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\objects\TourGroupStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\tables\TourGroupChatPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\tables\TourGroupChatPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\tables\TourGroupChatPlainSqlSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\tables\TourGroupChatPlainSqlSupport.scala)
+  - 现状：// 本文件负责数据库读写，不承载复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\tour-group\tables\TourGroupPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\tour-group\tables\TourGroupPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\BookTrainItemPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\BookTrainItemPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\CreateTrainJourneyPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\CreateTrainJourneyPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\GetTrainDetailsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\GetTrainDetailsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\ListManagedTrainsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\ListManagedTrainsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\RegisterRailwayManagerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\RegisterRailwayManagerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\SearchTrainsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\SearchTrainsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\TrainDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\TrainDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\TrainPlannerWorkflow.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\TrainPlannerWorkflow.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它编排的是哪条具体业务流程。
+- [E:\typesafe\backend\src\main\scala\microservices\train\api\TrainSuggestionsPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\train\api\TrainSuggestionsPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\RailwayManager.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\RailwayManager.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainJourney.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainJourney.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainSeatModels.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainSeatModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainValueObjects.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainValueObjects.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainValueObjectsSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\train\objects\TrainValueObjectsSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\train\tables\TrainPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\train\tables\TrainPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\api\CreateTravelerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\api\CreateTravelerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\api\DeleteTravelerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\api\DeleteTravelerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\api\ListTravelersPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\api\ListTravelersPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\api\TravelerDomainFunctions.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\api\TravelerDomainFunctions.scala)
+  - 现状：// 本文件负责业务流程编排。
+  - 修改意见：写清楚它封装的是哪条业务链路。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\api\TravelerPlannerSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\api\TravelerPlannerSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它支撑的是哪一组 planner、哪类动作。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\api\UpdateTravelerPlanner.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\api\UpdateTravelerPlanner.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的具体动作、输入和输出。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerErrors.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerErrors.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它承载哪些具体业务错误。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerPlannerModels.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerPlannerModels.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerProfile.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerProfile.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerProfileSourceJsonCodecs.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerProfileSourceJsonCodecs.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它给哪些对象提供 JSON 编解码。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerProfileStatuses.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerProfileStatuses.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它是请求、响应、状态、值对象还是模型。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerProfileStatusesSupport.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\objects\TravelerProfileStatusesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪组对象/枚举。
+- [E:\typesafe\backend\src\main\scala\microservices\traveler\tables\TravelerPlannerPlainSql.scala](/E:\typesafe\backend\src\main\scala\microservices\traveler\tables\TravelerPlannerPlainSql.scala)
+  - 现状：// 本文件负责数据库读写，不承担复杂业务流程。
+  - 修改意见：写清楚它对应的表动作和业务入口 planner。
+- [E:\typesafe\backend\src\main\scala\routes\HealthResponseDto.scala](/E:\typesafe\backend\src\main\scala\routes\HealthResponseDto.scala)
+  - 现状：// 本文件负责路由分发。
+  - 修改意见：写清楚它对应的路由分发职责。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsAdvertising.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsAdvertising.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsAttraction.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsAttraction.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsAuth.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsAuth.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContent.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContent.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContentBlog.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContentBlog.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContentExplore.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContentExplore.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContentFeedback.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContentFeedback.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContentReview.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsContentReview.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsFlight.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsFlight.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsHotel.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsHotel.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsIdentity.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsIdentity.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperations.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperations.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperationsAirline.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperationsAirline.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperationsAttraction.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperationsAttraction.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperationsHotel.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperationsHotel.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperationsSiteAdmin.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOperationsSiteAdmin.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOrder.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsOrder.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroup.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroup.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChat.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChat.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChatConversations.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChatConversations.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChatDirectConversations.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChatDirectConversations.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChatMessages.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChatMessages.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChatSettings.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupChatSettings.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupCore.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupCore.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupMembers.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupMembers.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupPlan.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTourGroupPlan.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTrain.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTrain.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTraveler.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerDefinitionsTraveler.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它汇总的是哪一组 planner，别只说“属于当前模块”。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerRegistry.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerRegistry.scala)
+  - 现状：// 本文件负责路由分发。
+  - 修改意见：写清楚它注册了哪些业务 planner，以及 registry 的查找职责。
+- [E:\typesafe\backend\src\main\scala\routes\PlannerRouter.scala](/E:\typesafe\backend\src\main\scala\routes\PlannerRouter.scala)
+  - 现状：// 本文件负责路由分发。
+  - 修改意见：写清楚它按什么 planner 名称/注册表做分发，以及分发到哪类业务入口。
+- [E:\typesafe\backend\src\main\scala\routes\TourGroupChatMessageRoutes.scala](/E:\typesafe\backend\src\main\scala\routes\TourGroupChatMessageRoutes.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的业务域、动作和路由入口。
+- [E:\typesafe\backend\src\main\scala\routes\TourGroupChatResponseSupport.scala](/E:\typesafe\backend\src\main\scala\routes\TourGroupChatResponseSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的路由分发职责。
+- [E:\typesafe\backend\src\main\scala\routes\TourGroupChatRouter.scala](/E:\typesafe\backend\src\main\scala\routes\TourGroupChatRouter.scala)
+  - 现状：// 本文件负责路由分发。
+  - 修改意见：写清楚它对应的业务域、动作和路由入口。
+- [E:\typesafe\backend\src\main\scala\routes\TourGroupChatRouterSupport.scala](/E:\typesafe\backend\src\main\scala\routes\TourGroupChatRouterSupport.scala)
+  - 现状：// 本文件负责路由分发。
+  - 修改意见：写清楚它对应的路由分发职责。
+- [E:\typesafe\backend\src\main\scala\routes\TourGroupChatSettingsRoutes.scala](/E:\typesafe\backend\src\main\scala\routes\TourGroupChatSettingsRoutes.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的业务域、动作和路由入口。
+- [E:\typesafe\backend\src\main\scala\routes\TourGroupConversationRoutes.scala](/E:\typesafe\backend\src\main\scala\routes\TourGroupConversationRoutes.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的业务域、动作和路由入口。
+- [E:\typesafe\backend\src\main\scala\routes\TourGroupDirectConversationRoutes.scala](/E:\typesafe\backend\src\main\scala\routes\TourGroupDirectConversationRoutes.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的业务域、动作和路由入口。
+- [E:\typesafe\backend\src\main\scala\routes\TourGroupMessageActionRoutes.scala](/E:\typesafe\backend\src\main\scala\routes\TourGroupMessageActionRoutes.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它对应的业务域、动作和路由入口。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\ApiPlan.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\ApiPlan.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\BirthDateSupport.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\BirthDateSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪个共享对象/值对象/标识符。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\CountValuesSupport.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\CountValuesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪个共享对象/值对象/标识符。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\CurrencySupport.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\CurrencySupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪个共享对象/值对象/标识符。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\DomainError.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\DomainError.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\MoneySupport.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\MoneySupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪个共享对象/值对象/标识符。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\OrderContentIdentifiers.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\OrderContentIdentifiers.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\PersonAndIdentityValues.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\PersonAndIdentityValues.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\PersonAndIdentityValuesSupport.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\PersonAndIdentityValuesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪个共享对象/值对象/标识符。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\PrincipalIdentifiers.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\PrincipalIdentifiers.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\Rating.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\Rating.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\RatingSupport.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\RatingSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪个共享对象/值对象/标识符。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\ResourceIdentifiers.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\ResourceIdentifiers.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\SupportIdentifiers.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\SupportIdentifiers.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\TimePeriods.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\TimePeriods.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\TimePeriodsSupport.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\TimePeriodsSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪个共享对象/值对象/标识符。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\TourGroupIdentifiers.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\TourGroupIdentifiers.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\TravelValues.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\TravelValues.scala)
+  - 现状：// 本文件只定义数据结构和 JSON codec。
+  - 修改意见：写清楚它到底是标识符、值对象、错误对象还是通用 codec。
+- [E:\typesafe\backend\src\main\scala\shared-kernel\objects\TravelValuesSupport.scala](/E:\typesafe\backend\src\main\scala\shared-kernel\objects\TravelValuesSupport.scala)
+  - 现状：// 本文件属于当前模块的实现。
+  - 修改意见：写清楚它辅助的是哪个共享对象/值对象/标识符。
+- [E:\typesafe\backend\src\main\scala\static\StaticAssetRouter.scala](/E:\typesafe\backend\src\main\scala\static\StaticAssetRouter.scala)
+  - 现状：// 本文件负责路由分发。
+  - 修改意见：写清楚它的具体职责，避免只写“属于当前模块/负责业务流程编排”。

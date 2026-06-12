@@ -1,4 +1,6 @@
-﻿import type { ContentImageResponse } from './ContentImageResponse'
+// 本文件定义 content 模块的 `ReviewResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { ContentImageResponse } from './ContentImageResponse'
 
 export type ReviewResponse = {
   reviewId: string

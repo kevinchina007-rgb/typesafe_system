@@ -10,10 +10,12 @@ import type { TrainBookRequest, TrainSortMode, TrainsPageController, TrainsPageP
 import { useTrainSearchState } from './useTrainSearchState'
 import type { TrainResponse } from '@/lib/mvp-types/index'
 
+// 只截取日期字符串的年月日部分，供列车搜索使用。
 function normalizeDateOnly(value: string) {
   return value.trim().slice(0, 10)
 }
 
+// TrainsPage 的页面控制器，负责搜索、预订、日期窗口和广告目标模式。
 export function useTrainsPageController({
   currentLanguage,
   signedInUser,
@@ -42,6 +44,7 @@ export function useTrainsPageController({
   const [isTourGroupTargetMode, setIsTourGroupTargetMode] = useState(false)
   const [targetTrainResponses, setTargetTrainResponses] = useState<TrainResponse[]>([])
 
+  // 如果来自旅游团定向预订，就先回填列车搜索条件。
   useEffect(() => {
     const target = consumeTourGroupBookingTarget('trains')
     if (!target) {
@@ -61,7 +64,7 @@ export function useTrainsPageController({
 
         const nextTrainResponse = {
           ...train,
-          seatInventories: train.seatInventories.filter(seatInventory => seatInventory.seatClass === target.seatClass || target.seatClass === null),
+          seatInventories: train.seatInventories.filter((seatInventory: (typeof train.seatInventories)[number]) => seatInventory.seatClass === target.seatClass || target.seatClass === null),
         }
 
         setSearchFromStation(target.fromStationCode)
@@ -84,12 +87,15 @@ export function useTrainsPageController({
     }
   }, [onShowNotice, translate])
 
+  // 根据当前搜索条件计算排序后的列车结果。
   const sortedTrainResponses = useMemo(
     () => sortTrainResponses(trainResponses, searchFromStation, searchToStation, trainSortMode),
     [searchFromStation, searchToStation, trainResponses, trainSortMode],
   )
+  // 计算当前搜索条件对应的推荐文案。
   const searchRecommendation = formatTrainRecommendation(searchFromStation, searchToStation, translate)
 
+  // 过滤不可用的出行人，保持选择列表有效。
   useEffect(() => {
     const availableTravelerIds = travelers.map(traveler => traveler.travelerId)
     setSelectedTravelerIds(currentIds => {
@@ -98,6 +104,7 @@ export function useTrainsPageController({
     })
   }, [travelers])
 
+  // 执行一次列车搜索并刷新结果。
   async function executeTrainSearch() {
     const normalizedStations = normalizeTrainSearchRequestStations(searchFromStation, searchToStation)
     setIsTourGroupTargetMode(false)
@@ -114,14 +121,17 @@ export function useTrainsPageController({
     setDateWindowStart(addHotelDays(searchDate, -3))
   }
 
+  // 日期条向前移动一天。
   function onPreviousDateWindow() {
     setDateWindowStart(date => addHotelDays(date, -1))
   }
 
+  // 日期条向后移动一天。
   function onNextDateWindow() {
     setDateWindowStart(date => addHotelDays(date, 1))
   }
 
+  // 选择某一天后重新查询列车。
   async function handleDateSelect(date: string) {
     setSearchDate(date)
     setIsTourGroupTargetMode(false)
@@ -139,6 +149,7 @@ export function useTrainsPageController({
     setDateWindowStart(addHotelDays(date, -3))
   }
 
+  // 提交列车预订并创建订单。
   async function bookTrain(payload: TrainBookRequest) {
     if (!signedInUser) {
       setIsAuthDialogOpen(true)
@@ -163,6 +174,7 @@ export function useTrainsPageController({
     }, translate('trains.bookNow'), translate('notice.bookingCreated'))
   }
 
+  // 加载资源评论摘要。
   async function loadReviewSummary(payload: { resourceType: string; resourceId: string }) {
     if (!signedInUser) {
       throw new Error(translate('error.loginRequired'))
@@ -174,6 +186,7 @@ export function useTrainsPageController({
     })
   }
 
+  // 加载资源评论列表。
   async function loadReviewsByResource(payload: { resourceType: string; resourceId: string }) {
     if (!signedInUser) {
       throw new Error(translate('error.loginRequired'))

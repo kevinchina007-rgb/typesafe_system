@@ -1,3 +1,5 @@
+// OrderPlainSql 封装订单模块的plain SQL 实现。
+
 package com.typesafe.travel.persistence.order
 
 import cats.effect.IO

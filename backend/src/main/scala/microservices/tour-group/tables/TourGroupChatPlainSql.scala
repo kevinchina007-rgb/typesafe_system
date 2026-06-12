@@ -1,3 +1,5 @@
+// TourGroupChatPlainSql 封装团体游模块的plain SQL 实现。
+
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -10,25 +12,6 @@ import java.security.MessageDigest
 import java.util.HexFormat
 import java.util.Base64
 import java.util.UUID
-
-private final case class ParticipantState(
-    participantId: String,
-    userId: String,
-    role: String,
-    joinedAt: Instant,
-    status: String,
-    lastReadAt: Option[Instant],
-    lastReadMessageId: Option[String],
-    mutedAt: Option[Instant],
-    archivedAt: Option[Instant]
-)
-
-private final case class ConversationAccess(
-    conversation: TourGroupConversation,
-    participant: ParticipantState
-)
-
-private final case class ChatUserProfile(userId: String, displayName: String, avatarUrl: Option[String])
 
 object TourGroupChatPlainSql:
   private val groupPublicType = TourGroupConversationType.GroupPublic.toString

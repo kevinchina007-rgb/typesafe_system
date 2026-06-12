@@ -1,3 +1,5 @@
+// 本文件定义 UploadAttractionImagePlanner，负责 attraction 模块的上传编排和接口入口。
+
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 import type { AttractionImageUploadResponse } from '@/microservices/attraction/objects/AttractionImageUploadResponse'
 

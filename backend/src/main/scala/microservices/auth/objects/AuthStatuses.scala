@@ -1,0 +1,36 @@
+package com.typesafe.travel.auth.domain
+
+import com.typesafe.travel.shared.kernel.*
+import io.circe.{Decoder, Encoder}
+
+// 登录主体类型。
+final case class AuthActorType(value: String):
+  override def toString: String = value
+
+object AuthActorType:
+  val User: AuthActorType = AuthActorType("User")
+  val Manager: AuthActorType = AuthActorType("Manager")
+  given sourceEncoder: Encoder[AuthActorType] = Encoder.encodeString.contramap(_.toString)
+  given sourceDecoder: Decoder[AuthActorType] = Decoder.decodeString.map(fromText)
+
+  def fromText(value: String): AuthActorType =
+    value.trim.toLowerCase match
+      case "manager" => Manager
+      case _ => User
+
+// 会话状态。
+final case class AuthSessionStatus(value: String):
+  override def toString: String = value
+
+object AuthSessionStatus:
+  val Active: AuthSessionStatus = AuthSessionStatus("Active")
+  val Expired: AuthSessionStatus = AuthSessionStatus("Expired")
+  val Revoked: AuthSessionStatus = AuthSessionStatus("Revoked")
+  given sourceEncoder: Encoder[AuthSessionStatus] = Encoder.encodeString.contramap(_.toString)
+  given sourceDecoder: Decoder[AuthSessionStatus] = Decoder.decodeString.map(fromText)
+
+  def fromText(value: String): AuthSessionStatus =
+    value.trim.toLowerCase match
+      case "expired" => Expired
+      case "revoked" => Revoked
+      case _ => Active

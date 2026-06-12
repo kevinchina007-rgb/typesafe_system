@@ -1,3 +1,4 @@
+// 订单行项目详情组件，只负责把单个订单项的补充信息渲染出来。
 import { formatIsoDateTime, localizeBookingKind, localizeCabinClass, localizeReservationStatus, localizeSupplierReviewStatus } from '@/lib/presenters/view-models'
 import { formatTravelerIdentity, formatOrderLineItemTitle, parseAttractionSnapshot, parseFlightSnapshot } from '@/pages/BookingsPage/functions'
 import type { OrderLineItemDetailsProps } from '@/pages/BookingsPage/objects'

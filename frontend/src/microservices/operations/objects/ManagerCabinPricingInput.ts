@@ -1,3 +1,5 @@
+// 本文件定义 operations 模块的 `ManagerCabinPricingInput`，作为输入模型并提供 JSON 编解码。
+
 export type ManagerCabinPricingInput = {
   seatCount: number
   originalPrice: string

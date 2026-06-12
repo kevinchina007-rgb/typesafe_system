@@ -1,3 +1,3 @@
-export { searchHotelsPlanner } from '@/microservices/hotel/api/SearchHotelsPlanner'
-export { getHotelDetailsPlanner } from '@/microservices/hotel/api/GetHotelDetailsPlanner'
-export { uploadHotelRoomTypeImage } from '@/microservices/hotel/api/UploadHotelRoomTypeImagePlanner'
+export { searchHotelsPlanner } from './SearchHotelsPlanner'
+export { getHotelDetailsPlanner } from './GetHotelDetailsPlanner'
+export { uploadHotelRoomTypeImage } from './UploadHotelRoomTypeImagePlanner'

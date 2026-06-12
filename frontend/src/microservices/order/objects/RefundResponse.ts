@@ -1,4 +1,6 @@
-﻿export type RefundResponse = {
+// 本文件定义 order 模块的 `RefundResponse`，作为响应数据并提供 JSON 编解码。
+
+export type RefundResponse = {
   refundId: string
   refundAmount: string
   refundCurrency: string

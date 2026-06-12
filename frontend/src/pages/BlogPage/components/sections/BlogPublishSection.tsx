@@ -2,11 +2,13 @@ import { BlogEditor } from '../BlogEditor'
 import type { BlogPageController } from '../../objects'
 import { emptyDraft, tagGroups, travelCities } from '../../functions'
 
+// 发布页面参数，包含 controller 和翻译函数。
 type BlogPublishSectionProps = {
   controller: BlogPageController
   translate: (translationKey: string) => string
 }
 
+// 发布页面，负责草稿列表、编辑器和发布辅助筛选。
 export function BlogPublishSection({ controller, translate }: BlogPublishSectionProps) {
   const {
     isBusy,

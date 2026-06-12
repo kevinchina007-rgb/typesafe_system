@@ -1,3 +1,5 @@
+// 本文件定义 attraction 模块的响应映射函数，负责把后端结果整理成前端展示数据。
+
 import type { AttractionListResponse } from '@/microservices/attraction/objects/AttractionListResponse'
 import type { AttractionResponse } from '@/microservices/attraction/objects/AttractionResponse'
 import type { AttractionTicketSessionResponse } from '@/microservices/attraction/objects/AttractionTicketSessionResponse'

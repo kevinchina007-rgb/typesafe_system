@@ -1,4 +1,6 @@
-﻿export type { AttractionItemDetailsResponse } from '@/microservices/order/objects/AttractionItemDetailsResponse'
+// 本文件定义订单服务前端传输类型，覆盖订单创建、支付和退款接口。
+
+export type { AttractionItemDetailsResponse } from '@/microservices/order/objects/AttractionItemDetailsResponse'
 export type { FlightItemDetailsResponse } from '@/microservices/order/objects/FlightItemDetailsResponse'
 export type { HotelItemDetailsResponse } from '@/microservices/order/objects/HotelItemDetailsResponse'
 export type { OrderLineItemResponse } from '@/microservices/order/objects/OrderLineItemResponse'

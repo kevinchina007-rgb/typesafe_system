@@ -2,10 +2,12 @@ import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { BlogPageController } from '../../objects'
 import { buildFallbackInitials, formatShortDate, notificationFilters } from '../../functions'
 
+// 通知页面参数，只接收 controller。
 type BlogNotificationsSectionProps = {
   controller: BlogPageController
 }
 
+// 通知页面，负责筛选展示不同类型的互动通知。
 export function BlogNotificationsSection({ controller }: BlogNotificationsSectionProps) {
   const { notifications, notificationFilter, filteredNotifications, setNotificationFilter, openProfile } = controller
 

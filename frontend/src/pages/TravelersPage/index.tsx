@@ -1,3 +1,5 @@
+// 本文件作为当前目录的入口导出文件。
+
 import { TravelersPageShell } from './components'
 import { useTravelersPageController } from './hooks'
 import type { TravelersPageProps } from './objects'

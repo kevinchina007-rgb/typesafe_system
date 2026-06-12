@@ -1,3 +1,5 @@
+// 本文件定义 TravelersPage 页面数据模型和 JSON 编解码。
+
 import type { AppLanguage, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { TravelerProfileInput } from '@/microservices/traveler/objects/TravelerProfileInput'

@@ -4,12 +4,14 @@ import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { BlogPageController } from '../../objects'
 import { buildFallbackInitials, formatShortDate } from '../../functions'
 
+// 帖子详情弹窗参数，包含 controller、登录用户和关闭回调。
 type BlogSelectedPostDialogProps = {
   controller: BlogPageController
   signedInUser: { userId: string } | null
   onClose: () => void
 }
 
+// 帖子详情弹窗，展示大图、正文、评论和互动操作。
 export function BlogSelectedPostDialog({ controller, signedInUser, onClose }: BlogSelectedPostDialogProps) {
   const {
     selectedPost,
@@ -27,6 +29,7 @@ export function BlogSelectedPostDialog({ controller, signedInUser, onClose }: Bl
     followedAuthors,
   } = controller
 
+  // 没有选中帖子时不渲染弹窗。
   if (!selectedPost) return null
 
   return (

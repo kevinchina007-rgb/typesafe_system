@@ -7,6 +7,7 @@ import { useMultiCitySearchRows } from '@/pages/FlightsPage/components/hooks/use
 import { useRoundTripSearchRows } from '@/pages/FlightsPage/components/hooks/useRoundTripSearchRows'
 import type { FlightSearchCardProps } from '../../objects'
 
+// FlightsPage 的搜索卡片，负责切换行程类型并填写航线与日期条件。
 export function FlightSearchCard({
   tripType,
   departureAirport,
@@ -77,7 +78,10 @@ export function FlightSearchCard({
                   />
                 </Field>
                 <Field label={translate('flights.date')}>
-                  <DateInput value={segment.departureDate} onChange={event => onMultiCitySegmentChange(segment.id, 'departureDate', event.target.value)} />
+                  <DateInput
+                    value={segment.departureDate}
+                    onChange={event => onMultiCitySegmentChange(segment.id, 'departureDate', event.target.value)}
+                  />
                 </Field>
                 <div className="flex items-end">
                   <button
@@ -148,6 +152,7 @@ export function FlightSearchCard({
   )
 }
 
+// 单条搜索航线行的布局组件，负责渲染出发地、目的地和日期。
 function SearchRouteRow({
   departureLabel,
   arrivalLabel,
@@ -200,6 +205,7 @@ function SearchRouteRow({
   )
 }
 
+// 表单字段容器，只负责把标签和输入控件放在一起。
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="grid gap-2">
@@ -209,6 +215,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
+// 日期输入框的统一样式封装。
 function DateInput({ value, onChange }: { value: string; onChange: ChangeEventHandler<HTMLInputElement> }) {
   return (
     <input
@@ -220,6 +227,7 @@ function DateInput({ value, onChange }: { value: string; onChange: ChangeEventHa
   )
 }
 
+// 机场下拉选择框，只负责从城市列表里选出一个值。
 function CitySelect({
   value,
   placeholder,

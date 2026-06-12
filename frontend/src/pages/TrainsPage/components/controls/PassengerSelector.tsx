@@ -1,9 +1,11 @@
-﻿type PassengerSelectorProps = {
+// 乘客数量选择器参数，只负责人数下拉框。
+type PassengerSelectorProps = {
   passengerCount: number
   translate: (translationKey: string) => string
   onChange: (value: number) => void
 }
 
+// 乘客数量选择器，只负责展示人数下拉框。
 export function PassengerSelector({ passengerCount, translate, onChange }: PassengerSelectorProps) {
   return (
     <label className="grid gap-2 text-sm font-medium text-slate-600">

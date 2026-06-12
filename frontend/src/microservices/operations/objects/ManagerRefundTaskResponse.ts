@@ -1,4 +1,6 @@
-﻿export type ManagerRefundTaskResponse = {
+// 本文件定义 operations 模块的 `ManagerRefundTaskResponse`，作为响应数据并提供 JSON 编解码。
+
+export type ManagerRefundTaskResponse = {
   orderId: string
   buyerUserId: string
   taskType: string

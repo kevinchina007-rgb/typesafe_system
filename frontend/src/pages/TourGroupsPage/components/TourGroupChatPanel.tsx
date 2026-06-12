@@ -1,3 +1,5 @@
+// 本文件定义 TourGroupsPage 页面的面板组件，负责集中展示一组相关内容。
+
 import { useEffect, useMemo, useState } from 'react'
 
 import type { AppLanguage, TourGroupChatSettingsResponse, TourGroupConversationListResponse, TourGroupConversationSummaryResponse, TourGroupMembershipResponse, TourGroupMessageResponse, TourGroupMessageSearchResultResponse, TourGroupUploadedAttachmentResponse, UserResponse } from '@/lib/mvp-types/index'

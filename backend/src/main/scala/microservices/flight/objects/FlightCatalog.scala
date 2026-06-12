@@ -1,3 +1,5 @@
+// FlightCatalog 定义航班模块的目录模型。
+
 package com.typesafe.travel.flight.objects
 
 import io.circe.{Decoder, Encoder}

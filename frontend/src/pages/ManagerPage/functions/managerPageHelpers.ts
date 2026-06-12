@@ -1,6 +1,7 @@
 import type { AppViewKey } from '@/lib/mvp-types/index'
 import type { LoginManagerType } from '@/pages/ManagerPage/objects'
 
+// 管理员页面统一使用的基础样式类名，避免各子页面自己散写。
 export const managerPageShellClassName = 'grid gap-6 px-6 py-8 text-slate-950'
 export const managerHeaderClassName = 'grid gap-2'
 export const managerEyebrowClassName = 'text-sm font-bold text-slate-500'
@@ -26,6 +27,7 @@ export const managerBusinessEntries: Array<{
   accentClassName: string
   imageSrc: string
 }> = [
+  // 航司入口卡片。
   {
     managerType: 'airline',
     titleKey: 'manager.type.airline',
@@ -33,13 +35,15 @@ export const managerBusinessEntries: Array<{
     accentClassName: 'bg-sky-500',
     imageSrc: '/images/manager-entry/airline.jpg',
   },
+  // 酒店入口卡片。
   {
     managerType: 'hotel',
     titleKey: 'manager.type.hotel',
     shortTitle: 'HOTEL',
     accentClassName: 'bg-cyan-500',
-    imageSrc: '/images/home-hero-candidates/01_澶ф捣_钁¤悇鐗橮raia da Marinha_娴蜂笌宀╁鍦ㄨ繖閲岀浉鐖?jpg',
+    imageSrc: '/images/home-hero-candidates/01_大海_葡萄牙Praia da Marinha_海与岩壁在这里相爱.jpg',
   },
+  // 火车入口卡片。
   {
     managerType: 'train',
     titleKey: 'manager.type.train',
@@ -47,12 +51,13 @@ export const managerBusinessEntries: Array<{
     accentClassName: 'bg-indigo-500',
     imageSrc: '/images/manager-entry/train.jpg',
   },
+  // 景点入口卡片。
   {
     managerType: 'attraction',
     titleKey: 'manager.type.attraction',
     shortTitle: 'VIEW',
     accentClassName: 'bg-emerald-500',
-    imageSrc: '/images/home-hero-candidates/04_澶у北_鐟炲＋Oeschinensee_婀栧厜鎶婂北鑹茶交杞绘敹钘?jpg',
+    imageSrc: '/images/home-hero-candidates/04_大山_瑞士Oeschinensee_湖光把山色轻轻收藏.jpg',
   },
 ].map((entry): {
   managerType: Exclude<LoginManagerType, 'siteAdmin'>
@@ -83,6 +88,7 @@ export const managerBusinessEntries: Array<{
   }
 })
 
+// 根据管理员类型返回页面标题。
 export function getManagerEntryTitle(managerType: LoginManagerType, translate: (translationKey: string) => string) {
   if (managerType === 'airline') return translate('manager.type.airline')
   if (managerType === 'hotel') return translate('manager.type.hotel')
@@ -91,6 +97,7 @@ export function getManagerEntryTitle(managerType: LoginManagerType, translate: (
   return translate('manager.type.attraction')
 }
 
+// 根据管理员类型返回注册页标题。
 export function getManagerRegisterTitle(managerType: LoginManagerType, translate: (translationKey: string) => string) {
   if (managerType === 'airline') return translate('manager.registerAirline')
   if (managerType === 'hotel') return translate('manager.registerHotel')
@@ -99,6 +106,7 @@ export function getManagerRegisterTitle(managerType: LoginManagerType, translate
   return translate('attractionAdmin.registerTitle')
 }
 
+// 根据管理员类型返回登录页标题。
 export function getManagerLoginTitle(managerType: LoginManagerType, translate: (translationKey: string) => string) {
   if (managerType === 'airline') return translate('manager.loginAirline')
   if (managerType === 'hotel') return translate('manager.loginHotel')
@@ -107,6 +115,7 @@ export function getManagerLoginTitle(managerType: LoginManagerType, translate: (
   return translate('attractionAdmin.loginTitle')
 }
 
+// 根据管理员类型返回注册表单字段。
 export function getManagerRegisterFields(managerType: LoginManagerType, translate: (translationKey: string) => string) {
   if (managerType === 'airline') {
     return [
@@ -147,6 +156,7 @@ export function getManagerRegisterFields(managerType: LoginManagerType, translat
   ]
 }
 
+// 把当前视图映射成管理后台实际要展示的模块页签。
 export function toActiveSection(currentViewKey: AppViewKey) {
   if (currentViewKey === 'managerFeedback') return 'feedback'
   if (currentViewKey === 'managerAdvertising') return 'advertising'
@@ -161,6 +171,7 @@ export function toActiveSection(currentViewKey: AppViewKey) {
   return 'workspace'
 }
 
+// 根据当前视图，决定航空管理后台的初始子页。
 export function toInitialAirlineSection(currentViewKey: AppViewKey) {
   if (currentViewKey === 'managerCreateFlight') return 'createFlight' as const
   if (currentViewKey === 'managerFeedback') return 'userFeedback' as const

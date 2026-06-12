@@ -1,4 +1,6 @@
-﻿import type { AppLanguage, TourGroupSummaryResponse, UserResponse } from '@/lib/mvp-types/index'
+// 本文件定义 TourGroupsPage 页面的列表组件，负责展示条目集合。
+
+import type { AppLanguage, TourGroupSummaryResponse, UserResponse } from '@/lib/mvp-types/index'
 import { formatGroupCardSubtitle } from '@/lib/presenters/tour-group-presenter'
 import { localizeTourGroupStatus } from '@/lib/presenters/view-models'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'

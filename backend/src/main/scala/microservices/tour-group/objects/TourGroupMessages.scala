@@ -1,3 +1,5 @@
+// TourGroupMessages 定义团体游模块的数据模型。
+
 package com.typesafe.travel.tourgroup.domain
 
 import com.typesafe.travel.shared.kernel.*

@@ -1,3 +1,5 @@
+// AuthDomainFunctions 定义认证模块的领域辅助函数。
+
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO

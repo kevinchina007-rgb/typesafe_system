@@ -1,3 +1,5 @@
+// TrainValueObjects 定义火车模块的值对象。
+
 package com.typesafe.travel.train.domain
 
 import com.typesafe.travel.shared.kernel.*

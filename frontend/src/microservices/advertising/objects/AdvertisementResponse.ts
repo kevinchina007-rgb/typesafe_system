@@ -1,3 +1,5 @@
+// 本文件定义 advertising 模块的 `AdvertisementResponse`，作为响应数据并提供 JSON 编解码。
+
 import type { AdvertisementReviewResponse } from './AdvertisementReviewResponse'
 
 export type AdvertisementResponse = {

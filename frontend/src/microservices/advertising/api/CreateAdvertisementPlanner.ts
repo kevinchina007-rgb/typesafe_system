@@ -1,3 +1,5 @@
+// 本文件定义 CreateAdvertisementPlanner，负责 advertising 模块的创建编排和接口入口。
+
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 
 

@@ -1,9 +1,11 @@
-﻿type RefundActionFormProps = {
+// 退款申请表单参数，只承接禁用状态、翻译和提交回调。
+type RefundActionFormProps = {
   disabled: boolean
   translate: (translationKey: string) => string
   onSubmit: (refundReason: string) => Promise<void>
 }
 
+// 退款动作表单，只负责输入原因和触发提交。
 export function RefundActionForm({ disabled, translate, onSubmit }: RefundActionFormProps) {
   return (
     <form

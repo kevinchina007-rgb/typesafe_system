@@ -1,3 +1,5 @@
+// FeedbackPlannerModels 定义内容模块的请求和响应模型。
+
 package com.typesafe.travel.content.domain
 
 import io.circe.{Decoder, Encoder}

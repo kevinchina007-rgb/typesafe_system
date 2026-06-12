@@ -6,6 +6,7 @@ import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { HotelPlannerResponse } from '@/lib/mvp-types/index'
 import type { HotelPreference } from '@/app/stores/models/hotel-booking-model'
 
+// 酒店页面顶层参数，负责把全局语言、登录态和导航能力传给页面。
 export type HotelsPageProps = {
   currentLanguage: AppLanguage
   signedInUser: UserResponse | null
@@ -14,20 +15,24 @@ export type HotelsPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
+// 酒店搜索通知的统一结构。
 export type HotelSearchNotice = {
   kind: 'error' | 'warning'
   message: string
 }
 
+// 酒店页面头部标题区参数。
 export type HotelPageHeroProps = {
   title: string
   description: string
 }
 
+// 酒店搜索提示区参数。
 export type HotelSearchNoticeProps = {
   notice: HotelSearchNotice | null
 }
 
+// 广告展示区参数。
 export type HotelAdvertisingSectionProps = {
   featuredAdvertisement: AdvertisementResponse | null
   selectedAdvertisement: AdvertisementResponse | null
@@ -35,6 +40,7 @@ export type HotelAdvertisingSectionProps = {
   onOpenAdvertisement: (advertisementId: string) => Promise<void>
 }
 
+// 酒店搜索卡片参数。
 export type HotelSearchCardProps = {
   isBusy: boolean
   searchLocation: string
@@ -49,6 +55,7 @@ export type HotelSearchCardProps = {
   onSearch: () => void
 }
 
+// 酒店日期价格条参数。
 export type HotelDatePriceStripProps = {
   dateWindowStart: string
   selectedDate: string
@@ -59,6 +66,7 @@ export type HotelDatePriceStripProps = {
   onDateSelect: (date: string) => void
 }
 
+// 酒店筛选条参数。
 export type HotelFilterBarProps = {
   hotelPreference: HotelPreference
   nearbyPreference: string
@@ -68,6 +76,7 @@ export type HotelFilterBarProps = {
   onNearbyPreferenceChange: (value: string) => void
 }
 
+// 酒店结果区参数。
 export type HotelResultsSectionProps = {
   currentLanguage: AppLanguage
   hotelResponses: HotelPlannerResponse[]
@@ -92,6 +101,7 @@ export type HotelResultsSectionProps = {
   onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
 }
 
+// 酒店页面 controller 暴露给视图层的全部状态和动作。
 export type HotelsPageController = {
   travelers: TravelerResponse[]
   selectedTravelerIds: string[]
@@ -140,6 +150,7 @@ export type HotelsPageController = {
   noticeSectionRef: RefObject<HTMLDivElement | null>
 }
 
+// 酒店搜索请求结构。
 export type HotelSearchRequest = {
   location?: string
   checkInDate?: string
@@ -150,6 +161,7 @@ export type HotelSearchRequest = {
   nearbyPreference?: string
 }
 
+// 酒店预订请求结构。
 export type HotelBookRequest = {
   roomTypeId: string
   guestTravelerIds: string[]
@@ -158,8 +170,10 @@ export type HotelBookRequest = {
   roomCount: number
 }
 
+// 复用的评论资源加载参数。
 export type ReviewLoaderRequest = { resourceType: string; resourceId: string }
 
+// 评论资源加载器集合。
 export type ReviewLoaders = {
   onLoadReviewSummary: (payload: ReviewLoaderRequest) => Promise<ResourceReviewSummaryResponse>
   onLoadReviews: (payload: ReviewLoaderRequest) => Promise<ReviewResponse[]>

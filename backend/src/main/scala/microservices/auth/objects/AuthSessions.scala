@@ -7,36 +7,7 @@ import io.circe.syntax.*
 
 import java.time.Instant
 
-final case class AuthActorType(value: String):
-  override def toString: String = value
-
-object AuthActorType:
-  val User: AuthActorType = AuthActorType("User")
-  val Manager: AuthActorType = AuthActorType("Manager")
-  given sourceEncoder: Encoder[AuthActorType] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[AuthActorType] = Decoder.decodeString.map(fromText)
-
-  def fromText(value: String): AuthActorType =
-    value.trim.toLowerCase match
-      case "manager" => Manager
-      case _ => User
-
-final case class AuthSessionStatus(value: String):
-  override def toString: String = value
-
-object AuthSessionStatus:
-  val Active: AuthSessionStatus = AuthSessionStatus("Active")
-  val Expired: AuthSessionStatus = AuthSessionStatus("Expired")
-  val Revoked: AuthSessionStatus = AuthSessionStatus("Revoked")
-  given sourceEncoder: Encoder[AuthSessionStatus] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[AuthSessionStatus] = Decoder.decodeString.map(fromText)
-
-  def fromText(value: String): AuthSessionStatus =
-    value.trim.toLowerCase match
-      case "expired" => Expired
-      case "revoked" => Revoked
-      case _ => Active
-
+// 单个登录会话的领域模型。
 final case class AuthSession(
     sessionId: SessionId,
     actorType: AuthActorType,
@@ -47,28 +18,35 @@ final case class AuthSession(
     expiresAt: Instant,
     status: AuthSessionStatus
 )
+// 会话领域模型的 JSON codec。
 object AuthSession:
   import AuthSourceJsonCodecs.given
   given sourceEncoder: Encoder[AuthSession] = deriveEncoder
   given sourceDecoder: Decoder[AuthSession] = deriveDecoder
 
+// 当前登录主体的抽象父类型。
 sealed trait CurrentPrincipal:
   def actorType: AuthActorType
 
+// 当前用户登录主体。
 final case class CurrentUserPrincipal(userId: UserId) extends CurrentPrincipal:
   val actorType: AuthActorType = AuthActorType.User
+// 当前用户主体的 JSON codec。
 object CurrentUserPrincipal:
   import AuthSourceJsonCodecs.given
   given sourceEncoder: Encoder[CurrentUserPrincipal] = deriveEncoder
   given sourceDecoder: Decoder[CurrentUserPrincipal] = deriveDecoder
 
+// 当前管理员登录主体。
 final case class CurrentManagerPrincipal(managerType: AuthManagerType, managerId: ManagerId) extends CurrentPrincipal:
   val actorType: AuthActorType = AuthActorType.Manager
+// 当前管理员主体的 JSON codec。
 object CurrentManagerPrincipal:
   import AuthSourceJsonCodecs.given
   given sourceEncoder: Encoder[CurrentManagerPrincipal] = deriveEncoder
   given sourceDecoder: Decoder[CurrentManagerPrincipal] = deriveDecoder
 
+// 登录主体父类型的 JSON codec。
 object CurrentPrincipal:
   given sourceEncoder: Encoder[CurrentPrincipal] =
     Encoder.instance {

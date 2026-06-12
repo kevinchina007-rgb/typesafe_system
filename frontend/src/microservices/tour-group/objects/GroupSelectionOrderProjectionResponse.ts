@@ -1,4 +1,6 @@
-﻿export type GroupSelectionOrderProjectionResponse = {
+// 本文件定义 tour-group 模块的 `GroupSelectionOrderProjectionResponse`，作为响应数据并提供 JSON 编解码。
+
+export type GroupSelectionOrderProjectionResponse = {
   selectionId: string
   orderId: string
   orderStatus: string

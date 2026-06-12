@@ -1,4 +1,6 @@
-﻿import type { AppLanguage, GroupPlanItemResponse, GroupPlanOptionResponse, GroupPlanSelectionResponse, OrderResponse, TourGroupSummaryResponse, TravelerResponse } from '@/lib/mvp-types/index'
+// 本文件把 `tour-group` 服务的群组、会话、成员和消息数据整理成前端展示模型。
+
+import type { AppLanguage, GroupPlanItemResponse, GroupPlanOptionResponse, GroupPlanSelectionResponse, OrderResponse, TourGroupSummaryResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, localizeBookingKind, localizeTourGroupItemType, localizeTourGroupResourceType, localizeTourGroupStatus } from '@/lib/presenters/view-models'
 
 export function formatTravelerChipLabel(traveler: TravelerResponse): string {

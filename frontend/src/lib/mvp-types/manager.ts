@@ -1,4 +1,6 @@
-﻿export type { ManagerBatchDecisionResponse } from '@/microservices/operations/objects/ManagerBatchDecisionResponse'
+// 本文件定义管理端前端传输类型，覆盖后台任务和审批接口。
+
+export type { ManagerBatchDecisionResponse } from '@/microservices/operations/objects/ManagerBatchDecisionResponse'
 export type { ManagerRefundTaskListResponse } from '@/microservices/operations/objects/ManagerRefundTaskListResponse'
 export type { ManagerRefundTaskResponse } from '@/microservices/operations/objects/ManagerRefundTaskResponse'
 export type { ManagerTaskListResponse } from '@/microservices/operations/objects/ManagerTaskListResponse'

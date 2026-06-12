@@ -5,6 +5,7 @@ import { DateSelector } from '@/pages/AttractionsPage/components/controls/DateSe
 import { HotAttractions } from '@/pages/AttractionsPage/components/controls/HotAttractions'
 import { ATTRACTION_QUICK_DATE_PRESETS, type AttractionSearchCardProps } from '../../objects'
 
+// AttractionsPage 的搜索卡片，用于填写城市、关键字和日期。
 export function AttractionSearchCard({
   isBusy,
   searchCity,

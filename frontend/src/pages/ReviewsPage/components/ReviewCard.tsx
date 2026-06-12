@@ -1,3 +1,5 @@
+// 本文件定义 ReviewsPage 页面的卡片组件，负责单条数据摘要展示。
+
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import { ContentImageGallery } from '@/pages/shared/content/ContentImageGallery'
 import { formatReviewMeta, localizeReviewResourceType, localizeReviewStatus, summarizeRating } from '@/lib/presenters/content-presenter'

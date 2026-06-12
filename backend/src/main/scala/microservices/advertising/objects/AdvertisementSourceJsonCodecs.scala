@@ -1,3 +1,5 @@
+// AdvertisementSourceJsonCodecs 定义广告模块的源数据 JSON codec。
+
 package com.typesafe.travel.advertising.domain
 
 import com.typesafe.travel.shared.kernel.ManagerId

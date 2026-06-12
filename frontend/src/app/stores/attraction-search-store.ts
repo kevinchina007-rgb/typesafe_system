@@ -1,3 +1,5 @@
+// 本文件封装状态管理逻辑。
+
 import type { AttractionQuickDatePreset, AttractionSortPreference, AttractionTypePreference } from '@/app/stores/models/attraction-booking-model'
 ﻿import { create } from 'zustand'
 

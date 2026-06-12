@@ -1,3 +1,5 @@
+// OrderPlannerModels 定义订单模块的请求和响应模型。
+
 package com.typesafe.travel.order.domain
 
 import io.circe.{Decoder, Encoder}

@@ -1,4 +1,6 @@
-﻿export type FlightItemDetailsResponse = {
+// 本文件定义 order 模块的 `FlightItemDetailsResponse`，作为详情响应数据并提供 JSON 编解码。
+
+export type FlightItemDetailsResponse = {
   airlineName: string
   airlineCode: string
   flightId: string

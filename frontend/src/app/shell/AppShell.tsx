@@ -1,4 +1,6 @@
-﻿import type { ComponentProps, ReactNode } from 'react'
+// 本文件定义应用主壳层，负责页面顶栏、侧边栏和内容区布局。
+
+import type { ComponentProps, ReactNode } from 'react'
 
 import { TopNavBar } from '@/app/shell/TopNavBar'
 

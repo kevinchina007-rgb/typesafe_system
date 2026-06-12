@@ -1,3 +1,5 @@
+// 本文件定义顶部导航条，负责页面标题、主操作和快捷入口。
+
 import { useEffect, useRef, useState } from 'react'
 import { Camera, ChevronDown, IdCard, KeyRound, LogOut, Settings, Ticket, UserRound, X } from 'lucide-react'
 
@@ -44,14 +46,17 @@ const secondaryButtonClassName =
 const primaryButtonClassName =
   'inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-55'
 
+// 根据用户名生成头像缩写，方便在没有头像时展示。
 function getInitials(label: string) {
   return label.trim().slice(0, 2).toUpperCase() || '游客'
 }
 
+// 拼出管理端本地缓存里保存个人资料覆盖项的 key。
 function managerProfileStorageKey(managerId: string) {
   return `flypig.managerProfile.${managerId}`
 }
 
+// 根据管理者类型返回名称后缀，用于页面展示。
 function managerNameSuffix(managerType: string) {
   if (managerType === 'Airline') return '航空公司'
   if (managerType === 'Hotel') return '酒店'
@@ -61,6 +66,7 @@ function managerNameSuffix(managerType: string) {
   return '管理者'
 }
 
+// 根据管理者类型返回更口语化的业务标签。
 function managerBusinessLabel(managerType: string) {
   if (managerType === 'Airline') return '航空公司'
   if (managerType === 'Hotel') return '酒店'
@@ -70,6 +76,7 @@ function managerBusinessLabel(managerType: string) {
   return '业务'
 }
 
+// 去掉名称里的业务后缀，方便回填到输入框里编辑。
 function stripManagerSuffix(displayName: string, managerType: string) {
   const suffix = managerNameSuffix(managerType)
   return displayName
@@ -82,6 +89,7 @@ function stripManagerSuffix(displayName: string, managerType: string) {
     .trim()
 }
 
+// 从本地缓存读取管理者资料覆盖项。
 function readManagerProfileOverride(managerId: string): ManagerProfileOverride {
   try {
     return JSON.parse(window.localStorage.getItem(managerProfileStorageKey(managerId)) ?? '{}') as ManagerProfileOverride
@@ -90,10 +98,12 @@ function readManagerProfileOverride(managerId: string): ManagerProfileOverride {
   }
 }
 
+// 把管理者资料覆盖项写回本地缓存。
 function writeManagerProfileOverride(managerId: string, override: ManagerProfileOverride) {
   window.localStorage.setItem(managerProfileStorageKey(managerId), JSON.stringify(override))
 }
 
+// 管理者头像上传弹窗，负责校验文件、预览和触发上传。
 function ManagerAvatarUploader({
   avatarUrl,
   displayName,
@@ -212,6 +222,7 @@ function ManagerAvatarUploader({
   )
 }
 
+// 顶部导航栏，负责主导航、账户菜单和管理端快捷操作。
 export function TopNavBar({
   currentTopNav,
   signedInManager,

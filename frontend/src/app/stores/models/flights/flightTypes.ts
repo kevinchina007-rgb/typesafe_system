@@ -1,3 +1,5 @@
+// 本文件定义航班相关枚举和类型集合，供航班页状态和筛选逻辑使用。
+
 import type { FlightPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightPlannerRequest'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'

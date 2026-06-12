@@ -1,14 +1,19 @@
-import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
-import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+// 本文件定义广告卡片轮播区，负责展示多张广告卡片并支持横向浏览。
 
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+
+import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
+import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
+
+// 广告轮播区的输入参数。
 type AdvertisementCardRailProps = {
   advertisements: AdvertisementResponse[]
   translate: (translationKey: string) => string
   onOpenAdvertisement: (advertisement: AdvertisementResponse) => void
 }
 
+// 广告轮播区，负责排序、自动轮播和点击打开详情。
 export function AdvertisementCardRail({
   advertisements,
   translate,
@@ -92,6 +97,7 @@ export function AdvertisementCardRail({
             ) : null}
           </div>
 
+          {/* 多张广告时，下面显示分页圆点用于切换。 */}
           {orderedAdvertisements.length > 1 ? (
             <div className="flex items-center justify-center gap-2">
               {orderedAdvertisements.map((advertisement, index) => (

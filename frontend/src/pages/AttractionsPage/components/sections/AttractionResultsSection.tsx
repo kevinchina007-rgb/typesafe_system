@@ -1,6 +1,7 @@
 import type { AttractionResultsSectionProps } from '../../objects'
 import { AttractionResultCard } from './AttractionResultCard'
 
+// AttractionsPage 的结果列表区域，只负责把景点结果逐条渲染出来。
 export function AttractionResultsSection({
   attractionResponses,
   currentLanguage,

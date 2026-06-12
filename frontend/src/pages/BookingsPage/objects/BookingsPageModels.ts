@@ -1,8 +1,10 @@
 import type { AppLanguage, AppViewKey, OrderLineItemResponse, OrderResponse, PaymentLinkResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
+// BookingsPage 使用的订单分类，只对应当前页面会展示的几种订单。
 export type OrderCategory = Extract<AppViewKey, 'flightOrders' | 'hotelOrders' | 'trainOrders' | 'attractionOrders'>
 
+// BookingsPage 的页面级参数，负责承接语言、用户和导航能力。
 export type BookingsPageProps = {
   currentLanguage: AppLanguage
   orderCategory: OrderCategory
@@ -13,6 +15,7 @@ export type BookingsPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
+// 订单侧边栏/操作区需要的一组动作，统一从页面控制器里下发。
 export type BookingOrderActions = {
   onReloadOrders: () => Promise<void>
   onOpenPayment: (order: OrderResponse) => void
@@ -22,8 +25,10 @@ export type BookingOrderActions = {
   onOpenOrderCancellationFeedback: (orderId: string) => Promise<void>
 }
 
+// 支付方式枚举值，只保留页面上真正可选的几种方式。
 export type PaymentMethodValue = 'alipay' | 'wechat-pay' | 'nailong-pay'
 
+// 订单面板参数，承接订单、评价、出行人和各类操作入口。
 export type OrderPanelProps = {
   currentLanguage: AppLanguage
   orderCategory: OrderCategory
@@ -41,6 +46,7 @@ export type OrderPanelProps = {
   onOpenOrderCancellationFeedback: (orderId: string) => Promise<void>
 }
 
+// 支付弹窗参数，负责承接订单、出行人和支付回调。
 export type PaymentModalProps = {
   isOpen: boolean
   order: OrderResponse | null
@@ -51,6 +57,7 @@ export type PaymentModalProps = {
   onConfirmPayment: (payload: { orderId: string; paymentMethod: PaymentMethodValue; travelerIds?: string[] }) => Promise<void>
 }
 
+// 订单行项目详情参数，用于展示单个订单项的补充信息。
 export type OrderLineItemDetailsProps = {
   currentLanguage: AppLanguage
   orderLineItem: OrderLineItemResponse
@@ -59,6 +66,7 @@ export type OrderLineItemDetailsProps = {
   translate: (translationKey: string) => string
 }
 
+// 航班订单快照摘要，只负责解析显示所需的最小字段。
 export type FlightSnapshotSummary = {
   airlineName?: string
   flightNumber?: string
@@ -71,6 +79,7 @@ export type FlightSnapshotSummary = {
   travelerIds: string[]
 }
 
+// 酒店订单快照摘要，只负责解析显示所需的最小字段。
 export type HotelSnapshotSummary = {
   hotelName?: string
   hotelLocation?: string
@@ -81,6 +90,7 @@ export type HotelSnapshotSummary = {
   travelerIds: string[]
 }
 
+// 火车订单快照摘要，只负责解析显示所需的最小字段。
 export type TrainSnapshotSummary = {
   trainId?: string
   trainNumber?: string
@@ -104,6 +114,7 @@ export type TrainSnapshotSummary = {
   currency?: string
 }
 
+// 航班订单展示模型，供页面直接渲染卡片内容。
 export type FlightOrderDisplay = {
   airlineName: string
   airlineLogoPath: string | null
@@ -118,6 +129,7 @@ export type FlightOrderDisplay = {
   travelerIds: string[]
 }
 
+// 酒店订单展示模型，供页面直接渲染卡片内容。
 export type HotelOrderDisplay = {
   hotelName: string
   hotelLocation: string
@@ -128,6 +140,7 @@ export type HotelOrderDisplay = {
   guestTravelerIds: string[]
 }
 
+// 火车订单展示模型，供页面直接渲染卡片内容。
 export type TrainOrderDisplay = {
   trainId: string
   trainNumber: string
@@ -153,6 +166,7 @@ export type TrainOrderDisplay = {
   reservationExpiresAt: string | null
 }
 
+// BookingsPage 控制器对页面暴露的完整状态和动作集合。
 export type BookingsPageController = {
   orders: OrderResponse[]
   reviews: ReviewResponse[]

@@ -1,3 +1,5 @@
+// 本文件定义 UploadHotelRoomTypeImagePlanner，负责 hotel 模块的上传编排和接口入口。
+
 import type { HotelRoomTypeImageUploadResponse } from '@/microservices/hotel/objects/HotelRoomTypeImageUploadResponse'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 

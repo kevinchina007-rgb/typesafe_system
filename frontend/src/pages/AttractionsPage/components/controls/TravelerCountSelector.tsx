@@ -1,5 +1,6 @@
 import type { TravelerCountSelectorProps } from '../../objects'
 
+// 景点搜索的出行人数选择器，只负责数字切换。
 export function TravelerCountSelector({ value, translate, onChange }: TravelerCountSelectorProps) {
   return (
     <label className="grid gap-2 text-sm font-medium text-slate-600">
@@ -14,4 +15,3 @@ export function TravelerCountSelector({ value, translate, onChange }: TravelerCo
     </label>
   )
 }
-

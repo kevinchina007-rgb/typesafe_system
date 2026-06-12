@@ -1,3 +1,5 @@
+// 本文件定义 operations 模块的 `UpdateHotelManagerProfilePlannerRequest`，作为planner 请求参数并提供 JSON 编解码。
+
 export type UpdateHotelManagerProfilePlannerRequest = {
   managerId: string
   displayName: string

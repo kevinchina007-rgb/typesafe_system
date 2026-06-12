@@ -1,3 +1,5 @@
+// OrderSourceJsonCodecs 定义订单模块的源数据 JSON codec。
+
 package com.typesafe.travel.order.domain
 
 import com.typesafe.travel.shared.kernel.*

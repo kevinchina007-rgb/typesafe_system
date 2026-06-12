@@ -1,3 +1,5 @@
+// 本文件定义航班页面常量，提供默认筛选、排序和显示配置。
+
 import type { FlightSearchSegment, FlightSearchState } from '@/app/stores/models/flights/flightTypes'
 import type { AircraftModel } from '@/microservices/flight/objects/AircraftModel'
 import type { FlightCity } from '@/microservices/flight/objects/FlightCity'

@@ -1,3 +1,5 @@
+// ApplicationWiringPaths 定义 application 装配所需的路径常量。
+
 package com.typesafe.travel.api
 
 import java.nio.file.{Path, Paths}

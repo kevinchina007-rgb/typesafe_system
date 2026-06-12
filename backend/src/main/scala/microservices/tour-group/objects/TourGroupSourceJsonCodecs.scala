@@ -1,3 +1,5 @@
+// TourGroupSourceJsonCodecs 定义团体游模块的源数据 JSON codec。
+
 package com.typesafe.travel.tourgroup.domain
 
 import com.typesafe.travel.shared.kernel.*

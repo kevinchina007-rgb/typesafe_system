@@ -1,3 +1,5 @@
+// LocalTourGroupChatAttachmentStorage 定义团体游模块的业务入口。
+
 package com.typesafe.travel.api.application
 
 import cats.effect.IO

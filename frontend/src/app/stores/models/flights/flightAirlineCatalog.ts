@@ -1,3 +1,5 @@
+// 本文件定义航司目录数据，供航班筛选和展示使用。
+
 export const flightAirlineNameByCode: Record<string, string> = {
   NL: '奶龙航空',
   LD: '科比航空',

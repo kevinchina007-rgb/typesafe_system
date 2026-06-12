@@ -1,4 +1,6 @@
-﻿export type GroupPlanOptionResponse = {
+// 本文件定义 tour-group 模块的 `GroupPlanOptionResponse`，作为响应数据并提供 JSON 编解码。
+
+export type GroupPlanOptionResponse = {
   optionId: string
   planItemId: string
   resourceType: string

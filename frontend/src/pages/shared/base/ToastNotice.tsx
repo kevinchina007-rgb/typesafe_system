@@ -1,14 +1,19 @@
-﻿import { useEffect } from 'react'
+// 本文件定义全局提示和错误弹窗，负责统一展示操作结果与异常信息。
+
+import { useEffect } from 'react'
 
 import type { AppNotice } from '@/lib/mvp-types/index'
 
+// 通知组件的输入参数。
 type ToastNoticeProps = {
   notice: AppNotice | null
   onDismiss: () => void
 }
 
+// 页面通知组件，错误时显示居中弹窗，普通提示时显示右下角 toast。
 export function ToastNotice({ notice, onDismiss }: ToastNoticeProps) {
   useEffect(() => {
+    // 普通通知自动关闭，错误弹窗保持打开等待用户确认。
     if (!notice) {
       return
     }
@@ -40,23 +45,24 @@ export function ToastNotice({ notice, onDismiss }: ToastNoticeProps) {
         >
           <img className="mx-auto h-28 w-28 object-contain" src="/images/fly-pig-error.png" alt="" />
           <h2 id="app-error-title" className="mt-4 text-2xl font-bold">
-            出错了
+            鍑洪敊浜?
           </h2>
           <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-700">
-            {notice.description || '未知错误。小猪还没定位到摔在哪一步。'}
+            {notice.description || '鏈煡閿欒銆傚皬鐚繕娌″畾浣嶅埌鎽斿湪鍝竴姝ャ€?'}
           </p>
           <button
             type="button"
             className="mt-7 inline-flex min-h-11 items-center justify-center border border-black bg-black px-6 py-2 text-sm font-semibold text-white transition hover:bg-white hover:text-black"
             onClick={onDismiss}
           >
-            知道了
+            鐭ラ亾浜?
           </button>
         </section>
       </div>
     )
   }
 
+  // 普通通知使用右下角浮层，不阻塞页面主流程。
   return (
     <aside
       className={`fixed right-6 bottom-6 z-[80] flex w-[min(28rem,calc(100vw-3rem))] items-center gap-5 border bg-white px-6 py-5 text-slate-950 shadow-2xl shadow-slate-950/15 ${

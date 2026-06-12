@@ -1,5 +1,8 @@
+// 本文件定义出行人选择面板，负责展示可选旅客并回传当前选择结果。
+
 import type { TravelerResponse } from '@/lib/mvp-types/index'
 
+// 出行人选择面板的输入参数。
 type TravelerSelectionPanelProps = {
   title: string
   hint: string
@@ -10,6 +13,7 @@ type TravelerSelectionPanelProps = {
   emptySelectionMessage: string
 }
 
+// 出行人选择面板，负责展示可选出行人和当前选中状态。
 export function TravelerSelectionPanel({
   title,
   hint,
@@ -25,10 +29,13 @@ export function TravelerSelectionPanel({
 
   return (
     <section className="grid gap-4 border border-slate-200 bg-white px-6 py-5">
+      {/* 面板头部展示标题和辅助说明。 */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="m-0 text-2xl font-bold text-slate-950">{title}</h3>
         <p className="m-0 text-sm font-medium text-slate-500">{hint}</p>
       </div>
+
+      {/* 中间区域按卡片形式列出所有出行人。 */}
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {travelers.map(traveler => {
           const isSelected = selectedTravelerIds.includes(traveler.travelerId)
@@ -48,6 +55,8 @@ export function TravelerSelectionPanel({
           )
         })}
       </div>
+
+      {/* 没有选中任何出行人时，底部给出提示。 */}
       {selectedTravelerIds.length === 0 ? <p className="m-0 text-sm font-medium text-rose-600">{emptySelectionMessage}</p> : null}
     </section>
   )

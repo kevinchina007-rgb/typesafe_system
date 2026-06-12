@@ -1,3 +1,5 @@
+// TourGroupChatRouter 负责 HTTP 请求路由分发。
+
 package com.typesafe.travel.api.routes
 
 import cats.effect.IO

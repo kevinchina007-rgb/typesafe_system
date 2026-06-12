@@ -5,6 +5,7 @@ import { useTrainsPageController } from './hooks'
 import type { TrainsPageProps } from './objects'
 import { TrainFilterBar, TrainPageHero, TrainResultsSection, TrainSearchCard } from './components'
 
+// TrainsPage 页面入口，只负责把控制器状态分发给子组件。
 export function TrainsPage(props: TrainsPageProps) {
   const controller = useTrainsPageController(props)
   const { currentLanguage, translate } = props

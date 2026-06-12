@@ -1,4 +1,7 @@
-﻿type AuthRequiredDialogProps = {
+// 本文件定义未登录确认弹窗，负责提示用户登录后继续当前操作。
+
+// 认证提示弹窗的输入参数。
+type AuthRequiredDialogProps = {
   isOpen: boolean
   title: string
   description: string
@@ -7,6 +10,7 @@
   onConfirm: () => void
 }
 
+// 需要登录时弹出的确认窗口，负责引导用户去登录页。
 export function AuthRequiredDialog({
   isOpen,
   title,
@@ -28,6 +32,7 @@ export function AuthRequiredDialog({
         aria-label={title}
         onClick={event => event.stopPropagation()}
       >
+        {/* 头部区域展示标题和登录提示图。 */}
         <div className="flex items-start justify-between gap-6">
           <div>
             <p className="text-sm font-semibold text-slate-500">{translate('authRequired.eyebrow')}</p>
@@ -51,8 +56,10 @@ export function AuthRequiredDialog({
           </button>
         </div>
 
+        {/* 中间区域说明为什么需要登录。 */}
         <p className="mt-6 max-w-prose text-base leading-7 text-slate-700">{description}</p>
 
+        {/* 底部按钮负责跳转登录或直接关闭。 */}
         <div className="mt-8 flex flex-wrap gap-3">
           <button
             type="button"

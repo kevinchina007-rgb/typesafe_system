@@ -1,3 +1,5 @@
+// AttractionRuleJson 定义景点模块的规则 JSON 结构。
+
 package com.typesafe.travel.attraction.domain
 
 import com.typesafe.travel.shared.kernel.*

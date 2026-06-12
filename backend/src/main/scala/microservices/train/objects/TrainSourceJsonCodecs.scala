@@ -1,3 +1,5 @@
+// TrainSourceJsonCodecs 定义火车模块的源数据 JSON codec。
+
 package com.typesafe.travel.train.domain
 
 import com.typesafe.travel.shared.kernel.*

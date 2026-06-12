@@ -1,3 +1,5 @@
+// ManagerPlannerModels 定义operations模块的请求和响应模型。
+
 package com.typesafe.travel.operations.domain
 
 import io.circe.{Decoder, Encoder}

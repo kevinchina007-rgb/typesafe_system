@@ -1,8 +1,11 @@
-﻿import { useEffect, useState } from 'react'
+// 本文件定义共享页面组件或工具，负责页面间复用逻辑。
+
+import { useEffect, useState } from 'react'
 
 import type { ContentImageResponse, ReviewEligibilityResponse } from '@/lib/mvp-types/index'
 import { ContentImageUploader } from '@/pages/shared/content/ContentImageUploader'
 
+// 评价编辑弹窗的输入参数。
 type ReviewComposerDialogProps = {
   isOpen: boolean
   isBusy: boolean
@@ -21,6 +24,7 @@ type ReviewComposerDialogProps = {
   onSubmit: (payload: { rating: number; title: string; content: string; images: ContentImageResponse[] }) => Promise<void>
 }
 
+// 评价编辑弹窗，负责初始化草稿并提交评价内容。
 export function ReviewComposerDialog({
   isOpen,
   isBusy,
@@ -33,12 +37,14 @@ export function ReviewComposerDialog({
   onUploadImage,
   onSubmit,
 }: ReviewComposerDialogProps) {
+  // 表单草稿状态。
   const [rating, setRating] = useState(5)
   const [reviewTitle, setReviewTitle] = useState('')
   const [content, setContent] = useState('')
   const [images, setImages] = useState<ContentImageResponse[]>([])
 
   useEffect(() => {
+    // 打开弹窗时，把已有内容或默认值同步进表单。
     if (isOpen) {
       setRating(initialValue?.rating ?? 5)
       setReviewTitle(initialValue?.title ?? '')
@@ -66,10 +72,12 @@ export function ReviewComposerDialog({
 
         {mode === 'create' && eligibility && !eligibility.canReview ? <p className="text-sm leading-6 text-slate-500">{eligibility.reason ?? translate('reviews.notEligible')}</p> : null}
 
+        {/* 可编辑时渲染完整表单，并允许上传图片。 */}
         {mode === 'edit' || eligibility?.canReview ? (
           <form
             className="grid gap-4"
             onSubmit={async event => {
+              // 提交时把当前评分、标题、内容和图片一起送出。
               event.preventDefault()
               await onSubmit({
                 rating,

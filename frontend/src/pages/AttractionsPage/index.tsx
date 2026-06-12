@@ -10,6 +10,7 @@ import { ATTRACTION_HOT_SPOTS, ATTRACTION_RECENT_SEARCHES } from './objects'
 import { AttractionPageHero, AttractionResultsSection, AttractionSearchCard } from './components'
 import { useAttractionsPageController } from './hooks'
 
+// AttractionsPage 页面入口，只负责把控制器状态分发给子组件。
 export function AttractionsPage({
   currentLanguage,
   signedInUser,

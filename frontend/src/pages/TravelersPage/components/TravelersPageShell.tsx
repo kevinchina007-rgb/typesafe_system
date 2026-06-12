@@ -1,3 +1,5 @@
+// 本文件定义 TravelersPage 页面的页面壳层，负责页面头部、内容区和操作入口布局。
+
 import { TravelerPanel } from './TravelerPanel'
 import type { TravelersPageController } from '../objects'
 

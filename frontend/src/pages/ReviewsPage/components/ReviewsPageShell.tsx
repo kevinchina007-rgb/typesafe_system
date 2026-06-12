@@ -1,3 +1,5 @@
+// 本文件定义 ReviewsPage 页面的页面壳层，负责页面头部、内容区和操作入口布局。
+
 import { CommunityHero } from '@/pages/shared/community/CommunityHero'
 import { ReviewComposerDialog } from '@/pages/shared/content/ReviewComposerDialog'
 import type { ReviewsPageController } from '../objects'

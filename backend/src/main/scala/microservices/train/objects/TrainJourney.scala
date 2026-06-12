@@ -1,3 +1,5 @@
+// TrainJourney 定义火车模块的数据模型。
+
 package com.typesafe.travel.train.domain
 
 import com.typesafe.travel.shared.kernel.*

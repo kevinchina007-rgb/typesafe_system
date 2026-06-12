@@ -1,4 +1,6 @@
-﻿import type { TrainStopResponse } from './TrainStopResponse'
+// 本文件定义 train 模块的 `TrainResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { TrainStopResponse } from './TrainStopResponse'
 import type { TrainSeatInventoryResponse } from './TrainSeatInventoryResponse'
 import type { TrainSeatResponse } from './TrainSeatResponse'
 import type { TrainSegmentPriceResponse } from './TrainSegmentPriceResponse'

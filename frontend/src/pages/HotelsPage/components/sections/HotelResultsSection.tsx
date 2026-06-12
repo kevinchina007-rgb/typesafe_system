@@ -2,6 +2,7 @@ import { formatIsoDateTime, localizeBedType, mapBackendStatusToProductLabel } fr
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { HotelResultsSectionProps } from '@/pages/HotelsPage/objects'
 
+// 酒店结果区，负责展示酒店、房型和预订表单。
 export function HotelResultsSection({
   currentLanguage,
   hotelResponses,

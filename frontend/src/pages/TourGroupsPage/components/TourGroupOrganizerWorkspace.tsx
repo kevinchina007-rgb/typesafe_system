@@ -1,3 +1,5 @@
+// 本文件定义 TourGroupsPage 页面的工作区组件，负责组织主要操作区和信息区。
+
 import { useEffect } from 'react'
 
 import type { AppLanguage, GroupPlanItemResponse, GroupPlanOptionResponse, TourGroupMembershipResponse, UserResponse } from '@/lib/mvp-types/index'

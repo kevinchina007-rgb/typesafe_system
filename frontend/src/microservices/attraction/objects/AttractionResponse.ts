@@ -1,4 +1,6 @@
-﻿import type { AttractionTicketTypeResponse } from './AttractionTicketTypeResponse'
+// 本文件定义 attraction 模块的 `AttractionResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { AttractionTicketTypeResponse } from './AttractionTicketTypeResponse'
 
 export type AttractionResponse = {
   attractionId: string

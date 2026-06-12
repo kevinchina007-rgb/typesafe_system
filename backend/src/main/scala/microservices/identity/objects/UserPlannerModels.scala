@@ -1,3 +1,5 @@
+// UserPlannerModels 定义身份模块的请求和响应模型。
+
 package com.typesafe.travel.identity.domain
 
 import io.circe.{Decoder, Encoder}

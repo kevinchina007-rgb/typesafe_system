@@ -1,3 +1,5 @@
+// UserDomainFunctions 定义身份模块的领域辅助函数。
+
 package com.typesafe.travel.identity.domain
 
 import com.typesafe.travel.shared.kernel.*

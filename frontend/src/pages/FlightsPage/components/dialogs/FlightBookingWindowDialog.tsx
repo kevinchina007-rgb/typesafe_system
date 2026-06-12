@@ -1,11 +1,13 @@
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 
+// 航班加收费用的弹窗参数，负责承接当前航班和关闭动作。
 type FlightBookingWindowDialogProps = {
   flight: FlightPlannerResponse | null
   translate: (translationKey: string) => string
   onClose: () => void
 }
 
+// 航班加收费用提示弹窗，只负责展示说明和关闭操作。
 export function FlightBookingWindowDialog({ flight, translate, onClose }: FlightBookingWindowDialogProps) {
   if (!flight) {
     return null
@@ -54,5 +56,4 @@ export function FlightBookingWindowDialog({ flight, translate, onClose }: Flight
     </div>
   )
 }
-
 

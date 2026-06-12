@@ -1,3 +1,5 @@
+// InventoryReservationDomainFunctions 定义inventory模块的领域辅助函数。
+
 package com.typesafe.travel.inventory.domain
 
 import com.typesafe.travel.shared.kernel.*

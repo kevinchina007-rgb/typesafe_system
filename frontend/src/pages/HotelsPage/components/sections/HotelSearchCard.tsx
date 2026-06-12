@@ -5,6 +5,7 @@ import { DateRangeSelector } from '@/pages/HotelsPage/components/controls/DateRa
 import { DestinationSelector } from '@/pages/HotelsPage/components/controls/DestinationSelector'
 import type { HotelSearchCardProps } from '@/pages/HotelsPage/objects'
 
+// 酒店搜索卡片，负责目的地、日期和搜索按钮。
 export function HotelSearchCard({
   isBusy,
   searchLocation,

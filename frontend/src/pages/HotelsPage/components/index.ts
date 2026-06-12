@@ -1,3 +1,4 @@
+// 酒店页面组件统一导出。
 export { DateRangeSelector } from './controls/DateRangeSelector'
 export { DestinationSelector } from './controls/DestinationSelector'
 export { GuestRoomSelector } from './controls/GuestRoomSelector'

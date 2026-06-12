@@ -1,3 +1,7 @@
+// 本文件定义 TourGroupsPage 页面的页面组件。
+
+// 本文件定义 TourGroupsPage 页面的页面组件。
+
 import { useMemo, useState } from 'react'
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
@@ -43,16 +47,19 @@ type TourGroupPlanComposerProps = {
   ) => Promise<void>
 }
 
+// 计算给定日期的下一天。
 function nextDay(dateText: string): string {
   const date = new Date(`${dateText}T00:00:00`)
   date.setDate(date.getDate() + 1)
   return date.toISOString().slice(0, 10)
 }
 
+// 拼出 UTC 时间字符串。
 function atUtc(dateText: string, hour: string): string {
   return `${dateText}T${hour}:00Z`
 }
 
+// 把任意时间值转成标准 ISO 字符串。
 function toInstantString(value: string): string {
   const parsedDate = new Date(value)
   if (Number.isNaN(parsedDate.getTime())) {
@@ -61,10 +68,12 @@ function toInstantString(value: string): string {
   return parsedDate.toISOString()
 }
 
+// 规范化搜索文本，便于做站点和城市匹配。
 function normalizeSearchToken(value: string): string {
   return value.trim().toLowerCase()
 }
 
+// 在列车停靠站里按站名或站码查找匹配项。
 function resolveTrainStop(train: TrainResponse, query: string): TrainResponse['stops'][number] | null {
   const normalizedQuery = normalizeSearchToken(query)
   return (
@@ -75,6 +84,7 @@ function resolveTrainStop(train: TrainResponse, query: string): TrainResponse['s
   )
 }
 
+// 把搜索建议列表渲染成可点击的候选项。
 function renderSuggestionList(
   suggestions: SearchSuggestionResponse[],
   onPick: (value: string) => void,
@@ -101,6 +111,7 @@ function renderSuggestionList(
   )
 }
 
+// 旅游团行程编辑器，负责搜索资源并把结果转换成行程项。
 export function TourGroupPlanComposer({
   currentLanguage,
   isBusy,
@@ -133,6 +144,7 @@ export function TourGroupPlanComposer({
     [existingPlanItems],
   )
 
+  // 加载出发地、到达地或目的地的搜索建议。
   async function loadLocationSuggestions(
     nextLocation: string,
     target: 'departure' | 'arrival' | 'location',
@@ -167,6 +179,7 @@ export function TourGroupPlanComposer({
     }
   }
 
+  // 根据当前搜索条件拉取对应资源列表。
   async function runSearch() {
     setSearchMessage('')
     setFlightResults([])
@@ -225,6 +238,7 @@ export function TourGroupPlanComposer({
     setAttractionResults(await onSearchAttractions({ city: location }))
   }
 
+  // 把一次搜索结果转成行程项和行程选项。
   async function createPlanWithOption(
     planPayload: {
       itemType: string

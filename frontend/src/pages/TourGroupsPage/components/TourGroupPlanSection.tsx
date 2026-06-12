@@ -1,4 +1,6 @@
-﻿import type { AppLanguage, GroupPlanItemResponse, GroupPlanOptionResponse } from '@/lib/mvp-types/index'
+// 本文件定义 TourGroupsPage 页面的页面分区，负责某一块独立内容的展示。
+
+import type { AppLanguage, GroupPlanItemResponse, GroupPlanOptionResponse } from '@/lib/mvp-types/index'
 import { formatPlanItemSummary, formatPlanOptionSummary } from '@/lib/presenters/tour-group-presenter'
 
 type TourGroupPlanSectionProps = {

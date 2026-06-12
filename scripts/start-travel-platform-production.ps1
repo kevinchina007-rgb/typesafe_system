@@ -152,7 +152,7 @@ if (-not (Test-BackendHealthy -BackendHealthUrl $backendHealthUrl)) {
     if ($env:TRAVEL_DB_URL -and $env:TRAVEL_DB_URL.Trim().Length -gt 0) {
       $env:TRAVEL_DB_URL.Trim()
     } else {
-      "jdbc:postgresql://127.0.0.1:5432/travel_platform"
+      "jdbc:postgresql://127.0.0.1:5432/travel_platform?sslmode=disable"
     }
   $databaseDriver =
     if ($env:TRAVEL_DB_DRIVER -and $env:TRAVEL_DB_DRIVER.Trim().Length -gt 0) {

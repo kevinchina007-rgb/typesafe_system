@@ -1,3 +1,5 @@
+// 本文件作为当前目录的入口导出文件。
+
 import { SmartTripPlannerPageShell } from './components/SmartTripPlannerPageShell'
 import { SMART_TRIP_PLANNER_PAGE_REGIONS, type SmartTripPlannerPageProps } from './objects'
 

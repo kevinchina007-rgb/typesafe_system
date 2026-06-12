@@ -7,6 +7,7 @@ import { managerBusinessEntries, getManagerEntryTitle, getManagerLoginTitle, get
 import { AttractionManagerPanelSection, SiteAdminPanel, SupplierFeedbackSection, SupplierManagerPanelSection, TrainManagerPanelSection } from './sections'
 import { useManagerPageController } from './hooks'
 
+// 管理后台页面入口，负责在未登录、已登录和各业务模块之间分发。
 export function ManagerPage(props: ManagerPageProps) {
   const controller = useManagerPageController(props)
   const {

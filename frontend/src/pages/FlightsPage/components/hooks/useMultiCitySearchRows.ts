@@ -1,7 +1,10 @@
-import type { FlightSearchSegment } from '@/app/stores/models/flights/flightTypes'
+﻿import type { FlightSearchSegment } from '@/app/stores/models/flights/flightTypes'
 
+
+// 多程搜索行里单个字段的可编辑范围，只允许这四个输入项。
 type SegmentField = 'departureAirport' | 'arrivalAirport' | 'departureDate' | 'arrivalDate'
 
+// 多程搜索行的联动逻辑，负责把相邻航段的机场字段同步好。
 export function useMultiCitySearchRows({
   segments,
   onSegmentChange,
@@ -34,3 +37,4 @@ export function useMultiCitySearchRows({
 
   return { updateSegment }
 }
+

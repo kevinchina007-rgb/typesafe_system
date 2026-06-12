@@ -1,5 +1,6 @@
 import type { AppViewKey } from '@/lib/mvp-types/index'
 
+// 首页轮播图数据结构。
 export type HomeHeroSlide = {
   image: string
   location: string
@@ -7,15 +8,18 @@ export type HomeHeroSlide = {
   tagline: string
 }
 
+// 首页功能入口卡片数据结构。
 export type HomeFeature = {
   label: string
   targetViewKey: Extract<AppViewKey, 'flights' | 'hotels' | 'trains' | 'attractions'>
 }
 
+// 首页页面参数。
 export type HomePageProps = {
   onNavigate: (viewKey: AppViewKey) => void
 }
 
+// 首页控制器暴露给组件的状态。
 export type HomePageController = {
   activeIndex: number
   typedLength: number
@@ -25,10 +29,13 @@ export type HomePageController = {
   homeFeaturePlaceholders: HomeFeature[]
 }
 
+// 首页可访问性区域 key。
 export type HomePageRegion = 'hero' | 'features'
 
+// 首页可访问性区域列表。
 export const HOME_PAGE_REGIONS: HomePageRegion[] = ['hero', 'features']
 
+// 首页首屏轮播图候选数据。
 export const HOME_HERO_SLIDES: HomeHeroSlide[] = [
   { image: '/images/home-hero-candidates/01_大海_葡萄牙Praia da Marinha_海与岩壁在这里相爱.jpg', location: '葡萄牙 马里尼亚海滩', nativeLocation: 'Praia da Marinha', tagline: '海与岩壁在这里相爱' },
   { image: '/images/home-hero-candidates/02_大海_葡萄牙Algarve_让浪花替你写下远方.jpg', location: '葡萄牙 阿尔加维', nativeLocation: 'Algarve', tagline: '让浪花替你写下远方' },
@@ -46,6 +53,7 @@ export const HOME_HERO_SLIDES: HomeHeroSlide[] = [
   { image: '/images/home-hero-candidates/14_夜晚都市_澳大利亚悉尼_港湾把星光留给归途.jpg', location: '澳大利亚 悉尼', nativeLocation: 'Sydney', tagline: '港湾把星光留给归途' },
 ]
 
+// 首页功能入口卡片数据。
 export const HOME_FEATURE_PLACEHOLDERS: HomeFeature[] = [
   { label: '航班', targetViewKey: 'flights' },
   { label: '酒店', targetViewKey: 'hotels' },

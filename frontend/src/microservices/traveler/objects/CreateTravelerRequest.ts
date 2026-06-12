@@ -1,4 +1,6 @@
-﻿import type { TravelerProfileInput } from './TravelerProfileInput'
+// 本文件定义 traveler 模块的 `CreateTravelerRequest`，作为请求参数并提供 JSON 编解码。
+
+import type { TravelerProfileInput } from './TravelerProfileInput'
 
 export type CreateTravelerRequest = TravelerProfileInput
 export const createTravelerRequestFromJson = (json: string): CreateTravelerRequest =>

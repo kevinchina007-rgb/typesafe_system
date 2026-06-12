@@ -1,4 +1,6 @@
-﻿import type { FeedbackThreadKind } from './FeedbackThreadKind'
+// 本文件定义 content 模块的 `FeedbackThreadResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { FeedbackThreadKind } from './FeedbackThreadKind'
 import type { FeedbackManagerType } from './FeedbackManagerType'
 import type { FeedbackMessageResponse } from './FeedbackMessageResponse'
 

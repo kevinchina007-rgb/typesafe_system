@@ -1,4 +1,6 @@
-﻿import type { TranslationDictionary } from '@/lib/i18n/types'
+// 本文件定义中文文案字典，供前端国际化和界面提示使用。
+
+import type { TranslationDictionary } from '@/lib/i18n/types'
 
 export const chineseTranslations: TranslationDictionary = {
   'app.eyebrow': '旅行工作台',

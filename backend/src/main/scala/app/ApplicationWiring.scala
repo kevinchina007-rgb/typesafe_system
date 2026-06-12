@@ -1,3 +1,5 @@
+// ApplicationWiring 负责组装 application 模块的 planner 依赖。
+
 package com.typesafe.travel.api
 
 import cats.effect.IO

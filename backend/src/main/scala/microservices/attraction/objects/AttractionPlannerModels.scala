@@ -1,3 +1,5 @@
+// AttractionPlannerModels 定义景点模块的请求和响应模型。
+
 package com.typesafe.travel.attraction.domain
 
 import io.circe.{Decoder, Encoder}

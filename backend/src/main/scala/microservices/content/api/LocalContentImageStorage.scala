@@ -1,3 +1,5 @@
+// LocalContentImageStorage 定义内容模块的图片存储实现。
+
 package com.typesafe.travel.api.storage
 
 import cats.effect.IO

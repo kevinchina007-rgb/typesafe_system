@@ -1,3 +1,5 @@
+// 本文件定义 GenerateAdvertisementTextCandidatesPlanner，负责 advertising 模块的生成编排和接口入口。
+
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 import type { GenerateAdvertisementTextCandidatesRequest } from '@/microservices/advertising/objects/GenerateAdvertisementTextCandidatesRequest'

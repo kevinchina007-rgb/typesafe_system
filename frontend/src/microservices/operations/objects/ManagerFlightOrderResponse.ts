@@ -1,3 +1,5 @@
+// 本文件定义 operations 模块的 `ManagerFlightOrderResponse`，作为响应数据并提供 JSON 编解码。
+
 import type { ManagerFlightOrderTravelerResponse } from './ManagerFlightOrderTravelerResponse'
 
 export type ManagerFlightOrderResponse = {

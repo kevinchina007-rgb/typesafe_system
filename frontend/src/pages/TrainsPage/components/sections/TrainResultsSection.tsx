@@ -1,6 +1,7 @@
 import type { TrainResultsSectionProps } from '@/pages/TrainsPage/objects'
 import { TrainResultCard } from './TrainResultCard'
 
+// TrainsPage 的结果列表区域，只负责把列车结果逐条渲染出来。
 export function TrainResultsSection({
   currentLanguage,
   isBusy,

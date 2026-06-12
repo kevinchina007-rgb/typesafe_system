@@ -1,4 +1,8 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
+// 本文件定义共享反馈会话工作区，负责反馈线程、消息列表和输入区交互。
+
+// 本文件定义共享反馈会话工作区，负责反馈线程、消息列表和输入区交互。
+
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
 import type { FeedbackManagerType } from '@/microservices/content/objects/FeedbackManagerType'
@@ -8,17 +12,20 @@ import type { OrderCancellationRequestStatus } from '@/microservices/content/obj
 import type { OrderCategory } from '@/pages/BookingsPage/objects'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 
+// 取消订单选择项，用于在客服会话里关联可操作的订单。
 type CancellationOrderOption = {
   orderId: string
   title: string
   category: OrderCategory
 }
 
+// 某些线程需要手工覆盖展示名称和头像地址。
 type SupportIdentityOverride = {
   name: string
   logoPath: string | null
 }
 
+// 工作区组件的完整输入参数。
 type FeedbackConversationWorkspaceProps = {
   audience: FeedbackAudience
   audienceDisplayName: string
@@ -52,18 +59,21 @@ type FeedbackConversationWorkspaceProps = {
   onOpenComplaintManagerThread?: (complaintMessageId: string) => Promise<FeedbackThread | void> | FeedbackThread | void
 }
 
+// 线程列表和聊天窗口统一使用的身份展示结构。
 type ChatIdentity = {
   name: string
   logoPath: string | null
   fallback: string
 }
 
+// 站点管理员的默认展示身份。
 const siteAdminIdentity: ChatIdentity = {
   name: '网站管理者',
   logoPath: null,
   fallback: '网',
 }
 
+// 航空公司名称与 Logo 的识别表，用来从文本中推断会话身份。
 const airlineIdentityCatalog: Array<{ name: string; logoPath: string }> = [
   { name: '奶龙航空', logoPath: '/images/airlines/NL.svg' },
   { name: '科比航空', logoPath: '/images/airlines/LD.svg' },
@@ -77,6 +87,7 @@ const airlineIdentityCatalog: Array<{ name: string; logoPath: string }> = [
   { name: '万户航空', logoPath: '/images/airlines/MH.svg' },
 ]
 
+// 根据管理端类型生成界面显示文案。
 function localizeManagerType(managerType: FeedbackManagerType, translate: (translationKey: string) => string) {
   if (managerType === 'Airline') return translate('manager.type.airline')
   if (managerType === 'Hotel') return translate('manager.type.hotel')
@@ -85,6 +96,7 @@ function localizeManagerType(managerType: FeedbackManagerType, translate: (trans
   return translate('manager.type.siteAdmin')
 }
 
+// 将取消订单状态转成用户可读文案。
 function localizeCancellationStatus(status: OrderCancellationRequestStatus) {
   if (status === 'approved') return '已同意取消'
   if (status === 'rejected') return '已拒绝取消'
@@ -92,16 +104,19 @@ function localizeCancellationStatus(status: OrderCancellationRequestStatus) {
   return '等待客服处理'
 }
 
+// 判断某条消息是不是当前一侧自己发出的。
 function isOwnMessage(senderRole: string, audience: FeedbackAudience) {
   if (audience === 'User') return senderRole === 'User'
   if (audience === 'Manager') return senderRole === 'Manager'
   return senderRole === 'SiteAdmin'
 }
 
+// 取线程中的最后一条消息，供预览和时间显示使用。
 function getLastMessage(thread: FeedbackThread) {
   return thread.messages[thread.messages.length - 1] ?? null
 }
 
+// 生成线程列表里的摘要文本。
 function getThreadPreview(thread: FeedbackThread) {
   const lastMessage = getLastMessage(thread)
   if (!lastMessage) return thread.subtitle || thread.resourceSummaryTitle || '暂无消息'
@@ -114,6 +129,7 @@ function getThreadPreview(thread: FeedbackThread) {
   return lastMessage.content
 }
 
+// 把列表里的时间格式化成适合扫读的短格式。
 function formatListTime(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
@@ -124,6 +140,7 @@ function formatListTime(value: string) {
   return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
 }
 
+// 把消息中间的时间分隔条格式化成完整日期时间。
 function formatCenterTime(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
@@ -136,6 +153,7 @@ function formatCenterTime(value: string) {
   })
 }
 
+// 控制消息流里是否需要插入时间分隔标记。
 function shouldShowTimeMarker(messages: FeedbackMessageResponse[], index: number) {
   if (index === 0) return true
   const previous = new Date(messages[index - 1]?.createdAt ?? '').getTime()
@@ -144,6 +162,7 @@ function shouldShowTimeMarker(messages: FeedbackMessageResponse[], index: number
   return current - previous > 10 * 60 * 1000
 }
 
+// 从文本中识别航空公司身份，用于自动匹配头像和名称。
 function findAirlineIdentity(text: string): ChatIdentity | null {
   const matchedAirline = airlineIdentityCatalog.find(airline => text.includes(airline.name))
   if (!matchedAirline) return null
@@ -154,6 +173,7 @@ function findAirlineIdentity(text: string): ChatIdentity | null {
   }
 }
 
+// 将管理端类型映射到订单分类，方便筛选可选订单。
 function managerTypeToOrderCategory(managerType: FeedbackManagerType): OrderCategory | null {
   if (managerType === 'Hotel') return 'hotelOrders'
   if (managerType === 'Airline') return 'flightOrders'
@@ -162,6 +182,7 @@ function managerTypeToOrderCategory(managerType: FeedbackManagerType): OrderCate
   return null
 }
 
+// 从文本中提取酒店展示名称，过滤掉明显的客服后缀。
 function extractHotelIdentityName(text: string) {
   const trimmed = text.trim()
   if (trimmed.length === 0) return null
@@ -173,6 +194,7 @@ function extractHotelIdentityName(text: string) {
   return candidate
 }
 
+// 根据线程内容、会话角色和覆盖规则，决定左侧头像与名称。
 function getThreadIdentity(
   thread: FeedbackThread,
   audience: FeedbackAudience,
@@ -238,6 +260,7 @@ function getThreadIdentity(
   }
 }
 
+// 为酒店类线程推断更准确的展示名称。
 function resolveHotelIdentityName(thread: FeedbackThread, fallbackName: string, cancellationOrderTitleById: Map<string, string>) {
   const orderTitle = thread.orderId ? cancellationOrderTitleById.get(thread.orderId) ?? '' : ''
   const resourceTitle = thread.resourceSummaryTitle.trim()
@@ -259,6 +282,7 @@ function resolveHotelIdentityName(thread: FeedbackThread, fallbackName: string, 
   return `${fallbackName}客服`
 }
 
+// 统一头像渲染入口，兼容后端资源、外链图片和文本兜底。
 function Avatar({
   imageUrl,
   fallback,
@@ -280,6 +304,7 @@ function Avatar({
   return <span className={className}>{fallback}</span>
 }
 
+// 反馈会话主工作区，负责列表、详情、消息输入和操作按钮。
 export function FeedbackConversationWorkspace({
   audience,
   audienceDisplayName,
@@ -768,8 +793,6 @@ export function FeedbackConversationWorkspace({
     </section>
   )
 }
-
-
 
 
 

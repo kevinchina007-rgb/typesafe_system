@@ -1,3 +1,5 @@
+// 本文件定义资源服务前端传输类型，供图片和媒体字段复用。
+
 export type { AttractionListResponse } from '@/microservices/attraction/objects/AttractionListResponse'
 export type { AttractionResponse } from '@/microservices/attraction/objects/AttractionResponse'
 export type { AttractionSearchQuery } from '@/microservices/attraction/objects/AttractionSearchQuery'

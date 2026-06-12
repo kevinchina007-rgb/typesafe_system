@@ -1,3 +1,4 @@
+// FlightsPage 模型统一导出。
 export type {
   DisplayFlight,
   FlightResultsRoute,

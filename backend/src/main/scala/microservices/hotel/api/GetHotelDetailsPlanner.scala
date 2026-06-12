@@ -1,3 +1,5 @@
+// GetHotelDetailsPlanner 是酒店模块的获取入口，负责请求校验、流程编排和结果返回。
+
 package com.typesafe.travel.hotel.api
 
 import com.typesafe.travel.hotel.objects.*

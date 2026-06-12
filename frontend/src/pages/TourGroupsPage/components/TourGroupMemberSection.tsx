@@ -1,3 +1,5 @@
+// 本文件定义 TourGroupsPage 页面的页面分区，负责某一块独立内容的展示。
+
 import type { AppLanguage, TourGroupDetailsResponse, TourGroupMembershipResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { formatTravelerChipLabel, getTourGroupConceptLabel } from '@/lib/presenters/tour-group-presenter'
 import { localizeTourGroupStatus } from '@/lib/presenters/view-models'

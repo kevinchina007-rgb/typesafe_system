@@ -1,3 +1,5 @@
+// User 定义身份模块的数据模型。
+
 package com.typesafe.travel.identity.domain
 
 import com.typesafe.travel.shared.kernel.*

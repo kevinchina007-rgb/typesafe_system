@@ -1,3 +1,5 @@
+// 本文件定义 AccountPage 页面的页面组件。
+
 import type { ReactNode } from 'react'
 
 type DetailFieldProps = {

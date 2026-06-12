@@ -5,6 +5,7 @@ import { buildLateBookingNotice } from './functions'
 import { useFlightsPageController } from './hooks'
 import type { FlightsPageProps } from './objects'
 
+// FlightsPage 入口组件，只负责把 controller 状态分发给各个子组件。
 export function FlightsPage(props: FlightsPageProps) {
   const {
     searchState,
@@ -80,11 +81,11 @@ export function FlightsPage(props: FlightsPageProps) {
           </section>
         )}
 
-          <FlightResultsSection
-            searchState={searchState}
-            flightResponses={displayFlightResponses}
-            flightResultGroups={displayFlightResultGroups}
-            hasSearchedFlights={displayHasSearchedFlights}
+        <FlightResultsSection
+          searchState={searchState}
+          flightResponses={displayFlightResponses}
+          flightResultGroups={displayFlightResultGroups}
+          hasSearchedFlights={displayHasSearchedFlights}
           isBusy={isBusy}
           isGuestMode={isGuestMode}
           signedInUserId={signedInUserId}

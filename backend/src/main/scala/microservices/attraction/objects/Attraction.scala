@@ -1,3 +1,5 @@
+// Attraction 定义景点模块的数据模型。
+
 package com.typesafe.travel.attraction.domain
 
 import com.typesafe.travel.shared.kernel.*

@@ -1,3 +1,5 @@
+// StaticAssetRouter 负责静态资源请求的路由分发。
+
 package com.typesafe.travel.static
 
 import cats.effect.IO

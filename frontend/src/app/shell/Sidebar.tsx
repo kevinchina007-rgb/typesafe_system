@@ -1,4 +1,6 @@
-﻿import type { NavItem, TopNavKey } from '@/app/navigation'
+// 本文件定义侧边栏，负责模块切换、导航分组和当前模块高亮。
+
+import type { NavItem, TopNavKey } from '@/app/navigation'
 import { useNavigationUiStore } from '@/app/stores/navigation-ui-store'
 import type { AppViewKey } from '@/lib/mvp-types/index'
 import { Icon } from '@/app/icons/Icons'
@@ -11,8 +13,11 @@ type SidebarProps = {
   translate: (translationKey: string) => string
 }
 
+// 侧边栏负责当前一级导航下的二级菜单展示和折叠控制。
 export function Sidebar({ currentTopNav, currentViewKey, items, onSelectView, translate }: SidebarProps) {
+  // 从导航 UI 状态里读取侧边栏是否折叠。
   const isCollapsed = useNavigationUiStore(state => state.isSidebarCollapsed)
+  // 切换侧边栏折叠状态，供按钮直接调用。
   const toggleSidebarCollapsed = useNavigationUiStore(state => state.toggleSidebarCollapsed)
 
   return (

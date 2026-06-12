@@ -3,6 +3,7 @@ import { REVIEWS_PAGE_REGIONS } from './objects'
 import { ReviewsPageShell } from './components/ReviewsPageShell'
 import { useReviewsPageController } from './hooks'
 
+// ReviewsPage 入口组件，只负责把控制器状态交给页面壳渲染。
 export function ReviewsPage({
   currentLanguage,
   signedInUser,

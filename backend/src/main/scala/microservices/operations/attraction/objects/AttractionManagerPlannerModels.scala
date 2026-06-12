@@ -1,3 +1,5 @@
+// AttractionManagerPlannerModels 负责operations相关实现。
+
 package com.typesafe.travel.operations.domain
 
 import io.circe.{Decoder, Encoder}

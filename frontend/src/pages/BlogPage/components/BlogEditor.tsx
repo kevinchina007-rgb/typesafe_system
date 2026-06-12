@@ -3,6 +3,7 @@
 import type { ContentImageResponse } from '@/lib/mvp-types/index'
 import { ContentImageUploader } from '@/pages/shared/content/ContentImageUploader'
 
+// Blog 编辑器参数，负责文章标题、摘要、正文和配图。
 type BlogEditorProps = {
   isBusy: boolean
   mode?: 'create' | 'edit'
@@ -23,6 +24,7 @@ type BlogEditorProps = {
   onCancel?: () => void
 }
 
+// Blog 编辑器，负责输入内容并提交草稿或正式发布。
 export function BlogEditor({
   isBusy,
   mode = 'create',
@@ -32,9 +34,13 @@ export function BlogEditor({
   onSubmit,
   onCancel,
 }: BlogEditorProps) {
+  // 标题输入值。
   const [title, setTitle] = useState(initialValue?.title ?? '')
+  // 摘要输入值。
   const [summary, setSummary] = useState(initialValue?.summary ?? '')
+  // 正文输入值。
   const [content, setContent] = useState(initialValue?.content ?? '')
+  // 上传图片列表。
   const [images, setImages] = useState<ContentImageResponse[]>(initialValue?.images ?? [])
 
   useEffect(() => {

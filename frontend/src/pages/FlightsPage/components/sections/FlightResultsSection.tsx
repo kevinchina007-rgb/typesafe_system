@@ -7,8 +7,10 @@ import { departureTimeWindows } from '@/pages/FlightsPage/functions'
 import { useFlightResultsState } from '@/pages/FlightsPage/components/hooks/useFlightResultsState'
 import type { DisplayFlight, FlightResultsRoute, FlightResultsSectionProps, FlightSortMode } from '../../objects'
 
+// 往返结果区当前激活的航段标签。
 type RoundTripLeg = 'outbound' | 'return'
 
+// 不同航段在结果区里的主题样式，只影响外观不影响逻辑。
 const legTheme = {
   outbound: {
     shell: 'bg-[#fff4cf]',
@@ -27,6 +29,7 @@ const legTheme = {
   },
 }
 
+// FlightsPage 结果展示区，负责承接筛选、日期条和航班列表。
 export function FlightResultsSection({
   searchState,
   flightResponses,
@@ -173,7 +176,7 @@ export function FlightResultsSection({
   return (
     <section className="relative z-0 grid gap-6 bg-slate-100 px-6 pb-8 pt-10">
       {isRoundTrip ? (
-      <ResultsBody
+        <ResultsBody
           route={activeRoute}
           resultsState={resultsState}
           routeTabs={
@@ -240,6 +243,7 @@ export function FlightResultsSection({
   )
 }
 
+// 往返结果区的两个航段标签，负责在去程和返程之间切换。
 function RoundTripTabs({
   activeLeg,
   outboundRoute,
@@ -256,14 +260,14 @@ function RoundTripTabs({
       <LegTab
         isActive={activeLeg === 'outbound'}
         theme={legTheme.outbound}
-        title="去程："
+        title="去程"
         route={outboundRoute}
         onClick={() => onChange('outbound')}
       />
       <LegTab
         isActive={activeLeg === 'return'}
         theme={legTheme.return}
-        title="返程："
+        title="返程"
         route={returnRoute}
         onClick={() => onChange('return')}
       />
@@ -271,6 +275,7 @@ function RoundTripTabs({
   )
 }
 
+// 多程结果区的航段标签窗口，负责分页展示多段航程。
 function MultiCityTabs({
   activeSegmentId,
   segments,
@@ -313,7 +318,7 @@ function MultiCityTabs({
             key={segment.id}
             isActive={activeSegmentId === segment.id}
             theme={legTheme.outbound}
-            title={`第${firstVisibleIndex + index + 1}程：`}
+            title={`第 ${firstVisibleIndex + index + 1} 程`}
             route={{
               departureAirport: segment.departureAirport,
               arrivalAirport: segment.arrivalAirport,
@@ -334,6 +339,7 @@ function MultiCityTabs({
   )
 }
 
+// 左右滚动按钮，只负责移动航段标签窗口。
 function TabWindowButton({
   direction,
   disabled,
@@ -359,6 +365,7 @@ function TabWindowButton({
   )
 }
 
+// 单个航段标签，把航线和日期摘要拼成可点击按钮。
 function LegTab({
   isActive,
   theme,
@@ -387,6 +394,7 @@ function LegTab({
   )
 }
 
+// 结果区主体容器，把日期条、筛选条和航班卡片串起来。
 function ResultsBody({
   route,
   resultsState,
@@ -478,6 +486,7 @@ function ResultsBody({
   )
 }
 
+// 日期价格条，负责展示未来几天的最低价概览。
 function DatePriceStrip({
   prices,
   selectedDate,
@@ -509,7 +518,7 @@ function DatePriceStrip({
               <span className="text-base font-medium">{formatDateLabel(item.date)}</span>
               <span className="text-base">{formatWeekday(item.date)}</span>
               <strong className={`text-xl font-bold ${isSelected ? 'text-white' : 'text-orange-500'}`}>
-                {item.lowestPrice ? `¥${formatPrice(item.lowestPrice)}` : '--'}
+                {item.lowestPrice ? `￥${formatPrice(item.lowestPrice)}` : '--'}
               </strong>
             </button>
           )
@@ -520,6 +529,7 @@ function DatePriceStrip({
   )
 }
 
+// 日期窗口翻页按钮，只负责切换前后日期页。
 function DateWindowButton({ direction, onClick }: { direction: 'left' | 'right'; onClick: () => void }) {
   return (
     <button
@@ -539,6 +549,7 @@ function DateWindowButton({ direction, onClick }: { direction: 'left' | 'right';
   )
 }
 
+// 结果区筛选栏参数，负责承接所有下拉筛选和排序动作。
 type FlightFilterBarProps = {
   airlineOptions: string[]
   departureAirportOptions: string[]
@@ -560,6 +571,7 @@ type FlightFilterBarProps = {
   formatCabinLabel: (value: string) => string
 }
 
+// 航班结果筛选栏，把航空公司、时间、机场、舱位和排序入口聚合起来。
 function FlightFilterBar({
   airlineOptions,
   departureAirportOptions,
@@ -584,7 +596,7 @@ function FlightFilterBar({
     <div className="flex flex-wrap items-center justify-between gap-4 bg-white px-6 py-5">
       <div className="flex flex-wrap items-center gap-3">
         <FilterSelect label="航空公司" value={selectedAirline} onChange={onAirlineChange} options={airlineOptions} />
-        <FilterSelect label="起抵时间" value={selectedTimeRange} onChange={onTimeRangeChange} options={departureTimeWindows} />
+        <FilterSelect label="起降时间" value={selectedTimeRange} onChange={onTimeRangeChange} options={departureTimeWindows} />
         <FilterSelect label="出发机场" value={selectedDepartureAirport} onChange={onDepartureAirportChange} options={departureAirportOptions} renderOption={formatAirportName} />
         <FilterSelect label="到达机场" value={selectedArrivalAirport} onChange={onArrivalAirportChange} options={arrivalAirportOptions} renderOption={formatAirportName} />
         <FilterSelect label="舱位" value={selectedCabin} onChange={onCabinChange} options={cabinOptions} renderOption={formatCabinLabel} />
@@ -603,13 +615,14 @@ function FlightFilterBar({
           className={sortMode === 'departureTime' ? 'text-sky-600' : 'text-slate-800'}
           onClick={() => onSortModeChange('departureTime')}
         >
-          起飞时间早-晚
+          起飞时间
         </button>
       </div>
     </div>
   )
 }
 
+// 单个筛选下拉框，负责展示当前值并展开候选项。
 function FilterSelect({
   label,
   value,
@@ -671,6 +684,7 @@ function FilterSelect({
   )
 }
 
+// 单个航班结果卡片，负责展示航司、时间、价格和预订按钮。
 function FlightResultCard({
   displayFlight,
   isBusy,
@@ -710,7 +724,7 @@ function FlightResultCard({
 
       <div className="grid content-center justify-items-end gap-1">
         <strong className={`text-4xl font-bold ${getPriceToneClass(displayFlight.priceTone)}`}>
-          ¥{formatPrice(displayFlight.displayPrice)}
+          ￥{formatPrice(displayFlight.displayPrice)}
         </strong>
         <span className="text-base text-slate-500">{getPriceToneLabel(displayFlight.priceTone)}</span>
       </div>
@@ -731,6 +745,7 @@ function FlightResultCard({
   )
 }
 
+// 出行人选择面板，把可预订的旅客勾选出来。
 function FlightTravelerSelectionPanel({
   travelers,
   selectedTravelerIds,
@@ -774,6 +789,7 @@ function FlightTravelerSelectionPanel({
   )
 }
 
+// 航班时间块，只负责显示时间和机场名称。
 function TimeBlock({ time, airport }: { time: string; airport: string }) {
   return (
     <div className="grid gap-1">
@@ -783,6 +799,7 @@ function TimeBlock({ time, airport }: { time: string; airport: string }) {
   )
 }
 
+// 把航班时间格式化成页面需要的 24 小时制文本。
 function formatFlightClock(isoDateTime: string | null): string {
   if (!isoDateTime) {
     return '--:--'
@@ -795,6 +812,7 @@ function formatFlightClock(isoDateTime: string | null): string {
   })
 }
 
+// 把日期格式化成结果区顶部卡片需要的短日期文本。
 function formatDateLabel(date: string): string {
   return new Date(`${date}T00:00:00`).toLocaleDateString('zh-CN', {
     month: '2-digit',
@@ -802,12 +820,14 @@ function formatDateLabel(date: string): string {
   })
 }
 
+// 把日期格式化成星期文本。
 function formatWeekday(date: string): string {
   return new Date(`${date}T00:00:00`).toLocaleDateString('zh-CN', {
     weekday: 'short',
   })
 }
 
+// 格式化价格，统一整数和小数的展示方式。
 function formatPrice(value: string | number): string {
   const numeric = Number(value)
   if (!Number.isFinite(numeric)) {
@@ -816,6 +836,7 @@ function formatPrice(value: string | number): string {
   return numeric % 1 === 0 ? numeric.toFixed(0) : numeric.toFixed(2)
 }
 
+// 根据价格层级返回不同的颜色 class。
 function getPriceToneClass(kind: DisplayFlight['priceTone']) {
   if (kind === 'lowest') {
     return 'text-orange-500'
@@ -828,6 +849,7 @@ function getPriceToneClass(kind: DisplayFlight['priceTone']) {
   return 'text-slate-950'
 }
 
+// 根据价格层级返回不同的中文标签。
 function getPriceToneLabel(kind: DisplayFlight['priceTone']) {
   if (kind === 'lowest') {
     return '最低价'

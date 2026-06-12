@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useAdvertisingStore, useDeliverableAdvertisements } from '@/app/stores/advertising-store'
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
@@ -11,6 +11,7 @@ import { loadFlightResultGroups, validateFlightSearchState } from '@/pages/Fligh
 import { useFlightSearchState } from '../components/hooks/useFlightSearchState'
 import type { FlightsPageController, FlightsPageProps } from '../objects'
 
+// FlightsPage 的页面控制器，负责把搜索、预订、广告和状态恢复这些页面逻辑集中起来.
 export function useFlightsPageController({
   currentLanguage,
   signedInUser,
@@ -147,7 +148,7 @@ export function useFlightsPageController({
           window.scrollTo({ top: 0, behavior: 'smooth' })
         } catch (error) {
           if (!cancelled) {
-            onShowNotice('error', translate('error.friendly.default'), error instanceof Error ? error.message : '鑸璺宠浆澶辫触銆?')
+          onShowNotice('error', translate('error.friendly.default'), error instanceof Error ? error.message : '航班广告跳转失败。')
           }
         }
       })()
@@ -243,7 +244,7 @@ export function useFlightsPageController({
       searchStateStore.setFlightResultGroups([])
       searchStateStore.setFlightPlannerResponses([])
       searchStateStore.setHasSearchedFlights(false)
-      reportErrorOnce('航班接口摔了一跤：请先确认后端已重启，并且新的航班演示数据迁移已经跑完。')
+      reportErrorOnce('航班接口出错了：请先确认后端已重启，并且新的航班演示数据已经迁移完成。')
     }
   }, [loadFlightResultGroups, reportErrorOnce, searchKey, searchFlights, searchStateStore])
 
@@ -317,3 +318,4 @@ export function useFlightsPageController({
     initialSelectedCabin,
   }
 }
+

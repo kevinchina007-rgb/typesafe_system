@@ -1,3 +1,5 @@
+// TravelerProfile 定义旅客模块的数据模型。
+
 package com.typesafe.travel.traveler.domain
 
 import com.typesafe.travel.shared.kernel.*

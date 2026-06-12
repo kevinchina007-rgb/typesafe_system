@@ -1,4 +1,6 @@
-﻿export type ManagerBatchDecisionResponse = {
+// 本文件定义 operations 模块的 `ManagerBatchDecisionResponse`，作为响应数据并提供 JSON 编解码。
+
+export type ManagerBatchDecisionResponse = {
   processedCount: number
   orderItemIds: string[]
   action: string

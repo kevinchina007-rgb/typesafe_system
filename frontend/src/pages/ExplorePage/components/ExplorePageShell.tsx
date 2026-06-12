@@ -1,3 +1,5 @@
+// 本文件定义 ExplorePage 页面的页面壳层，负责页面头部、内容区和操作入口布局。
+
 import type { ExplorePageController, ExplorePageProps } from '../objects'
 import { EXPLORE_SEARCH_TYPES } from '../objects'
 import { targetViewFromResult } from '../functions'

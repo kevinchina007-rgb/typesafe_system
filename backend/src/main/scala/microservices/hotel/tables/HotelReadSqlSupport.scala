@@ -1,3 +1,5 @@
+// HotelReadSqlSupport 封装酒店模块的数据库读写。
+
 package com.typesafe.travel.hotel.tables
 
 import com.typesafe.travel.hotel.api.{createRoomInventory, restorePersistedHotel, restorePersistedRoomType}

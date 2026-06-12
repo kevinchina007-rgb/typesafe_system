@@ -2,6 +2,7 @@ import type { OrderPanelProps } from '@/pages/BookingsPage/objects'
 import { AttractionOrderCard, FlightOrderCard, HotelOrderCard, TrainOrderCard } from '@/pages/BookingsPage/components/cards'
 import { getOrderCategoryDescriptionKey, getOrderCategoryTitle, orderMatchesCategory } from '@/pages/BookingsPage/functions'
 
+// 订单面板主体，把订单列表、分类标题和动作按钮组织起来。
 export function OrderPanel({
   currentLanguage,
   orderCategory,

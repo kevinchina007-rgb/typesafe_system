@@ -1,3 +1,5 @@
+// TrainPlannerModels 定义火车模块的请求和响应模型。
+
 package com.typesafe.travel.train.domain
 
 import io.circe.{Decoder, Encoder}

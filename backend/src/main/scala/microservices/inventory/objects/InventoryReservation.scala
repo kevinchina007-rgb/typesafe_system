@@ -1,3 +1,5 @@
+// InventoryReservation 定义inventory模块的数据模型。
+
 package com.typesafe.travel.inventory.domain
 
 import com.typesafe.travel.shared.kernel.*

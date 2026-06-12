@@ -1,3 +1,4 @@
+// 航班路线上的单个地点展示块，只负责显示城市和机场码。
 import { formatFlightAirportLabel } from '@/app/stores/models/flights/flightConstants'
 
 export function FlightRoutePoint({ airportCode, city }: { airportCode: string; city: string }) {

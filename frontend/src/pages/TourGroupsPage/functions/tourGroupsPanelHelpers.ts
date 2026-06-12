@@ -1,3 +1,5 @@
+// 本文件定义 TourGroupsPage 的辅助函数，负责整理团组列表、成员数量和当前选中状态。
+
 import type { GroupPlanItemResponse, GroupPlanOptionResponse, TourGroupDetailsResponse, TourGroupSummaryResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 
 export function syncGroupSummary(groups: TourGroupSummaryResponse[], details: TourGroupDetailsResponse): TourGroupSummaryResponse[] {

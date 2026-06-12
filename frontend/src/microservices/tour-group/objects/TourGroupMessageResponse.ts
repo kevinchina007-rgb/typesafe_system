@@ -1,4 +1,6 @@
-﻿import type { TourGroupMessageAttachmentResponse } from './TourGroupMessageAttachmentResponse'
+// 本文件定义 tour-group 模块的 `TourGroupMessageResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { TourGroupMessageAttachmentResponse } from './TourGroupMessageAttachmentResponse'
 import type { TourGroupMessageReactionResponse } from './TourGroupMessageReactionResponse'
 
 export type TourGroupMessageResponse = {

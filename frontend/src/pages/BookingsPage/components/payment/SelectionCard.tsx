@@ -1,3 +1,4 @@
+// 支付方式选择卡片，只负责单个单选项的展示。
 export function SelectionCard({
   name,
   value,

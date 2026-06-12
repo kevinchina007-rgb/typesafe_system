@@ -1,3 +1,5 @@
+// 本文件定义航班业务展示辅助函数，负责航班页的展示计算。
+
 import type { AppLanguage, TravelerResponse } from '@/lib/mvp-types/index'
 import { localizeCabinClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 

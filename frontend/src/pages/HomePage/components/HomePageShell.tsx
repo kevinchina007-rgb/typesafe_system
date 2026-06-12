@@ -1,6 +1,7 @@
 import type { HomePageController } from '../objects'
 import type { HomePageProps } from '../objects'
 
+// 首页主壳层，负责首屏视觉、轮播和功能入口卡片。
 type HomePageShellProps = {
   controller: HomePageController
 } & HomePageProps

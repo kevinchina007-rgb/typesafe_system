@@ -1,3 +1,5 @@
+// 本文件把 `content` 服务的博客、评论、反馈和点评数据整理成前端展示模型。
+
 import type { AppLanguage, BlogPostSummaryResponse, ResourceReviewSummaryResponse, ReviewResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime } from '@/lib/presenters/view-models'
 

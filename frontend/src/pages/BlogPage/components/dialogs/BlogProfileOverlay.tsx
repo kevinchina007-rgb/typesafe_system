@@ -3,12 +3,14 @@ import { ArrowLeft, X } from 'lucide-react'
 import type { BlogPageController } from '../../objects'
 import { BlogProfilePanel } from '../panels/BlogProfilePanel'
 
+// 个人主页浮层参数，包含 controller、登录用户和关闭回调。
 type BlogProfileOverlayProps = {
   controller: BlogPageController
   signedInUser: { userId: string; nickname?: string | null; avatarUrl?: string | null } | null
   onClose: () => void
 }
 
+// 个人主页浮层，用于在当前页面上覆盖展示完整主页信息。
 export function BlogProfileOverlay({ controller, signedInUser, onClose }: BlogProfileOverlayProps) {
   return (
     <div className="fixed inset-0 z-[60] overflow-y-auto bg-white/95 px-6 py-6 text-slate-950 backdrop-blur-sm">

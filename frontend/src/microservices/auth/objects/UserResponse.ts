@@ -1,4 +1,6 @@
-﻿export type UserResponse = {
+// 本文件定义 auth 模块的 `UserResponse`，作为响应数据并提供 JSON 编解码。
+
+export type UserResponse = {
   userId: string
   email: string
   nickname: string

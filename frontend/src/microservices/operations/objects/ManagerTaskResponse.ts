@@ -1,4 +1,6 @@
-﻿import type { SupplierReviewDecisionResponse } from '@/microservices/order/objects/SupplierReviewDecisionResponse'
+// 本文件定义 operations 模块的 `ManagerTaskResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { SupplierReviewDecisionResponse } from '@/microservices/order/objects/SupplierReviewDecisionResponse'
 
 export type ManagerTaskResponse = {
   taskId?: string

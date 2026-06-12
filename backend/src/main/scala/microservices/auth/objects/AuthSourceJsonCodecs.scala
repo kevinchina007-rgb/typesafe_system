@@ -1,3 +1,5 @@
+// AuthSourceJsonCodecs 定义认证模块的源数据 JSON codec。
+
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*

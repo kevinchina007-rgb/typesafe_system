@@ -53,7 +53,7 @@ $env:JAVA_HOME = $javaHome
 $env:TRAVEL_REPOSITORY_MODE = $RepositoryMode
 $env:TRAVEL_BACKEND_PORT = "$BackendPort"
 $launcherDatabasePath = (Join-Path $backendRoot 'data\travel-platform-runtime').Replace('\', '/')
-$env:TRAVEL_DB_URL = "jdbc:postgresql://127.0.0.1:5432/travel_platform"
+$env:TRAVEL_DB_URL = "jdbc:postgresql://127.0.0.1:5432/travel_platform?sslmode=disable"
 $env:TRAVEL_DB_DRIVER = "org.postgresql.Driver"
 $env:TRAVEL_DB_USER = "postgres"
 $backendSbtHome = Join-Path $backendRoot '.sbt-home'

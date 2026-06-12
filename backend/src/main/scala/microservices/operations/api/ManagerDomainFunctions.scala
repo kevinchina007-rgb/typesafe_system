@@ -1,6 +1,13 @@
+// ManagerDomainFunctions 定义operations模块的领域辅助函数。
+
 package com.typesafe.travel.operations.domain
 
+import cats.effect.IO
+import cats.syntax.all.*
+import com.typesafe.travel.persistence.operations.ManagerBookingTaskPlannerPlainSql
+import com.typesafe.travel.persistence.operations.ManagerRefundTaskPlannerPlainSql
 import com.typesafe.travel.shared.kernel.*
+import java.sql.Connection
 import java.time.Instant
 
 def registerAirlineManager(
@@ -75,3 +82,36 @@ def managerContextType(managerContext: ManagerContext): ManagerType =
     case _: AirlineManager    => ManagerType.Airline
     case _: HotelManager      => ManagerType.Hotel
     case _: AttractionManager => ManagerType.Attraction
+
+def updateRefundDecision(
+    connection: Connection,
+    orderId: String,
+    action: String,
+    refundStatus: String,
+    approved: Boolean,
+    now: Instant
+): IO[ManagerBatchDecisionPlannerResponse] =
+  ManagerRefundTaskPlannerPlainSql.updateRequestedRefundDecision(connection, orderId, refundStatus, approved, now)
+    .as(ManagerBatchDecisionPlannerResponse(1, Nil, action))
+
+def updateSupplierReviewDecisions(
+    connection: Connection,
+    managerId: String,
+    orderItemIds: List[String],
+    action: String,
+    supplierReviewStatus: String,
+    reviewDecision: String,
+    reason: Option[String],
+    now: Instant
+): IO[ManagerBatchDecisionPlannerResponse] =
+  orderItemIds.traverse_(orderItemId =>
+    ManagerBookingTaskPlannerPlainSql.updateSupplierReviewDecision(
+      connection,
+      managerId,
+      orderItemId,
+      supplierReviewStatus,
+      reviewDecision,
+      reason,
+      now
+    )
+  ).as(ManagerBatchDecisionPlannerResponse(orderItemIds.size, orderItemIds, action))

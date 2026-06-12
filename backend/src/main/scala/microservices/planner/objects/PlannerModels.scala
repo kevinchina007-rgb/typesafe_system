@@ -51,74 +51,6 @@ final case class TravelPreference(
 )
 // TODO(stage-2): derive weighting helpers for candidate scoring.
 
-final case class PreferenceLevel(value: String):
-  override def toString: String = value
-
-object PreferenceLevel:
-  val Low: PreferenceLevel = PreferenceLevel("Low")
-  val Medium: PreferenceLevel = PreferenceLevel("Medium")
-  val High: PreferenceLevel = PreferenceLevel("High")
-
-  def fromText(value: String): PreferenceLevel =
-    value.trim.toLowerCase match
-      case "low" => Low
-      case "high" => High
-      case _ => Medium
-
-final case class TransportPreference(value: String):
-  override def toString: String = value
-
-object TransportPreference:
-  val Any: TransportPreference = TransportPreference("Any")
-  val WalkFirst: TransportPreference = TransportPreference("WalkFirst")
-  val PublicTransitFirst: TransportPreference = TransportPreference("PublicTransitFirst")
-  val TaxiFirst: TransportPreference = TransportPreference("TaxiFirst")
-  val FlightAllowed: TransportPreference = TransportPreference("FlightAllowed")
-  val TrainPreferred: TransportPreference = TransportPreference("TrainPreferred")
-
-  def fromText(value: String): TransportPreference =
-    value.trim.toLowerCase match
-      case "walkfirst" | "walk_first" => WalkFirst
-      case "publictransitfirst" | "public_transit_first" => PublicTransitFirst
-      case "taxifirst" | "taxi_first" => TaxiFirst
-      case "flightallowed" | "flight_allowed" => FlightAllowed
-      case "trainpreferred" | "train_preferred" => TrainPreferred
-      case _ => Any
-
-final case class HotelPreference(value: String):
-  override def toString: String = value
-
-object HotelPreference:
-  val Any: HotelPreference = HotelPreference("Any")
-  val Budget: HotelPreference = HotelPreference("Budget")
-  val Comfort: HotelPreference = HotelPreference("Comfort")
-  val Premium: HotelPreference = HotelPreference("Premium")
-  val CentralLocation: HotelPreference = HotelPreference("CentralLocation")
-  val FamilyFriendly: HotelPreference = HotelPreference("FamilyFriendly")
-
-  def fromText(value: String): HotelPreference =
-    value.trim.toLowerCase match
-      case "budget" => Budget
-      case "comfort" => Comfort
-      case "premium" => Premium
-      case "centrallocation" | "central_location" => CentralLocation
-      case "familyfriendly" | "family_friendly" => FamilyFriendly
-      case _ => Any
-
-final case class TripPace(value: String):
-  override def toString: String = value
-
-object TripPace:
-  val Compact: TripPace = TripPace("Compact")
-  val Balanced: TripPace = TripPace("Balanced")
-  val Relaxed: TripPace = TripPace("Relaxed")
-
-  def fromText(value: String): TripPace =
-    value.trim.toLowerCase match
-      case "compact" => Compact
-      case "relaxed" => Relaxed
-      case _ => Balanced
-
 final case class TripPlan(
     tripPlanId: TripPlanId,
     ownerUserId: UserId,
@@ -129,24 +61,6 @@ final case class TripPlan(
     createdAt: Instant
 )
 // TODO(stage-5): add editable draft operations once the planner becomes user-editable.
-
-final case class TripPlanStatus(value: String):
-  override def toString: String = value
-
-object TripPlanStatus:
-  val Draft: TripPlanStatus = TripPlanStatus("Draft")
-  val CandidateGenerated: TripPlanStatus = TripPlanStatus("CandidateGenerated")
-  val CandidateSelected: TripPlanStatus = TripPlanStatus("CandidateSelected")
-  val Saved: TripPlanStatus = TripPlanStatus("Saved")
-  val Archived: TripPlanStatus = TripPlanStatus("Archived")
-
-  def fromText(value: String): TripPlanStatus =
-    value.trim.toLowerCase match
-      case "candidategenerated" | "candidate_generated" => CandidateGenerated
-      case "candidateselected" | "candidate_selected" => CandidateSelected
-      case "saved" => Saved
-      case "archived" => Archived
-      case _ => Draft
 
 final case class TripPlanSummary(
     title: String,
@@ -210,30 +124,6 @@ final case class PlannerTimeBlock(
 
 final case class LocalDateTimeLabel(value: String) extends AnyVal
 
-final case class PlannedTransportMode(value: String):
-  override def toString: String = value
-
-object PlannedTransportMode:
-  val Walk: PlannedTransportMode = PlannedTransportMode("Walk")
-  val Metro: PlannedTransportMode = PlannedTransportMode("Metro")
-  val Taxi: PlannedTransportMode = PlannedTransportMode("Taxi")
-  val Train: PlannedTransportMode = PlannedTransportMode("Train")
-  val Flight: PlannedTransportMode = PlannedTransportMode("Flight")
-  val Ferry: PlannedTransportMode = PlannedTransportMode("Ferry")
-  val Bus: PlannedTransportMode = PlannedTransportMode("Bus")
-  val Custom: PlannedTransportMode = PlannedTransportMode("Custom")
-
-  def fromText(value: String): PlannedTransportMode =
-    value.trim.toLowerCase match
-      case "walk" => Walk
-      case "metro" => Metro
-      case "taxi" => Taxi
-      case "train" => Train
-      case "flight" => Flight
-      case "ferry" => Ferry
-      case "bus" => Bus
-      case _ => Custom
-
 final case class PlannerCandidate(
     candidateId: PlannerCandidateId,
     strategy: PlannerStrategy,
@@ -242,22 +132,6 @@ final case class PlannerCandidate(
     estimatedBudget: Option[Money],
     warnings: Vector[PlanningWarning]
 )
-
-final case class PlannerStrategy(value: String):
-  override def toString: String = value
-
-object PlannerStrategy:
-  val Balanced: PlannerStrategy = PlannerStrategy("Balanced")
-  val BudgetFirst: PlannerStrategy = PlannerStrategy("BudgetFirst")
-  val ComfortFirst: PlannerStrategy = PlannerStrategy("ComfortFirst")
-  val AttractionMaximizing: PlannerStrategy = PlannerStrategy("AttractionMaximizing")
-
-  def fromText(value: String): PlannerStrategy =
-    value.trim.toLowerCase match
-      case "budgetfirst" | "budget_first" => BudgetFirst
-      case "comfortfirst" | "comfort_first" => ComfortFirst
-      case "attractionmaximizing" | "attraction_maximizing" => AttractionMaximizing
-      case _ => Balanced
 
 final case class PlannerScore(
     value: BigDecimal,
@@ -279,41 +153,5 @@ object PlanningConstraint:
   case object AvoidLateNightTransfer extends PlanningConstraint
 
   // TODO(stage-3): expand with open-hours, transfer-feasibility, and existing-order conflict constraints.
-
-sealed trait PlanningError extends DomainError
-
-object PlanningError:
-  final case class PlannerRequestWasInvalid(reason: String) extends PlanningError:
-    val message: String = s"Planner request was invalid: $reason"
-
-  final case class CandidateGenerationFailed(strategy: PlannerStrategy, reason: String) extends PlanningError:
-    val message: String = s"Planner candidate generation failed for '$strategy': $reason"
-
-  final case class ConstraintViolationFound(reason: String) extends PlanningError:
-    val message: String = s"Planner constraint violation: $reason"
-
-  final case class TripPlanWasNotFound(tripPlanId: TripPlanId) extends PlanningError:
-    val message: String = s"Trip plan '${tripPlanId.value}' was not found"
-
-  final case class CandidateWasNotFound(candidateId: PlannerCandidateId) extends PlanningError:
-    val message: String = s"Planner candidate '${candidateId.value}' was not found"
-
-final case class MatchingStatus(value: String):
-  override def toString: String = value
-
-object MatchingStatus:
-  val NotRequested: MatchingStatus = MatchingStatus("NotRequested")
-  val NotMatched: MatchingStatus = MatchingStatus("NotMatched")
-  val PartiallyMatched: MatchingStatus = MatchingStatus("PartiallyMatched")
-  val Matched: MatchingStatus = MatchingStatus("Matched")
-  val Confirmed: MatchingStatus = MatchingStatus("Confirmed")
-
-  def fromText(value: String): MatchingStatus =
-    value.trim.toLowerCase match
-      case "notmatched" | "not_matched" => NotMatched
-      case "partiallymatched" | "partially_matched" => PartiallyMatched
-      case "matched" => Matched
-      case "confirmed" => Confirmed
-      case _ => NotRequested
 
 // TODO(stage-2): add application-facing domain service contracts once orchestration begins.

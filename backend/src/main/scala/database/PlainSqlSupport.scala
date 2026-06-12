@@ -1,3 +1,5 @@
+// PlainSqlSupport 提供 plain SQL 执行所需的基础辅助。
+
 package com.typesafe.travel.persistence
 
 import cats.effect.IO

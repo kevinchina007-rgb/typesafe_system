@@ -1,3 +1,5 @@
+// AttractionReferenceDataSeeder 负责写入参考数据。
+
 package com.typesafe.travel.persistence
 
 import cats.effect.IO

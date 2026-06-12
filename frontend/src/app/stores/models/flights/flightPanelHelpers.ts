@@ -1,3 +1,5 @@
+// 本文件定义航班面板辅助函数，负责整理航班卡片和弹层展示数据。
+
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
 import type { FlightResultGroup, FlightSearchState } from '@/app/stores/models/flights/flightTypes'

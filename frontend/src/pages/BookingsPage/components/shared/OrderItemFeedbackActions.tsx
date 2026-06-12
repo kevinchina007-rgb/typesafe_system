@@ -1,3 +1,4 @@
+// 订单行项目上的评价/退款反馈动作区，只负责按钮呈现。
 import type { OrderResponse, ReviewResponse } from '@/lib/mvp-types/index'
 
 export function OrderItemFeedbackActions({

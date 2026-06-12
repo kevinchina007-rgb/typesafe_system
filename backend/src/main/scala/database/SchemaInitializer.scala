@@ -1,3 +1,5 @@
+// SchemaInitializer 负责初始化数据库结构。
+
 package com.typesafe.travel.persistence
 
 import cats.effect.IO

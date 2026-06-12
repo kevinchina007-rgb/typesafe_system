@@ -1,3 +1,5 @@
+// TourGroupChatPlannerModels 定义团体游模块的请求和响应模型。
+
 package com.typesafe.travel.tourgroup.domain
 
 import com.typesafe.travel.shared.kernel.*
@@ -11,10 +13,28 @@ object UpdateTourGroupChatSettingsPlannerRequest:
   given sourceEncoder: Encoder[UpdateTourGroupChatSettingsPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[UpdateTourGroupChatSettingsPlannerRequest] = deriveDecoder
 
+final case class UpdateTourGroupChatSettingsPlannerInput(
+    groupId: String,
+    sessionId: String,
+    allowMemberDirectChat: Boolean
+)
+object UpdateTourGroupChatSettingsPlannerInput:
+  given sourceEncoder: Encoder[UpdateTourGroupChatSettingsPlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[UpdateTourGroupChatSettingsPlannerInput] = deriveDecoder
+
 final case class GetOrCreateTourGroupDirectConversationPlannerRequest(targetUserId: String)
 object GetOrCreateTourGroupDirectConversationPlannerRequest:
   given sourceEncoder: Encoder[GetOrCreateTourGroupDirectConversationPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[GetOrCreateTourGroupDirectConversationPlannerRequest] = deriveDecoder
+
+final case class GetOrCreateTourGroupDirectConversationPlannerInput(
+    groupId: String,
+    sessionId: String,
+    targetUserId: String
+)
+object GetOrCreateTourGroupDirectConversationPlannerInput:
+  given sourceEncoder: Encoder[GetOrCreateTourGroupDirectConversationPlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[GetOrCreateTourGroupDirectConversationPlannerInput] = deriveDecoder
 
 final case class SendTourGroupMessageAttachmentPlannerRequest(
     attachmentId: String,
@@ -39,30 +59,131 @@ object SendTourGroupMessagePlannerRequest:
   given sourceEncoder: Encoder[SendTourGroupMessagePlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[SendTourGroupMessagePlannerRequest] = deriveDecoder
 
+final case class SendTourGroupChatMessagePlannerInput(
+    groupId: String,
+    sessionId: String,
+    payload: SendTourGroupMessagePlannerRequest
+)
+object SendTourGroupChatMessagePlannerInput:
+  given sourceEncoder: Encoder[SendTourGroupChatMessagePlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[SendTourGroupChatMessagePlannerInput] = deriveDecoder
+
+final case class SendTourGroupConversationMessagePlannerInput(
+    conversationId: String,
+    sessionId: String,
+    payload: SendTourGroupMessagePlannerRequest
+)
+object SendTourGroupConversationMessagePlannerInput:
+  given sourceEncoder: Encoder[SendTourGroupConversationMessagePlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[SendTourGroupConversationMessagePlannerInput] = deriveDecoder
+
 final case class MarkConversationReadPlannerRequest()
 object MarkConversationReadPlannerRequest:
   given sourceEncoder: Encoder[MarkConversationReadPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[MarkConversationReadPlannerRequest] = deriveDecoder
+
+final case class ListTourGroupChatMessagesPlannerRequest(groupId: String, sessionId: String)
+object ListTourGroupChatMessagesPlannerRequest:
+  given sourceEncoder: Encoder[ListTourGroupChatMessagesPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[ListTourGroupChatMessagesPlannerRequest] = deriveDecoder
+
+final case class ListTourGroupConversationMessagesPlannerRequest(conversationId: String, sessionId: String)
+object ListTourGroupConversationMessagesPlannerRequest:
+  given sourceEncoder: Encoder[ListTourGroupConversationMessagesPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[ListTourGroupConversationMessagesPlannerRequest] = deriveDecoder
+
+final case class ListTourGroupConversationsPlannerRequest(groupId: String, sessionId: String)
+object ListTourGroupConversationsPlannerRequest:
+  given sourceEncoder: Encoder[ListTourGroupConversationsPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[ListTourGroupConversationsPlannerRequest] = deriveDecoder
+
+final case class ListTourGroupDirectConversationsPlannerRequest(groupId: String, sessionId: String)
+object ListTourGroupDirectConversationsPlannerRequest:
+  given sourceEncoder: Encoder[ListTourGroupDirectConversationsPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[ListTourGroupDirectConversationsPlannerRequest] = deriveDecoder
+
+final case class LoadTourGroupChatSettingsPlannerRequest(groupId: String, sessionId: String)
+object LoadTourGroupChatSettingsPlannerRequest:
+  given sourceEncoder: Encoder[LoadTourGroupChatSettingsPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[LoadTourGroupChatSettingsPlannerRequest] = deriveDecoder
+
+final case class MarkTourGroupConversationReadPlannerRequest(conversationId: String, sessionId: String)
+object MarkTourGroupConversationReadPlannerRequest:
+  given sourceEncoder: Encoder[MarkTourGroupConversationReadPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[MarkTourGroupConversationReadPlannerRequest] = deriveDecoder
+
+final case class SearchTourGroupConversationsPlannerRequest(groupId: String, sessionId: String, query: String)
+object SearchTourGroupConversationsPlannerRequest:
+  given sourceEncoder: Encoder[SearchTourGroupConversationsPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[SearchTourGroupConversationsPlannerRequest] = deriveDecoder
+
+final case class SearchTourGroupMessagesPlannerRequest(groupId: String, sessionId: String, query: String)
+object SearchTourGroupMessagesPlannerRequest:
+  given sourceEncoder: Encoder[SearchTourGroupMessagesPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[SearchTourGroupMessagesPlannerRequest] = deriveDecoder
 
 final case class UpdateDirectConversationMuteStatePlannerRequest(muted: Boolean)
 object UpdateDirectConversationMuteStatePlannerRequest:
   given sourceEncoder: Encoder[UpdateDirectConversationMuteStatePlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[UpdateDirectConversationMuteStatePlannerRequest] = deriveDecoder
 
+final case class UpdateTourGroupDirectConversationMuteStatePlannerInput(
+    conversationId: String,
+    sessionId: String,
+    muted: Boolean
+)
+object UpdateTourGroupDirectConversationMuteStatePlannerInput:
+  given sourceEncoder: Encoder[UpdateTourGroupDirectConversationMuteStatePlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[UpdateTourGroupDirectConversationMuteStatePlannerInput] = deriveDecoder
+
 final case class UpdateDirectConversationArchiveStatePlannerRequest(archived: Boolean)
 object UpdateDirectConversationArchiveStatePlannerRequest:
   given sourceEncoder: Encoder[UpdateDirectConversationArchiveStatePlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[UpdateDirectConversationArchiveStatePlannerRequest] = deriveDecoder
+
+final case class UpdateTourGroupDirectConversationArchiveStatePlannerInput(
+    conversationId: String,
+    sessionId: String,
+    archived: Boolean
+)
+object UpdateTourGroupDirectConversationArchiveStatePlannerInput:
+  given sourceEncoder: Encoder[UpdateTourGroupDirectConversationArchiveStatePlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[UpdateTourGroupDirectConversationArchiveStatePlannerInput] = deriveDecoder
 
 final case class EditTourGroupMessagePlannerRequest(content: String)
 object EditTourGroupMessagePlannerRequest:
   given sourceEncoder: Encoder[EditTourGroupMessagePlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[EditTourGroupMessagePlannerRequest] = deriveDecoder
 
+final case class EditTourGroupMessagePlannerInput(messageId: String, sessionId: String, content: String)
+object EditTourGroupMessagePlannerInput:
+  given sourceEncoder: Encoder[EditTourGroupMessagePlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[EditTourGroupMessagePlannerInput] = deriveDecoder
+
+final case class DeleteTourGroupMessagePlannerRequest(messageId: String, sessionId: String)
+object DeleteTourGroupMessagePlannerRequest:
+  given sourceEncoder: Encoder[DeleteTourGroupMessagePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[DeleteTourGroupMessagePlannerRequest] = deriveDecoder
+
+final case class RecallTourGroupMessagePlannerRequest(messageId: String, sessionId: String)
+object RecallTourGroupMessagePlannerRequest:
+  given sourceEncoder: Encoder[RecallTourGroupMessagePlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[RecallTourGroupMessagePlannerRequest] = deriveDecoder
+
 final case class AddConversationReactionPlannerRequest(reactionType: String)
 object AddConversationReactionPlannerRequest:
   given sourceEncoder: Encoder[AddConversationReactionPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[AddConversationReactionPlannerRequest] = deriveDecoder
+
+final case class AddTourGroupMessageReactionPlannerInput(messageId: String, sessionId: String, reactionType: String)
+object AddTourGroupMessageReactionPlannerInput:
+  given sourceEncoder: Encoder[AddTourGroupMessageReactionPlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[AddTourGroupMessageReactionPlannerInput] = deriveDecoder
+
+final case class RemoveTourGroupMessageReactionPlannerRequest(messageId: String, sessionId: String, reactionType: String)
+object RemoveTourGroupMessageReactionPlannerRequest:
+  given sourceEncoder: Encoder[RemoveTourGroupMessageReactionPlannerRequest] = deriveEncoder
+  given sourceDecoder: Decoder[RemoveTourGroupMessageReactionPlannerRequest] = deriveDecoder
 
 final case class UploadConversationAttachmentPlannerRequest(
     fileName: String,
@@ -72,6 +193,15 @@ final case class UploadConversationAttachmentPlannerRequest(
 object UploadConversationAttachmentPlannerRequest:
   given sourceEncoder: Encoder[UploadConversationAttachmentPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[UploadConversationAttachmentPlannerRequest] = deriveDecoder
+
+final case class UploadTourGroupConversationAttachmentPlannerInput(
+    conversationId: String,
+    sessionId: String,
+    payload: UploadConversationAttachmentPlannerRequest
+)
+object UploadTourGroupConversationAttachmentPlannerInput:
+  given sourceEncoder: Encoder[UploadTourGroupConversationAttachmentPlannerInput] = deriveEncoder
+  given sourceDecoder: Decoder[UploadTourGroupConversationAttachmentPlannerInput] = deriveDecoder
 
 final case class TourGroupChatSettingsPlannerResponse(
     groupId: String,

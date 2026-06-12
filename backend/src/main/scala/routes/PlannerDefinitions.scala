@@ -1,183 +1,32 @@
+// PlannerDefinitions 璐熻矗鏀堕泦鍚勪釜妯″潡鐨勮鍒掔粍鍚堛€?
 package com.typesafe.travel.api.routes
 
-import com.typesafe.travel.advertising.domain.*
-import com.typesafe.travel.api.{ExploreSearchPlanner, ExploreSuggestionsPlanner}
-import com.typesafe.travel.attraction.api.BookAttractionItemPlanner
-import com.typesafe.travel.attraction.domain.{AttractionSuggestionsPlanner, CreateAttractionPlanner, CreateAttractionTicketRulePlanner, CreateAttractionTicketSessionPlanner, CreateAttractionTicketTypePlanner, GetAttractionDetailsPlanner, ListAttractionsPlanner, ListManagedAttractionsPlanner, UploadAttractionImagePlanner}
-import com.typesafe.travel.auth.domain.*
-import com.typesafe.travel.content.domain.*
-import com.typesafe.travel.flight.api.{BookFlightPlanner, FlightDailyLowestPricesPlanner, FlightSuggestionsPlanner, GetFlightDetailsPlanner, SearchFlightsPlanner}
-import com.typesafe.travel.hotel.api.{BookHotelPlanner, GetHotelDetailsPlanner, HotelSuggestionsPlanner, SearchHotelsPlanner}
-import com.typesafe.travel.identity.domain.{CreateUserPlanner, GetUserPlanner, LoginUserPlanner, UpdateUserProfilePlanner, UploadUserAvatarPlanner}
-import com.typesafe.travel.operations.domain.*
-import com.typesafe.travel.order.domain.*
-import com.typesafe.travel.tourgroup.domain.*
-import com.typesafe.travel.traveler.domain.*
-import com.typesafe.travel.train.domain.*
-
 object PlannerDefinitions:
-  import PlannerRegistry.RegisteredPlan.WithConnection
+  val advertisingPlanners: PlannerRegistry = PlannerDefinitionsAdvertising.registry
+  val attractionPlanners: PlannerRegistry = PlannerDefinitionsAttraction.registry
+  val authPlanners: PlannerRegistry = PlannerDefinitionsAuth.registry
+  val contentPlanners: PlannerRegistry = PlannerDefinitionsContent.registry
+  val flightPlanners: PlannerRegistry = PlannerDefinitionsFlight.registry
+  val hotelPlanners: PlannerRegistry = PlannerDefinitionsHotel.registry
+  val identityPlanners: PlannerRegistry = PlannerDefinitionsIdentity.registry
+  val orderPlanners: PlannerRegistry = PlannerDefinitionsOrder.registry
+  val operationsPlanners: PlannerRegistry = PlannerDefinitionsOperations.registry
+  val tourGroupPlanners: PlannerRegistry = PlannerDefinitionsTourGroup.registry
+  val trainPlanners: PlannerRegistry = PlannerDefinitionsTrain.registry
+  val travelerPlanners: PlannerRegistry = PlannerDefinitionsTraveler.registry
 
-  val orderPlanners: PlannerRegistry =
-    val registeredPlanners: List[PlannerRegistry.RegisteredPlan] =
-      List(
-        WithConnection(ListAdvertisementsPlanner),
-        WithConnection(CreateAdvertisementPlanner),
-        WithConnection(UpdateAdvertisementPlanner),
-        WithConnection(SubmitAdvertisementForReviewPlanner),
-        WithConnection(PauseAdvertisementPlanner),
-        WithConnection(ApproveAdvertisementPlanner),
-        WithConnection(RejectAdvertisementPlanner),
-        WithConnection(AssignAdvertisementSlotPlanner),
-        WithConnection(PauseAdvertisementDisplayPlanner),
-        WithConnection(GetAdvertisementDeliverySettingsPlanner),
-        WithConnection(SaveAdvertisementDeliverySettingsPlanner),
-        WithConnection(UploadAdvertisementImagePlanner),
-        WithConnection(GenerateAdvertisementImageCandidatesPlanner),
-        WithConnection(GenerateAdvertisementTextCandidatesPlanner),
-        WithConnection(FlightSuggestionsPlanner),
-        WithConnection(SearchFlightsPlanner),
-        WithConnection(FlightDailyLowestPricesPlanner),
-        WithConnection(GetFlightDetailsPlanner),
-        WithConnection(BookFlightPlanner),
-        WithConnection(HotelSuggestionsPlanner),
-        WithConnection(SearchHotelsPlanner),
-        WithConnection(GetHotelDetailsPlanner),
-        WithConnection(BookHotelPlanner),
-        WithConnection(BookAttractionItemPlanner),
-        WithConnection(AttractionSuggestionsPlanner),
-        WithConnection(ListAttractionsPlanner),
-        WithConnection(GetAttractionDetailsPlanner),
-        WithConnection(ListManagedAttractionsPlanner),
-        WithConnection(CreateAttractionPlanner),
-        WithConnection(UploadAttractionImagePlanner),
-        WithConnection(CreateAttractionTicketTypePlanner),
-        WithConnection(CreateAttractionTicketSessionPlanner),
-        WithConnection(CreateAttractionTicketRulePlanner),
-        WithConnection(SignupPlanner),
-        WithConnection(LoginPlanner),
-        WithConnection(CurrentUserPlanner),
-        WithConnection(LogoutPlanner),
-        WithConnection(LogoutOtherSessionsPlanner),
-        WithConnection(ListAuthSessionsPlanner),
-        WithConnection(ChangePasswordPlanner),
-        WithConnection(BlogSuggestionsPlanner),
-        WithConnection(ListBlogPostsPlanner),
-        WithConnection(GetBlogPostPlanner),
-        WithConnection(CreateBlogPostPlanner),
-        WithConnection(UpdateBlogPostPlanner),
-        WithConnection(SaveBlogDraftPlanner),
-        WithConnection(PublishBlogPostPlanner),
-        WithConnection(ApproveBlogPostPlanner),
-        WithConnection(RejectBlogPostPlanner),
-        WithConnection(ArchiveBlogPostPlanner),
-        WithConnection(AddBlogCommentPlanner),
-        WithConnection(DeleteBlogCommentPlanner),
-        WithConnection(LikeBlogPostPlanner),
-        WithConnection(UnlikeBlogPostPlanner),
-        WithConnection(LikeBlogCommentPlanner),
-        WithConnection(UnlikeBlogCommentPlanner),
-        WithConnection(FavoriteBlogPostPlanner),
-        WithConnection(UnfavoriteBlogPostPlanner),
-        WithConnection(FollowBlogUserPlanner),
-        WithConnection(BlockBlogUserPlanner),
-        WithConnection(ListBlogNotificationsPlanner),
-        WithConnection(GetBlogProfilePlanner),
-        WithConnection(UpdateBlogProfilePrivacyPlanner),
-        WithConnection(ListBlogFollowersPlanner),
-        WithConnection(ListBlogFollowingPlanner),
-        WithConnection(ListMyReviewsPlanner),
-        WithConnection(ListReviewsByResourcePlanner),
-        WithConnection(GetReviewSummaryPlanner),
-        WithConnection(CheckReviewEligibilityPlanner),
-        WithConnection(CreateReviewPlanner),
-        WithConnection(UpdateReviewPlanner),
-        WithConnection(DeleteReviewPlanner),
-        WithConnection(UploadReviewImagePlanner),
-        WithConnection(ListFeedbackThreadsPlanner),
-        WithConnection(EnsureReviewFeedbackThreadPlanner),
-        WithConnection(EnsureOrderCancellationThreadPlanner),
-        WithConnection(SendFeedbackMessagePlanner),
-        WithConnection(CreateOrderCancellationMessagePlanner),
-        WithConnection(HandleOrderCancellationRequestPlanner),
-        WithConnection(MarkFeedbackThreadReadPlanner),
-        WithConnection(EscalateFeedbackThreadPlanner),
-        WithConnection(CreateFeedbackComplaintPlanner),
-        WithConnection(OpenComplaintManagerThreadPlanner),
-        WithConnection(ExploreSuggestionsPlanner),
-        WithConnection(ExploreSearchPlanner),
-        WithConnection(CreateUserPlanner),
-        WithConnection(LoginUserPlanner),
-        WithConnection(GetUserPlanner),
-        WithConnection(UploadUserAvatarPlanner),
-        WithConnection(UpdateUserProfilePlanner),
-        WithConnection(ManagerLoginPlanner),
-        WithConnection(CurrentManagerPlanner),
-        WithConnection(ManagerLogoutPlanner),
-        WithConnection(ManagerLogoutOtherSessionsPlanner),
-        WithConnection(ListManagerSessionsPlanner),
-        WithConnection(ChangeManagerPasswordPlanner),
-        WithConnection(RegisterAirlineManagerPlanner),
-        WithConnection(RegisterHotelManagerPlanner),
-        WithConnection(RegisterAttractionManagerPlanner),
-        WithConnection(RegisterSiteAdminPlanner),
-        WithConnection(UpdateSiteAdminManagerProfilePlanner),
-        WithConnection(ListManagerTasksPlanner),
-        WithConnection(BatchConfirmManagerTasksPlanner),
-        WithConnection(BatchRejectManagerTasksPlanner),
-        WithConnection(ListManagerFlightsPlanner),
-        WithConnection(ListManagerFlightOrdersPlanner),
-        WithConnection(ListManagerHotelsPlanner),
-        WithConnection(ListManagerRefundTasksPlanner),
-        WithConnection(UpdateAirlineManagerProfilePlanner),
-        WithConnection(UpdateHotelManagerProfilePlanner),
-        WithConnection(CreateManagerFlightPlanner),
-        WithConnection(ToggleManagerFlightStatusPlanner),
-        WithConnection(CreateManagerRoomTypePlanner),
-        WithConnection(UploadHotelRoomTypeImagePlanner),
-        WithConnection(ConfirmManagerBookingItemPlanner),
-        WithConnection(RejectManagerBookingItemPlanner),
-        WithConnection(ApproveManagerRefundPlanner),
-        WithConnection(RejectManagerRefundPlanner),
-        WithConnection(ListOrdersPlanner),
-        WithConnection(CreateOrderPlanner),
-        WithConnection(GetOrderPlanner),
-        WithConnection(CreatePaymentLinkPlanner),
-        WithConnection(SubmitOrderPlanner),
-        WithConnection(PayOrderPlanner),
-        WithConnection(CancelOrderPlanner),
-        WithConnection(RequestRefundPlanner),
-        WithConnection(ApproveRefundPlanner),
-        WithConnection(SettleRefundPlanner),
-        WithConnection(FindOrderPaymentPlanner),
-        WithConnection(CreateTravelerPlanner),
-        WithConnection(UpdateTravelerPlanner),
-        WithConnection(ListTravelersPlanner),
-        WithConnection(DeleteTravelerPlanner),
-        WithConnection(TrainSuggestionsPlanner),
-        WithConnection(RegisterRailwayManagerPlanner),
-        WithConnection(ListManagedTrainsPlanner),
-        WithConnection(CreateTrainJourneyPlanner),
-        WithConnection(SearchTrainsPlanner),
-        WithConnection(GetTrainDetailsPlanner),
-        WithConnection(BookTrainItemPlanner),
-        WithConnection(CreateTourGroupPlanner),
-        WithConnection(UploadTourGroupCoverImagePlanner),
-        WithConnection(ListTourGroupsPlanner),
-        WithConnection(GetTourGroupDetailsPlanner),
-        WithConnection(JoinTourGroupPlanner),
-        WithConnection(LeaveTourGroupPlanner),
-        WithConnection(AddMembershipTravelerPlanner),
-        WithConnection(RemoveMembershipTravelerPlanner),
-        WithConnection(KickTourGroupMemberPlanner),
-        WithConnection(BlacklistTourGroupMemberPlanner),
-        WithConnection(TransferTourGroupLeaderPlanner),
-        WithConnection(CreateTourGroupPlanItemPlanner),
-        WithConnection(CreateTourGroupPlanOptionPlanner),
-        WithConnection(CreateTourGroupSelectionPlanner),
-        WithConnection(SubmitTourGroupSelectionPlanner)
-      )
-
-    PlannerRegistry(
-      registeredPlanners.map(planner => planner.name -> planner).toMap
+  val allPlanners: PlannerRegistry =
+    PlannerRegistry.combine(
+      advertisingPlanners,
+      attractionPlanners,
+      authPlanners,
+      contentPlanners,
+      flightPlanners,
+      hotelPlanners,
+      identityPlanners,
+      orderPlanners,
+      operationsPlanners,
+      tourGroupPlanners,
+      trainPlanners,
+      travelerPlanners
     )

@@ -1,3 +1,5 @@
+// TrainDomainFunctions 定义火车模块的领域辅助函数。
+
 package com.typesafe.travel.train.domain
 
 import cats.syntax.all.*

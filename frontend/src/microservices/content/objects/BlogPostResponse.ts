@@ -1,4 +1,6 @@
-﻿import type { BlogCommentResponse } from './BlogCommentResponse'
+// 本文件定义 content 模块的 `BlogPostResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { BlogCommentResponse } from './BlogCommentResponse'
 import type { BlogPostSummaryResponse } from './BlogPostSummaryResponse'
 
 export type BlogPostResponse = {

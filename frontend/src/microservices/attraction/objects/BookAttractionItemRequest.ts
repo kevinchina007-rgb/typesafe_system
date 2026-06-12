@@ -1,3 +1,5 @@
+// 本文件定义 attraction 模块的 `BookAttractionItemRequest`，作为请求参数并提供 JSON 编解码。
+
 export type BookAttractionItemRequest = {
   userId: string
   attractionId: string

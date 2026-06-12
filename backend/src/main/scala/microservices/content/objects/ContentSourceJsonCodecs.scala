@@ -1,3 +1,5 @@
+// ContentSourceJsonCodecs 定义内容模块的源数据 JSON codec。
+
 package com.typesafe.travel.content.domain
 
 import com.typesafe.travel.shared.kernel.*

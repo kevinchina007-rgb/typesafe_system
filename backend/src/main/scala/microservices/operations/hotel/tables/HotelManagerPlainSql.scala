@@ -1,3 +1,5 @@
+// HotelManagerPlainSql 负责operations相关实现。
+
 package com.typesafe.travel.persistence.operations
 
 import cats.effect.IO

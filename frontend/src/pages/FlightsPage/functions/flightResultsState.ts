@@ -1,18 +1,32 @@
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
-import type { FlightDailyLowestPricePlannerResponse, FlightDailyLowestPricesPlannerRequest, FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
+import type {
+  FlightDailyLowestPricePlannerResponse,
+  FlightDailyLowestPricesPlannerRequest,
+  FlightDailyLowestPricesPlannerResponse,
+} from '@/microservices/flight/objects/FlightDailyLowestPrices'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
-import { getFlightDetailsPlannerAirlineDisplayNameByCode, getFlightDetailsPlannerAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
+import {
+  getFlightDetailsPlannerAirlineDisplayNameByCode,
+  getFlightDetailsPlannerAirlineLogoPathByCode,
+} from '@/app/stores/models/flights/flightAirlineCatalog'
 import { formatFlightRouteCity } from '@/app/stores/models/flights/flightConstants'
-import { formatFlightAirportLabel, getFlightDetailsPlannerCityAirportCodes, normalizeFlightAirportForApi } from '@/app/stores/models/flights/flightConstants'
+import {
+  formatFlightAirportLabel,
+  getFlightDetailsPlannerCityAirportCodes,
+  normalizeFlightAirportForApi,
+} from '@/app/stores/models/flights/flightConstants'
 
+// FlightsPage 使用的排序方式，只保留价格和起飞时间两种。
 export type FlightSortMode = 'price' | 'departureTime'
 
+// FlightsPage 当前激活的航线信息，用于驱动结果区展示。
 export type FlightResultsRoute = {
   departureAirport: string
   arrivalAirport: string
   departureDate: string
 }
 
+// FlightsPage 将航班响应整理后的展示对象，避免在视图里重复计算。
 export type DisplayFlight = {
   flight: FlightPlannerResponse
   airlineName: string
@@ -27,6 +41,7 @@ export type DisplayFlight = {
   priceTone: 'lowest' | 'discount' | 'standard'
 }
 
+// 不同舱位在页面上的中文标签映射，只负责文案转换。
 const cabinLabelByClass: Record<string, string> = {
   ECONOMY: '经济舱',
   PREMIUM_ECONOMY: '超级经济舱',
@@ -34,10 +49,13 @@ const cabinLabelByClass: Record<string, string> = {
   FIRST: '头等舱',
 }
 
+// 舱位排序顺序，结果区筛选时按这个顺序排列。
 export const cabinOrder = ['ECONOMY', 'PREMIUM_ECONOMY', 'BUSINESS', 'FIRST']
 
+// 起飞时间筛选窗口，结果区直接按这些时间段展示。
 export const departureTimeWindows = ['00:00-03:59', '04:00-07:59', '08:00-11:59', '12:00-15:59', '16:00-19:59', '20:00-23:59']
 
+// 根据是否存在晚订费，生成 FlightsPage 里的提示文案。
 export function buildLateBookingNotice(
   flightResponse: FlightPlannerResponse,
   translate: (translationKey: string) => string,
@@ -51,6 +69,7 @@ export function buildLateBookingNotice(
     .replace('{currency}', flightResponse.lateBookingSurchargeCurrency || flightResponse.currency)
 }
 
+// 根据搜索态把结果区拆成多个查询任务，供结果区逐组展示。
 export function loadFlightResultGroups(
   searchState: {
     tripType: 'oneWay' | 'roundTrip' | 'multiCity'
@@ -83,6 +102,7 @@ export function loadFlightResultGroups(
   )
 }
 
+// 校验 FlightsPage 的搜索条件是否满足提交要求。
 export function validateFlightSearchState(searchState: {
   tripType: 'oneWay' | 'roundTrip' | 'multiCity'
   departureAirport: string
@@ -107,7 +127,7 @@ export function validateFlightSearchState(searchState: {
       return !departureAirport || !arrivalAirport
     })
   ) {
-    return '小飞机找不到跑道啦：请先选好出发地和目的地。'
+    return '小飞机找不到跑道呀：请先选好出发地和目的地。'
   }
 
   if (
@@ -150,6 +170,7 @@ export function validateFlightSearchState(searchState: {
   return null
 }
 
+// 基于搜索条件加载每日最低价，作为结果区顶部日期条的数据来源。
 export function loadDailyLowestPricesFromSearch(
   request: FlightDailyLowestPricesPlannerRequest,
   onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>,
@@ -180,6 +201,7 @@ export function loadDailyLowestPricesFromSearch(
   ).then(prices => ({ prices }))
 }
 
+// 当同一路线对应多个机场代码时，分别发起搜索。
 export async function loadDailyLowestPricesAcrossAirportCodes(
   request: FlightDailyLowestPricesPlannerRequest,
   onLoadDailyLowestPrices: (payload: FlightDailyLowestPricesPlannerRequest) => Promise<FlightDailyLowestPricesPlannerResponse>,
@@ -217,6 +239,7 @@ export async function loadDailyLowestPricesAcrossAirportCodes(
   return { prices: [...pricesByDate.values()].sort((left, right) => left.date.localeCompare(right.date)) }
 }
 
+// 展开机场搜索值，必要时拆成多个机场代码。
 export function expandAirportSearchValues(value: string | undefined): string[] {
   if (!value) {
     return []
@@ -230,6 +253,7 @@ export function expandAirportSearchValues(value: string | undefined): string[] {
   return [normalizeFlightAirportForApi(value) ?? value]
 }
 
+// 构造空的日期价格窗，保证结果区始终有固定长度。
 export function buildEmptyDateWindow(startDate: string, days: number): FlightDailyLowestPricePlannerResponse[] {
   const start = parseSearchDate(startDate)
   return Array.from({ length: days }, (_, index) => {
@@ -243,30 +267,37 @@ export function buildEmptyDateWindow(startDate: string, days: number): FlightDai
   })
 }
 
+// 把机场代码转成页面可读的机场名称。
 export function formatAirportName(value: string): string {
   return formatFlightAirportLabel(value)
 }
 
+// 把舱位代码转成页面可读的中文标签。
 export function formatCabinLabel(value: string): string {
   return cabinLabelByClass[normalizeCabinClass(value)] ?? value
 }
 
+// 读取航司在页面上的展示名称。
 export function getAirlineDisplayName(flight: FlightPlannerResponse): string {
   return getFlightDetailsPlannerAirlineDisplayNameByCode(flight.airlineCode, flight.airlineName)
 }
 
+// 读取航司在页面上的 logo 路径。
 export function getAirlineLogoPath(flight: FlightPlannerResponse): string | null {
   return getFlightDetailsPlannerAirlineLogoPathByCode(flight.airlineCode, flight.airlineLogoPath)
 }
 
+// 规范化舱位字符串，统一成筛选使用的标准格式。
 export function normalizeCabinClass(value: string): string {
   return value.trim().replace('-', '_').toUpperCase()
 }
 
+// 对字符串数组去重并过滤空值。
 export function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))]
 }
 
+// 把搜索日期字符串解析成 Date，供日期窗计算使用。
 export function parseSearchDate(value: string): Date {
   if (!value) {
     return new Date()
@@ -274,6 +305,7 @@ export function parseSearchDate(value: string): Date {
   return new Date(`${value}T00:00:00`)
 }
 
+// 把 Date 转成 input date 需要的 yyyy-mm-dd 格式。
 export function formatDateInput(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -281,6 +313,7 @@ export function formatDateInput(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
+// 把航线日期格式化成页面卡片需要的短日期文本。
 export function formatRouteDate(date: string): string {
   if (!date) {
     return ''
@@ -293,6 +326,7 @@ export function formatRouteDate(date: string): string {
   })
 }
 
+// 把航班响应和当前舱位组合成页面展示对象。
 export function toDisplayFlight(flight: FlightPlannerResponse, selectedCabin: string): DisplayFlight {
   const selectedInventory =
     selectedCabin === 'all'
@@ -316,6 +350,7 @@ export function toDisplayFlight(flight: FlightPlannerResponse, selectedCabin: st
   }
 }
 
+// 组装当前搜索条件下需要执行的航班查询任务。
 function buildFlightSearchRequests(searchState: {
   tripType: 'oneWay' | 'roundTrip' | 'multiCity'
   departureAirport: string
@@ -333,8 +368,8 @@ function buildFlightSearchRequests(searchState: {
   if (searchState.tripType === 'multiCity') {
     return searchState.multiCitySegments.map((segment, index) => ({
       id: segment.id,
-      title: `第${index + 1}程`,
-      subtitle: `${formatFlightRouteCity(segment.departureAirport)} → ${formatFlightRouteCity(segment.arrivalAirport)} ${segment.departureDate}`,
+      title: `第 ${index + 1} 程`,
+      subtitle: `${formatFlightRouteCity(segment.departureAirport)} -> ${formatFlightRouteCity(segment.arrivalAirport)} ${segment.departureDate}`,
       query: {
         departureAirport: normalizeFlightAirportForApi(segment.departureAirport),
         arrivalAirport: normalizeFlightAirportForApi(segment.arrivalAirport),
@@ -348,7 +383,7 @@ function buildFlightSearchRequests(searchState: {
       {
         id: 'outbound',
         title: '去程',
-        subtitle: `${formatFlightRouteCity(searchState.departureAirport)} → ${formatFlightRouteCity(searchState.arrivalAirport)} ${searchState.departureDate}`,
+        subtitle: `${formatFlightRouteCity(searchState.departureAirport)} -> ${formatFlightRouteCity(searchState.arrivalAirport)} ${searchState.departureDate}`,
         query: {
           departureAirport: normalizeFlightAirportForApi(searchState.departureAirport),
           arrivalAirport: normalizeFlightAirportForApi(searchState.arrivalAirport),
@@ -358,7 +393,7 @@ function buildFlightSearchRequests(searchState: {
       {
         id: 'return',
         title: '返程',
-        subtitle: `${formatFlightRouteCity(searchState.arrivalAirport)} → ${formatFlightRouteCity(searchState.departureAirport)} ${searchState.returnDate}`,
+        subtitle: `${formatFlightRouteCity(searchState.arrivalAirport)} -> ${formatFlightRouteCity(searchState.departureAirport)} ${searchState.returnDate}`,
         query: {
           departureAirport: normalizeFlightAirportForApi(searchState.arrivalAirport),
           arrivalAirport: normalizeFlightAirportForApi(searchState.departureAirport),
@@ -372,7 +407,7 @@ function buildFlightSearchRequests(searchState: {
     {
       id: 'one-way',
       title: '单程',
-      subtitle: `${formatFlightRouteCity(searchState.departureAirport)} → ${formatFlightRouteCity(searchState.arrivalAirport)} ${searchState.departureDate}`,
+      subtitle: `${formatFlightRouteCity(searchState.departureAirport)} -> ${formatFlightRouteCity(searchState.arrivalAirport)} ${searchState.departureDate}`,
       query: {
         departureAirport: normalizeFlightAirportForApi(searchState.departureAirport),
         arrivalAirport: normalizeFlightAirportForApi(searchState.arrivalAirport),
@@ -382,6 +417,7 @@ function buildFlightSearchRequests(searchState: {
   ]
 }
 
+// 当同一路线对应多个机场代码时，分别发起搜索。
 async function searchFlightsAcrossAirportCodes(
   query: FlightSearchPlannerRequest,
   onSearchFlights: (payload: FlightSearchPlannerRequest) => Promise<FlightPlannerResponse[]>,
@@ -407,6 +443,7 @@ async function searchFlightsAcrossAirportCodes(
   return uniqueFlights(responses.flat())
 }
 
+// 按 flightId 去重，避免机场展开后出现重复航班。
 function uniqueFlights(flights: FlightPlannerResponse[]): FlightPlannerResponse[] {
   const seenFlightIds = new Set<string>()
   return flights.filter(flight => {

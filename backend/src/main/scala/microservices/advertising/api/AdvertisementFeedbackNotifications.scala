@@ -1,3 +1,5 @@
+// AdvertisementFeedbackNotifications 定义广告模块的通知消息结构。
+
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO

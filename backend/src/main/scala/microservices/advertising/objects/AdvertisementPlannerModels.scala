@@ -1,3 +1,5 @@
+// AdvertisementPlannerModels 定义广告模块的请求和响应模型。
+
 package com.typesafe.travel.advertising.domain
 
 import io.circe.{Decoder, Encoder}

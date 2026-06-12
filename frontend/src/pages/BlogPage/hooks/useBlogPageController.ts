@@ -6,7 +6,7 @@ import type { BlogPostResponse } from '@/microservices/content/objects/BlogPostR
 import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
 import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/content/objects/BlogProfileResponse'
 import type { BlogCommentResponse } from '@/microservices/content/objects/BlogCommentResponse'
-import type { BlogPageController, BlogPageProps, BlogTab, MineTab, NotificationFilter, ProfileRelationTab } from '../objects'
+import type { BlogDraft, BlogPageController, BlogPageProps, BlogTab, MineTab, NotificationFilter, ProfileRelationTab } from '../objects'
 import {
   emptyDraft,
   filterNotifications,
@@ -23,6 +23,7 @@ import {
 import { usePageActions } from '@/pages/shared/usePageActions'
 import type { ContentImageResponse } from '@/lib/mvp-types/index'
 
+// 把本地图片转成页面可直接展示的内容图片对象。
 async function fileToContentImage(file: File, sortOrder: number) {
   const publicUrl = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -40,6 +41,7 @@ async function fileToContentImage(file: File, sortOrder: number) {
   }
 }
 
+// Blog 页面总控制器，负责组织状态、接口调用和页面动作。
 export function useBlogPageController({
   currentLanguage,
   signedInUser,
@@ -47,42 +49,78 @@ export function useBlogPageController({
   onShowNotice,
 }: BlogPageProps): BlogPageController {
   const { isBusy, runPageAction, runPageActionWithResult } = usePageActions(currentLanguage, translate, onShowNotice)
+
+  // 顶部导航当前选中的标签页。
   const [activeTab, setActiveTab] = useState<BlogTab>('home')
+  // “我的内容”区域当前选中的标签页。
   const [mineTab, setMineTab] = useState<MineTab>('published')
+  // 通知列表当前使用的筛选条件。
   const [notificationFilter, setNotificationFilter] = useState<NotificationFilter>('comments')
+  // 首页帖子列表。
   const [posts, setPosts] = useState<BlogPostSummaryResponse[]>([])
+  // 我已发布的帖子列表。
   const [myPosts, setMyPosts] = useState<BlogPostSummaryResponse[]>([])
+  // 我收藏的帖子列表。
   const [favoritePosts, setFavoritePosts] = useState<BlogPostSummaryResponse[]>([])
+  // 我的草稿列表。
   const [drafts, setDrafts] = useState<BlogPostSummaryResponse[]>([])
+  // 通知列表。
   const [notifications, setNotifications] = useState<BlogNotificationResponse[]>([])
+  // 当前登录用户自己的主页数据。
   const [profile, setProfile] = useState<BlogProfileResponse | null>(null)
+  // 当前正在查看的其他用户主页数据。
   const [viewedProfile, setViewedProfile] = useState<BlogProfileResponse | null>(null)
+  // 当前查看的主页下的帖子列表。
   const [viewedProfilePosts, setViewedProfilePosts] = useState<BlogPostSummaryResponse[]>([])
+  // 主页关系列表当前选中的页签。
   const [profileRelationTab, setProfileRelationTab] = useState<ProfileRelationTab | null>(null)
+  // 主页关系列表当前展示的用户。
   const [profileRelationUsers, setProfileRelationUsers] = useState<BlogProfileUserResponse[]>([])
+  // 主页浮层是否打开。
   const [profileOverlayOpen, setProfileOverlayOpen] = useState(false)
+  // 主页设置浮层是否打开。
   const [profileSettingsOpen, setProfileSettingsOpen] = useState(false)
+  // 首页搜索关键词。
   const [query, setQuery] = useState('')
+  // 首页选中的标签。
   const [selectedTag, setSelectedTag] = useState<BlogTagResponse | null>(null)
+  // 首页选中的城市。
   const [selectedCities, setSelectedCities] = useState<string[]>([])
+  // 发布编辑器中的草稿内容。
   const [draft, setDraft] = useState(emptyDraft)
+  // 当前选中的帖子详情。
   const [selectedPost, setSelectedPost] = useState<BlogPostResponse | null>(null)
+  // 当前选中的帖子图片下标。
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  // 评论输入草稿。
   const [commentDraft, setCommentDraft] = useState('')
+  // 已关注作者集合。
   const [followedAuthors, setFollowedAuthors] = useState<Set<string>>(new Set())
 
+  // 计算当前选中标签的展示文案。
   const selectedTagLabel = getSelectedTagLabel(selectedTag)
+  // 计算当前选中城市的展示文案。
   const selectedCityLabel = getSelectedCityLabel(selectedCities)
+  // 计算选中帖子对应的图片列表。
   const selectedImages = getSelectedImages(selectedPost)
+  // 计算选中帖子当前显示的图片。
   const selectedImage = getSelectedImage(selectedPost, selectedImageIndex)
+  // 计算选中帖子对应的城市列表。
   const selectedPostCities = getSelectedPostCities(selectedPost)
+  // 计算选中帖子对应的标签列表。
   const selectedPostTags = getSelectedPostTags(selectedPost)
+  // 合并当前正在展示的主页对象。
   const currentProfile = viewedProfile ?? profile
+  // 判断当前查看的主页是不是自己。
   const isOwnProfile = getIsOwnProfile(signedInUser?.userId, currentProfile?.userId)
+  // 判断关系列表是否需要隐藏。
   const profileRelationsHidden = getProfileRelationsHidden(currentProfile, isOwnProfile)
+  // 计算“我的内容”区域当前展示的帖子来源。
   const displayedMinePosts = getDisplayedMinePosts(mineTab, isOwnProfile, Boolean(viewedProfile), favoritePosts, viewedProfilePosts, myPosts)
+  // 根据通知筛选条件得到当前可见通知。
   const filteredNotifications = useMemo(() => filterNotifications(notifications, notificationFilter), [notifications, notificationFilter])
 
+  // 重新加载首页帖子列表。
   async function reloadHome() {
     const response = await travelMvpApiClient.listShortBlogPosts({
       scope: 'home',
@@ -95,6 +133,7 @@ export function useBlogPageController({
     setPosts(response.posts ?? [])
   }
 
+  // 重新加载“我的内容”相关数据。
   async function reloadMine() {
     if (!signedInUser) {
       setDrafts([])
@@ -122,14 +161,17 @@ export function useBlogPageController({
     setNotifications(notificationResponse.notifications ?? [])
   }
 
+  // 首次挂载或筛选项变化时，重新拉取首页帖子。
   useEffect(() => {
     void reloadHome().catch(() => setPosts([]))
   }, [query, selectedTagLabel, selectedCityLabel, signedInUser?.userId])
 
+  // 登录态变化时，重新拉取“我的内容”相关数据。
   useEffect(() => {
     void reloadMine().catch(() => undefined)
   }, [signedInUser?.userId])
 
+  // 校验当前用户是否已登录。
   function requireUser() {
     if (!signedInUser) {
       throw new Error(translate('error.loginRequired'))
@@ -137,6 +179,7 @@ export function useBlogPageController({
     return signedInUser
   }
 
+  // 用最新帖子替换当前列表中的旧帖子。
   function replacePost(nextPost: BlogPostSummaryResponse) {
     setPosts(current => current.map(item => (item.postId === nextPost.postId ? nextPost : item)))
     setMyPosts(current => current.map(item => (item.postId === nextPost.postId ? nextPost : item)))
@@ -147,10 +190,12 @@ export function useBlogPageController({
     setSelectedPost(current => (current && current.post.postId === nextPost.postId ? { ...current, post: nextPost } : current))
   }
 
+  // 切换首页城市筛选项。
   function toggleCity(city: string) {
     setSelectedCities(current => (current.includes(city) ? current.filter(item => item !== city) : [...current, city]))
   }
 
+  // 切换草稿里的城市。
   function toggleDraftCity(city: string) {
     setDraft(current => ({
       ...current,
@@ -160,6 +205,7 @@ export function useBlogPageController({
     }))
   }
 
+  // 切换草稿里的标签。
   function toggleDraftTag(nextTag: BlogTagResponse) {
     setDraft(current => {
       const exists = current.tags.some(tag => tag.tagType === nextTag.tagType && tag.tagValue === nextTag.tagValue)
@@ -172,6 +218,7 @@ export function useBlogPageController({
     })
   }
 
+  // 打开帖子详情。
   async function openPost(postId: string) {
     const response = await travelMvpApiClient.getBlogPost(postId, signedInUser?.userId)
     setSelectedPost(response)
@@ -185,6 +232,7 @@ export function useBlogPageController({
     }
   }
 
+  // 打开某个用户的主页。
   async function openProfile(profileUserId: string) {
     const viewerUserId = signedInUser?.userId
     if (viewerUserId && profileUserId === viewerUserId) {
@@ -215,6 +263,7 @@ export function useBlogPageController({
     setProfileOverlayOpen(true)
   }
 
+  // 关闭主页浮层。
   function closeProfileOverlay() {
     setProfileOverlayOpen(false)
     setViewedProfile(null)
@@ -224,6 +273,7 @@ export function useBlogPageController({
     setProfileSettingsOpen(false)
   }
 
+  // 打开主页的关注/粉丝列表。
   async function openProfileRelation(nextTab: ProfileRelationTab) {
     if (!currentProfile) return
     if (currentProfile.relationListHidden && !isOwnProfile) {
@@ -238,6 +288,7 @@ export function useBlogPageController({
     setProfileRelationUsers(response.users ?? [])
   }
 
+  // 更新主页隐私设置。
   async function updateProfilePrivacy(hideRelations: boolean) {
     const user = requireUser()
     const response = await runPageActionWithResult(
@@ -252,6 +303,7 @@ export function useBlogPageController({
     }
   }
 
+  // 保存草稿或者发布文章。
   async function saveDraft(
     status: 'draft' | 'publish',
     editorDraft?: Pick<BlogDraft, 'title' | 'summary' | 'content' | 'images'>,
@@ -283,6 +335,7 @@ export function useBlogPageController({
     }, status === 'draft' ? '保存草稿' : '发布帖子', translate('notice.actionSuccess'))
   }
 
+  // 给帖子点赞或取消点赞。
   async function likePost(post: BlogPostSummaryResponse) {
     const user = requireUser()
     const nextPost = await runPageActionWithResult(
@@ -295,6 +348,7 @@ export function useBlogPageController({
     replacePost(nextPost.post)
   }
 
+  // 收藏或取消收藏帖子。
   async function favoritePost(post: BlogPostSummaryResponse) {
     const user = requireUser()
     const nextPost = await runPageActionWithResult(
@@ -307,6 +361,7 @@ export function useBlogPageController({
     replacePost(nextPost.post)
   }
 
+  // 关注帖子作者。
   async function followAuthor(post: BlogPostSummaryResponse) {
     const user = requireUser()
     if (post.authorUserId === user.userId) return
@@ -320,6 +375,7 @@ export function useBlogPageController({
     )
   }
 
+  // 提交帖子评论。
   async function submitComment() {
     const user = requireUser()
     if (!selectedPost || !commentDraft.trim()) return
@@ -333,6 +389,7 @@ export function useBlogPageController({
     setCommentDraft('')
   }
 
+  // 给评论点赞或取消点赞。
   async function likeComment(comment: BlogCommentResponse) {
     const user = requireUser()
     const updated = await runPageActionWithResult(
@@ -346,16 +403,19 @@ export function useBlogPageController({
     replacePost(updated.post)
   }
 
+  // 处理本地上传图片并生成预览对象。
   async function handleImages(files: FileList | null) {
     if (!files || files.length === 0) return
     const nextImages = await Promise.all(Array.from(files).slice(0, 9).map((file, index) => fileToContentImage(file, index)))
     setDraft(current => ({ ...current, images: nextImages }))
   }
 
+  // 把单张图片文件转成页面可用的内容图片。
   async function uploadDraftImage(imageFile: File): Promise<ContentImageResponse> {
     return fileToContentImage(imageFile, Date.now())
   }
 
+  // 从草稿里移除一张图片。
   function removeDraftImage(imageId: string) {
     setDraft(current => ({ ...current, images: current.images.filter(image => image.imageId !== imageId) }))
   }

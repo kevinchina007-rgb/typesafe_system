@@ -1,3 +1,5 @@
+// 本文件定义 flight 模块的 `FlightResponse`，作为响应数据并提供 JSON 编解码。
+
 import type { FlightBookingWindowStatus } from './FlightBookingWindowStatus'
 import type { CabinInventoryResponse } from './CabinInventoryResponse'
 

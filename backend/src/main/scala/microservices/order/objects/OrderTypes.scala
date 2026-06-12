@@ -1,3 +1,5 @@
+// OrderTypes 定义订单模块的数据模型。
+
 package com.typesafe.travel.order.domain
 
 import io.circe.{Decoder, Encoder}

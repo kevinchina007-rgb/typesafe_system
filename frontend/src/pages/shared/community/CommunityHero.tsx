@@ -1,8 +1,12 @@
-﻿type CommunityTab = {
+// 本文件定义共享页面组件或工具，负责页面间复用逻辑。
+
+// 标签项的数据结构。
+type CommunityTab = {
   key: string
   label: string
 }
 
+// 社区页顶部英雄区的输入参数。
 type CommunityHeroProps = {
   eyebrow: string
   title: string
@@ -20,6 +24,7 @@ type CommunityHeroProps = {
   onSecondaryAction?: () => void
 }
 
+// 社区页英雄区，负责标题、搜索框、按钮和标签切换。
 export function CommunityHero({
   eyebrow,
   title,
@@ -38,6 +43,7 @@ export function CommunityHero({
 }: CommunityHeroProps) {
   return (
     <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40 grid gap-4">
+      {/* 顶部这一行放页面标题和可选操作按钮。 */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-bold text-slate-500">{eyebrow}</p>
@@ -57,7 +63,9 @@ export function CommunityHero({
         </div>
       </div>
 
+      {/* 搜索区负责接收关键字并触发查询。 */}
       <div className="grid gap-2">
+        {/* 搜索框负责收集社区页的关键字。 */}
         <input
           value={searchValue}
           onChange={event => onSearchChange(event.target.value)}
@@ -68,6 +76,7 @@ export function CommunityHero({
         </button>
       </div>
 
+      {/* 标签栏负责切换社区页不同内容分区。 */}
       <div className="flex flex-wrap gap-3" role="tablist" aria-label={title}>
         {tabs.map(tab => (
           <button

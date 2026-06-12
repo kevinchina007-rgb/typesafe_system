@@ -1,3 +1,5 @@
+// HotelSourceJsonCodecs 定义酒店模块的源数据 JSON codec。
+
 package com.typesafe.travel.hotel.objects
 
 import com.typesafe.travel.shared.kernel.*

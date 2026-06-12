@@ -1,3 +1,5 @@
+// 本文件定义 CustomerFeedbackPage 页面的工作区组件，负责组织主要操作区和信息区。
+
 import { createFeedbackComplaint, createOrderCancellationMessage, markFeedbackThreadRead, sendFeedbackMessage } from '@/app/stores/feedback-chat-store'
 import type { UserResponse } from '@/lib/mvp-types/index'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'

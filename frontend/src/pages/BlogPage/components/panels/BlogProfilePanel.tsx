@@ -5,12 +5,14 @@ import { BlogPostCard } from '../BlogPostCard'
 import type { BlogPageController } from '../../objects'
 import { buildFallbackInitials } from '../../functions'
 
+// 主页面板参数，决定是否以内联或浮层方式展示。
 type BlogProfilePanelProps = {
   controller: BlogPageController
   signedInUser: { userId: string; nickname?: string | null; avatarUrl?: string | null } | null
   variant?: 'inline' | 'overlay'
 }
 
+// 个人主页面板，负责展示资料、关系列表和帖子列表。
 export function BlogProfilePanel({ controller, signedInUser, variant = 'inline' }: BlogProfilePanelProps) {
   const {
     currentProfile,
@@ -34,9 +36,12 @@ export function BlogProfilePanel({ controller, signedInUser, variant = 'inline' 
     followAuthor,
   } = controller
 
+  // 个人主页名称兜底。
   const profileName = currentProfile?.nickname ?? signedInUser?.nickname ?? '未登录用户'
+  // 个人主页头像兜底。
   const profileAvatar = currentProfile?.avatarUrl ?? signedInUser?.avatarUrl ?? null
 
+  // 面板主体内容，内联与浮层共用。
   const body = (
     <section className="grid gap-6">
       <div className={`flex items-center gap-5 border border-slate-200 bg-white p-5 ${variant === 'overlay' ? 'shadow-sm' : ''}`}>

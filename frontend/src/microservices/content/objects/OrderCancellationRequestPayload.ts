@@ -1,3 +1,5 @@
+// 本文件定义 content 模块的 `OrderCancellationRequestPayload`，作为消息载荷并提供 JSON 编解码。
+
 import type { FeedbackSenderRole } from './FeedbackSenderRole'
 
 export type OrderCancellationRequestStatus = 'pending' | 'approved' | 'rejected' | 'needMoreInfo'

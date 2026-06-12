@@ -1,4 +1,5 @@
-﻿export {}
+// 管理后台页面的函数和样式常量统一从这里导出。
+export {}
 export {
   getManagerEntryTitle,
   getManagerLoginTitle,

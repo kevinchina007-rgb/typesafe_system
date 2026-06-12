@@ -1,3 +1,5 @@
+// Main 是后端服务的启动入口，负责装配依赖并拉起 HTTP 服务。
+
 package com.typesafe.travel.api
 
 import cats.effect.IO

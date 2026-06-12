@@ -1,4 +1,6 @@
-﻿export type TrainRefundPolicyResponse = {
+// 本文件定义 train 模块的 `TrainRefundPolicyResponse`，作为响应数据并提供 JSON 编解码。
+
+export type TrainRefundPolicyResponse = {
   startOffsetMinutesBeforeDeparture: number
   endOffsetMinutesBeforeDeparture: number
   refundType: string

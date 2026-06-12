@@ -1,4 +1,6 @@
-﻿import type { TourGroupSummaryResponse } from './TourGroupSummaryResponse'
+// 本文件定义 tour-group 模块的 `TourGroupDetailsResponse`，作为详情响应数据并提供 JSON 编解码。
+
+import type { TourGroupSummaryResponse } from './TourGroupSummaryResponse'
 import type { TourGroupMembershipResponse } from './TourGroupMembershipResponse'
 import type { TourGroupMembershipTravelerResponse } from './TourGroupMembershipTravelerResponse'
 import type { GroupPlanItemResponse } from './GroupPlanItemResponse'

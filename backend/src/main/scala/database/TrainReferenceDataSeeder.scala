@@ -1,3 +1,5 @@
+// TrainReferenceDataSeeder 负责写入参考数据。
+
 package com.typesafe.travel.persistence
 
 import cats.effect.IO
@@ -229,7 +231,8 @@ object TrainReferenceDataSeeder:
   def seedIfNeeded(transactor: Transactor[IO]): IO[Unit] =
     for
       _ <- seedManagerIfNeeded(transactor)
-      _ <- demoTrains.traverse_(seedTrainIfMissing(transactor, _))
+      existingTrainIds <- sql"select train_id from trains".query[String].to[List].transact(transactor).map(_.toSet)
+      _ <- demoTrains.filterNot(seed => existingTrainIds.contains(seed.trainId)).traverse_(insertTrain(transactor, _))
     yield ()
 
   private def seedManagerIfNeeded(transactor: Transactor[IO]): IO[Unit] =

@@ -16,6 +16,7 @@ const managerAuthInputClassName =
 const managerAuthButtonClassName =
   'inline-flex min-h-12 w-fit items-center justify-center border border-pink-500 bg-pink-500 px-6 py-3 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-60'
 
+// 航空和酒店管理后台未登录时共用的认证区。
 export function ManagerPanelAuth({
   isBusy,
   translate,
@@ -26,6 +27,7 @@ export function ManagerPanelAuth({
 }: ManagerPanelAuthProps) {
   return (
     <>
+      {/* 航空管理员注册和登录表单并排展示。 */}
       <div className={managerAuthGridClassName}>
         <form
           className={managerAuthFormClassName}
@@ -119,6 +121,7 @@ export function ManagerPanelAuth({
         </form>
       </div>
 
+      {/* 酒店管理员注册和登录表单并排展示。 */}
       <div className={managerAuthGridClassName}>
         <form
           className={managerAuthFormClassName}

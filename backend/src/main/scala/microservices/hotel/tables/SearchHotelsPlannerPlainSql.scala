@@ -1,3 +1,5 @@
+// SearchHotelsPlannerPlainSql 封装酒店模块的plain SQL 实现。
+
 package com.typesafe.travel.hotel.tables
 
 import cats.effect.IO

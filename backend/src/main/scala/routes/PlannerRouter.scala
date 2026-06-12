@@ -1,3 +1,5 @@
+// PlannerRouter 负责将 HTTP 请求分发到对应的 planner。
+
 package com.typesafe.travel.api.routes
 
 import cats.effect.IO

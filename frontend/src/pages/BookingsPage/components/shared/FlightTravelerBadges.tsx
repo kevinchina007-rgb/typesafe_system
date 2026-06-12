@@ -1,3 +1,4 @@
+// 航班订单里的出行人标签组，只负责把旅客名字按行显示。
 import type { TravelerResponse } from '@/lib/mvp-types/index'
 import { formatTravelerIdentity } from '@/pages/BookingsPage/functions'
 

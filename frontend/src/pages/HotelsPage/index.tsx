@@ -13,6 +13,7 @@ import {
   HotelSearchNotice,
 } from './components'
 
+// 酒店页面入口组件，负责把搜索、广告和结果区串起来。
 export function HotelsPage(props: HotelsPageProps) {
   const controller = useHotelsPageController(props)
   const { currentLanguage, translate } = props

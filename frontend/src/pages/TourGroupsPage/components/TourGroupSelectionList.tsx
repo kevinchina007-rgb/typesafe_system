@@ -1,4 +1,6 @@
-﻿import type { AppLanguage, GroupPlanItemResponse, GroupPlanOptionResponse, GroupSelectionOrderProjectionResponse, GroupPlanSelectionResponse, TourGroupMembershipResponse } from '@/lib/mvp-types/index'
+// 本文件定义 TourGroupsPage 页面的列表组件，负责展示条目集合。
+
+import type { AppLanguage, GroupPlanItemResponse, GroupPlanOptionResponse, GroupSelectionOrderProjectionResponse, GroupPlanSelectionResponse, TourGroupMembershipResponse } from '@/lib/mvp-types/index'
 import { useEffect, useMemo, useState } from 'react'
 import { formatSelectionStatusLabel, formatSelectionTitle, getTourGroupConceptLabel } from '@/lib/presenters/tour-group-presenter'
 

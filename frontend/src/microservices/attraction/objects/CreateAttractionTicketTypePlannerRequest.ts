@@ -1,3 +1,5 @@
+// 本文件定义 attraction 模块的 `CreateAttractionTicketTypePlannerRequest`，作为planner 请求参数并提供 JSON 编解码。
+
 export type CreateAttractionTicketTypePlannerRequest = {
   managerId: string
   attractionId: string

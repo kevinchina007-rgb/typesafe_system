@@ -29,9 +29,9 @@ function normalizeConfiguredBackendOrigin(configuredOrigin: string | undefined):
 
 export function getTravelBackendOrigin(): string {
   if (window.location && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-    // 蹇嵎鏂瑰紡榛樿鎵撳紑 localhost 鍓嶇銆?
-    // 杩欑鎯呭喌涓嬪繀椤诲缁堝洖鍒板悓 host 鐨?backend锛屽惁鍒?cookie 浼氳惤鍦ㄥ彟涓€濂?host 涓婏紝
-    // 鍛ㄦ湡鎬?me/session 鎭㈠鏃跺氨浼氭妸宸茬櫥褰曠敤鎴疯鍒ゆ垚鏈櫥褰曘€?
+    // 本地开发默认走 localhost 前端时，后端也必须回到同一个 host。
+    // 这样 cookie 才会落在同一站点上，后面的 session/me 恢复才不会误判登录状态。
+    // 所以这里直接固定到本机的 19095 端口。
     return `${window.location.protocol}//${window.location.hostname}:19095`
   }
 

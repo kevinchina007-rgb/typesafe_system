@@ -10,6 +10,7 @@ import {
   BlogSelectedPostDialog,
 } from './components'
 
+// BlogPage 入口组件，负责在首页、发布、通知和我的内容之间切换。
 export function BlogPage(props: BlogPageProps) {
   const controller = useBlogPageController(props)
   const { activeTab, profileOverlayOpen, selectedPost } = controller

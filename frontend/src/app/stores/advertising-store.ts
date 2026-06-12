@@ -1,4 +1,6 @@
-﻿import { create } from 'zustand'
+// 本文件封装状态管理逻辑。
+
+import { create } from 'zustand'
 
 import { getManagerSnap } from '@/app/stores/manager-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
@@ -81,6 +83,7 @@ type AdvertisingActions = {
 
 type AdvertisingStore = AdvertisingState & AdvertisingActions
 
+// 判断广告当前是否满足展示条件。
 function advertisementIsDeliverable(advertisement: AdvertisementResponse, currentTime = new Date()) {
   const startsAt = Date.parse(advertisement.startAt)
   const endsAt = Date.parse(advertisement.endAt)
@@ -96,6 +99,7 @@ function advertisementIsDeliverable(advertisement: AdvertisementResponse, curren
   )
 }
 
+// 按优先级和更新时间排序广告。
 function sortAdvertisements(advertisements: AdvertisementResponse[]) {
   return [...advertisements].sort((left, right) => {
     if (left.priority !== right.priority) {
@@ -106,6 +110,7 @@ function sortAdvertisements(advertisements: AdvertisementResponse[]) {
   })
 }
 
+// 按投放槽位和更新时间排序可展示广告。
 function sortDeliverableAdvertisements(advertisements: AdvertisementResponse[]) {
   return [...advertisements].sort((left, right) => {
     const slotDelta = (left.slotIndex ?? 999) - (right.slotIndex ?? 999)
@@ -114,6 +119,7 @@ function sortDeliverableAdvertisements(advertisements: AdvertisementResponse[]) 
   })
 }
 
+// 新广告插入或覆盖已有同 ID 广告。
 function upsertAdvertisement(advertisements: AdvertisementResponse[], nextAdvertisement: AdvertisementResponse) {
   const existingIndex = advertisements.findIndex(item => item.advertisementId === nextAdvertisement.advertisementId)
   if (existingIndex < 0) {
@@ -125,10 +131,12 @@ function upsertAdvertisement(advertisements: AdvertisementResponse[], nextAdvert
   return sortAdvertisements(nextAdvertisements)
 }
 
+// 从列表里移除指定广告。
 function removeAdvertisement(advertisements: AdvertisementResponse[], advertisementId: string) {
   return advertisements.filter(item => item.advertisementId !== advertisementId)
 }
 
+// 在指定投放槽位里替换广告并保持排序。
 function replaceAdvertisementSlot(
   advertisements: AdvertisementResponse[],
   nextAdvertisement: AdvertisementResponse,
@@ -140,12 +148,14 @@ function replaceAdvertisementSlot(
   )
 }
 
+// 把页面投放位映射成后端使用的字符串值。
 function toPlacementValue(placement: AdvertisingPlacementKey) {
   if (placement === 'flightBooking') return 'FlightBookingPage'
   if (placement === 'trainBooking') return 'TrainBookingPage'
   return placement === 'hotelBooking' ? 'HotelBookingPage' : 'AttractionBookingPage'
 }
 
+// 读取当前登录管理者，未登录时直接抛错。
 function requireSignedInManager() {
   const manager = getManagerSnap().signedInManagerSession
   if (!manager) {
@@ -154,6 +164,7 @@ function requireSignedInManager() {
   return manager
 }
 
+// 广告状态仓库，负责广告列表、投放设置和投放位缓存。
 export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   ownerAdvertisements: [],
   pendingReviewAdvertisements: [],
@@ -229,7 +240,9 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   uploadAdvertisementImage: async imageFile => travelMvpApiClient.uploadAdvertisementImage(imageFile),
+  // 生成广告图片候选。
   generateAdvertisementImageCandidates: async payload => travelMvpApiClient.generateAdvertisementImageCandidates(payload),
+  // 生成广告文案候选。
   generateAdvertisementTextCandidates: async payload => travelMvpApiClient.generateAdvertisementTextCandidates(payload),
   updateAdvertisement: async (advertisementId, payload) => {
     const manager = requireSignedInManager()

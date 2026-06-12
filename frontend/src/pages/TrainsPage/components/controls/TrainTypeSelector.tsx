@@ -1,3 +1,4 @@
+// 火车类型偏好选择器参数，只负责车型分类下拉框。
 import { trainTypePreferences, type TrainTypePreference } from '@/app/stores/models/train-booking-model'
 
 type TrainTypeSelectorProps = {
@@ -6,6 +7,7 @@ type TrainTypeSelectorProps = {
   onChange: (value: TrainTypePreference) => void
 }
 
+// 火车类型偏好选择器，把枚举值映射成页面文案。
 export function TrainTypeSelector({ value, translate, onChange }: TrainTypeSelectorProps) {
   const translationKeyByOption: Record<TrainTypePreference, string> = {
     HighSpeed: 'trains.trainType.highSpeed',

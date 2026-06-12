@@ -1,4 +1,6 @@
-﻿export type { GroupPlanItemResponse } from '@/microservices/tour-group/objects/GroupPlanItemResponse'
+// 本文件定义旅游群组服务前端传输类型，覆盖群组、会话和成员接口。
+
+export type { GroupPlanItemResponse } from '@/microservices/tour-group/objects/GroupPlanItemResponse'
 export type { GroupPlanOptionResponse } from '@/microservices/tour-group/objects/GroupPlanOptionResponse'
 export type { GroupPlanSelectionResponse } from '@/microservices/tour-group/objects/GroupPlanSelectionResponse'
 export type { GroupSelectionOrderLinkResponse } from '@/microservices/tour-group/objects/GroupSelectionOrderLinkResponse'

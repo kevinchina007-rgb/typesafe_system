@@ -16,6 +16,7 @@ import {
   managerTitleClassName,
 } from '@/pages/ManagerPage/functions'
 
+// 管理员认证卡片，负责在同一张卡片里切换注册和登录表单。
 export function ManagerAuthCard({
   title,
   registerTitle,
@@ -39,6 +40,7 @@ export function ManagerAuthCard({
   const registerFormRef = useRef<HTMLFormElement>(null)
   const loginFormRef = useRef<HTMLFormElement>(null)
 
+  // 重置注册和登录表单，避免切换模式后留下旧输入值。
   function resetManagerAuthForms() {
     registerFormRef.current?.reset()
     loginFormRef.current?.reset()

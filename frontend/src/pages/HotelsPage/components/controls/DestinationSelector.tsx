@@ -1,10 +1,12 @@
-﻿type DestinationSelectorProps = {
+// 目的地输入选择器参数。
+type DestinationSelectorProps = {
   value: string
   translate: (translationKey: string) => string
   suggestions: string[]
   onChange: (value: string) => void
 }
 
+// 目的地选择器，负责输入或从建议中选择城市。
 export function DestinationSelector({ value, translate, suggestions, onChange }: DestinationSelectorProps) {
   return (
     <label className="grid gap-2 text-sm font-black text-slate-700">

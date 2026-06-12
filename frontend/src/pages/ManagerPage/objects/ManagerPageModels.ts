@@ -15,6 +15,7 @@ import type {
 import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
+// 管理页面根入口需要的 props。
 export type ManagerPageProps = {
   currentLanguage: AppLanguage
   currentViewKey: AppViewKey
@@ -27,9 +28,13 @@ export type ManagerPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
+// 管理员登录类型，与前后端命名保持一致。
 export type LoginManagerType = 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin'
+// 认证模式只有注册和登录两种。
 export type ManagerAuthMode = 'register' | 'login'
+// 非站点管理员的业务类型，便于复用入口和权限判断。
 export type BusinessManagerType = Exclude<LoginManagerType, 'siteAdmin'>
+// 广告资源选项，供管理后台的广告模块复用。
 export type AdvertisementResourceOption = {
   value: string
   label: string
@@ -40,6 +45,7 @@ export type AdvertisementResourceOption = {
   timeRange?: string
 }
 
+// 管理首页入口卡片的展示参数。
 export type ManagerEntryCardProps = {
   title: string
   shortTitle: string
@@ -49,6 +55,7 @@ export type ManagerEntryCardProps = {
   onSelect: (authMode: ManagerAuthMode) => void
 }
 
+// 管理员认证卡片的展示参数。
 export type ManagerAuthCardProps = {
   title: string
   registerTitle: string
@@ -67,6 +74,7 @@ export type ManagerAuthCardProps = {
   translate: (translationKey: string) => string
 }
 
+// 管理页面控制器对页面层暴露的完整状态和动作。
 export type ManagerPageController = {
   activeManagerType: 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin' | null
   activeSection: 'workspace' | 'feedback' | 'advertising' | 'blogAudit' | 'advertisingReview' | 'siteAdminFeedback'

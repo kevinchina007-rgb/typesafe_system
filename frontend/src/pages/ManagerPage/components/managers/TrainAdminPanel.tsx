@@ -4,6 +4,7 @@ import type { AppLanguage, TrainAdminSessionResponse } from '@/lib/mvp-types/ind
 import { formatIsoDateTime, localizeTrainSeatClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { getPasswordValidationMessage } from '@/pages/shared/auth/passwordValidation'
 
+// 火车管理员后台面板，负责注册、登录和新增车次。
 function normalizeDateTimeInput(rawValue: string): string {
   const trimmedValue = rawValue.trim()
   if (!trimmedValue) {

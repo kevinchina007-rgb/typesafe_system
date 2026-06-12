@@ -1,13 +1,16 @@
 import type { TripType } from '@/app/stores/models/flights'
 
+// 航班搜索的行程类型切换参数。
 type TripTypeSelectorProps = {
   value: TripType
   translate: (translationKey: string) => string
   onChange: (value: TripType) => void
 }
 
+// 可选的行程类型列表，顺序与页面按钮一致。
 const tripTypeOptions: TripType[] = ['oneWay', 'roundTrip', 'multiCity']
 
+// 行程类型切换器，把当前值和翻译函数组合成按钮组。
 export function TripTypeSelector({ value, translate, onChange }: TripTypeSelectorProps) {
   return (
     <div className="flex flex-wrap items-center gap-3" role="tablist" aria-label={translate('flights.tripType')}>
@@ -29,4 +32,5 @@ export function TripTypeSelector({ value, translate, onChange }: TripTypeSelecto
   )
 }
 
+// 让外部文件可以继续复用 TripType 的类型定义。
 export type { TripType }

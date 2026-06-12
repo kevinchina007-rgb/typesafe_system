@@ -1,3 +1,5 @@
+// 本文件定义 advertising 模块的 `CreateAdvertisementRequest`，作为请求参数并提供 JSON 编解码。
+
 export type CreateAdvertisementRequest = {
   ownerManagerId: string
   ownerType: string

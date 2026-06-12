@@ -1,3 +1,5 @@
+// 本文件定义 BookingsPage 页面的卡片组件，负责单条数据摘要展示。
+
 import type { OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { FlightTravelerBadges } from '@/pages/BookingsPage/components/shared/FlightTravelerBadges'

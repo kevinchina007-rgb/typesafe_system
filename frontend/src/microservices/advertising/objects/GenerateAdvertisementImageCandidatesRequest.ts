@@ -1,3 +1,5 @@
+// 本文件定义 advertising 模块的 `GenerateAdvertisementImageCandidatesRequest`，作为请求参数并提供 JSON 编解码。
+
 export type GenerateAdvertisementImageCandidatesRequest = {
   prompt: string
   supportingCopy?: string | null

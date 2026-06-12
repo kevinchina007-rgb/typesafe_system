@@ -7,8 +7,8 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import java.time.{Instant, LocalDate}
 import TourGroupSourceJsonCodecs.given
 
-// TourGroup 只负责“团体计划与成员关系”，不直接承担真实交易�?
-// 真实支付和退款仍然通过 Order 主链完成�?
+// TourGroup 只负责团体计划和成员关系，不直接承担真实交易。
+// 真实支付和退款仍由 Order 主链路完成。
 enum TourGroupStatus:
   case Draft, Open, Closed, Cancelled
 
@@ -16,16 +16,9 @@ object TourGroupStatus:
   val all: Vector[TourGroupStatus] =
     Vector(TourGroupStatus.Draft, TourGroupStatus.Open, TourGroupStatus.Closed, TourGroupStatus.Cancelled)
 
-  def fromText(value: String): TourGroupStatus =
-    value.trim match
-      case "Draft"     => TourGroupStatus.Draft
-      case "Open"      => TourGroupStatus.Open
-      case "Closed"    => TourGroupStatus.Closed
-      case "Cancelled" => TourGroupStatus.Cancelled
-      case other       => throw new IllegalArgumentException(s"Unknown tour group status: $other")
-
   given sourceEncoder: Encoder[TourGroupStatus] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[TourGroupStatus] = Decoder.decodeString.map(fromText)
+  given sourceDecoder: Decoder[TourGroupStatus] = Decoder.decodeString.map(TourGroupStatusesSupport.parseTourGroupStatus)
+  export TourGroupStatusesSupport.parseTourGroupStatus as fromText
 
 final case class TourGroup(
     groupId: TourGroupId,

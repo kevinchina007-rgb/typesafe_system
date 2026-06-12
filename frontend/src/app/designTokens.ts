@@ -1,4 +1,6 @@
-﻿export const designTokens = {
+// 本文件定义应用级设计令牌，包括颜色、间距、字号和圆角。
+
+export const designTokens = {
   spacing: {
     xs: '0.375rem',
     sm: '0.625rem',

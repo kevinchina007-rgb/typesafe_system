@@ -1,4 +1,6 @@
-﻿import { useEffect, useState } from 'react'
+// 本文件定义 TourGroupsPage 页面的弹窗组件，负责临时表单或确认交互。
+
+import { useEffect, useState } from 'react'
 
 type CreateTourGroupDialogProps = {
   isOpen: boolean

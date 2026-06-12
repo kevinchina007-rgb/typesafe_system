@@ -1,4 +1,6 @@
-﻿export { CreateTourGroupDialog } from './CreateTourGroupDialog'
+// 本目录统一导出组件，方便上层按模块引用。
+
+export { CreateTourGroupDialog } from './CreateTourGroupDialog'
 export { TourGroupBookingSummary } from './TourGroupBookingSummary'
 export { TourGroupChatPanel } from './TourGroupChatPanel'
 export { TourGroupDetail } from './TourGroupDetail'

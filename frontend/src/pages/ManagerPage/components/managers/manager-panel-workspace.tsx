@@ -382,6 +382,7 @@ export function ManagerPanelWorkspace({
   )
 }
 
+// 创建航班区块，负责从表单直接生成一条新航班。
 function CreateFlightSection({
   isBusy,
   onCreateManagerFlight,
@@ -535,6 +536,7 @@ function CreateFlightSection({
   )
 }
 
+// 创建航班表单字段包装器，统一标签和强调样式。
 function CreateFlightField({ label, important = false, children }: { label: string; important?: boolean; children: ReactNode }) {
   return (
     <label className="grid gap-2">
@@ -544,6 +546,7 @@ function CreateFlightField({ label, important = false, children }: { label: stri
   )
 }
 
+// 舱位草稿卡片，负责配置单个舱位的票数、价格和折扣。
 function CabinDraftCard({
   title,
   seats,
@@ -590,6 +593,7 @@ function CabinDraftCard({
   )
 }
 
+// 航班查询卡片，负责填写查询条件和触发搜索。
 function ManagerFlightSearchCard({
   draft,
   onDraftChange,
@@ -669,6 +673,7 @@ function ManagerFlightSearchCard({
   )
 }
 
+// 查询字段包装器，统一展示字段标题和输入控件。
 function ManagerSearchField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="grid gap-2">
@@ -678,6 +683,7 @@ function ManagerSearchField({ label, children }: { label: string; children: Reac
   )
 }
 
+// 城市下拉选择器，负责展示所有可选出发/到达城市。
 function CitySelect({
   value,
   placeholder,
@@ -703,6 +709,7 @@ function CitySelect({
   )
 }
 
+// 航班管理区块，负责展示航班查询结果和排序筛选。
 function FlightManagementSection({
   currentLanguage,
   flights,
@@ -799,6 +806,7 @@ function FlightManagementSection({
   )
 }
 
+// 单条航班卡片，负责展示航班信息和启停按钮。
 function ManagerFlightCard({
   flight,
   profile,
@@ -878,6 +886,7 @@ function ManagerFlightCard({
   )
 }
 
+// 航班订单区块，负责按舱位分组展示当前航班的订单。
 function ManagerFlightOrdersSection({
   currentLanguage,
   flight,
@@ -956,6 +965,7 @@ function ManagerFlightOrdersSection({
   )
 }
 
+// 航班订单卡片，负责展示买家、旅客和订单状态。
 function ManagerFlightOrderCard({
   currentLanguage,
   order,
@@ -989,6 +999,7 @@ function ManagerFlightOrderCard({
   )
 }
 
+// 旅客悬浮卡片，负责展示单个旅客的完整信息摘要。
 function ManagerTravelerHoverCard({ traveler }: { traveler: ManagerFlightOrderResponse['travelers'][number] }) {
   return (
     <span className="group relative inline-flex">
@@ -1015,31 +1026,37 @@ function ManagerTravelerHoverCard({ traveler }: { traveler: ManagerFlightOrderRe
     </span>
   )
 }
+// 把 HH:mm 转成分钟数，方便做时间比较。
 function clockToMinutes(clock: string): number {
   const [hourText, minuteText] = clock.split(':')
   return Number(hourText) * 60 + Number(minuteText)
 }
 
+// 把分钟数格式化回 HH:mm。
 function formatClockFromMinutes(totalMinutes: number): string {
   const hour = Math.floor(totalMinutes / 60).toString().padStart(2, '0')
   const minute = (totalMinutes % 60).toString().padStart(2, '0')
   return `${hour}:${minute}`
 }
 
+// 判断一个钟点是否落在指定时间段内。
 function isClockInsideWindow(clock: string, windowStart: string, windowEnd: string): boolean {
   const value = clockToMinutes(clock)
   return value >= clockToMinutes(windowStart) && value <= clockToMinutes(windowEnd)
 }
 
+// 在时间段内找一个默认钟点，避免表单初始值越界。
 function bumpClockInsideWindow(windowStart: string, windowEnd: string): string {
   const preferred = clockToMinutes(windowStart) + 90
   return formatClockFromMinutes(Math.min(preferred, clockToMinutes(windowEnd)))
 }
 
+// 把日期和钟点拼成后端需要的本地时间字符串。
 function buildLocalDateTime(date: string, clock: string): string {
   return `${date}T${clock}`
 }
 
+// 根据原价和折扣率计算舱位实际价格。
 function calculateCabinActualPrice(price: string, discounted: boolean, discountRate: string): string {
   const originalPrice = Number(price)
   const rate = Number(discountRate)
@@ -1050,6 +1067,7 @@ function calculateCabinActualPrice(price: string, discounted: boolean, discountR
   return actualPrice.toFixed(2)
 }
 
+// 展示出发或到达时间块。
 function TimeBlock({ time, airport }: { time: string; airport: string }) {
   return (
     <div className="grid gap-1">
@@ -1059,6 +1077,7 @@ function TimeBlock({ time, airport }: { time: string; airport: string }) {
   )
 }
 
+// 统一的筛选下拉框组件。
 function FilterSelect({
   label,
   value,
@@ -1088,6 +1107,7 @@ function FilterSelect({
   )
 }
 
+// 校验航班查询条件是否合理。
 function validateManagerFlightSearchDraft(draft: ManagerFlightSearchDraft): string | null {
   const departureCity = draft.departureCity.trim()
   const arrivalCity = draft.arrivalCity.trim()
@@ -1098,6 +1118,7 @@ function validateManagerFlightSearchDraft(draft: ManagerFlightSearchDraft): stri
   return null
 }
 
+// 把查询草稿整理成后端搜索参数。
 function buildManagerFlightSearchPayload(draft: ManagerFlightSearchDraft, sortDirection: 'asc' | 'desc') {
   return {
     departureAirports: draft.departureCity ? getFlightDetailsPlannerCityAirportCodes(draft.departureCity) : undefined,
@@ -1108,6 +1129,7 @@ function buildManagerFlightSearchPayload(draft: ManagerFlightSearchDraft, sortDi
   }
 }
 
+// 根据城市和现有航班数据生成机场选项。
 function buildManagerAirportOptions(cityName: string, fallbackAirportCodes: string[]): string[] {
   const cityAirportCodes = cityName ? getFlightDetailsPlannerCityAirportCodes(cityName) : []
   if (cityAirportCodes.length > 0) {
@@ -1117,6 +1139,7 @@ function buildManagerAirportOptions(cityName: string, fallbackAirportCodes: stri
   return unique(fallbackAirportCodes)
 }
 
+// 航司资料草稿，保存当前页面正在编辑的基础资料。
 type AirlineProfileDraft = {
   displayName: string
   companyName: string
@@ -1124,6 +1147,8 @@ type AirlineProfileDraft = {
   logoPath: string
 }
 
+// 航空管理资料区块，负责展示和编辑当前航司的基础资料。
+// 航空管理资料区块，负责展示和编辑当前航司资料。
 function ManagerProfileSection({
   managerSession,
   profileDraft,
@@ -1189,6 +1214,8 @@ function ManagerProfileSection({
   )
 }
 
+// 酒店工作区，负责酒店资料和房型创建入口。
+// 酒店工作区，负责酒店资料和房型创建入口。
 function HotelWorkspace({
   currentLanguage,
   isBusy,
@@ -1272,6 +1299,7 @@ function HotelWorkspace({
   )
 }
 
+// 酒店资料区块，负责编辑酒店基础资料。
 export function HotelProfileSection({
   currentLanguage,
   managerSession,
@@ -1380,6 +1408,7 @@ export function HotelProfileSection({
   )
 }
 
+// 酒店资料草稿，保存当前编辑中的酒店信息。
 type HotelProfileDraft = {
   displayName: string
   email: string
@@ -1387,6 +1416,8 @@ type HotelProfileDraft = {
   hotelLocation: string
 }
 
+// 把酒店管理者和当前酒店信息整理成表单草稿。
+// 把酒店会话和当前酒店信息整理成表单草稿。
 function buildHotelProfileDraft(
   managerSession: NonNullable<ManagerPanelProps['managerSession']>,
   currentHotel: ManagerPanelProps['managedHotels'][number] | null,
@@ -1399,6 +1430,8 @@ function buildHotelProfileDraft(
   }
 }
 
+// 把航司管理者和已有航班信息整理成资料草稿。
+// 把航司会话和现有航班数据整理成资料草稿。
 function buildProfileDraft(managerSession: ManagerPanelProps['managerSession'], managedFlights: FlightPlannerResponse[]): AirlineProfileDraft {
   const firstFlight = managedFlights[0]
   return {
@@ -1409,6 +1442,8 @@ function buildProfileDraft(managerSession: ManagerPanelProps['managerSession'], 
   }
 }
 
+// 把航班时间格式化成页面可读的时分展示。
+// 把航班时间格式化成页面展示的时分。
 function formatFlightClock(isoDateTime: string | null): string {
   if (!isoDateTime) {
     return '--:--'
@@ -1421,6 +1456,8 @@ function formatFlightClock(isoDateTime: string | null): string {
   })
 }
 
+// 统一不同来源的舱位名称写法，便于后续比较。
+// 统一不同来源的舱位名称写法。
 function normalizeCabinKey(value: string): string {
   const normalized = value.trim().toUpperCase().replaceAll('-', '_')
   if (normalized === 'PREMIUMECONOMY' || normalized === 'PREMIUM_ECONOMY') {
@@ -1435,6 +1472,8 @@ function normalizeCabinKey(value: string): string {
   return 'ECONOMY'
 }
 
+// 把订单里的旅客名单拼成一行简短摘要。
+// 把订单里的旅客列表拼成简短摘要。
 function formatManagerFlightTravelers(order: ManagerFlightOrderResponse): string {
   if (order.travelers.length > 0) {
     return order.travelers.map(traveler => `${traveler.fullName} (${traveler.documentNumber})`).join('、')
@@ -1445,6 +1484,8 @@ function formatManagerFlightTravelers(order: ManagerFlightOrderResponse): string
   return '未选择出行人'
 }
 
+// 把旅客的座位和餐食偏好压缩成摘要文案。
+// 把旅客座位和餐食偏好拼成摘要。
 function formatTravelerPreferenceSummary(traveler: ManagerFlightOrderResponse['travelers'][number]): string {
   const seatLabels: Record<string, string> = {
     Window: '靠窗',
@@ -1476,6 +1517,8 @@ function formatTravelerPreferenceSummary(traveler: ManagerFlightOrderResponse['t
   ].filter(Boolean).join(' / ')
 }
 
+// 把旅客的特殊需求压缩成摘要文案。
+// 把旅客特殊需求拼成摘要。
 function formatTravelerRequirementSummary(traveler: ManagerFlightOrderResponse['travelers'][number]): string {
   const requirement = traveler.specialRequirementInfo
   return [
@@ -1486,6 +1529,8 @@ function formatTravelerRequirementSummary(traveler: ManagerFlightOrderResponse['
   ].filter(Boolean).join(' / ') || '无特殊要求'
 }
 
+// 根据订单状态返回对应的状态徽标样式。
+// 根据订单状态返回对应的徽标样式。
 function statusBadgeClassName(status: string): string {
   if (status === 'Refunded') {
     return 'inline-flex min-h-10 items-center justify-center border border-sky-200 bg-sky-50 px-4 text-base font-black text-sky-700'
@@ -1496,6 +1541,8 @@ function statusBadgeClassName(status: string): string {
   return 'inline-flex min-h-10 items-center justify-center border border-amber-200 bg-amber-50 px-4 text-base font-black text-amber-700'
 }
 
+// 去掉重复值，避免下拉列表重复展示。
+// 去掉重复值，避免下拉选项重复展示。
 function unique(values: string[]): string[] {
   return [...new Set(values.filter(Boolean))]
 }

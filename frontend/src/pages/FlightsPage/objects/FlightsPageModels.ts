@@ -11,6 +11,7 @@ import type {
 } from '@/microservices/flight/objects/FlightDailyLowestPrices'
 import type { FlightResultGroup, FlightSearchSegment, FlightSearchState } from '@/app/stores/models/flights/flightTypes'
 
+// FlightsPage 顶层参数，负责把语言、登录用户和导航能力传给页面。
 export type FlightsPageProps = {
   currentLanguage: AppLanguage
   signedInUser: UserResponse | null
@@ -19,14 +20,17 @@ export type FlightsPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
+// FlightsPage 的排序方式，只保留页面需要的两种展示顺序。
 export type FlightSortMode = 'price' | 'departureTime'
 
+// FlightsPage 当前展示的一条航线，包含起降机场和日期。
 export type FlightResultsRoute = {
   departureAirport: string
   arrivalAirport: string
   departureDate: string
 }
 
+// FlightsPage 中单条航班的展示数据，负责把原始响应整理成视图可直接使用的结构。
 export type DisplayFlight = {
   flight: FlightPlannerResponse
   airlineName: string
@@ -41,6 +45,7 @@ export type DisplayFlight = {
   priceTone: 'lowest' | 'discount' | 'standard'
 }
 
+// FlightSearchCard 参数，负责承接搜索面板里的所有表单状态和事件。
 export type FlightSearchCardProps = {
   tripType: 'oneWay' | 'roundTrip' | 'multiCity'
   departureAirport: string
@@ -66,6 +71,7 @@ export type FlightSearchCardProps = {
   onSubmit: () => void
 }
 
+// FlightResultsSection 参数，负责承接结果区的查询状态、筛选条件和预订动作。
 export type FlightResultsSectionProps = {
   searchState: FlightSearchState
   flightResponses: FlightPlannerResponse[]
@@ -94,6 +100,7 @@ export type FlightResultsSectionProps = {
   initialSelectedCabin?: string | null
 }
 
+// FlightsPage controller 暴露给视图层的状态和动作集合。
 export type FlightsPageController = {
   travelers: TravelerResponse[]
   isBusy: boolean

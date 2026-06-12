@@ -1,5 +1,6 @@
 import type { HotAttractionsProps } from '../../objects'
 
+// 热门景点快捷入口，只负责展示可点击的推荐词。
 export function HotAttractions({ items, translate, onSelect }: HotAttractionsProps) {
   return (
     <div className="grid gap-2">
@@ -14,4 +15,3 @@ export function HotAttractions({ items, translate, onSelect }: HotAttractionsPro
     </div>
   )
 }
-

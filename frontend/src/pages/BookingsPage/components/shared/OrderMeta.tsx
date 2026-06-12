@@ -1,3 +1,4 @@
+// 通用订单元信息块，只负责展示标签和值。
 export function OrderMeta({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid gap-1 border border-slate-200 bg-white p-3">

@@ -1,5 +1,6 @@
 import type { HotelSearchNotice } from '../objects/HotelsPageModels'
 
+// 计算所有酒店的最低房价，用于日期价格条展示。
 export function getLowestRoomPrice(hotelResponses: Array<{ roomTypes: Array<{ basePrice: string }> }>): number | null {
   const prices = hotelResponses.flatMap(hotel => hotel.roomTypes.map(roomType => Number(roomType.basePrice)).filter(Number.isFinite))
   if (prices.length === 0) {
@@ -9,6 +10,7 @@ export function getLowestRoomPrice(hotelResponses: Array<{ roomTypes: Array<{ ba
   return Math.min(...prices)
 }
 
+// 校验酒店搜索输入，返回可展示的提示信息。
 export function validateHotelSearchInput(
   translate: (translationKey: string) => string,
   nextLocation: string,
@@ -43,6 +45,7 @@ export function validateHotelSearchInput(
   return null
 }
 
+// 将酒店搜索条件整理成提交请求前的标准形态。
 export function formatHotelSearchRequest(
   location: string,
   checkInDate: string,

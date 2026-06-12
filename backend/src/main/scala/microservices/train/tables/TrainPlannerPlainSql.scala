@@ -1,3 +1,5 @@
+// TrainPlannerPlainSql 封装火车模块的plain SQL 实现。
+
 package com.typesafe.travel.train.domain
 
 import cats.effect.IO

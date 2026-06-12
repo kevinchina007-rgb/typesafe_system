@@ -1,3 +1,5 @@
+// FlightPlannerModels 定义航班模块的请求和响应模型。
+
 package com.typesafe.travel.flight.objects
 
 import io.circe.{Decoder, Encoder}

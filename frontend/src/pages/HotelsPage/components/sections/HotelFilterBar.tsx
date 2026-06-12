@@ -1,6 +1,7 @@
 import { HotelPreferenceSelector } from '@/pages/HotelsPage/components/controls/HotelPreferenceSelector'
 import type { HotelFilterBarProps } from '@/pages/HotelsPage/objects'
 
+// 酒店筛选条，负责偏好和周边条件。
 export function HotelFilterBar({
   hotelPreference,
   nearbyPreference,

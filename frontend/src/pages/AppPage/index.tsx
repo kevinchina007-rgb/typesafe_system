@@ -4,6 +4,7 @@ import { AppPageShell } from './components/AppPageShell'
 import { useAppPageController } from './hooks'
 import { APP_PAGE_REGIONS, type AppPageController } from './objects'
 
+// App 级页面入口，根据当前路由状态渲染主壳层和通知区。
 export function MvpApp() {
   const currentNotice = useAppShellStore(state => state.currentNotice)
   const controller = useAppPageController()

@@ -1,3 +1,5 @@
+// TravelerDomainFunctions 定义旅客模块的领域辅助函数。
+
 package com.typesafe.travel.traveler.domain
 
 import com.typesafe.travel.shared.kernel.*

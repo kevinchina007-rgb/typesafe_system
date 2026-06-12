@@ -1,3 +1,5 @@
+// 本文件定义 traveler 模块的 `TravelerProfileDetails`，作为传输数据并提供 JSON 编解码。
+
 export type TravelerBasicInfo = {
   fullName: string
   gender: string

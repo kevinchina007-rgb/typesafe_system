@@ -1,3 +1,4 @@
+// 房间和入住人数选择器参数。
 type GuestRoomSelectorProps = {
   roomCount: number
   guestCount: number
@@ -6,6 +7,7 @@ type GuestRoomSelectorProps = {
   onGuestCountChange: (value: number) => void
 }
 
+// 房间和入住人数选择器，负责预订前的基础配置。
 export function GuestRoomSelector({
   roomCount,
   guestCount,

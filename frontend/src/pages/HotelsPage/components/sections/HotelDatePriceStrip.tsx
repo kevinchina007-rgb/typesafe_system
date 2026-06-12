@@ -7,6 +7,7 @@ import {
 } from '@/app/stores/models/hotel-booking-model'
 import type { HotelDatePriceStripProps } from '@/pages/HotelsPage/objects'
 
+// 酒店日期价格条，负责按天展示价格和切换窗口。
 export function HotelDatePriceStrip({
   dateWindowStart,
   selectedDate,
@@ -39,7 +40,7 @@ export function HotelDatePriceStrip({
                 {formatHotelWeekdayLabel(date)}
               </span>
               <strong className={`text-xl font-black ${isSelected ? 'text-white' : 'text-orange-500'}`}>
-                {lowestPrice !== null ? `¥${formatPrice(lowestPrice)}` : '--'}
+                {lowestPrice !== null ? `楼${formatPrice(lowestPrice)}` : '--'}
               </strong>
             </button>
           )
@@ -50,6 +51,7 @@ export function HotelDatePriceStrip({
   )
 }
 
+// 日期窗左右切换按钮。
 function WindowButton({
   direction,
   disabled,
@@ -67,7 +69,7 @@ function WindowButton({
       }`}
       disabled={disabled}
       onClick={onClick}
-      aria-label={direction === 'left' ? '鏌ョ湅鍓嶄竴鏃ユ湡' : '鏌ョ湅鍚庝竴鏃ユ湡'}
+      aria-label={direction === 'left' ? '左移日期窗口' : '右移日期窗口'}
     >
       {direction === 'left' ? (
         <ChevronLeft className="h-5 w-5 text-sky-700 transition group-hover:text-white" />
@@ -78,6 +80,7 @@ function WindowButton({
   )
 }
 
+// 把价格格式化成展示文本。
 function formatPrice(value: number): string {
   return value % 1 === 0 ? value.toFixed(0) : value.toFixed(2)
 }

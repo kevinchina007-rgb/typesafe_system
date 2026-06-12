@@ -1,4 +1,6 @@
-﻿export type TourGroupMessageReactionResponse = {
+// 本文件定义 tour-group 模块的 `TourGroupMessageReactionResponse`，作为响应数据并提供 JSON 编解码。
+
+export type TourGroupMessageReactionResponse = {
   reactionType: string
   count: number
   reactedByCurrentUser: boolean

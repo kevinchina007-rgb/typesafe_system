@@ -1,3 +1,5 @@
+// AdvertisementPlainSql 封装广告模块的plain SQL 实现。
+
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO

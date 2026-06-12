@@ -1,13 +1,16 @@
 ﻿import type { TrainTripType } from '@/app/stores/models/train-booking-model'
 
+// 火车行程类型切换控件参数，只负责单程和往返两个按钮。
 type TripTypeSelectorProps = {
   value: TrainTripType
   translate: (translationKey: string) => string
   onChange: (value: TrainTripType) => void
 }
 
+// 行程类型候选项，只负责按钮顺序。
 const tripTypeOptions: TrainTripType[] = ['oneWay', 'roundTrip']
 
+// 火车行程类型切换器，只负责把当前值渲染成按钮组。
 export function TripTypeSelector({ value, translate, onChange }: TripTypeSelectorProps) {
   return (
     <div className="flex flex-wrap items-center gap-3" role="tablist" aria-label={translate('trains.tripType')}>

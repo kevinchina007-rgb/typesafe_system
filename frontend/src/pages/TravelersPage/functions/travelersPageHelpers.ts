@@ -1,3 +1,5 @@
+// 本文件定义 TravelersPage 的辅助函数，负责整理旅客列表、选择状态和编辑弹层所需的数据。
+
 import type { TravelerResponse } from '@/lib/mvp-types/index'
 import type { TravelerFormDraft } from '../objects'
 import type { TravelerProfileInput } from '@/microservices/traveler/objects/TravelerProfileInput'

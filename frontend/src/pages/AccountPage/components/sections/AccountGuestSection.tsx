@@ -8,6 +8,7 @@ type AccountGuestSectionProps = {
   translate: (translationKey: string) => string
 }
 
+// 未登录状态下的账号入口区域。
 export function AccountGuestSection({ controller, translate }: AccountGuestSectionProps) {
   const {
     accountEntryMode,

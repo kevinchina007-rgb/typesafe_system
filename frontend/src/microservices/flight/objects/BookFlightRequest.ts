@@ -1,3 +1,5 @@
+// 本文件定义 flight 模块的 `BookFlightRequest`，作为请求参数并提供 JSON 编解码。
+
 export type BookFlightPlannerRequest = {
   userId: string
   flightId: string

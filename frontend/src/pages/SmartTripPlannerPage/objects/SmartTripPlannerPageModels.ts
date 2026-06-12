@@ -1,3 +1,5 @@
+// 本文件定义 SmartTripPlannerPage 页面数据模型和 JSON 编解码。
+
 import type { AppViewKey } from '@/lib/mvp-types/index'
 
 export type SmartTripPlannerPageProps = {

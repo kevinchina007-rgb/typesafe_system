@@ -1,3 +1,5 @@
+// MigrationPlan 定义数据库迁移执行顺序。
+
 package com.typesafe.travel.persistence
 
 import cats.effect.IO

@@ -1,4 +1,6 @@
-﻿import type { TrainSeatAssignmentResponse } from '@/microservices/train/objects/TrainSeatAssignmentResponse'
+// 本文件定义 order 模块的 `TrainItemDetailsResponse`，作为详情响应数据并提供 JSON 编解码。
+
+import type { TrainSeatAssignmentResponse } from '@/microservices/train/objects/TrainSeatAssignmentResponse'
 
 export type TrainItemDetailsResponse = {
   trainId: string

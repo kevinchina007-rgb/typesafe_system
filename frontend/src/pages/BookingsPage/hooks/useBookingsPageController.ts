@@ -6,6 +6,7 @@ import type { OrderResponse, ReviewResponse, TravelerResponse, PaymentLinkRespon
 import { usePageActions } from '@/pages/shared/usePageActions'
 import type { BookingsPageController, BookingsPageProps, PaymentMethodValue } from '../objects'
 
+// BookingsPage 的控制器，负责拉取订单、评价和出行人并组织页面动作。
 export function useBookingsPageController({
   currentLanguage,
   signedInUser,

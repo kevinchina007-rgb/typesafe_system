@@ -1,4 +1,6 @@
-﻿export type TourGroupMembershipResponse = {
+// 本文件定义 tour-group 模块的 `TourGroupMembershipResponse`，作为响应数据并提供 JSON 编解码。
+
+export type TourGroupMembershipResponse = {
   membershipId: string
   userId: string
   userDisplayName?: string

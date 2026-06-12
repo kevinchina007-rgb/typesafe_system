@@ -1,3 +1,5 @@
+// 本文件定义 hotel 模块的 `HotelResponse`，作为响应数据并提供 JSON 编解码。
+
 import type { RoomTypeSummaryResponse } from './RoomTypeSummaryResponse'
 
 export type HotelPlannerResponse = {

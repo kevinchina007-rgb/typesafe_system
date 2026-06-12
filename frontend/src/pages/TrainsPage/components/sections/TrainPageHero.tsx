@@ -1,5 +1,6 @@
 import type { TrainPageHeroProps } from '@/pages/TrainsPage/objects'
 
+// TrainsPage 顶部横幅，只负责展示标题和简介。
 export function TrainPageHero({ title, description }: TrainPageHeroProps) {
   return (
     <section className="grid gap-4 border border-sky-200 bg-gradient-to-r from-sky-50 via-white to-amber-50 p-6 shadow-sm shadow-sky-100/50">

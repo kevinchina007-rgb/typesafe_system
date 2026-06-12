@@ -1,4 +1,6 @@
-﻿export type TrainSeatResponse = {
+// 本文件定义 train 模块的 `TrainSeatResponse`，作为响应数据并提供 JSON 编解码。
+
+export type TrainSeatResponse = {
   seatId: string
   carriageNo: number
   seatNo: string

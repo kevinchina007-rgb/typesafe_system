@@ -1,3 +1,5 @@
+// OrderDomainFunctions 定义订单模块的领域辅助函数。
+
 package com.typesafe.travel.api.application
 
 import com.typesafe.travel.order.domain.*

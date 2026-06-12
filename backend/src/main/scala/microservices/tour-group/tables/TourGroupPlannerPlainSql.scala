@@ -1,3 +1,5 @@
+// TourGroupPlannerPlainSql 封装团体游模块的plain SQL 实现。
+
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO

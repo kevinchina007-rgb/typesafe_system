@@ -1,3 +1,5 @@
+// 本文件定义 ExplorePage 的辅助函数，负责整理探索页搜索结果、推荐卡片和页面状态。
+
 import type { AppViewKey, ExploreSearchResultResponse } from '@/lib/mvp-types/index'
 
 export function targetViewFromResult(resourceType: string): AppViewKey {

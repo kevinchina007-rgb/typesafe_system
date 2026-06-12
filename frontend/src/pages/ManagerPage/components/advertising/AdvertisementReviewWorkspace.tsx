@@ -4,6 +4,7 @@ import { useAdvertisingStore } from '@/app/stores/advertising-store'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 
+// 广告审核工作区，站点管理员在这里完成广告审核、排序和投放配置。
 type AdvertisingBusinessModule = 'flight' | 'hotel' | 'train' | 'attraction'
 type PlacementValue = 'FlightBookingPage' | 'HotelBookingPage' | 'TrainBookingPage' | 'AttractionBookingPage'
 

@@ -1,4 +1,6 @@
-﻿import { create } from 'zustand'
+// 本文件封装状态管理逻辑。
+
+import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
 import type { AppLanguage, AppNotice, AppViewKey } from '@/lib/mvp-types/index'

@@ -1,3 +1,5 @@
+// PersistenceApplicationWiring 负责组装 persistence 层相关依赖。
+
 package com.typesafe.travel.api
 
 import cats.effect.IO
@@ -6,6 +8,7 @@ import cats.syntax.all.*
 import com.typesafe.travel.api.routes.*
 import com.typesafe.travel.persistence.*
 import com.typesafe.travel.persistence.order.TrainOrderExpirySweeper
+import com.typesafe.travel.static.StaticAssetRouter
 
 import ApplicationWiringPaths.resolveConfiguredPath
 
@@ -18,14 +21,14 @@ object PersistenceApplicationWiring:
 
     DatabaseTransactor.resource(databaseConfig).flatMap { databaseTransactor =>
       val setup =
-        Resource.eval(SchemaInitializer.initialize(databaseTransactor)) *>
-          Resource.eval(ReferenceDataSeeder.seedIfNeeded(databaseTransactor))
+        Resource.eval(SchemaInitializer.initialize(databaseTransactor))
       val wiring =
         ApplicationWiring(
           httpApp =
             (
-              PlannerRouter(PlannerDefinitions.orderPlanners).routes <+>
-                ApiRouter(
+              HealthRouter.routes <+>
+                PlannerRouter(PlannerDefinitions.allPlanners).routes <+>
+                StaticAssetRouter(
                   uploadedBinaryAssetReader = Some(UploadedBinaryAssetPlainSql(databaseConfig)),
                   avatarUploadRootDirectoryPath = avatarUploadRootDirectoryPath,
                   contentUploadRootDirectoryPath = contentUploadRootDirectoryPath,

@@ -1,4 +1,6 @@
-﻿import type { OrderLineItemResponse } from './OrderLineItemResponse'
+// 本文件定义 order 模块的 `OrderResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { OrderLineItemResponse } from './OrderLineItemResponse'
 import type { PaymentResponse } from './PaymentResponse'
 import type { RefundResponse } from './RefundResponse'
 

@@ -1,5 +1,6 @@
 import type { TrainSearchCardProps } from '@/pages/TrainsPage/objects'
 
+// TrainsPage 的搜索卡片，只负责输入出发地、目的地和日期。
 export function TrainSearchCard({
   isBusy,
   searchDate,

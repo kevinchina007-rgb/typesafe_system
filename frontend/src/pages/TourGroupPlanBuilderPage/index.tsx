@@ -1,3 +1,5 @@
+// 本文件作为当前目录的入口导出文件。
+
 import { useEffect, useMemo, useState } from 'react'
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
@@ -25,6 +27,7 @@ function getGroupIdFromUrl(): string | null {
   return groupId && groupId.trim().length > 0 ? groupId : null
 }
 
+// 旅游团行程编排页，负责加载团信息并把搜索接口交给编辑器。
 export function TourGroupPlanBuilderPage({
   currentLanguage,
   signedInUser,
@@ -37,6 +40,7 @@ export function TourGroupPlanBuilderPage({
   const [details, setDetails] = useState<TourGroupDetailsResponse | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
 
+  // 根据 URL 中的 groupId 拉取旅游团详情。
   useEffect(() => {
     if (!groupId) {
       setLoadError('missing_group_id')
@@ -61,11 +65,13 @@ export function TourGroupPlanBuilderPage({
     }
   }, [groupId])
 
+  // 判断当前登录用户是不是团长。
   const isOrganizer = useMemo(
     () => signedInUser !== null && details?.group.organizerUserId === signedInUser.userId,
     [details?.group.organizerUserId, signedInUser],
   )
 
+  // 返回旅游团详情页。
   function goBackToTourGroup() {
     onNavigate('tourGroups')
   }
@@ -80,6 +86,7 @@ export function TourGroupPlanBuilderPage({
     </button>
   )
 
+  // 创建一个新的行程项。
   async function onCreatePlanItem(payload: {
     itemType: string
     title: string
@@ -101,6 +108,7 @@ export function TourGroupPlanBuilderPage({
     return pickCreatedPlanItem(nextDetails, previousIds)
   }
 
+  // 为指定行程项创建候选方案。
   async function onCreateOptionForPlanItem(
     planItemId: string,
     payload: {
@@ -124,23 +132,28 @@ export function TourGroupPlanBuilderPage({
     setDetails(nextDetails)
   }
 
+  // 搜索航班供行程项选择。
   const searchFlights = async (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => {
     const response = await travelMvpApiClient.searchFlightsPlanner(payload)
     return response.flights
   }
 
+  // 搜索酒店供行程项选择。
   const searchHotels = async (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => {
     const response = await travelMvpApiClient.searchHotelsPlanner(payload)
     return response.hotels
   }
 
+  // 搜索列车供行程项选择。
   const searchTrains = async (payload: { fromStation?: string; toStation?: string; date?: string }) => {
     const response = await travelMvpApiClient.listTrains(payload)
     return response.trains
   }
 
+  // 搜索景点并在必要时补详情。
   const searchAttractions = async (payload: { city?: string }) => {
     const response = await travelMvpApiClient.listAttractions(payload)
+    // 先拿列表结果，再逐个补景点详情，失败时保留摘要结果。
     const detailedAttractions = await Promise.all(
       response.attractions.map(async attractionSummary => {
         try {

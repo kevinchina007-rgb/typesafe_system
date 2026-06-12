@@ -11,6 +11,7 @@ type AccountSignedInSectionProps = {
   translate: (translationKey: string) => string
 }
 
+// 已登录状态下的账号信息区域。
 export function AccountSignedInSection({ account, controller, translate }: AccountSignedInSectionProps) {
   const {
     isBusy,
@@ -65,7 +66,7 @@ export function AccountSignedInSection({ account, controller, translate }: Accou
                 onSubmit={async event => {
                   event.preventDefault()
                   if (!profileDraft.nickname.trim()) {
-                    onValidationError('昵称不能为空。')
+                    onValidationError('鏄电О涓嶈兘涓虹┖銆?')
                     return
                   }
                   await onUpdateProfile({

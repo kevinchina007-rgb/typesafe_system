@@ -1,3 +1,5 @@
+// 本文件定义 HotelsPage 页面的状态控制逻辑，负责条件维护、请求触发和动作调度。
+
 import { useHotelSearchStore } from '@/app/stores/hotel-search-store'
 
 export function useHotelSearchState() {

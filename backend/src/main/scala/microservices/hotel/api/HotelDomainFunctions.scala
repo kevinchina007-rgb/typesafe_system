@@ -1,3 +1,5 @@
+// HotelDomainFunctions 定义酒店模块的领域辅助函数。
+
 package com.typesafe.travel.hotel.api
 
 import com.typesafe.travel.hotel.objects.*

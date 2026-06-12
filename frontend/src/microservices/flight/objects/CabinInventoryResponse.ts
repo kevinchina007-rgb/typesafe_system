@@ -1,4 +1,6 @@
-﻿export type CabinInventoryResponse = {
+// 本文件定义 flight 模块的 `CabinInventoryResponse`，作为响应数据并提供 JSON 编解码。
+
+export type CabinInventoryResponse = {
   inventoryId: string
   cabinClass: string
   availableSeats: number

@@ -10,6 +10,7 @@ import {
   getPostTags,
 } from '@/pages/BlogPage/functions'
 
+// 单个 Blog 帖子卡片的参数定义。
 type BlogPostCardProps = {
   post: BlogPostSummaryResponse
   compact?: boolean
@@ -19,9 +20,13 @@ type BlogPostCardProps = {
   onLike: (post: BlogPostSummaryResponse) => void
 }
 
+// 帖子卡片，负责显示封面、作者、标签和点赞入口。
 export function BlogPostCard({ post, compact = false, isActive = false, onOpenPost, onOpenProfile, onLike }: BlogPostCardProps) {
+  // 帖子封面图地址。
   const coverImage = getPostCoverImage(post)
+  // 帖子标签列表。
   const tags = getPostTags(post)
+  // 帖子城市列表。
   const cities = getPostCities(post)
 
   return (

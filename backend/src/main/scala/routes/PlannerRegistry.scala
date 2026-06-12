@@ -1,3 +1,5 @@
+// PlannerRegistry 负责请求路由分发。
+
 package com.typesafe.travel.api.routes
 
 import io.circe.{Decoder, Encoder}
@@ -7,6 +9,11 @@ final case class PlannerRegistry(
 )
 
 object PlannerRegistry:
+  def combine(registries: PlannerRegistry*): PlannerRegistry =
+    PlannerRegistry(
+      registries.iterator.flatMap(_.planners).toMap
+    )
+
   sealed trait RegisteredPlan:
     def name: String
 

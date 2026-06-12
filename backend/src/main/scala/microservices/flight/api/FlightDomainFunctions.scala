@@ -1,3 +1,5 @@
+// FlightDomainFunctions 定义航班模块的领域辅助函数。
+
 package com.typesafe.travel.flight.api
 
 import com.typesafe.travel.flight.objects.*

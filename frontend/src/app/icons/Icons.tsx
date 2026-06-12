@@ -1,4 +1,6 @@
-﻿import type { ReactNode, SVGProps } from 'react'
+// 本文件定义应用图标组件集合，供页面壳层和业务页面统一复用。
+
+import type { ReactNode, SVGProps } from 'react'
 
 export type AppIcon =
   | 'dashboard'
@@ -21,6 +23,7 @@ type IconProps = {
   className?: string
 } & SVGProps<SVGSVGElement>
 
+// 基础 SVG 容器，统一图标的尺寸、描边和公共属性。
 function BaseIcon({ children, size = 20, className, ...props }: Omit<IconProps, 'icon'> & { children: ReactNode }) {
   return (
     <svg
@@ -41,6 +44,7 @@ function BaseIcon({ children, size = 20, className, ...props }: Omit<IconProps, 
   )
 }
 
+// 根据业务枚举值渲染对应的图标图形。
 export function Icon({ icon, size = 20, className, ...props }: IconProps) {
   switch (icon) {
     case 'dashboard':

@@ -4,10 +4,12 @@ import { BlogPostCard } from '../BlogPostCard'
 import type { BlogPageController } from '../../objects'
 import { tagGroups, travelCities } from '../../functions'
 
+// 首页区块参数，只接收 controller。
 type BlogHomeSectionProps = {
   controller: BlogPageController
 }
 
+// Blog 首页，负责展示搜索、筛选和帖子列表。
 export function BlogHomeSection({ controller }: BlogHomeSectionProps) {
   const {
     posts,

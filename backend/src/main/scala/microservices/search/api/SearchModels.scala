@@ -1,3 +1,5 @@
+// SearchModels 定义search模块的业务入口。
+
 package com.typesafe.travel.api.application
 
 enum SearchResourceType(val value: String):

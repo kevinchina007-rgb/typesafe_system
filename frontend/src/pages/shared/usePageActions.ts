@@ -1,8 +1,11 @@
-﻿import { useState } from 'react'
+// 本文件定义页面级动作包装逻辑，负责统一处理确认、请求调用和提示反馈。
+
+import { useState } from 'react'
 
 import type { AppLanguage, AppNotice } from '@/lib/mvp-types/index'
 import { mapTechnicalErrorToFriendlyMessage } from '@/lib/presenters/view-models'
 
+// 页面通知处理器，统一由页面层传入。
 export type PageNoticeHandler = (
   kind: AppNotice['kind'],
   title: string,
@@ -10,13 +13,16 @@ export type PageNoticeHandler = (
   technicalMessage?: string,
 ) => void
 
+// 页面动作钩子，统一处理忙碌态和成功/失败提示。
 export function usePageActions(
   currentLanguage: AppLanguage,
   translate: (translationKey: string) => string,
   onShowNotice: PageNoticeHandler,
 ) {
+  // 页面级统一忙碌状态，避免重复点击。
   const [isBusy, setIsBusy] = useState(false)
 
+  // 只需要成功提示的页面动作。
   async function runPageAction(action: () => Promise<void>, successTitle: string, successDescription: string) {
     setIsBusy(true)
     try {
@@ -35,6 +41,7 @@ export function usePageActions(
     }
   }
 
+  // 需要返回结果的页面动作，成功后把结果继续传回调用方。
   async function runPageActionWithResult<TValue>(
     action: () => Promise<TValue>,
     successTitle: string,

@@ -1,3 +1,5 @@
+// 本文件定义 UploadAdvertisementImagePlanner，负责 advertising 模块的上传编排和接口入口。
+
 import type { AdvertisementImageUploadResponse } from '@/microservices/advertising/objects/AdvertisementImageUploadResponse'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 

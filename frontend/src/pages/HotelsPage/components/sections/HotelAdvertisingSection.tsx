@@ -1,6 +1,7 @@
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { HotelAdvertisingSectionProps } from '@/pages/HotelsPage/objects'
 
+// 酒店广告区，负责展示推荐广告和当前选中的广告。
 export function HotelAdvertisingSection({
   featuredAdvertisement,
   selectedAdvertisement,

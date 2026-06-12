@@ -1,3 +1,5 @@
+// TravelerProfileSourceJsonCodecs 定义旅客模块的源数据 JSON codec。
+
 package com.typesafe.travel.traveler.domain
 
 import com.typesafe.travel.shared.kernel.*

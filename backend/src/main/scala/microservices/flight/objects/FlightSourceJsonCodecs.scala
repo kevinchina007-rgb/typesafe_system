@@ -1,3 +1,5 @@
+// FlightSourceJsonCodecs 定义航班模块的源数据 JSON codec。
+
 package com.typesafe.travel.flight.objects
 
 import com.typesafe.travel.shared.kernel.*

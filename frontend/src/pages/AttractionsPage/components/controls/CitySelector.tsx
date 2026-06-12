@@ -1,5 +1,6 @@
 import type { CitySelectorProps } from '../../objects'
 
+// 景点搜索的城市选择器，只负责建议项和文本输入。
 export function CitySelector({ value, translate, suggestions, onChange }: CitySelectorProps) {
   return (
     <label className="grid gap-2 text-sm font-medium text-slate-600">

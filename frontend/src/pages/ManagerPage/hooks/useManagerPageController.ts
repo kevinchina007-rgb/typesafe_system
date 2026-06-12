@@ -18,6 +18,7 @@ import type { ManagerCabinPricingInput } from '@/microservices/operations/object
 import { toActiveSection } from '../functions'
 import type { AdvertisementResourceOption, LoginManagerType, ManagerPageController, ManagerPageProps, ManagerAuthMode } from '../objects'
 
+// 管理页面控制器，集中管理登录态、面板状态和各类业务动作。
 const airportCodeToCity: Record<string, string> = {
   PEK: '北京',
   PKX: '北京',

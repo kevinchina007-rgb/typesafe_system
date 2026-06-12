@@ -1,3 +1,5 @@
+// 本文件定义 TourGroupsPage 页面的页面组件。
+
 import { useEffect, useMemo, useState } from 'react'
 
 import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TrainResponse } from '@/lib/mvp-types/index'

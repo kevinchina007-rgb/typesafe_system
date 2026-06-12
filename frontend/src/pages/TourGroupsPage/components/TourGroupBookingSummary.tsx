@@ -1,4 +1,6 @@
-﻿import type { AppLanguage, OrderResponse } from '@/lib/mvp-types/index'
+// 本文件定义 TourGroupsPage 页面的页面组件。
+
+import type { AppLanguage, OrderResponse } from '@/lib/mvp-types/index'
 import { formatBookingSummary } from '@/lib/presenters/tour-group-presenter'
 import { localizeTourGroupStatus } from '@/lib/presenters/view-models'
 

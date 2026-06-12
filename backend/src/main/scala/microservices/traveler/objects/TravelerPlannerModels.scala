@@ -1,3 +1,5 @@
+// TravelerPlannerModels 定义旅客模块的请求和响应模型。
+
 package com.typesafe.travel.traveler.domain
 
 import io.circe.{Decoder, Encoder}

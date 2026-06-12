@@ -1,3 +1,5 @@
+// 本文件定义 TourGroupsPage 页面数据模型和 JSON 编解码。
+
 import type { AppLanguage, AppViewKey, AttractionResponse, FlightPlannerResponse, HotelPlannerResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 

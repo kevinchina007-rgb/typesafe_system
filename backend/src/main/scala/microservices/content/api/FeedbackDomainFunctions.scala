@@ -1,3 +1,5 @@
+// FeedbackDomainFunctions 定义内容模块的领域辅助函数。
+
 package com.typesafe.travel.content.domain
 
 import com.typesafe.travel.content.domain.*

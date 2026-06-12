@@ -1,3 +1,5 @@
+// 本文件定义 ExplorePage 页面数据模型和 JSON 编解码。
+
 import type { AppViewKey, ExploreSearchResultResponse, SearchSuggestionResponse } from '@/lib/mvp-types/index'
 
 export type ExploreSearchType = 'all' | 'flight' | 'hotel' | 'train' | 'attraction' | 'blog'

@@ -1,3 +1,5 @@
+// TravelerPlannerPlainSql 封装旅客模块的plain SQL 实现。
+
 package com.typesafe.travel.traveler.domain
 
 import cats.effect.IO

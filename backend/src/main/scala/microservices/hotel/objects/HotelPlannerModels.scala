@@ -1,3 +1,5 @@
+// HotelPlannerModels 定义酒店模块的请求和响应模型。
+
 package com.typesafe.travel.hotel.objects
 
 import io.circe.{Decoder, Encoder}

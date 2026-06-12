@@ -1,3 +1,5 @@
+// HotelPlannerResponseMapper 定义酒店模块的业务入口。
+
 package com.typesafe.travel.hotel.api
 
 import com.typesafe.travel.hotel.objects.*

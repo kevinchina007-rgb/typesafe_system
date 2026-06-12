@@ -18,6 +18,7 @@ import { TravelersPage } from '@/pages/TravelersPage'
 import type { AppPageController } from '../objects'
 import { useAppPageController } from '../hooks'
 
+// 根据当前视图 key 渲染对应的业务页面。
 function renderCurrentPage(controller: ReturnType<typeof useAppPageController>) {
   const {
     normalizedViewKey,
@@ -67,6 +68,7 @@ function renderCurrentPage(controller: ReturnType<typeof useAppPageController>) 
   return null
 }
 
+// App 页面最外层壳组件，负责导航和账户动作。
 export function AppPageShell({ controller }: { controller: AppPageController }) {
   return (
     <AppShell

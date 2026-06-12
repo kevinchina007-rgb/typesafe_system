@@ -1,3 +1,4 @@
+// 火车座位偏好选择器参数，只负责座位类型下拉框。
 import { trainSeatPreferences, type TrainSeatPreference } from '@/app/stores/models/train-booking-model'
 
 type SeatClassSelectorProps = {
@@ -6,6 +7,7 @@ type SeatClassSelectorProps = {
   onChange: (value: TrainSeatPreference) => void
 }
 
+// 座位偏好选择器，把枚举值映射成页面文案。
 export function SeatClassSelector({ value, translate, onChange }: SeatClassSelectorProps) {
   const translationKeyByOption: Record<TrainSeatPreference, string> = {
     Business: 'trains.seatClass.business',

@@ -2,6 +2,7 @@ import type { CustomerFeedbackPageProps } from './objects'
 import { useCustomerFeedbackPageController } from './hooks'
 import { CustomerFeedbackWorkspace } from './components'
 
+// CustomerFeedbackPage 入口组件，负责把反馈线程和订单信息交给工作区展示。
 export function CustomerFeedbackPage(props: CustomerFeedbackPageProps) {
   const controller = useCustomerFeedbackPageController(props)
 

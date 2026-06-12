@@ -2,6 +2,7 @@
 import { quoteTrainSegmentAmount, resolveTrainSearchSegment } from '@/app/stores/models/train-booking-model'
 import type { TrainSortMode } from '../objects'
 
+// 火车站查询别名表，只负责把中文站名映射成页面常用简称。
 const trainStationQueryAliases: Record<string, string> = {
   北京南: 'BJS',
   天津南: 'TJS',
@@ -22,6 +23,7 @@ const trainStationQueryAliases: Record<string, string> = {
   合肥南: 'HFN',
 }
 
+// 规范化火车站查询词，优先替换成站点别名。
 export function normalizeTrainSearchStationQuery(query: string): string {
   const trimmed = query.trim()
   if (!trimmed) {
@@ -30,6 +32,7 @@ export function normalizeTrainSearchStationQuery(query: string): string {
   return trainStationQueryAliases[trimmed] ?? trimmed
 }
 
+// 把去程/返程站点一起规范化，供列表查询直接使用。
 export function normalizeTrainSearchRequestStations(fromStation: string, toStation: string): { fromStation: string; toStation: string } {
   return {
     fromStation: normalizeTrainSearchStationQuery(fromStation),
@@ -37,6 +40,7 @@ export function normalizeTrainSearchRequestStations(fromStation: string, toStati
   }
 }
 
+// 给列车编号打一个优先级分数，供排序逻辑使用。
 function getTrainPriorityScore(trainNumber: string): number {
   const firstChar = trainNumber.trim().toUpperCase().charAt(0)
   if (firstChar === 'G') {
@@ -48,6 +52,7 @@ function getTrainPriorityScore(trainNumber: string): number {
   return 2
 }
 
+// 读取某列车在指定路线上的最低价，只做排序辅助。
 function getTrainRouteLowestPrice(train: TrainResponse, fromStationQuery: string, toStationQuery: string): number {
   const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
   if (!routeSegment) {
@@ -66,6 +71,7 @@ function getTrainRouteLowestPrice(train: TrainResponse, fromStationQuery: string
   return Math.min(...routeQuotes)
 }
 
+// 读取某列车在指定路线上的出发时间戳，只做排序辅助。
 function getTrainRouteDepartureTimestamp(train: TrainResponse, fromStationQuery: string, toStationQuery: string): number {
   const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
   const departureValue = routeSegment?.fromStop.departureTime ?? routeSegment?.fromStop.arrivalTime ?? null
@@ -76,6 +82,7 @@ function getTrainRouteDepartureTimestamp(train: TrainResponse, fromStationQuery:
   return Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp
 }
 
+// 对列车响应按页面当前排序方式排序。
 export function sortTrainResponses(
   trainResponses: TrainResponse[],
   fromStationQuery: string,
@@ -109,6 +116,7 @@ export function sortTrainResponses(
   })
 }
 
+// 按搜索条件过滤列车响应，只保留可用路线和日期匹配项。
 export function filterTrainResponsesBySearchCriteria(
   trainResponses: TrainResponse[],
   fromStationQuery: string,
@@ -133,6 +141,7 @@ export function filterTrainResponsesBySearchCriteria(
   })
 }
 
+// 生成列车推荐文案，作为页面空状态或提示文案。
 export function formatTrainRecommendation(searchFromStation: string, searchToStation: string, translate: (translationKey: string) => string) {
   if (!searchFromStation || !searchToStation) {
     return translate('trains.recommendationFallback')

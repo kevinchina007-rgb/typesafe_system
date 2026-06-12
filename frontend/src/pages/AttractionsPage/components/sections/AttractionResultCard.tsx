@@ -9,6 +9,7 @@ import { readAttractionTicketBookingForm } from '../../functions'
 
 const WEEKDAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
+// 景点结果卡片，只负责展示单条景点信息和预订入口。
 export function AttractionResultCard({
   attractionResponse,
   currentLanguage,

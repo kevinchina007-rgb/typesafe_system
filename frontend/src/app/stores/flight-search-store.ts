@@ -1,9 +1,12 @@
+// 本文件封装状态管理逻辑。
+
 import { create } from 'zustand'
 
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
 import type { FlightResultGroup, FlightSearchState } from '@/app/stores/models/flights/flightTypes'
 import { createFlightSearchSegment, defaultFlightSearchState } from '@/app/stores/models/flights'
 
+// 根据行程类型重建一份默认搜索条件，避免共享可变对象。
 function buildDefaultSearchState(tripType: FlightSearchState['tripType']): FlightSearchState {
   return {
     ...defaultFlightSearchState,
@@ -45,6 +48,7 @@ const flightSearchStoreDefaultState: FlightSearchStoreState = {
   hasSearchedFlights: false,
 }
 
+// 航班搜索仓库，保存搜索条件和搜索结果的页面级状态。
 export const useFlightSearchStore = create<FlightSearchStore>(set => ({
   ...flightSearchStoreDefaultState,
   setSearchState: searchState => set({ searchState }),
@@ -102,6 +106,7 @@ export const useFlightSearchStore = create<FlightSearchStore>(set => ({
     })),
 }))
 
+// 读取航班搜索页面当前快照，供非 React 场景直接消费。
 export function getFlightDetailsPlannerSearchSnap() {
   const { searchState, flightResponses, flightResultGroups, hasSearchedFlights } = useFlightSearchStore.getState()
   return { searchState, flightResponses, flightResultGroups, hasSearchedFlights }

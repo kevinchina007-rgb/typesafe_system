@@ -1,4 +1,6 @@
-﻿import type { TrainResponse, TravelerResponse } from '@/lib/mvp-types/index'
+// 本文件定义火车预订模型，用于预订流程的数据传递。
+
+import type { TrainResponse, TravelerResponse } from '@/lib/mvp-types/index'
 
 export type TrainTripType = 'oneWay' | 'roundTrip'
 export type TrainQuickDatePreset = 'today' | 'tomorrow' | 'weekend' | 'nextWeek'

@@ -1,3 +1,5 @@
+// TravelValues 定义共享内核中的通用值对象。
+
 package com.typesafe.travel.shared.kernel
 
 final case class AirlineName private (value: String)

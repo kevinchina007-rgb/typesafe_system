@@ -1,4 +1,6 @@
-﻿import type { AppViewKey } from '@/lib/mvp-types/index'
+// 本文件定义顶部导航按钮，负责在壳层导航区触发页面跳转。
+
+import type { AppViewKey } from '@/lib/mvp-types/index'
 import type { AppIcon } from '@/app/icons/Icons'
 import { Icon } from '@/app/icons/Icons'
 

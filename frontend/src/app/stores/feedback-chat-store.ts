@@ -1,4 +1,6 @@
-﻿import { create } from 'zustand'
+// 本文件封装状态管理逻辑。
+
+import { create } from 'zustand'
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { getManagerSnap } from '@/app/stores/manager-store'
@@ -58,10 +60,12 @@ type FeedbackChatActions = {
 
 type FeedbackChatStore = FeedbackChatState & FeedbackChatActions
 
+// 按更新时间倒序排列反馈线程。
 function sortThreads(threads: FeedbackThread[]) {
   return [...threads].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
 }
 
+// 插入或更新单个线程。
 function upsertThread(threads: FeedbackThread[], nextThread: FeedbackThread) {
   const existingIndex = threads.findIndex(thread => thread.threadId === nextThread.threadId)
   if (existingIndex < 0) {
@@ -73,6 +77,7 @@ function upsertThread(threads: FeedbackThread[], nextThread: FeedbackThread) {
   return sortThreads(nextThreads)
 }
 
+// 把同一个线程同步到不同的状态桶里。
 function syncThreadBuckets(state: FeedbackChatState, nextThread: FeedbackThread): FeedbackChatState {
   return {
     ...state,
@@ -88,6 +93,7 @@ function syncThreadBuckets(state: FeedbackChatState, nextThread: FeedbackThread)
   }
 }
 
+// 反馈聊天仓库，保存用户、管理者和站点管理员的反馈线程。
 export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
   userThreads: [],
   managerThreads: [],
@@ -227,9 +233,10 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
       siteAdminManagerThreads: [],
       activeMiniThread: null,
       isLoading: false,
-    }),
+  }),
 }))
 
+// 读取反馈聊天仓库快照。
 export function getFeedbackChatSnap() {
   const {
     userThreads,
@@ -250,10 +257,12 @@ export function getFeedbackChatSnap() {
   }
 }
 
+// 确保订单取消线程存在。
 export function ensureOrderCancellationThread(params: { userId: string; orderId: string }) {
   return useFeedbackChatStore.getState().ensureOrderCancellationThread(params)
 }
 
+// 发送一条反馈消息。
 export function sendFeedbackMessage(params: {
   threadId: string
   senderRole: Exclude<FeedbackSenderRole, 'System'>
@@ -263,10 +272,12 @@ export function sendFeedbackMessage(params: {
   return useFeedbackChatStore.getState().sendMessage(params)
 }
 
+// 创建订单取消消息。
 export function createOrderCancellationMessage(params: { threadId: string; orderId: string; reason: string }) {
   return useFeedbackChatStore.getState().createOrderCancellationMessage(params)
 }
 
+// 处理订单取消请求。
 export function handleOrderCancellationRequest(params: {
   threadId: string
   messageId: string
@@ -278,41 +289,50 @@ export function handleOrderCancellationRequest(params: {
   return useFeedbackChatStore.getState().handleOrderCancellationRequest(params)
 }
 
+// 标记反馈线程已读。
 export function markFeedbackThreadRead(threadId: string, audience: FeedbackAudience) {
   return useFeedbackChatStore.getState().markThreadRead(threadId, audience)
 }
 
+// 创建管理者升级线程。
 export function createManagerEscalationThread(params: { threadId: string; senderDisplayName: string; body: string }) {
   return useFeedbackChatStore.getState().escalateThread(params)
 }
 
+// 创建投诉线程。
 export function createFeedbackComplaint(params: { sourceThreadId: string; selectedMessageIds: string[]; userExplanation: string; userDisplayName: string }) {
   return useFeedbackChatStore.getState().createComplaint(params)
 }
 
+// 打开投诉对应的管理者线程。
 export function openComplaintManagerThread(params: { complaintMessageId: string; siteAdminActorId: string }) {
   return useFeedbackChatStore.getState().openComplaintManagerThread(params)
 }
 
+// 设置当前激活的迷你反馈线程。
 export function setActiveFeedbackMiniThread(thread: FeedbackThread | null) {
   useFeedbackChatStore.getState().setActiveMiniThread(thread)
 }
 
+// 读取用户侧反馈线程。
 export function getFeedbackThreadsForUser() {
   return useFeedbackChatStore.getState().userThreads
 }
 
+// 读取管理者侧反馈线程。
 export function getFeedbackThreadsForManager(managerType?: FeedbackManagerType) {
   const threads = useFeedbackChatStore.getState().managerThreads
   return managerType ? threads.filter(thread => thread.managerType === managerType) : threads
 }
 
+// 读取站点管理员侧反馈线程。
 export function getFeedbackThreadsForSiteAdmin(channel: FeedbackSiteAdminChannel) {
   return channel === 'user'
-    ? useFeedbackChatStore.getState().siteAdminUserThreads
+  ? useFeedbackChatStore.getState().siteAdminUserThreads
     : useFeedbackChatStore.getState().siteAdminManagerThreads
 }
 
+// 清空所有反馈线程缓存。
 export function clearAllThreads() {
   useFeedbackChatStore.getState().clearAllThreads()
 }

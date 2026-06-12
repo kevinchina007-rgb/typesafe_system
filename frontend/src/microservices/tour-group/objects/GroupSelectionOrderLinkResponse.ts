@@ -1,4 +1,6 @@
-﻿export type GroupSelectionOrderLinkResponse = {
+// 本文件定义 tour-group 模块的 `GroupSelectionOrderLinkResponse`，作为响应数据并提供 JSON 编解码。
+
+export type GroupSelectionOrderLinkResponse = {
   selectionId: string
   orderId: string
   createdAt: string

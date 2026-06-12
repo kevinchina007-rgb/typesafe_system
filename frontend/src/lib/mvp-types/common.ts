@@ -1,4 +1,6 @@
-﻿export type { HealthResponse } from '@/microservices/common/objects/HealthResponse'
+// 本文件定义公共前端传输类型，供多个模块共享。
+
+export type { HealthResponse } from '@/microservices/common/objects/HealthResponse'
 export type { ApiErrorResponse } from '@/microservices/common/objects/ApiErrorResponse'
 export type { ExploreSearchResponse } from '@/microservices/common/objects/ExploreSearchResponse'
 export type { ExploreSearchResultResponse } from '@/microservices/common/objects/ExploreSearchResultResponse'

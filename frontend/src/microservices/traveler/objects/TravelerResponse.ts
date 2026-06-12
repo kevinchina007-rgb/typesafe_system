@@ -1,3 +1,5 @@
+// 本文件定义 traveler 模块的 `TravelerResponse`，作为响应数据并提供 JSON 编解码。
+
 import type {
   TravelerBasicInfo,
   TravelerContactInfo,

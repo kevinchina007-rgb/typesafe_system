@@ -1,3 +1,5 @@
+// Advertisement 定义广告模块的数据模型。
+
 package com.typesafe.travel.advertising.domain
 
 import com.typesafe.travel.shared.kernel.*

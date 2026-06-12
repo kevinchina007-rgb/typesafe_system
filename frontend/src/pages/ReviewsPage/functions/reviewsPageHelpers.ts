@@ -1,3 +1,5 @@
+// 本文件定义 ReviewsPage 的辅助函数，负责整理点评列表、评分信息和举报状态。
+
 import type { AppLanguage, ReviewResponse } from '@/lib/mvp-types/index'
 import { localizeReviewResourceType } from '@/lib/presenters/content-presenter'
 

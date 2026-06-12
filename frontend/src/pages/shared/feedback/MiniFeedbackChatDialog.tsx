@@ -1,7 +1,10 @@
-﻿import { useEffect, useState } from 'react'
+// 本文件定义迷你反馈聊天弹窗，负责在小窗口中发送和查看反馈消息。
+
+import { useEffect, useState } from 'react'
 
 import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
 
+// 迷你客服对话框的输入参数。
 type MiniFeedbackChatDialogProps = {
   isOpen: boolean
   thread: FeedbackThread | null
@@ -11,6 +14,7 @@ type MiniFeedbackChatDialogProps = {
   onSendMessage: (threadId: string, body: string) => void
 }
 
+// 迷你反馈对话框负责展示最近消息，并允许直接发送新消息。
 export function MiniFeedbackChatDialog({
   isOpen,
   thread,
@@ -19,9 +23,11 @@ export function MiniFeedbackChatDialog({
   onClose,
   onSendMessage,
 }: MiniFeedbackChatDialogProps) {
+  // 输入框草稿，关闭弹窗时会清空。
   const [draftMessage, setDraftMessage] = useState('')
 
   useEffect(() => {
+    // 弹窗关闭后重置草稿，避免下次打开残留。
     if (!isOpen) {
       setDraftMessage('')
     }
@@ -45,17 +51,19 @@ export function MiniFeedbackChatDialog({
         </div>
 
         <div className="grid gap-3 max-h-80 overflow-auto">
+          {/* 这里只展示最近几条消息，方便快速查看上下文。 */}
           {thread.messages.slice(-3).map(message => (
             <article
               key={message.messageId}
               className={message.senderDisplayName === senderDisplayName ? 'grid gap-2 border border-slate-200 bg-white p-3 justify-self-end bg-sky-50' : 'grid gap-2 border border-slate-200 bg-white p-3'}
             >
               <strong>{message.senderDisplayName}</strong>
-              <p>{message.messageType === 'orderCancellationRequest' ? '取消订单请求' : message.content}</p>
+              <p>{message.messageType === 'orderCancellationRequest' ? '鍙栨秷璁㈠崟璇锋眰' : message.content}</p>
             </article>
           ))}
         </div>
 
+        {/* 底部表单负责输入并发送新的反馈消息。 */}
         <form
           className="grid gap-4 grid gap-3"
           onSubmit={event => {

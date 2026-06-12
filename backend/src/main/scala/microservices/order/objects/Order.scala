@@ -7,9 +7,9 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.time.Instant
 
-// Order 浠嶇劧鏄氦鏄撲富鑱氬悎鏍广�?
-// Flight / Hotel / Train / Attraction 閮藉厛鎶婅嚜宸辩殑涓氬姟蹇収浜ょ粰 Order�?
-// 鐒跺悗鐢?Order 缁熶竴绠＄悊鏀粯銆侀€€娆俱€佺‘璁ゅ拰鍙栨秷绛変氦鏄撶姸鎬併€?
+// Order 领域对象，统一承载航班、酒店、火车和景点等订单的公共数据。
+// 这里的结构负责把不同业务类型的订单统一收拢到同一个领域模型里。
+
 final case class Order(
     orderId: OrderId,
     ownerUserId: UserId,
@@ -32,7 +32,7 @@ object Order:
   given sourceDecoder: Decoder[Order] = deriveDecoder[Order]
 
 enum OrderError(val message: String) extends DomainError:
-  // OrderError 鏄氦鏄撴牴鍙В閲婃€х殑鏍稿績锛氭墍鏈夊澶栧け璐ユ渶缁堥兘鍙互杩藉埌杩欓噷銆?
+  // OrderError 汇总订单相关的领域校验失败原因，方便上层直接展示或记录。
   case OrderWasNotFound(orderId: OrderId) extends OrderError(s"Order '${orderId.value}' was not found")
   case OrderCannotBeSubmittedWithoutItems(orderId: OrderId) extends OrderError(s"Order '${orderId.value}' cannot be submitted without any order items")
   case OrderItemsCouldOnlyBeAddedInDraft(orderId: OrderId, currentOrderStatus: OrderStatus) extends OrderError(s"Order '${orderId.value}' cannot add items while in status $currentOrderStatus")

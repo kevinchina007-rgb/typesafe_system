@@ -1,3 +1,4 @@
+// 订单支付动作区，只负责支付和取消两个入口。
 import type { OrderResponse } from '@/lib/mvp-types/index'
 import { isOrderPayable } from '@/pages/BookingsPage/functions'
 

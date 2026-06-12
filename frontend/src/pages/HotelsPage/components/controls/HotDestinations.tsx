@@ -1,9 +1,11 @@
-﻿type HotDestinationsProps = {
+// 热门目的地按钮组参数。
+type HotDestinationsProps = {
   destinations: string[]
   translate: (translationKey: string) => string
   onSelectDestination: (value: string) => void
 }
 
+// 热门目的地推荐区。
 export function HotDestinations({ destinations, translate, onSelectDestination }: HotDestinationsProps) {
   return (
     <div className="grid gap-3">

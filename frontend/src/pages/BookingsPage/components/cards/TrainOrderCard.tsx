@@ -15,6 +15,7 @@ import {
   isTrainOrderLineItem,
 } from '@/pages/BookingsPage/functions'
 
+// 火车订单卡片，用于展示火车订单的车次、座位和操作入口。
 export function TrainOrderCard({
   currentLanguage,
   isBusy,

@@ -5,6 +5,7 @@ import { formatTravelerIdentity, getFlightDetailsPlannerOrderTravelerIds, isFlig
 import type { PaymentModalProps } from '@/pages/BookingsPage/objects'
 import { SelectionCard } from '@/pages/BookingsPage/components/payment/SelectionCard'
 
+// 支付弹窗主体，负责选择支付方式、生成二维码和确认支付。
 export function PaymentModal({
   isOpen,
   order,

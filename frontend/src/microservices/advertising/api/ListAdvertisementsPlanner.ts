@@ -1,3 +1,5 @@
+// 本文件定义 ListAdvertisementsPlanner，负责 advertising 模块的列表查询编排和接口入口。
+
 import type { AdvertisementListResponse } from '@/microservices/advertising/objects/AdvertisementListResponse'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 

@@ -1,3 +1,5 @@
+// FlightCabinPlainSqlRows 封装航班模块的plain SQL 行映射。
+
 package com.typesafe.travel.flight.tables
 
 import com.typesafe.travel.flight.objects.CabinInventoryPlannerRow

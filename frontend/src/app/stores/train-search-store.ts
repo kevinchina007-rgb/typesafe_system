@@ -1,3 +1,5 @@
+// 本文件封装状态管理逻辑。
+
 import { create } from 'zustand'
 
 import type { TrainQuickDatePreset, TrainSeatPreference, TrainTripType, TrainTypePreference } from '@/app/stores/models/train-booking-model'

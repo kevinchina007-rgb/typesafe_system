@@ -1,4 +1,6 @@
-﻿export type TourGroupConversationSummaryResponse = {
+// 本文件定义 tour-group 模块的 `TourGroupConversationSummaryResponse`，作为摘要响应数据并提供 JSON 编解码。
+
+export type TourGroupConversationSummaryResponse = {
   conversationId: string
   conversationType: string
   status: string

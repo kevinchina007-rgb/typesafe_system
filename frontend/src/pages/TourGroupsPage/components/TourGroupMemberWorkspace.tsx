@@ -1,3 +1,5 @@
+// 本文件定义 TourGroupsPage 页面的工作区组件，负责组织主要操作区和信息区。
+
 import type { AppLanguage, GroupPlanItemResponse, TourGroupDetailsResponse, TourGroupMembershipResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import { TourGroupMemberSection } from '@/pages/TourGroupsPage/components/TourGroupMemberSection'
 import { TourGroupPlanSection } from '@/pages/TourGroupsPage/components/TourGroupPlanSection'

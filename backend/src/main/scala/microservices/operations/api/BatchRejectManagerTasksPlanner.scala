@@ -1,0 +1,14 @@
+// BatchRejectManagerTasksPlanner 是operations模块的业务入口，负责请求校验、流程编排和结果返回。
+
+package com.typesafe.travel.operations.domain
+
+import cats.effect.IO
+import com.typesafe.travel.api.routes.ConnectionApiPlan
+
+import java.sql.Connection
+import java.time.Instant
+
+object BatchRejectManagerTasksPlanner extends ConnectionApiPlan[ManagerBatchDecisionPlannerRequest, ManagerBatchDecisionPlannerResponse]:
+  override val name: String = "BatchRejectManagerTasksPlanner"
+  override def plan(input: ManagerBatchDecisionPlannerRequest, connection: Connection): IO[ManagerBatchDecisionPlannerResponse] =
+    updateSupplierReviewDecisions(connection, input.managerId, input.orderItemIds, "reject", "SupplierRejected", "Reject", input.reason.orElse(input.note), Instant.now())

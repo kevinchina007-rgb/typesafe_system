@@ -1,3 +1,5 @@
+// AttractionSourceJsonCodecs 定义景点模块的源数据 JSON codec。
+
 package com.typesafe.travel.attraction.domain
 
 import com.typesafe.travel.shared.kernel.*

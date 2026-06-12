@@ -1,3 +1,5 @@
+// AuthPlannerPlainSql 封装认证模块的plain SQL 实现。
+
 package com.typesafe.travel.persistence.auth
 
 import cats.effect.IO

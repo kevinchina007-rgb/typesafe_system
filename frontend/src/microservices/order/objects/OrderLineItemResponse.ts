@@ -1,4 +1,6 @@
-﻿import type { FlightItemDetailsResponse } from './FlightItemDetailsResponse'
+// 本文件定义 order 模块的 `OrderLineItemResponse`，作为响应数据并提供 JSON 编解码。
+
+import type { FlightItemDetailsResponse } from './FlightItemDetailsResponse'
 import type { HotelItemDetailsResponse } from './HotelItemDetailsResponse'
 import type { TrainItemDetailsResponse } from './TrainItemDetailsResponse'
 import type { AttractionItemDetailsResponse } from './AttractionItemDetailsResponse'

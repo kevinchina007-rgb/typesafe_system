@@ -1,4 +1,6 @@
-﻿import { useMemo, useRef, useState, type ReactNode } from 'react'
+// 本文件定义 TravelersPage 页面的面板组件，负责集中展示一组相关内容。
+
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 
 import type { TravelerResponse } from '@/lib/mvp-types/index'
 import { deriveTravelerTypeLabelFromBirthDate, localizeDocumentType } from '@/lib/presenters/view-models'

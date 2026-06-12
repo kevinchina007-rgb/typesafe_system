@@ -58,15 +58,6 @@ lazy val circeGenericDependency =
 lazy val circeParserDependency =
   "io.circe" %% "circe-parser" % "0.14.9"
 
-lazy val doobieCoreDependency =
-  "org.tpolecat" %% "doobie-core" % "1.0.0-RC5"
-
-lazy val doobieHikariDependency =
-  "org.tpolecat" %% "doobie-hikari" % "1.0.0-RC5"
-
-lazy val doobieH2Dependency =
-  "org.tpolecat" %% "doobie-h2" % "1.0.0-RC5"
-
 lazy val postgresqlDependency =
   "org.postgresql" % "postgresql" % "42.7.4"
 
@@ -103,7 +94,7 @@ lazy val root = (project in file("."))
 
 lazy val sharedKernel = module("shared-kernel")
   .settings(
-    libraryDependencies ++= Seq(munitDependency)
+    libraryDependencies ++= Seq(catsEffectDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )
 
 lazy val searchService = module("search-service")
@@ -191,6 +182,7 @@ lazy val persistenceJdbc = module("persistence-jdbc")
   .settings(
     Compile / unmanagedSourceDirectories ++= Seq(
       backendSourceRoot / "database",
+      backendSourceRoot / "doobie",
       moduleSourceDir("advertising-domain") / "api",
       moduleSourceDir("auth-domain") / "api",
       moduleSourceDir("identity-domain") / "api",
@@ -226,15 +218,11 @@ lazy val persistenceJdbc = module("persistence-jdbc")
       moduleSourceDir("operations-domain") / "attraction" / "tables",
       moduleSourceDir("operations-domain") / "siteadmin" / "tables"
     ),
-    Compile / unmanagedSources += backendSourceRoot / "routes" / "ApiPlan.scala",
     Compile / unmanagedResourceDirectories += backendSourceRoot / "database" / "migrations",
     libraryDependencies ++= Seq(
       catsEffectDependency,
       circeGenericDependency,
       circeParserDependency,
-      doobieCoreDependency,
-      doobieHikariDependency,
-      doobieH2Dependency,
       postgresqlDependency,
       munitDependency
     )
@@ -283,6 +271,7 @@ lazy val apiGateway = Project(id = "api-gateway", base = file("projects/api-gate
       backendSourceRoot / "app",
       backendSourceRoot / "static",
       backendSourceRoot / "routes",
+      backendSourceRoot / "doobie",
       moduleSourceDir("advertising-domain") / "api",
       moduleSourceDir("auth-domain") / "api",
       moduleSourceDir("identity-domain") / "api",

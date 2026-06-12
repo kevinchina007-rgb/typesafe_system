@@ -1,8 +1,18 @@
+// BlogDomainFunctions 定义内容模块的领域辅助函数。
+
 package com.typesafe.travel.content.domain
 
+import cats.effect.IO
 import com.typesafe.travel.shared.kernel.*
 
 import java.time.Instant
+
+def validateBlogDraft(input: SaveBlogDraftPlannerRequest, requireTags: Boolean): IO[Unit] =
+  if input.title.trim.isEmpty then IO.raiseError(new IllegalArgumentException("Blog title must not be empty"))
+  else if input.summary.trim.isEmpty then IO.raiseError(new IllegalArgumentException("Blog summary must not be empty"))
+  else if input.content.trim.isEmpty then IO.raiseError(new IllegalArgumentException("Blog content must not be empty"))
+  else if requireTags && input.tags.isEmpty then IO.raiseError(new IllegalArgumentException("Blog tags must not be empty"))
+  else IO.unit
 
 def createPublishedBlogPost(
     postId: BlogId,

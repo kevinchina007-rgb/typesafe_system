@@ -1,3 +1,5 @@
+// FlightDailyLowestPricesPlanner 是航班模块的业务入口，负责请求校验、流程编排和结果返回。
+
 package com.typesafe.travel.flight.api
 
 import com.typesafe.travel.flight.objects.*

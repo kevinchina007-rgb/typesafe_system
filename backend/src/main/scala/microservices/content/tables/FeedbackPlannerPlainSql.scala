@@ -1,3 +1,5 @@
+// FeedbackPlannerPlainSql 封装内容模块的plain SQL 实现。
+
 package com.typesafe.travel.persistence.content
 
 import cats.effect.IO

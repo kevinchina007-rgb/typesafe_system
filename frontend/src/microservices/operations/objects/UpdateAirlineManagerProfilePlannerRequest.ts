@@ -1,3 +1,5 @@
+// 本文件定义 operations 模块的 `UpdateAirlineManagerProfilePlannerRequest`，作为planner 请求参数并提供 JSON 编解码。
+
 export type UpdateAirlineManagerProfilePlannerRequest = {
   managerId: string
   displayName: string

@@ -1,4 +1,6 @@
-﻿export type HotelItemDetailsResponse = {
+// 本文件定义 order 模块的 `HotelItemDetailsResponse`，作为详情响应数据并提供 JSON 编解码。
+
+export type HotelItemDetailsResponse = {
   hotelId: string
   hotelName: string
   location: string

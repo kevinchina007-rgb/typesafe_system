@@ -1,3 +1,5 @@
+// 本文件定义 AppPage 页面的状态控制逻辑，负责条件维护、请求触发和动作调度。
+
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { clearAllThreads, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
@@ -58,6 +60,7 @@ export function useAppPageController() {
     ]),
   )
 
+  // 给任意请求加超时包装，避免页面一直等不到响应。
   const withTimeout = useCallback(
     <T,>(promise: Promise<T>, timeoutMessage: string, timeoutMs = 2500): Promise<T> =>
       new Promise<T>((resolve, reject) => {
@@ -73,6 +76,7 @@ export function useAppPageController() {
     [],
   )
 
+  // 判断是否需要在错误后清空当前登录态。
   const shouldClearPrincipalStateOnError = useCallback((error: unknown) => {
     if (isUnauthorizedApiError(error)) {
       return true
@@ -88,6 +92,7 @@ export function useAppPageController() {
     )
   }, [])
 
+  // 重新探测后端健康状态。
   const reloadBackendHealth = useCallback(async () => {
     try {
       await withTimeout(travelMvpApiClient.getHealth(), 'backend_health_timeout')
@@ -102,6 +107,7 @@ export function useAppPageController() {
     }
   }, [withTimeout])
 
+  // 重新拉取用户和管理者登录态，并同步到本地 store。
   const reloadPrincipalState = useCallback(async () => {
     const [currentUserSessionResult, currentManagerSessionResult] = await Promise.allSettled([
       withTimeout(travelMvpApiClient.getCurrentUserSession(), 'user_session_timeout'),
@@ -134,6 +140,7 @@ export function useAppPageController() {
     return didResolvePrincipalState
   }, [shouldClearPrincipalStateOnError, withTimeout])
 
+  // 首次挂载时拉取健康检查和登录态，失败则按节奏重试。
   useEffect(() => {
     let isDisposed = false
     let retryTimeout: ReturnType<typeof setTimeout> | null = null
@@ -165,6 +172,7 @@ export function useAppPageController() {
     }
   }, [reloadBackendHealth, reloadPrincipalState])
 
+  // 当规范化后的路由和当前路由不一致时，统一修正页面视图。
   useEffect(() => {
     if (normalizedViewKey !== currentViewKey) setAppView(normalizedViewKey)
   }, [currentViewKey, normalizedViewKey])
@@ -255,13 +263,16 @@ export function useAppPageController() {
   useEffect(() => {
     if (!hasResolvedPrincipalState) return
     if (signedInUserResponse) {
+      // 用户登录时加载用户侧反馈线程。
       void loadUserFeedbackThreads()
       return
     }
     if (signedInManagerSessionResponse) {
+      // 管理者登录时加载管理者侧反馈线程。
       void loadManagerFeedbackThreads()
       return
     }
+    // 没有登录态时清空所有反馈线程缓存。
     clearAllThreads()
   }, [
     hasResolvedPrincipalState,
@@ -276,6 +287,7 @@ export function useAppPageController() {
     setAppNotice({ id: Date.now(), kind, title, description, technicalMessage })
   }
 
+  // 统一包装头部账号相关动作的成功与失败提示。
   async function runHeaderAccountAction(action: () => Promise<void>, successMessage?: string) {
     try {
       await action()
