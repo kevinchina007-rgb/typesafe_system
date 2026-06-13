@@ -1,5 +1,4 @@
-// ReferenceDataSeederFlights 负责数据库基础设施相关实现。
-
+// ReferenceDataSeederFlights is responsible for flight reference data.
 package com.typesafe.travel.persistence
 
 import cats.effect.IO
@@ -13,11 +12,11 @@ object ReferenceDataSeederFlights:
       List(
         sql"""
           insert into airlines (airline_id, name, code, status, created_at)
-          values ('airline-mu', '濂堕緳鑸┖', 'MU', 'Active', timestamp '2026-03-25 00:00:00')
+          values ('airline-mu', '奶龙航空', 'MU', 'Active', timestamp '2026-03-25 00:00:00')
         """.update.run,
         sql"""
           insert into airlines (airline_id, name, code, status, created_at)
-          values ('airline-9c', '绉戞瘮鑸┖', '9C', 'Active', timestamp '2026-03-25 00:00:00')
+          values ('airline-9c', '科比航空', '9C', 'Active', timestamp '2026-03-25 00:00:00')
         """.update.run
       )
 
@@ -76,7 +75,7 @@ object ReferenceDataSeederFlights:
 
     (insertAirlines ++ insertFlights ++ insertInventories).sequence.transact(transactor).void
 
-  private def insertCabinInventory(
+  def insertCabinInventory(
       inventoryId: String,
       flightId: String,
       cabinClass: String,

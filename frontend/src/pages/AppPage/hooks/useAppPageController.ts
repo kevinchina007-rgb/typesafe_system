@@ -88,7 +88,13 @@ export function useAppPageController() {
 
     return (
       error.message.startsWith('user_not_found|') ||
-      error.message.startsWith('manager_not_found|')
+      error.message.startsWith('manager_not_found|') ||
+      error.message.includes('signed-in user session is required') ||
+      error.message.includes('signed-in manager session is required') ||
+      error.message.includes('session was not found') ||
+      error.message.includes('has expired') ||
+      error.message.includes('has been revoked') ||
+      error.message.includes('current session does not match the requested actor')
     )
   }, [])
 

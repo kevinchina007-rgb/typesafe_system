@@ -14,7 +14,7 @@ object SchemaInitializer:
     initializeWithMigrationSteps(
       transactor = transactor,
       migrationSteps = MigrationPlan.defaultSteps,
-      runReferenceSeedData = true
+      runReferenceSeedData = false
     )
 
   private[persistence] def initializeWithMigrationSteps(

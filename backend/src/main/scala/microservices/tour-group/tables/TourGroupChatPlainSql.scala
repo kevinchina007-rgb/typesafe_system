@@ -5,6 +5,7 @@ package com.typesafe.travel.tourgroup.domain
 import cats.effect.IO
 import com.typesafe.travel.persistence.PlainSqlSupport
 import com.typesafe.travel.shared.kernel.*
+import com.typesafe.travel.tourgroup.domain.*
 
 import java.sql.{Connection, ResultSet, Timestamp, Types}
 import java.time.Instant

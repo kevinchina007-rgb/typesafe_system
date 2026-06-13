@@ -38,6 +38,7 @@ object PersistenceApplicationWiring:
         )
 
       setup *>
+        Resource.eval(ReferenceDataSeeder.seedIfNeeded(databaseTransactor)) *>
         Resource.make(TrainOrderExpirySweeper.start(databaseConfig))(_.cancel).void *>
         Resource.pure(wiring)
     }
