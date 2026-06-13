@@ -1,117 +1,15 @@
-// 本文件定义 TourGroupsPage 页面的页面组件。
-
-// 本文件定义 TourGroupsPage 页面的页面组件。
-
 import { useMemo, useState } from 'react'
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type {
-  AppLanguage,
-  AttractionResponse,
-  FlightPlannerResponse,
-  GroupPlanItemResponse,
-  HotelPlannerResponse,
-  SearchSuggestionResponse,
-  TrainResponse,
-} from '@/lib/mvp-types/index'
-import { formatIsoDateTime, localizeCabinClass, localizeTrainSeatClass } from '@/lib/presenters/view-models'
+import type { AttractionResponse, FlightPlannerResponse, HotelPlannerResponse, SearchSuggestionResponse, TrainResponse } from '@/lib/mvp-types/index'
 
-type TourGroupPlanComposerProps = {
-  currentLanguage: AppLanguage
-  isBusy: boolean
-  existingPlanItems: GroupPlanItemResponse[]
-  translate: (translationKey: string) => string
-  onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
-  onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
-  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
-  onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
-  onCreatePlanItem: (payload: {
-    itemType: string
-    title: string
-    description: string
-    scheduledAt: string
-    endsAt?: string | null
-    sequenceNo: number
-  }) => Promise<GroupPlanItemResponse | null>
-  onCreateOptionForPlanItem: (
-    planItemId: string,
-    payload: {
-      resourceType: string
-      resourceId: string
-      resourceVariantCode?: string | null
-      resourceContext?: string | null
-      label: string
-      description: string
-      defaultQuantity: number
-    },
-  ) => Promise<void>
-}
+import { TourGroupPlanComposerActions } from '@/pages/TourGroupsPage/components/TourGroupPlanComposerActions'
+import type { TourGroupPlanComposerProps, SearchTarget } from '@/pages/TourGroupsPage/components/TourGroupPlanComposer.types'
+import { TourGroupFlightResults, TourGroupHotelResults, TourGroupTrainResults, TourGroupAttractionResults } from '@/pages/TourGroupsPage/components/TourGroupPlanComposerResultCards'
+import { TourGroupPlanComposerSearchForm } from '@/pages/TourGroupsPage/components/TourGroupPlanComposerSearchForm'
+import { TourGroupPlanComposerValidation } from '@/pages/TourGroupsPage/components/TourGroupPlanComposerValidation'
+import { nextDay } from '@/pages/TourGroupsPage/components/TourGroupPlanComposer.utils'
 
-// 计算给定日期的下一天。
-function nextDay(dateText: string): string {
-  const date = new Date(`${dateText}T00:00:00`)
-  date.setDate(date.getDate() + 1)
-  return date.toISOString().slice(0, 10)
-}
-
-// 拼出 UTC 时间字符串。
-function atUtc(dateText: string, hour: string): string {
-  return `${dateText}T${hour}:00Z`
-}
-
-// 把任意时间值转成标准 ISO 字符串。
-function toInstantString(value: string): string {
-  const parsedDate = new Date(value)
-  if (Number.isNaN(parsedDate.getTime())) {
-    return value
-  }
-  return parsedDate.toISOString()
-}
-
-// 规范化搜索文本，便于做站点和城市匹配。
-function normalizeSearchToken(value: string): string {
-  return value.trim().toLowerCase()
-}
-
-// 在列车停靠站里按站名或站码查找匹配项。
-function resolveTrainStop(train: TrainResponse, query: string): TrainResponse['stops'][number] | null {
-  const normalizedQuery = normalizeSearchToken(query)
-  return (
-    train.stops.find(stop => stop.stationCode.trim().toLowerCase() === normalizedQuery) ??
-    train.stops.find(stop => normalizeSearchToken(stop.stationName) === normalizedQuery) ??
-    train.stops.find(stop => normalizeSearchToken(stop.stationName).includes(normalizedQuery)) ??
-    null
-  )
-}
-
-// 把搜索建议列表渲染成可点击的候选项。
-function renderSuggestionList(
-  suggestions: SearchSuggestionResponse[],
-  onPick: (value: string) => void,
-) {
-  if (suggestions.length === 0) {
-    return null
-  }
-
-  return (
-    <ul className="grid gap-2 border border-sky-200 bg-white/85 p-3 shadow-sm shadow-sky-100/40">
-      {suggestions.map(suggestion => (
-        <li key={`${suggestion.resourceType}:${suggestion.value}`}>
-          <button
-            type="button"
-            className="inline-flex items-center justify-center text-sm font-bold text-sky-600 underline-offset-4 hover:underline"
-            onClick={() => onPick(suggestion.value)}
-          >
-            <strong>{suggestion.title}</strong>
-          </button>
-          <p className="text-sm leading-6 text-slate-500">{suggestion.subtitle}</p>
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-// 旅游团行程编辑器，负责搜索资源并把结果转换成行程项。
 export function TourGroupPlanComposer({
   currentLanguage,
   isBusy,
@@ -144,11 +42,10 @@ export function TourGroupPlanComposer({
     [existingPlanItems],
   )
 
-  // 加载出发地、到达地或目的地的搜索建议。
-  async function loadLocationSuggestions(
-    nextLocation: string,
-    target: 'departure' | 'arrival' | 'location',
-  ) {
+  const isRouteItem = itemType === 'Flight' || itemType === 'Train'
+  const formGridClassName = itemType === 'Attraction' ? 'grid gap-4 md:grid-cols-3' : 'grid gap-4 md:grid-cols-4'
+
+  async function loadLocationSuggestions(nextLocation: string, target: SearchTarget) {
     const normalizedLocation = nextLocation.trim()
     if (normalizedLocation.length < 2) {
       if (target === 'departure') setDepartureLocationSuggestions([])
@@ -179,7 +76,6 @@ export function TourGroupPlanComposer({
     }
   }
 
-  // 根据当前搜索条件拉取对应资源列表。
   async function runSearch() {
     setSearchMessage('')
     setFlightResults([])
@@ -199,7 +95,7 @@ export function TourGroupPlanComposer({
       const departure = departureLocation.trim()
       const arrival = arrivalLocation.trim()
       if (!departure || !arrival) {
-        setSearchMessage('请填写出发地点和到达地点。')
+        setSearchMessage('请先填写出发地点和到达地点。')
         return
       }
       setFlightResults(await onSearchFlights({ departureAirport: departure, arrivalAirport: arrival, date }))
@@ -224,7 +120,7 @@ export function TourGroupPlanComposer({
       const departure = departureLocation.trim()
       const arrival = arrivalLocation.trim()
       if (!departure || !arrival) {
-        setSearchMessage('请填写出发地点和到达地点。')
+        setSearchMessage('请先填写出发地点和到达地点。')
         return
       }
       setTrainResults(await onSearchTrains({ fromStation: departure, toStation: arrival, date }))
@@ -238,7 +134,6 @@ export function TourGroupPlanComposer({
     setAttractionResults(await onSearchAttractions({ city: location }))
   }
 
-  // 把一次搜索结果转成行程项和行程选项。
   async function createPlanWithOption(
     planPayload: {
       itemType: string
@@ -270,9 +165,6 @@ export function TourGroupPlanComposer({
     setSearchMessage(translate('tourGroups.createPlanSuccessHint'))
   }
 
-  const isRouteItem = itemType === 'Flight' || itemType === 'Train'
-  const formGridClassName = itemType === 'Attraction' ? 'grid gap-4 md:grid-cols-3' : 'grid gap-4 md:grid-cols-4'
-
   return (
     <section className="grid gap-3 border border-sky-200 bg-white/85 p-4 text-slate-950 shadow-sm shadow-sky-100/40">
       <div className="text-lg font-bold text-slate-950">
@@ -283,295 +175,66 @@ export function TourGroupPlanComposer({
         </div>
       </div>
 
-      <form
-        className="grid gap-4 border border-sky-200 bg-white/85 p-5 text-slate-950 shadow-sm shadow-sky-100/40"
-        onSubmit={async event => {
-          event.preventDefault()
-          await runSearch()
-        }}
-      >
-        <div className={itemType === 'Hotel' ? 'grid gap-4 md:grid-cols-4 hotel' : formGridClassName}>
-          <label className="grid gap-2">
-            {translate('tourGroups.itemType')}
-            <select value={itemType} onChange={event => setItemType(event.target.value)}>
-              <option value="Flight">{translate('tourGroups.itemType.flight')}</option>
-              <option value="Hotel">{translate('tourGroups.itemType.hotel')}</option>
-              <option value="Train">{translate('tourGroups.itemType.train')}</option>
-              <option value="Attraction">{translate('tourGroups.itemType.attraction')}</option>
-            </select>
-          </label>
+      <TourGroupPlanComposerSearchForm
+        itemType={itemType}
+        setItemType={setItemType}
+        date={date}
+        setDate={setDate}
+        hotelCheckOutDate={hotelCheckOutDate}
+        setHotelCheckOutDate={setHotelCheckOutDate}
+        departureLocation={departureLocation}
+        setDepartureLocation={setDepartureLocation}
+        arrivalLocation={arrivalLocation}
+        setArrivalLocation={setArrivalLocation}
+        location={location}
+        setLocation={setLocation}
+        departureLocationSuggestions={departureLocationSuggestions}
+        arrivalLocationSuggestions={arrivalLocationSuggestions}
+        locationSuggestions={locationSuggestions}
+        onLoadLocationSuggestions={(value, target) => void loadLocationSuggestions(value, target)}
+        onPickDepartureLocation={() => setDepartureLocationSuggestions([])}
+        onPickArrivalLocation={() => setArrivalLocationSuggestions([])}
+        onPickLocation={() => setLocationSuggestions([])}
+        onSubmitSearch={runSearch}
+        isRouteItem={isRouteItem}
+        formGridClassName={formGridClassName}
+        translate={translate}
+      />
 
-          <label className="grid gap-2">
-            {translate(itemType === 'Hotel' ? 'tourGroups.hotelCheckInDate' : 'tourGroups.search.date')}
-            <input type="date" value={date} onChange={event => setDate(event.target.value)} required />
-          </label>
+      <TourGroupPlanComposerActions isBusy={isBusy} translate={translate} />
+      <TourGroupPlanComposerValidation message={searchMessage} />
 
-          {isRouteItem ? (
-            <label className="grid gap-2">
-              出发地点
-              <input
-                value={departureLocation}
-                onFocus={() => void loadLocationSuggestions(departureLocation, 'departure')}
-                onChange={event => {
-                  const nextValue = event.target.value
-                  setDepartureLocation(nextValue)
-                  void loadLocationSuggestions(nextValue, 'departure')
-                }}
-                required
-              />
-              {renderSuggestionList(departureLocationSuggestions, value => {
-                setDepartureLocation(value)
-                setDepartureLocationSuggestions([])
-              })}
-            </label>
-          ) : null}
+      <TourGroupFlightResults
+        currentLanguage={currentLanguage}
+        isBusy={isBusy}
+        flightResults={flightResults}
+        onCreatePlanWithOption={createPlanWithOption}
+      />
 
-          {isRouteItem ? (
-            <label className="grid gap-2">
-              到达地点
-              <input
-                value={arrivalLocation}
-                onFocus={() => void loadLocationSuggestions(arrivalLocation, 'arrival')}
-                onChange={event => {
-                  const nextValue = event.target.value
-                  setArrivalLocation(nextValue)
-                  void loadLocationSuggestions(nextValue, 'arrival')
-                }}
-                required
-              />
-              {renderSuggestionList(arrivalLocationSuggestions, value => {
-                setArrivalLocation(value)
-                setArrivalLocationSuggestions([])
-              })}
-            </label>
-          ) : null}
+      <TourGroupHotelResults
+        isBusy={isBusy}
+        hotelResults={hotelResults}
+        date={date}
+        hotelCheckOutDate={hotelCheckOutDate}
+        onCreatePlanWithOption={createPlanWithOption}
+      />
 
-          {!isRouteItem ? (
-            <label className="grid gap-2">
-              {translate('tourGroups.search.locationLabel')}
-              <input
-                value={location}
-                onFocus={() => void loadLocationSuggestions(location, 'location')}
-                onChange={event => {
-                  const nextLocation = event.target.value
-                  setLocation(nextLocation)
-                  void loadLocationSuggestions(nextLocation, 'location')
-                }}
-                required
-              />
-              {renderSuggestionList(locationSuggestions, value => {
-                setLocation(value)
-                setLocationSuggestions([])
-              })}
-            </label>
-          ) : null}
+      <TourGroupTrainResults
+        currentLanguage={currentLanguage}
+        isBusy={isBusy}
+        trainResults={trainResults}
+        departureLocation={departureLocation}
+        arrivalLocation={arrivalLocation}
+        date={date}
+        onCreatePlanWithOption={createPlanWithOption}
+      />
 
-          {itemType === 'Hotel' ? (
-            <label className="grid gap-2">
-              {translate('tourGroups.hotelCheckOutDate')}
-              <input
-                type="date"
-                value={hotelCheckOutDate}
-                onChange={event => setHotelCheckOutDate(event.target.value)}
-                required
-              />
-            </label>
-          ) : null}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-            type="submit"
-            disabled={isBusy}
-          >
-            {translate('tourGroups.searchOptions')}
-          </button>
-        </div>
-
-        {searchMessage ? <p className="text-sm leading-6 text-slate-500">{searchMessage}</p> : null}
-      </form>
-
-      {itemType === 'Flight' && flightResults.length > 0 ? (
-        <ul className="grid gap-3">
-          {flightResults.map(flight => (
-            <li key={flight.flightId}>
-              <div className="grid gap-2 border border-sky-200 bg-gradient-to-br from-white via-cyan-50 to-slate-50 p-4 shadow-sm shadow-sky-100/40">
-                <strong>{`${flight.airlineCode} ${flight.flightNumber}`}</strong>
-                <p>{`${flight.departureAirport} → ${flight.arrivalAirport}`}</p>
-                <p>{formatIsoDateTime(flight.departureTime, '-')}</p>
-                <div className="grid gap-2">
-                  {flight.cabinInventories.map(cabin => (
-                    <button
-                      className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-                      key={cabin.inventoryId}
-                      type="button"
-                      disabled={isBusy}
-                      onClick={() =>
-                        void createPlanWithOption(
-                          {
-                            itemType: 'Flight',
-                            title: `${flight.departureAirport} → ${flight.arrivalAirport}`,
-                            description: `${flight.airlineName} ${flight.flightNumber}`,
-                            scheduledAt: toInstantString(flight.departureTime),
-                            endsAt: toInstantString(flight.arrivalTime),
-                          },
-                          {
-                            resourceType: 'Flight',
-                            resourceId: flight.flightId,
-                            resourceVariantCode: cabin.cabinClass,
-                            label: `${flight.flightNumber} ${localizeCabinClass(cabin.cabinClass, currentLanguage)}`,
-                            description: `${flight.departureAirport} → ${flight.arrivalAirport} / ${cabin.unitPrice} ${cabin.currency}`,
-                            defaultQuantity: 1,
-                          },
-                        )
-                      }
-                    >
-                      {`${localizeCabinClass(cabin.cabinClass, currentLanguage)} / ${cabin.unitPrice} ${cabin.currency}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {itemType === 'Hotel' && hotelResults.length > 0 ? (
-        <ul className="grid gap-3">
-          {hotelResults.map(hotel => (
-            <li key={hotel.hotelId}>
-              <div className="grid gap-2 border border-sky-200 bg-gradient-to-br from-white via-cyan-50 to-slate-50 p-4 shadow-sm shadow-sky-100/40">
-                <strong>{hotel.hotelName}</strong>
-                <p>{hotel.location}</p>
-                <div className="grid gap-2">
-                  {hotel.roomTypes.map(roomType => (
-                    <button
-                      className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-                      key={roomType.roomTypeId}
-                      type="button"
-                      disabled={isBusy}
-                      onClick={() =>
-                        void createPlanWithOption(
-                          {
-                            itemType: 'Hotel',
-                            title: `${hotel.location} stay`,
-                            description: hotel.hotelName,
-                            scheduledAt: atUtc(date, '15:00'),
-                            endsAt: atUtc(hotelCheckOutDate || nextDay(date), '12:00'),
-                          },
-                          {
-                            resourceType: 'HotelRoomType',
-                            resourceId: roomType.roomTypeId,
-                            label: `${hotel.hotelName} ${roomType.roomTypeName}`,
-                            description: `${roomType.roomTypeName} / ${roomType.basePrice} ${roomType.currency}`,
-                            defaultQuantity: 1,
-                          },
-                        )
-                      }
-                    >
-                      {`${roomType.roomTypeName} / ${roomType.basePrice} ${roomType.currency}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      {itemType === 'Train' && trainResults.length > 0 ? (
-        <ul className="grid gap-3">
-          {trainResults.map(train => {
-            const fromStop = resolveTrainStop(train, departureLocation)
-            const toStop = resolveTrainStop(train, arrivalLocation)
-            return (
-              <li key={train.trainId}>
-                <div className="grid gap-2 border border-sky-200 bg-gradient-to-br from-white via-cyan-50 to-slate-50 p-4 shadow-sm shadow-sky-100/40">
-                  <strong>{train.trainNumber}</strong>
-                  <p>{train.stops.map(stop => stop.stationCode).join(' → ')}</p>
-                  <div className="grid gap-2">
-                    {fromStop && toStop
-                      ? train.seatInventories.map(seat => (
-                          <button
-                            className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-                            key={seat.inventoryId}
-                            type="button"
-                            disabled={isBusy}
-                            onClick={() =>
-                              void createPlanWithOption(
-                                {
-                                  itemType: 'Train',
-                                  title: `${fromStop.stationName} → ${toStop.stationName}`,
-                                  description: train.trainNumber,
-                                  scheduledAt: atUtc(date, '09:00'),
-                                },
-                                {
-                                  resourceType: 'TrainJourneySeat',
-                                  resourceId: train.trainId,
-                                  resourceVariantCode: seat.seatClass,
-                                  resourceContext: `${fromStop.stationCode}|${toStop.stationCode}`,
-                                  label: `${train.trainNumber} ${localizeTrainSeatClass(seat.seatClass, currentLanguage)}`,
-                                  description: `${fromStop.stationName} → ${toStop.stationName}`,
-                                  defaultQuantity: 1,
-                                },
-                              )
-                            }
-                          >
-                            {localizeTrainSeatClass(seat.seatClass, currentLanguage)}
-                          </button>
-                        ))
-                      : <p className="text-sm leading-6 text-slate-500">请先填写出发地点和到达地点。</p>}
-                  </div>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      ) : null}
-
-      {itemType === 'Attraction' && attractionResults.length > 0 ? (
-        <ul className="grid gap-3">
-          {attractionResults.map(attraction => (
-            <li key={attraction.attractionId}>
-              <div className="grid gap-2 border border-sky-200 bg-gradient-to-br from-white via-cyan-50 to-slate-50 p-4 shadow-sm shadow-sky-100/40">
-                <strong>{attraction.attractionName}</strong>
-                <p>{`${attraction.city} / ${attraction.location}`}</p>
-                <div className="grid gap-2">
-                  {attraction.ticketTypes.map(ticketType => (
-                    <button
-                      className="inline-flex min-h-11 items-center justify-center border border-sky-300 bg-white px-4 py-2 text-sm font-semibold text-sky-800 shadow-none transition hover:border-sky-700 hover:bg-sky-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-55"
-                      key={ticketType.ticketTypeId}
-                      type="button"
-                      disabled={isBusy}
-                      onClick={() =>
-                        void createPlanWithOption(
-                          {
-                            itemType: 'Attraction',
-                            title: attraction.attractionName,
-                            description: ticketType.ticketTypeName,
-                            scheduledAt: atUtc(date, '09:00'),
-                          },
-                          {
-                            resourceType: 'AttractionTicketType',
-                            resourceId: ticketType.ticketTypeId,
-                            resourceContext: attraction.attractionId,
-                            label: `${attraction.attractionName} ${ticketType.ticketTypeName}`,
-                            description: `${ticketType.ticketTypeName} / ${ticketType.priceAmount} ${ticketType.priceCurrency}`,
-                            defaultQuantity: 1,
-                          },
-                        )
-                      }
-                    >
-                      {`${ticketType.ticketTypeName} / ${ticketType.priceAmount} ${ticketType.priceCurrency}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <TourGroupAttractionResults
+        isBusy={isBusy}
+        attractionResults={attractionResults}
+        date={date}
+        onCreatePlanWithOption={createPlanWithOption}
+      />
     </section>
   )
 }

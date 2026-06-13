@@ -4,11 +4,11 @@ package com.typesafe.travel.attraction.domain
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
-import com.typesafe.travel.attraction.api.AttractionPlannerWorkflow
+import com.typesafe.travel.attraction.domain.AttractionImagePlanner
 
 import java.sql.Connection
 
 object UploadAttractionImagePlanner extends ConnectionApiPlan[UploadAttractionImagePlannerRequest, UploadAttractionImagePlannerResponse]:
   override val name: String = "UploadAttractionImagePlanner"
   override def plan(input: UploadAttractionImagePlannerRequest, connection: Connection): IO[UploadAttractionImagePlannerResponse] =
-    AttractionPlannerWorkflow.uploadImage(connection, input)
+    AttractionImagePlanner.uploadImage(connection, input)
