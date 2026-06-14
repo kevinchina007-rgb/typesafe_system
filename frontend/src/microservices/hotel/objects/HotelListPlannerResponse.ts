@@ -1,4 +1,11 @@
-// 本文件定义 hotel 模块的 `HotelListPlannerResponse`，作为planner 响应数据并提供 JSON 编解码。
+import type { HotelPlannerResponse } from './HotelPlannerResponse'
 
-export type { HotelListPlannerResponse } from './HotelListResponse'
-export { hotelListResponseFromJson, hotelListResponseToJson } from './HotelListResponse'
+export type HotelListPlannerResponse = {
+  hotels: HotelPlannerResponse[]
+}
+
+export const hotelListPlannerResponseFromJson = (json: string): HotelListPlannerResponse =>
+  JSON.parse(json) as HotelListPlannerResponse
+
+export const hotelListPlannerResponseToJson = (value: HotelListPlannerResponse): string =>
+  JSON.stringify(value)

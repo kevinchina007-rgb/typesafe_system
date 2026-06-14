@@ -1,5 +1,4 @@
-// SearchModels 定义search模块的业务入口。
-
+// SearchModels 定义 search 基础层的资源类型和结果模型。
 package com.typesafe.travel.api.application
 
 enum SearchResourceType(val value: String):

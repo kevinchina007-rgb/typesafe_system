@@ -20,7 +20,7 @@ object GetHotelDetailsPlanner extends ConnectionApiPlan[HotelDetailsPlannerReque
     for
       maybeHotel <- GetHotelDetailsPlannerPlainSql.details(connection, input)
       hotel <- IO.fromOption(maybeHotel)(new IllegalArgumentException(s"Hotel '${input.hotelId}' was not found"))
-    yield HotelPlannerResponseMapper.toHotelPlannerResponse(hotel, stayPeriod)
+    yield GetHotelDetailsPlannerResponseMapper.toHotelPlannerResponse(hotel, stayPeriod)
 
   private def parseStayPeriod(checkInDate: Option[String], checkOutDate: Option[String]): Option[StayPeriod] =
     (checkInDate.map(_.trim).filter(_.nonEmpty), checkOutDate.map(_.trim).filter(_.nonEmpty)) match

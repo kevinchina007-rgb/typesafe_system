@@ -1,4 +1,6 @@
-package com.typesafe.travel.attraction.domain
+package com.typesafe.travel.attraction.api
+
+import com.typesafe.travel.attraction.domain.*
 
 import cats.effect.IO
 import com.typesafe.travel.persistence.attraction.AttractionPlannerPlainSql
@@ -11,3 +13,6 @@ object GetAttractionPlanner:
 
   def listManaged(connection: Connection, input: ListManagedAttractionsPlannerRequest): IO[AttractionListPlannerResponse] =
     AttractionPlannerPlainSql.listManaged(connection, input)
+
+
+

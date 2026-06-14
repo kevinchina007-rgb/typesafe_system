@@ -1,6 +1,7 @@
-// CreateAttractionTicketRulePlanner 是景点模块的创建入口，负责请求校验、流程编排和结果返回。
+// CreateAttractionTicketRulePlanner 是景点模块的创建入口，负责请求校验、流程编排和结果返回�?
+package com.typesafe.travel.attraction.api
 
-package com.typesafe.travel.attraction.domain
+import com.typesafe.travel.attraction.domain.*
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
@@ -13,3 +14,6 @@ object CreateAttractionTicketRulePlanner extends ConnectionApiPlan[CreateAttract
   override val name: String = "CreateAttractionTicketRulePlanner"
   override def plan(input: CreateAttractionTicketRulePlannerRequest, connection: Connection): IO[Attraction] =
     AttractionPlannerPlainSql.createTicketRule(connection, input, Instant.now())
+
+
+

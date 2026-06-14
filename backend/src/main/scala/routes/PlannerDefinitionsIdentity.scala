@@ -11,10 +11,9 @@ object PlannerDefinitionsIdentity:
     PlannerRegistry(
       List(
         WithConnection(CreateUserPlanner),
-        WithConnection(LoginUserPlanner),
+        WithConnection(LoginPlanner),
         WithConnection(GetUserPlanner),
         WithConnection(UploadUserAvatarPlanner),
         WithConnection(UpdateUserProfilePlanner)
       ).map(planner => planner.name -> planner).toMap
     )
-

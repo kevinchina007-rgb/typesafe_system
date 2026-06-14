@@ -1,6 +1,7 @@
-// GetAttractionDetailsPlanner 是景点模块的获取入口，负责请求校验、流程编排和结果返回。
+// GetAttractionDetailsPlanner 是景点模块的获取入口，负责请求校验、流程编排和结果返回�?
+package com.typesafe.travel.attraction.api
 
-package com.typesafe.travel.attraction.domain
+import com.typesafe.travel.attraction.domain.*
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
@@ -12,3 +13,6 @@ object GetAttractionDetailsPlanner extends ConnectionApiPlan[GetAttractionDetail
   override val name: String = "GetAttractionDetailsPlanner"
   override def plan(input: GetAttractionDetailsPlannerRequest, connection: Connection): IO[Attraction] =
     AttractionPlannerPlainSql.details(connection, input)
+
+
+

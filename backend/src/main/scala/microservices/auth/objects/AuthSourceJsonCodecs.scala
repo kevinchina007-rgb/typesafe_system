@@ -1,5 +1,4 @@
-// AuthSourceJsonCodecs 定义认证模块的源数据 JSON codec。
-
+// AuthSourceJsonCodecs 瀹氫箟璁よ瘉妯″潡鐨勬簮鏁版嵁 JSON codec銆?
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*
@@ -8,7 +7,7 @@ import io.circe.{Decoder, Encoder}
 import java.time.Instant
 import scala.util.Try
 
-private[domain] object AuthSourceJsonCodecs:
+object AuthSourceJsonCodecs:
   given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   given Decoder[Instant] = Decoder.decodeString.emap(value => Try(Instant.parse(value)).toEither.left.map(_.getMessage))
 
@@ -26,4 +25,6 @@ private[domain] object AuthSourceJsonCodecs:
 
   given Encoder[EmailAddress] = Encoder.encodeString.contramap(_.value)
   given Decoder[EmailAddress] = Decoder.decodeString.emap(value => EmailAddress.create(value).left.map(_.getMessage))
+
+
 

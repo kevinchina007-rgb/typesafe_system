@@ -1,4 +1,6 @@
-package com.typesafe.travel.attraction.domain
+package com.typesafe.travel.attraction.api
+
+import com.typesafe.travel.attraction.domain.*
 
 import cats.effect.IO
 import com.typesafe.travel.persistence.attraction.AttractionPlannerPlainSql
@@ -11,3 +13,6 @@ object SearchAttractionsPlanner:
 
   def list(connection: Connection, input: ListAttractionsPlannerRequest): IO[AttractionListPlannerResponse] =
     AttractionPlannerPlainSql.list(connection, input)
+
+
+

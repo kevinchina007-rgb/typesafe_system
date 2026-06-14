@@ -7,16 +7,14 @@ final case class CandidateValidationResult(
     candidate: PlannerCandidate,
     blockingErrors: Vector[PlanningError],
     warnings: Vector[PlanningWarning]
-):
-  def isValid: Boolean = blockingErrors.isEmpty
+)
 
 // CandidateEvaluation represents a candidate after matching, validation, and scoring.
 final case class CandidateEvaluation(
     candidate: PlannerCandidate,
     validation: CandidateValidationResult,
     isRecommended: Boolean
-):
-  def isValid: Boolean = validation.isValid
+)
 
 // PlannerDraftResult is the stage-2 service result for the Smart Planner flow.
 final case class PlannerDraftResult(

@@ -1,5 +1,4 @@
-// ManagerLoginPlanner 是认证模块的业务入口，负责请求校验、流程编排和结果返回。
-
+// ManagerLoginPlanner 鏄璇佹ā鍧楃殑涓氬姟鍏ュ彛锛岃礋璐ｈ姹傛牎楠屻€佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO
@@ -19,3 +18,5 @@ object ManagerLoginPlanner extends ConnectionApiPlan[ManagerLoginPlannerRequest,
       valid <- verifyPassword(input.password, passwordHash)
       _ <- if valid then IO.unit else IO.raiseError(AuthError.InvalidPassword(EmailAddress.create(input.email).fold(throw _, identity)))
     yield response
+
+

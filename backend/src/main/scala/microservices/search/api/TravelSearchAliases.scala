@@ -1,5 +1,4 @@
-// TravelSearchAliases 定义search模块的业务入口。
-
+// TravelSearchAliases 定义 search 基础层的别名匹配和查询扩展工具。
 package com.typesafe.travel.api.application
 
 import com.typesafe.travel.shared.kernel.{AirportCode, HotelLocation}
@@ -8,13 +7,13 @@ object TravelSearchAliases:
   private val airportAliasIndex: Map[String, Set[AirportCode]] =
     Map(
       "shanghai" -> Set(AirportCode.unsafe("PVG"), AirportCode.unsafe("SHA")),
-      "上海" -> Set(AirportCode.unsafe("PVG"), AirportCode.unsafe("SHA")),
+      "涓婃捣" -> Set(AirportCode.unsafe("PVG"), AirportCode.unsafe("SHA")),
       "tokyo" -> Set(AirportCode.unsafe("NRT"), AirportCode.unsafe("HND")),
-      "东京" -> Set(AirportCode.unsafe("NRT"), AirportCode.unsafe("HND")),
+      "涓滀含" -> Set(AirportCode.unsafe("NRT"), AirportCode.unsafe("HND")),
       "seoul" -> Set(AirportCode.unsafe("ICN"), AirportCode.unsafe("GMP")),
-      "首尔" -> Set(AirportCode.unsafe("ICN"), AirportCode.unsafe("GMP")),
+      "棣栧皵" -> Set(AirportCode.unsafe("ICN"), AirportCode.unsafe("GMP")),
       "hangzhou" -> Set(AirportCode.unsafe("HGH")),
-      "杭州" -> Set(AirportCode.unsafe("HGH")),
+      "鏉窞" -> Set(AirportCode.unsafe("HGH")),
       "incheon" -> Set(AirportCode.unsafe("ICN")),
       "gimpo" -> Set(AirportCode.unsafe("GMP")),
       "narita" -> Set(AirportCode.unsafe("NRT")),
@@ -27,13 +26,13 @@ object TravelSearchAliases:
   private val hotelLocationAliasIndex: Map[String, Set[String]] =
     Map(
       "hangzhou" -> Set("hangzhou", "west lake"),
-      "杭州" -> Set("hangzhou", "west lake", "西湖"),
-      "west lake" -> Set("hangzhou", "west lake", "西湖"),
-      "西湖" -> Set("hangzhou", "west lake", "西湖"),
+      "鏉窞" -> Set("hangzhou", "west lake", "瑗挎箹"),
+      "west lake" -> Set("hangzhou", "west lake", "瑗挎箹"),
+      "瑗挎箹" -> Set("hangzhou", "west lake", "瑗挎箹"),
       "shanghai" -> Set("shanghai", "bund"),
-      "上海" -> Set("shanghai", "bund", "外滩"),
-      "bund" -> Set("shanghai", "bund", "外滩"),
-      "外滩" -> Set("shanghai", "bund", "外滩")
+      "涓婃捣" -> Set("shanghai", "bund", "澶栨哗"),
+      "bund" -> Set("shanghai", "bund", "澶栨哗"),
+      "澶栨哗" -> Set("shanghai", "bund", "澶栨哗")
     )
 
   def normalizeSearchText(rawSearchText: String): String =

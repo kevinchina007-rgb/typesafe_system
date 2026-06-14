@@ -9,7 +9,8 @@ import type { AdvertisementDeliverySettingsResponse } from '@/microservices/adve
 import type { GenerateAdvertisementImageCandidatesResponse } from '@/microservices/advertising/objects/GenerateAdvertisementImageCandidatesResponse'
 import type { GenerateAdvertisementTextCandidatesResponse } from '@/microservices/advertising/objects/GenerateAdvertisementTextCandidatesResponse'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
-import type { AdvertisementReviewDecisionRequest } from '@/microservices/advertising/objects/AdvertisementReviewDecisionRequest'
+import type { ApproveAdvertisementRequest } from '@/microservices/advertising/objects/ApproveAdvertisementRequest'
+import type { RejectAdvertisementRequest } from '@/microservices/advertising/objects/RejectAdvertisementRequest'
 import type { AdvertisementSlotAssignmentRequest } from '@/microservices/advertising/objects/AdvertisementSlotAssignmentRequest'
 import type { CreateAdvertisementRequest } from '@/microservices/advertising/objects/CreateAdvertisementRequest'
 import type { UpdateAdvertisementRequest } from '@/microservices/advertising/objects/UpdateAdvertisementRequest'
@@ -67,8 +68,8 @@ type AdvertisingActions = {
   ) => Promise<AdvertisementResponse>
   submitAdvertisementForReview: (advertisementId: string) => Promise<AdvertisementResponse>
   pauseAdvertisement: (advertisementId: string) => Promise<AdvertisementResponse>
-  approveAdvertisement: (advertisementId: string, payload: AdvertisementReviewDecisionRequest) => Promise<AdvertisementResponse>
-  rejectAdvertisement: (advertisementId: string, payload: AdvertisementReviewDecisionRequest) => Promise<AdvertisementResponse>
+  approveAdvertisement: (advertisementId: string, payload: ApproveAdvertisementRequest) => Promise<AdvertisementResponse>
+  rejectAdvertisement: (advertisementId: string, payload: RejectAdvertisementRequest) => Promise<AdvertisementResponse>
   assignAdvertisementSlot: (advertisementId: string, payload: AdvertisementSlotAssignmentRequest) => Promise<AdvertisementResponse>
   pauseAdvertisementDisplay: (advertisementId: string, reviewNote?: string | null) => Promise<AdvertisementResponse>
   loadAdvertisementDeliverySettings: (placement: string) => Promise<AdvertisementDeliverySettingsResponse>

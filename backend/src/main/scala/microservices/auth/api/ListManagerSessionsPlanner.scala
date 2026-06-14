@@ -1,5 +1,4 @@
-// ListManagerSessionsPlanner 是认证模块的列表查询入口，负责请求校验、流程编排和结果返回。
-
+// ListManagerSessionsPlanner 鏄璇佹ā鍧楃殑鍒楄〃鏌ヨ鍏ュ彛锛岃礋璐ｈ姹傛牎楠屻€佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO
@@ -9,7 +8,9 @@ import com.typesafe.travel.persistence.auth.ManagerAuthPlannerPlainSql
 import java.sql.Connection
 import java.time.Instant
 
-object ListManagerSessionsPlanner extends ConnectionApiPlan[ManagerSessionPlannerRequest, ManagerAuthSessionListPlannerResponse]:
+object ListManagerSessionsPlanner extends ConnectionApiPlan[ManagerSessionPlannerRequest, ManagerSessionListPlannerResponse]:
   override val name: String = "ListManagerSessionsPlanner"
-  override def plan(input: ManagerSessionPlannerRequest, connection: Connection): IO[ManagerAuthSessionListPlannerResponse] =
+  override def plan(input: ManagerSessionPlannerRequest, connection: Connection): IO[ManagerSessionListPlannerResponse] =
     ManagerAuthPlannerPlainSql.listSessions(connection, input.sessionId, Instant.now())
+
+

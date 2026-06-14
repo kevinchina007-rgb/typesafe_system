@@ -1,4 +1,6 @@
-package com.typesafe.travel.attraction.domain
+package com.typesafe.travel.attraction.api
+
+import com.typesafe.travel.attraction.domain.*
 
 import cats.effect.IO
 import com.typesafe.travel.persistence.attraction.AttractionPlannerPlainSql
@@ -18,3 +20,6 @@ object AttractionCreationPlanner:
 
   def createTicketRule(connection: Connection, input: CreateAttractionTicketRulePlannerRequest): IO[Attraction] =
     AttractionPlannerPlainSql.createTicketRule(connection, input, Instant.now())
+
+
+

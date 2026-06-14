@@ -14,6 +14,7 @@ export {
   isOrderPayable,
   isOrderRefunded,
   orderMatchesCategory,
+  orderTypeToOrderCategory,
 } from './bookingOrderHelpers'
 export {
   buildFlightOrderDisplay,

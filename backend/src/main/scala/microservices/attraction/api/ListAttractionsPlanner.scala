@@ -1,6 +1,7 @@
-// ListAttractionsPlanner 是景点模块的列表查询入口，负责请求校验、流程编排和结果返回。
+// ListAttractionsPlanner 是景点模块的列表查询入口，负责请求校验、流程编排和结果返回�?
+package com.typesafe.travel.attraction.api
 
-package com.typesafe.travel.attraction.domain
+import com.typesafe.travel.attraction.domain.*
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
@@ -12,3 +13,6 @@ object ListAttractionsPlanner extends ConnectionApiPlan[ListAttractionsPlannerRe
   override val name: String = "ListAttractionsPlanner"
   override def plan(input: ListAttractionsPlannerRequest, connection: Connection): IO[AttractionListPlannerResponse] =
     AttractionPlannerPlainSql.list(connection, input)
+
+
+

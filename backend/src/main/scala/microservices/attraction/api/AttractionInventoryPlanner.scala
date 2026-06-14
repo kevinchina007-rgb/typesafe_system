@@ -1,4 +1,6 @@
-package com.typesafe.travel.attraction.domain
+package com.typesafe.travel.attraction.api
+
+import com.typesafe.travel.attraction.domain.*
 
 import com.typesafe.travel.persistence.attraction.AttractionPlannerPlainSql
 
@@ -10,3 +12,6 @@ object AttractionInventoryPlanner:
 
   def restoreInventoryForCancelledOrder(connection: Connection, orderId: String): Unit =
     AttractionPlannerPlainSql.restoreInventoryForCancelledOrder(connection, orderId)
+
+
+

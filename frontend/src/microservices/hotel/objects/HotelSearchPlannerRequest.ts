@@ -1,4 +1,11 @@
-// 本文件定义 hotel 模块的 `HotelSearchPlannerRequest`，作为planner 请求参数并提供 JSON 编解码。
+export type HotelSearchPlannerRequest = {
+  location?: string
+  checkInDate?: string
+  checkOutDate?: string
+}
 
-export type { HotelSearchPlannerRequest } from './HotelSearchQuery'
-export { hotelSearchQueryFromJson, hotelSearchQueryToJson } from './HotelSearchQuery'
+export const hotelSearchPlannerRequestFromJson = (json: string): HotelSearchPlannerRequest =>
+  JSON.parse(json) as HotelSearchPlannerRequest
+
+export const hotelSearchPlannerRequestToJson = (value: HotelSearchPlannerRequest): string =>
+  JSON.stringify(value)

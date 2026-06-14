@@ -8,7 +8,7 @@ export type { AttractionTicketTypeResponse } from '@/microservices/attraction/ob
 export type { AttractionTicketTypeRuleResponse } from '@/microservices/attraction/objects/AttractionTicketTypeRuleResponse'
 export type { BookAttractionItemRequest } from '@/microservices/attraction/objects/BookAttractionItemRequest'
 export type { BookHotelPlannerRequest } from '@/microservices/hotel/objects/BookHotelPlannerRequest'
-export type { BookTrainItemRequest } from '@/microservices/train/objects/BookTrainItemRequest'
+export type { BookTrainItemPlannerRequest } from '@/microservices/train/objects/BookTrainItemPlannerRequest'
 export type { HotelListPlannerResponse } from '@/microservices/hotel/objects/HotelListPlannerResponse'
 export type { HotelPlannerResponse } from '@/microservices/hotel/objects/HotelPlannerResponse'
 export type { HotelSearchPlannerRequest } from '@/microservices/hotel/objects/HotelSearchPlannerRequest'

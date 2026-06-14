@@ -7,7 +7,7 @@ import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { useSignedInTravelers } from '@/pages/shared/useSignedInTravelers'
 import { consumeTourGroupBookingTarget } from '@/pages/shared/tour-group-booking/tourGroupBookingTarget'
-import type { HotelPlannerResponse } from '@/microservices/hotel/objects/HotelResponse'
+import type { HotelPlannerResponse } from '@/microservices/hotel/objects/HotelPlannerResponse'
 import type {
   HotelBookRequest,
   HotelSearchNotice,

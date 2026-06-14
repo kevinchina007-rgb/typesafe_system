@@ -2,7 +2,8 @@
 
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 import type { AttractionListResponse } from '@/microservices/attraction/objects/AttractionListResponse'
-import { mapAttractionListResponseFromBackend, type BackendAttractionListResponse } from '@/microservices/attraction/api/AttractionResponseMappers'
+import { mapAttractionListResponseFromBackend } from '@/microservices/attraction/api/AttractionListResponseMapper'
+import type { BackendAttractionListResponse } from '@/microservices/attraction/api/AttractionResponseMapperSupport'
 
 export const listManagedAttractions = (managerId: string): Promise<AttractionListResponse> =>
   executeJsonApiRequest<BackendAttractionListResponse>('/ListManagedAttractionsPlanner', 'POST', { managerId }).then(response =>

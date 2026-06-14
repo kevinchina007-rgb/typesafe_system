@@ -1,4 +1,6 @@
-package com.typesafe.travel.attraction.domain
+package com.typesafe.travel.attraction.api
+
+import com.typesafe.travel.attraction.domain.*
 
 import cats.effect.IO
 
@@ -48,3 +50,6 @@ object AttractionImagePlanner:
         fileSize = fileContent.length.toLong
       )
     }
+
+
+

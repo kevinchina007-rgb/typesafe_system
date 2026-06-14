@@ -9,7 +9,11 @@ object PreferenceLevel:
   val Low: PreferenceLevel = PreferenceLevel("Low")
   val Medium: PreferenceLevel = PreferenceLevel("Medium")
   val High: PreferenceLevel = PreferenceLevel("High")
-  export PlannerStatusSupport.parsePreferenceLevel as fromText
+  def fromText(value: String): PreferenceLevel =
+    value.trim.toLowerCase match
+      case "low" => Low
+      case "high" => High
+      case _ => Medium
 
 final case class TransportPreference(value: String):
   override def toString: String = value
@@ -21,8 +25,14 @@ object TransportPreference:
   val TaxiFirst: TransportPreference = TransportPreference("TaxiFirst")
   val FlightAllowed: TransportPreference = TransportPreference("FlightAllowed")
   val TrainPreferred: TransportPreference = TransportPreference("TrainPreferred")
-
-  export PlannerStatusSupport.parseTransportPreference as fromText
+  def fromText(value: String): TransportPreference =
+    value.trim.toLowerCase match
+      case "walkfirst" | "walk_first" => WalkFirst
+      case "publictransitfirst" | "public_transit_first" => PublicTransitFirst
+      case "taxifirst" | "taxi_first" => TaxiFirst
+      case "flightallowed" | "flight_allowed" => FlightAllowed
+      case "trainpreferred" | "train_preferred" => TrainPreferred
+      case _ => Any
 
 final case class HotelPreference(value: String):
   override def toString: String = value
@@ -34,8 +44,14 @@ object HotelPreference:
   val Premium: HotelPreference = HotelPreference("Premium")
   val CentralLocation: HotelPreference = HotelPreference("CentralLocation")
   val FamilyFriendly: HotelPreference = HotelPreference("FamilyFriendly")
-
-  export PlannerStatusSupport.parseHotelPreference as fromText
+  def fromText(value: String): HotelPreference =
+    value.trim.toLowerCase match
+      case "budget" => Budget
+      case "comfort" => Comfort
+      case "premium" => Premium
+      case "centrallocation" | "central_location" => CentralLocation
+      case "familyfriendly" | "family_friendly" => FamilyFriendly
+      case _ => Any
 
 final case class TripPace(value: String):
   override def toString: String = value
@@ -44,8 +60,11 @@ object TripPace:
   val Compact: TripPace = TripPace("Compact")
   val Balanced: TripPace = TripPace("Balanced")
   val Relaxed: TripPace = TripPace("Relaxed")
-
-  export PlannerStatusSupport.parseTripPace as fromText
+  def fromText(value: String): TripPace =
+    value.trim.toLowerCase match
+      case "compact" => Compact
+      case "relaxed" => Relaxed
+      case _ => Balanced
 
 final case class TripPlanStatus(value: String):
   override def toString: String = value
@@ -56,8 +75,13 @@ object TripPlanStatus:
   val CandidateSelected: TripPlanStatus = TripPlanStatus("CandidateSelected")
   val Saved: TripPlanStatus = TripPlanStatus("Saved")
   val Archived: TripPlanStatus = TripPlanStatus("Archived")
-
-  export PlannerStatusSupport.parseTripPlanStatus as fromText
+  def fromText(value: String): TripPlanStatus =
+    value.trim.toLowerCase match
+      case "candidategenerated" | "candidate_generated" => CandidateGenerated
+      case "candidateselected" | "candidate_selected" => CandidateSelected
+      case "saved" => Saved
+      case "archived" => Archived
+      case _ => Draft
 
 final case class PlannedTransportMode(value: String):
   override def toString: String = value
@@ -71,8 +95,16 @@ object PlannedTransportMode:
   val Ferry: PlannedTransportMode = PlannedTransportMode("Ferry")
   val Bus: PlannedTransportMode = PlannedTransportMode("Bus")
   val Custom: PlannedTransportMode = PlannedTransportMode("Custom")
-
-  export PlannerStatusSupport.parsePlannedTransportMode as fromText
+  def fromText(value: String): PlannedTransportMode =
+    value.trim.toLowerCase match
+      case "walk" => Walk
+      case "metro" => Metro
+      case "taxi" => Taxi
+      case "train" => Train
+      case "flight" => Flight
+      case "ferry" => Ferry
+      case "bus" => Bus
+      case _ => Custom
 
 final case class PlannerStrategy(value: String):
   override def toString: String = value
@@ -82,8 +114,12 @@ object PlannerStrategy:
   val BudgetFirst: PlannerStrategy = PlannerStrategy("BudgetFirst")
   val ComfortFirst: PlannerStrategy = PlannerStrategy("ComfortFirst")
   val AttractionMaximizing: PlannerStrategy = PlannerStrategy("AttractionMaximizing")
-
-  export PlannerStatusSupport.parsePlannerStrategy as fromText
+  def fromText(value: String): PlannerStrategy =
+    value.trim.toLowerCase match
+      case "budgetfirst" | "budget_first" => BudgetFirst
+      case "comfortfirst" | "comfort_first" => ComfortFirst
+      case "attractionmaximizing" | "attraction_maximizing" => AttractionMaximizing
+      case _ => Balanced
 
 final case class MatchingStatus(value: String):
   override def toString: String = value
@@ -94,5 +130,10 @@ object MatchingStatus:
   val PartiallyMatched: MatchingStatus = MatchingStatus("PartiallyMatched")
   val Matched: MatchingStatus = MatchingStatus("Matched")
   val Confirmed: MatchingStatus = MatchingStatus("Confirmed")
-
-  export PlannerStatusSupport.parseMatchingStatus as fromText
+  def fromText(value: String): MatchingStatus =
+    value.trim.toLowerCase match
+      case "notmatched" | "not_matched" => NotMatched
+      case "partiallymatched" | "partially_matched" => PartiallyMatched
+      case "matched" => Matched
+      case "confirmed" => Confirmed
+      case _ => NotRequested

@@ -1,5 +1,4 @@
-// ChangePasswordPlanner 是认证模块的修改入口，负责请求校验、流程编排和结果返回。
-
+// ChangePasswordPlanner 鏄璇佹ā鍧楃殑淇敼鍏ュ彛锛岃礋璐ｈ姹傛牎楠屻€佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO
@@ -19,3 +18,5 @@ object ChangePasswordPlanner extends ConnectionApiPlan[ChangePasswordPlannerRequ
       newHash <- hashPassword(input.newPassword)
       response <- AuthPlannerPlainSql.changePassword(connection, input.sessionId, newHash, Instant.now())
     yield response
+
+

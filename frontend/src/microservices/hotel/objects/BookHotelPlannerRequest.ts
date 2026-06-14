@@ -1,4 +1,14 @@
-// 本文件定义 hotel 模块的 `BookHotelPlannerRequest`，作为planner 请求参数并提供 JSON 编解码。
+export type BookHotelPlannerRequest = {
+  userId: string
+  roomTypeId: string
+  guestTravelerIds: string[]
+  checkInDate: string
+  checkOutDate: string
+  roomCount: number
+}
 
-export type { BookHotelPlannerRequest } from './BookHotelRequest'
-export { bookHotelRequestFromJson, bookHotelRequestToJson } from './BookHotelRequest'
+export const bookHotelPlannerRequestFromJson = (json: string): BookHotelPlannerRequest =>
+  JSON.parse(json) as BookHotelPlannerRequest
+
+export const bookHotelPlannerRequestToJson = (value: BookHotelPlannerRequest): string =>
+  JSON.stringify(value)

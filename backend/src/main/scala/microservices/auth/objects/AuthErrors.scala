@@ -1,5 +1,4 @@
-// AuthErrors 定义认证模块的错误模型。
-
+// AuthErrors 瀹氫箟璁よ瘉妯″潡鐨勯敊璇ā鍨嬨€?
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*
@@ -64,3 +63,5 @@ object AuthError:
 
   final case class ManagerTypeDidNotMatch(expected: AuthManagerType, actual: AuthManagerType) extends AuthError:
     override val message: String = s"Expected manager type $expected but found $actual"
+
+

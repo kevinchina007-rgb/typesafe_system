@@ -1,5 +1,4 @@
-// ManagerLogoutPlanner 是认证模块的业务入口，负责请求校验、流程编排和结果返回。
-
+// ManagerLogoutPlanner 鏄璇佹ā鍧楃殑涓氬姟鍏ュ彛锛岃礋璐ｈ姹傛牎楠屻€佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO
@@ -12,3 +11,5 @@ object ManagerLogoutPlanner extends ConnectionApiPlan[ManagerSessionPlannerReque
   override val name: String = "ManagerLogoutPlanner"
   override def plan(input: ManagerSessionPlannerRequest, connection: Connection): IO[ManagerAuthStatusPlannerResponse] =
     ManagerAuthPlannerPlainSql.logout(connection, input.sessionId)
+
+

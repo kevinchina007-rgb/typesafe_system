@@ -1,5 +1,4 @@
-// TrainStatuses 定义火车模块的状态模型。
-
+// TrainStatuses defines state models for the train module.
 package com.typesafe.travel.train.domain
 
 import com.typesafe.travel.shared.kernel.*
@@ -13,9 +12,15 @@ object TrainJourneyStatus:
   val OnSale: TrainJourneyStatus = TrainJourneyStatus("OnSale")
   val Closed: TrainJourneyStatus = TrainJourneyStatus("Closed")
 
+  def fromText(value: String): TrainJourneyStatus =
+    value.trim.toLowerCase match
+      case "draft" => Draft
+      case "onsale" | "on_sale" => OnSale
+      case "closed" => Closed
+      case _ => Draft
+
   given sourceEncoder: Encoder[TrainJourneyStatus] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[TrainJourneyStatus] = Decoder.decodeString.map(TrainStatusesSupport.parseTrainJourneyStatus)
-  export TrainStatusesSupport.parseTrainJourneyStatus as fromText
+  given sourceDecoder: Decoder[TrainJourneyStatus] = Decoder.decodeString.map(fromText)
 
 final case class TrainSeatInventoryStatus(value: String):
   override def toString: String = value
@@ -25,9 +30,15 @@ object TrainSeatInventoryStatus:
   val SoldOut: TrainSeatInventoryStatus = TrainSeatInventoryStatus("SoldOut")
   val Closed: TrainSeatInventoryStatus = TrainSeatInventoryStatus("Closed")
 
+  def fromText(value: String): TrainSeatInventoryStatus =
+    value.trim.toLowerCase match
+      case "openforsale" | "open_for_sale" => OpenForSale
+      case "soldout" | "sold_out" => SoldOut
+      case "closed" => Closed
+      case _ => Closed
+
   given sourceEncoder: Encoder[TrainSeatInventoryStatus] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[TrainSeatInventoryStatus] = Decoder.decodeString.map(TrainStatusesSupport.parseTrainSeatInventoryStatus)
-  export TrainStatusesSupport.parseTrainSeatInventoryStatus as fromText
+  given sourceDecoder: Decoder[TrainSeatInventoryStatus] = Decoder.decodeString.map(fromText)
 
 final case class TrainRefundType(value: String):
   override def toString: String = value
@@ -37,9 +48,15 @@ object TrainRefundType:
   val PartialRefund: TrainRefundType = TrainRefundType("PartialRefund")
   val NonRefundable: TrainRefundType = TrainRefundType("NonRefundable")
 
+  def fromText(value: String): TrainRefundType =
+    value.trim.toLowerCase match
+      case "fullrefund" | "full_refund" | "full" => FullRefund
+      case "partialrefund" | "partial_refund" | "partial" => PartialRefund
+      case "nonrefundable" | "non_refundable" | "none" => NonRefundable
+      case _ => NonRefundable
+
   given sourceEncoder: Encoder[TrainRefundType] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[TrainRefundType] = Decoder.decodeString.map(TrainStatusesSupport.parseTrainRefundType)
-  export TrainStatusesSupport.parseTrainRefundType as fromText
+  given sourceDecoder: Decoder[TrainRefundType] = Decoder.decodeString.map(fromText)
 
 final case class TrainSeatPositionType(value: String):
   override def toString: String = value
@@ -50,9 +67,16 @@ object TrainSeatPositionType:
   val Middle: TrainSeatPositionType = TrainSeatPositionType("Middle")
   val Other: TrainSeatPositionType = TrainSeatPositionType("Other")
 
+  def fromText(value: String): TrainSeatPositionType =
+    value.trim.toLowerCase match
+      case "window" => Window
+      case "aisle" => Aisle
+      case "middle" => Middle
+      case "other" => Other
+      case _ => Other
+
   given sourceEncoder: Encoder[TrainSeatPositionType] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[TrainSeatPositionType] = Decoder.decodeString.map(TrainStatusesSupport.parseTrainSeatPositionType)
-  export TrainStatusesSupport.parseTrainSeatPositionType as fromText
+  given sourceDecoder: Decoder[TrainSeatPositionType] = Decoder.decodeString.map(fromText)
 
 final case class TrainSeatStatus(value: String):
   override def toString: String = value
@@ -61,9 +85,14 @@ object TrainSeatStatus:
   val Available: TrainSeatStatus = TrainSeatStatus("Available")
   val Unavailable: TrainSeatStatus = TrainSeatStatus("Unavailable")
 
+  def fromText(value: String): TrainSeatStatus =
+    value.trim.toLowerCase match
+      case "available" => Available
+      case "unavailable" => Unavailable
+      case _ => Unavailable
+
   given sourceEncoder: Encoder[TrainSeatStatus] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[TrainSeatStatus] = Decoder.decodeString.map(TrainStatusesSupport.parseTrainSeatStatus)
-  export TrainStatusesSupport.parseTrainSeatStatus as fromText
+  given sourceDecoder: Decoder[TrainSeatStatus] = Decoder.decodeString.map(fromText)
 
 final case class TrainSeatPreference(value: String):
   override def toString: String = value
@@ -74,6 +103,13 @@ object TrainSeatPreference:
   val Middle: TrainSeatPreference = TrainSeatPreference("Middle")
   val NoPreference: TrainSeatPreference = TrainSeatPreference("NoPreference")
 
+  def fromText(value: String): TrainSeatPreference =
+    value.trim.toLowerCase match
+      case "window" => Window
+      case "aisle" => Aisle
+      case "middle" => Middle
+      case "nopreference" | "no_preference" => NoPreference
+      case _ => NoPreference
+
   given sourceEncoder: Encoder[TrainSeatPreference] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[TrainSeatPreference] = Decoder.decodeString.map(TrainStatusesSupport.parseTrainSeatPreference)
-  export TrainStatusesSupport.parseTrainSeatPreference as fromText
+  given sourceDecoder: Decoder[TrainSeatPreference] = Decoder.decodeString.map(fromText)

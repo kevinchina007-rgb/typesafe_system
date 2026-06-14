@@ -7,7 +7,7 @@ import com.typesafe.travel.hotel.objects.*
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
 import com.typesafe.travel.hotel.tables.BookHotelPlannerPlainSql
-import com.typesafe.travel.hotel.tables.HotelReadSqlSupport
+import com.typesafe.travel.hotel.tables.HotelRoomTypeSqlSupport
 import com.typesafe.travel.shared.kernel.{RoomCount, RoomTypeId, StayPeriod}
 
 import java.sql.Connection
@@ -23,7 +23,7 @@ object BookHotelPlanner extends ConnectionApiPlan[BookHotelPlannerRequest, Hotel
       roomCount <- IO.fromEither(RoomCount.create(input.roomCount))
       _ <- if roomCount.value > 0 then IO.unit else IO.raiseError(new IllegalArgumentException("Room count must be greater than zero"))
       _ <- if input.guestTravelerIds.nonEmpty then IO.unit else IO.raiseError(new IllegalArgumentException("At least one guest traveler is required for hotel booking"))
-      hotel <- IO.fromOption(HotelReadSqlSupport.loadHotelByRoomTypeId(connection, input.roomTypeId))(new IllegalArgumentException(s"Room type '${input.roomTypeId}' was not found"))
+      hotel <- IO.fromOption(HotelRoomTypeSqlSupport.loadHotelByRoomTypeId(connection, input.roomTypeId))(new IllegalArgumentException(s"Room type '${input.roomTypeId}' was not found"))
       roomTypeId = RoomTypeId(input.roomTypeId)
       roomType <- IO.fromEither(findRoomTypeById(hotel, roomTypeId).left.map(error => new IllegalArgumentException(error.message)))
       _ <- IO.fromEither(
@@ -53,6 +53,6 @@ object BookHotelPlanner extends ConnectionApiPlan[BookHotelPlannerRequest, Hotel
           totalAmount.toPlainString,
           totalCurrency
         )
-        HotelBookingPlannerResponse(orderId, orderItemId, "Draft", totalAmount.toPlainString, totalCurrency)
+        BookHotelPlannerResponseMapper.toHotelBookingPlannerResponse(orderId, orderItemId, "Draft", totalAmount.toPlainString, totalCurrency)
       }
     yield response

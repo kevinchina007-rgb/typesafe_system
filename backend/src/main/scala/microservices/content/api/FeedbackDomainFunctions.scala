@@ -1,5 +1,4 @@
-// FeedbackDomainFunctions 定义内容模块的领域辅助函数。
-
+﻿// FeedbackDomainFunctions 瀹氫箟鍐呭妯″潡鐨勯鍩熻緟鍔╁嚱鏁般€?
 package com.typesafe.travel.content.domain
 
 import com.typesafe.travel.content.domain.*
@@ -170,7 +169,7 @@ def createOrderCancellationMessage(
         senderRole = FeedbackSenderRole.User,
         senderDisplayName = thread.ownerUserDisplayName,
         messageType = FeedbackMessageType.OrderCancellationRequest,
-        content = "申请取消订单",
+        content = "鐢宠鍙栨秷璁㈠崟",
         payload = Some(payload),
         complaintPayload = None,
         isRead = false,
@@ -214,18 +213,18 @@ def createOrderCancellationSystemMessage(
     createdAt: Instant
 ): FeedbackMessage =
   val payload = handledMessage.payload.getOrElse(throw new IllegalArgumentException("Order cancellation request payload is required"))
-  val note = payload.managerNote.filter(_.nonEmpty).map(value => s"，原因：$value").getOrElse("")
+  val note = payload.managerNote.filter(_.nonEmpty).map(value => s"锛屽師鍥狅細$value").getOrElse("")
   val content = payload.status match
-    case OrderCancellationRequestStatus.Approved     => "客服已同意取消该订单"
-    case OrderCancellationRequestStatus.Rejected     => s"客服已拒绝取消该订单$note"
-    case OrderCancellationRequestStatus.NeedMoreInfo => s"客服需要你补充更多信息$note"
-    case _                                           => "取消订单请求状态已更新"
+    case OrderCancellationRequestStatus.Approved     => "瀹㈡湇宸插悓鎰忓彇娑堣璁㈠崟"
+    case OrderCancellationRequestStatus.Rejected     => s"瀹㈡湇宸叉嫆缁濆彇娑堣璁㈠崟$note"
+    case OrderCancellationRequestStatus.NeedMoreInfo => s"瀹㈡湇闇€瑕佷綘琛ュ厖鏇村淇℃伅$note"
+    case _                                           => "鍙栨秷璁㈠崟璇锋眰鐘舵€佸凡鏇存柊"
   FeedbackMessage(
     messageId = messageId,
     threadId = threadId,
     senderId = "system",
     senderRole = FeedbackSenderRole.System,
-    senderDisplayName = "系统",
+    senderDisplayName = "绯荤粺",
     messageType = FeedbackMessageType.System,
     content = content,
     payload = None,
@@ -245,7 +244,7 @@ def createComplaintCardMessage(
     threadId = threadId,
     senderId = "site-admin",
     senderRole = FeedbackSenderRole.SiteAdmin,
-    senderDisplayName = "网站管理者",
+    senderDisplayName = "缃戠珯绠＄悊鑰?,
     messageType = FeedbackMessageType.ComplaintCard,
     content = payload.summary,
     payload = None,
@@ -265,7 +264,7 @@ def createComplaintSystemMessage(
     threadId = threadId,
     senderId = "system",
     senderRole = FeedbackSenderRole.System,
-    senderDisplayName = "系统",
+    senderDisplayName = "绯荤粺",
     messageType = FeedbackMessageType.System,
     content = content,
     payload = None,
@@ -282,7 +281,7 @@ def createReviewFeedbackThread(input: EnsureReviewFeedbackThreadPlannerRequest, 
     ownerUserId = Some(UserId(input.userId)),
     ownerUserDisplayName = input.userId,
     title = s"Review feedback ${input.reviewId}",
-    subtitle = "退款与客服沟通",
+    subtitle = "閫€娆句笌瀹㈡湇娌熼€?,
     resourceType = "review",
     resourceSummaryTitle = input.reviewId,
     orderId = None,
@@ -305,29 +304,39 @@ final case class CancellationThreadDescriptor(
     title: String
 )
 
+private def feedbackManagerTypeFromOrderType(orderType: String): Option[FeedbackManagerType] =
+  val normalizedOrderType = orderType.trim.toLowerCase
+  if normalizedOrderType.contains("flight") then Some(FeedbackManagerType.Airline)
+  else if normalizedOrderType.contains("hotel") then Some(FeedbackManagerType.Hotel)
+  else if normalizedOrderType.contains("train") then Some(FeedbackManagerType.Train)
+  else if normalizedOrderType.contains("attraction") then Some(FeedbackManagerType.Attraction)
+  else None
+
+private def feedbackManagerTypeFromItemKind(itemKind: String): Option[FeedbackManagerType] =
+  val normalizedItemKind = itemKind.trim.toLowerCase
+  if normalizedItemKind.contains("flight") then Some(FeedbackManagerType.Airline)
+  else if normalizedItemKind.contains("hotel") then Some(FeedbackManagerType.Hotel)
+  else if normalizedItemKind.contains("train") then Some(FeedbackManagerType.Train)
+  else if normalizedItemKind.contains("attraction") then Some(FeedbackManagerType.Attraction)
+  else None
+
 def cancellationThreadDescriptor(summary: FeedbackOrderCancellationSummary): CancellationThreadDescriptor =
-  val normalizedOrderType = summary.orderType.trim.toLowerCase
-  val normalizedItemKind = summary.itemKind.trim.toLowerCase
-  val isHotel = normalizedOrderType.contains("hotel") || normalizedItemKind.contains("hotel")
-  val isTrain = normalizedOrderType.contains("train") || normalizedItemKind.contains("train")
-  val isAttraction = normalizedOrderType.contains("attraction") || normalizedItemKind.contains("attraction")
+  val managerType =
+    feedbackManagerTypeFromOrderType(summary.orderType)
+      .orElse(feedbackManagerTypeFromItemKind(summary.itemKind))
+      .getOrElse(FeedbackManagerType.Airline)
+
   val resourceLabel =
     summary.hotelName.map(_.trim).filter(_.nonEmpty).orElse(summary.orderTitle.map(_.trim).filter(_.nonEmpty)).getOrElse {
-      if isHotel then "酒店"
-      else if isTrain then "火车"
-      else if isAttraction then "景点"
+      if managerType == FeedbackManagerType.Hotel then "酒店"
+      else if managerType == FeedbackManagerType.Train then "火车"
+      else if managerType == FeedbackManagerType.Attraction then "景点"
       else summary.airlineName.map(_.trim).filter(_.nonEmpty).getOrElse("航空公司")
     }
   val resourceSummaryTitle =
     summary.hotelName.map(_.trim).filter(_.nonEmpty).map { hotelName =>
       summary.hotelLocation.map(_.trim).filter(_.nonEmpty).map(location => s"$hotelName · $location").getOrElse(hotelName)
     }.getOrElse(resourceLabel)
-
-  val managerType =
-    if isHotel then FeedbackManagerType.Hotel
-    else if isTrain then FeedbackManagerType.Train
-    else if isAttraction then FeedbackManagerType.Attraction
-    else FeedbackManagerType.Airline
 
   val resourceType =
     if managerType == FeedbackManagerType.Hotel then "hotelOrderCancellation"
@@ -350,7 +359,7 @@ def createOrderCancellationThread(input: EnsureOrderCancellationThreadPlannerReq
     ownerUserId = Some(UserId(input.userId)),
     ownerUserDisplayName = input.userId,
     title = descriptor.title,
-    subtitle = "退款与客服沟通",
+    subtitle = "閫€娆句笌瀹㈡湇娌熼€?,
     resourceType = descriptor.resourceType,
     resourceSummaryTitle = descriptor.resourceSummaryTitle,
     orderId = Some(OrderId(summary.orderId)),
@@ -390,3 +399,4 @@ def createEscalatedFeedbackThread(source: FeedbackThread, now: Instant): Feedbac
     createdAt = now,
     updatedAt = now
   )
+

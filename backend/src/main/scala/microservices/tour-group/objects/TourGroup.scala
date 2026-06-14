@@ -17,8 +17,15 @@ object TourGroupStatus:
     Vector(TourGroupStatus.Draft, TourGroupStatus.Open, TourGroupStatus.Closed, TourGroupStatus.Cancelled)
 
   given sourceEncoder: Encoder[TourGroupStatus] = Encoder.encodeString.contramap(_.toString)
-  given sourceDecoder: Decoder[TourGroupStatus] = Decoder.decodeString.map(TourGroupStatusesSupport.parseTourGroupStatus)
-  export TourGroupStatusesSupport.parseTourGroupStatus as fromText
+  given sourceDecoder: Decoder[TourGroupStatus] = Decoder.decodeString.map(fromText)
+
+  def fromText(value: String): TourGroupStatus =
+    value.trim match
+      case "Draft" => TourGroupStatus.Draft
+      case "Open" => TourGroupStatus.Open
+      case "Closed" => TourGroupStatus.Closed
+      case "Cancelled" => TourGroupStatus.Cancelled
+      case other => throw new IllegalArgumentException(s"Unknown tour group status: $other")
 
 final case class TourGroup(
     groupId: TourGroupId,

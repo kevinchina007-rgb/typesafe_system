@@ -1,6 +1,7 @@
-// AttractionDomainFunctions 定义景点模块的领域辅助函数。
+// AttractionDomainFunctions 定义景点模块的领域辅助函数�?
+package com.typesafe.travel.attraction.api
 
-package com.typesafe.travel.attraction.domain
+import com.typesafe.travel.attraction.domain.*
 
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.*
@@ -253,3 +254,6 @@ private def validateTicketEligibilityRuleConfig(
 
   if configMatchesRuleType then Right(())
   else Left(AttractionError.AttractionTravelerSelectionWasInvalid(s"Eligibility rule config did not match $ruleType"))
+
+
+

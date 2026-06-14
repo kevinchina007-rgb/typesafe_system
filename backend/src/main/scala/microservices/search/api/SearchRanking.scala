@@ -1,5 +1,4 @@
-// SearchRanking 定义search模块的业务入口。
-
+// SearchRanking 定义 search 基础层的排序和打分工具。
 package com.typesafe.travel.api.application
 
 object SearchRanking:

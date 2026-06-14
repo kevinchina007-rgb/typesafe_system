@@ -3,7 +3,6 @@ package com.typesafe.travel.auth.domain
 import com.typesafe.travel.shared.kernel.*
 import io.circe.{Decoder, Encoder}
 
-// 登录主体类型。
 final case class AuthActorType(value: String):
   override def toString: String = value
 
@@ -18,7 +17,6 @@ object AuthActorType:
       case "manager" => Manager
       case _ => User
 
-// 会话状态。
 final case class AuthSessionStatus(value: String):
   override def toString: String = value
 

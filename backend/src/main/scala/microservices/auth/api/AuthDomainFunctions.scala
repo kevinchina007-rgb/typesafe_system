@@ -1,5 +1,4 @@
-// AuthDomainFunctions 定义认证模块的领域辅助函数。
-
+// AuthDomainFunctions 瀹氫箟璁よ瘉妯″潡鐨勯鍩熻緟鍔╁嚱鏁般€?
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO
@@ -146,3 +145,5 @@ private def validatePasswordStrength(rawPassword: String, loginEmail: Option[Ema
       normalizedPassword.distinct.length <= 3
 
   if isWeak then throw AuthError.PasswordWasTooWeak
+
+

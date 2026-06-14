@@ -1,3 +1,1 @@
-// 本文件定义 PayOrderPlanner，负责 order 模块的处理编排和接口入口。
-
-export { payOrder } from './OrderPlannerSupport'
+export { payOrder } from './OrderPaymentSupport'

@@ -1,5 +1,4 @@
-// ManagerAuthPlannerPlainSql 封装认证模块的plain SQL 实现。
-
+// ManagerAuthPlannerPlainSql 灏佽璁よ瘉妯″潡鐨刾lain SQL 瀹炵幇銆?
 package com.typesafe.travel.persistence.auth
 
 import cats.effect.IO
@@ -84,7 +83,7 @@ object ManagerAuthPlannerPlainSql:
       }
     }
 
-  def listSessions(connection: Connection, sessionId: String, now: Instant): IO[ManagerAuthSessionListPlannerResponse] =
+  def listSessions(connection: Connection, sessionId: String, now: Instant): IO[ManagerSessionListPlannerResponse] =
     current(connection, sessionId, now).flatMap { manager =>
       IO.blocking {
         PlainSqlSupport.withStatement(
@@ -95,7 +94,7 @@ object ManagerAuthPlannerPlainSql:
           statement.setString(2, manager.managerId)
           statement.setString(3, manager.managerType)
           val sessions = PlainSqlSupport.queryList(statement) { resultSet =>
-            ManagerAuthSessionPlannerResponse(
+            ManagerSessionPlannerResponse(
               sessionId = resultSet.getString("session_id"),
               createdAt = resultSet.getTimestamp("created_at").toInstant,
               lastSeenAt = resultSet.getTimestamp("last_seen_at").toInstant,
@@ -104,7 +103,7 @@ object ManagerAuthPlannerPlainSql:
               isCurrent = resultSet.getString("session_id") == sessionId
             )
           }
-          ManagerAuthSessionListPlannerResponse(sessions)
+          ManagerSessionListPlannerResponse(sessions)
         }
       }
     }
@@ -225,3 +224,5 @@ object ManagerAuthPlannerPlainSql:
       case "Attraction" => "manager_id"
       case "SiteAdmin" => "manager_id"
       case _ => "airline_id"
+
+

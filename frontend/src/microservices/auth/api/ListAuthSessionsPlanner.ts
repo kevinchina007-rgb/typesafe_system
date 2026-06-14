@@ -1,5 +1,4 @@
-// 本文件定义 ListAuthSessionsPlanner，负责 auth 模块的列表查询编排和接口入口。
-
+import type { UserSessionListResponse } from '@/microservices/auth/objects/UserSessionListResponse'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 const userSessionStorageKey = 'flypig.userSessionId'
@@ -8,5 +7,5 @@ function readUserSessionId(): string | null {
   return window.localStorage.getItem(userSessionStorageKey)
 }
 
-export const listUserSessions = (): Promise<{ sessions: unknown[] }> =>
+export const listUserSessions = (): Promise<UserSessionListResponse> =>
   executeJsonApiRequest('/ListAuthSessionsPlanner', 'POST', { sessionId: readUserSessionId() })

@@ -1,5 +1,4 @@
-// CurrentManagerPlanner 是认证模块的当前信息查询入口，负责请求校验、流程编排和结果返回。
-
+// CurrentManagerPlanner 鏄璇佹ā鍧楃殑褰撳墠淇℃伅鏌ヨ鍏ュ彛锛岃礋璐ｈ姹傛牎楠屻€佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO
@@ -13,3 +12,5 @@ object CurrentManagerPlanner extends ConnectionApiPlan[ManagerSessionPlannerRequ
   override val name: String = "CurrentManagerPlanner"
   override def plan(input: ManagerSessionPlannerRequest, connection: Connection): IO[CurrentManagerPlannerResponse] =
     ManagerAuthPlannerPlainSql.current(connection, input.sessionId, Instant.now())
+
+

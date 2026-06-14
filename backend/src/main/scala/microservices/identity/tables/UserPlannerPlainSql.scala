@@ -41,7 +41,7 @@ object UserPlannerPlainSql:
       finally statement.close()
     }
 
-  def login(connection: Connection, request: LoginUserPlannerRequest): IO[UserPlannerResponse] =
+  def login(connection: Connection, request: LoginPlannerRequest): IO[UserPlannerResponse] =
     IO.blocking {
       val statement = connection.prepareStatement(selectUserSql + " where email = ?")
       try
@@ -99,8 +99,8 @@ object UserPlannerPlainSql:
       nickname = resultSet.getString("nickname"),
       phone = resultSet.getString("phone"),
       avatarUrl = Option(resultSet.getString("avatar_url")),
-      status = resultSet.getString("status"),
-      membershipLevel = resultSet.getString("membership_level"),
+      status = UserAccountStatus.fromText(resultSet.getString("status")).toString,
+      membershipLevel = UserMembershipLevel.fromText(resultSet.getString("membership_level")).toString,
       points = resultSet.getLong("points"),
       defaultTravelerProfileId = Option(resultSet.getString("default_traveler_id")),
       createdAt = resultSet.getTimestamp("created_at").toInstant.toString

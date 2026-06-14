@@ -1,6 +1,7 @@
-// AttractionRuleJson 定义景点模块的规则 JSON 结构。
+// AttractionRuleJson 定义景点模块的规�?JSON 结构�?
+package com.typesafe.travel.attraction.api
 
-package com.typesafe.travel.attraction.domain
+import com.typesafe.travel.attraction.domain.*
 
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.traveler.domain.*
@@ -83,3 +84,6 @@ object AttractionRuleJson:
       val cursor = json.hcursor
       cursor.downField("minInclusive").as[Int].orElse(cursor.downField("ageValue").as[Int]).map(TicketEligibilityRuleConfig.AgeAtLeast.apply)
     }
+
+
+

@@ -1,5 +1,4 @@
-// AuthCredentials 定义认证模块的数据模型。
-
+// AuthCredentials 瀹氫箟璁よ瘉妯″潡鐨勬暟鎹ā鍨嬨€?
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*
@@ -72,3 +71,5 @@ object ManagerCredential:
   import AuthSourceJsonCodecs.given
   given sourceEncoder: Encoder[ManagerCredential] = deriveEncoder
   given sourceDecoder: Decoder[ManagerCredential] = deriveDecoder
+
+

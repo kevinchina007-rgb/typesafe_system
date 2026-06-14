@@ -1,5 +1,4 @@
-// LogoutPlanner 是认证模块的退出登录入口，负责请求校验、流程编排和结果返回。
-
+// LogoutPlanner 鏄璇佹ā鍧楃殑閫€鍑虹櫥褰曞叆鍙ｏ紝璐熻矗璇锋眰鏍￠獙銆佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO
@@ -12,3 +11,5 @@ object LogoutPlanner extends ConnectionApiPlan[SessionPlannerRequest, AuthStatus
   override val name: String = "LogoutPlanner"
   override def plan(input: SessionPlannerRequest, connection: Connection): IO[AuthStatusPlannerResponse] =
     AuthPlannerPlainSql.logout(connection, input.sessionId)
+
+

@@ -3,7 +3,8 @@
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 import type { AttractionResponse } from '@/microservices/attraction/objects/AttractionResponse'
 import type { AttractionSearchQuery } from '@/microservices/attraction/objects/AttractionSearchQuery'
-import { mapAttractionResponseFromBackend, type BackendAttractionResponse } from './AttractionResponseMappers'
+import { mapAttractionResponseFromBackend } from './AttractionDetailsResponseMapper'
+import type { BackendAttractionResponse } from './AttractionResponseMapperSupport'
 
 export const getAttraction = (attractionId: string, query?: Pick<AttractionSearchQuery, 'useDate'>): Promise<AttractionResponse> =>
   executeJsonApiRequest<BackendAttractionResponse>('/GetAttractionDetailsPlanner', 'POST', {

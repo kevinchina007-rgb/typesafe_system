@@ -21,10 +21,9 @@ object SearchHotelsPlanner extends ConnectionApiPlan[HotelSearchPlannerRequest, 
     val stayPeriod = parseStayPeriod(input.checkInDate, input.checkOutDate)
     for
       hotels <- SearchHotelsPlannerPlainSql.list(connection, input)
-    yield HotelListPlannerResponse(
-      hotels
-        .filter(hotel => hotelIsSearchMatch(hotel, locationFilter, stayPeriod))
-        .map(hotel => HotelPlannerResponseMapper.toHotelPlannerResponse(hotel, stayPeriod))
+    yield SearchHotelsPlannerResponseMapper.toHotelListPlannerResponse(
+      hotels.filter(hotel => hotelIsSearchMatch(hotel, locationFilter, stayPeriod)),
+      stayPeriod
     )
 
   private def parseStayPeriod(checkInDate: Option[String], checkOutDate: Option[String]): Option[StayPeriod] =

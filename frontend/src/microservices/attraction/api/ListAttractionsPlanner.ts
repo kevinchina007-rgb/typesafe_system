@@ -3,7 +3,8 @@
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 import type { AttractionListResponse } from '@/microservices/attraction/objects/AttractionListResponse'
 import type { AttractionSearchQuery } from '@/microservices/attraction/objects/AttractionSearchQuery'
-import { mapAttractionListResponseFromBackend, type BackendAttractionListResponse } from './AttractionResponseMappers'
+import { mapAttractionListResponseFromBackend } from './AttractionListResponseMapper'
+import type { BackendAttractionListResponse } from './AttractionResponseMapperSupport'
 
 export const listAttractions = (query?: AttractionSearchQuery): Promise<AttractionListResponse> =>
   executeJsonApiRequest<BackendAttractionListResponse>('/ListAttractionsPlanner', 'POST', {

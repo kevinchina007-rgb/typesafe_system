@@ -1,5 +1,4 @@
-// AuthPlannerPlainSql 封装认证模块的plain SQL 实现。
-
+// AuthPlannerPlainSql 灏佽璁よ瘉妯″潡鐨刾lain SQL 瀹炵幇銆?
 package com.typesafe.travel.persistence.auth
 
 import cats.effect.IO
@@ -118,7 +117,7 @@ object AuthPlannerPlainSql:
       }
     }
 
-  def listSessions(connection: Connection, sessionId: String, now: Instant): IO[AuthSessionListPlannerResponse] =
+  def listSessions(connection: Connection, sessionId: String, now: Instant): IO[UserSessionListPlannerResponse] =
     currentUser(connection, sessionId, now).flatMap { current =>
       IO.blocking {
         PlainSqlSupport.withStatement(
@@ -128,7 +127,7 @@ object AuthPlannerPlainSql:
           statement.setString(1, AuthActorType.User.toString)
           statement.setString(2, current.userId)
           PlainSqlSupport.queryList(statement) { resultSet =>
-            AuthSessionPlannerResponse(
+            UserSessionPlannerResponse(
               resultSet.getString("session_id"),
               resultSet.getTimestamp("created_at").toInstant,
               resultSet.getTimestamp("last_seen_at").toInstant,
@@ -137,7 +136,7 @@ object AuthPlannerPlainSql:
             )
           }
         }
-      }.map(AuthSessionListPlannerResponse.apply)
+      }.map(UserSessionListPlannerResponse.apply)
     }
 
   def logout(connection: Connection, sessionId: String): IO[AuthStatusPlannerResponse] =
@@ -225,3 +224,5 @@ object AuthPlannerPlainSql:
       points = resultSet.getLong("points"),
       expiresAt = expiresAt
     )
+
+

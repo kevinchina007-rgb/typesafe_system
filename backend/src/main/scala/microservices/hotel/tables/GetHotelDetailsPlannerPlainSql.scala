@@ -10,5 +10,5 @@ import java.sql.Connection
 object GetHotelDetailsPlannerPlainSql:
   def details(connection: Connection, request: HotelDetailsPlannerRequest): IO[Option[Hotel]] =
     IO.blocking {
-      HotelReadSqlSupport.getHotel(connection, request.hotelId)
+      HotelDetailsSqlSupport.getHotel(connection, request.hotelId)
     }
