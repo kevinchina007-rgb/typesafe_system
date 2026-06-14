@@ -5,13 +5,12 @@ export type RoomTypeSummaryResponse = {
   roomTypeName: string
   capacity: number
   bedType: string
-  nightlyPrice: string
   basePrice: string
   currency: string
   imageUrl: string | null
-  availableRooms: number
-  availableRoomsForRequestedStay: number | null
+  status: string
   isBookableForRequestedStay: boolean
+  availableRoomsForRequestedStay: number | null
 }
 export const roomTypeSummaryResponseFromJson = (json: string): RoomTypeSummaryResponse =>
   JSON.parse(json) as RoomTypeSummaryResponse

@@ -1,3 +1,7 @@
+// AttractionCreationPlanner orchestrates the backend creation flow for attraction.
+// It chains attraction creation, ticket types, sessions, and rules, then delegates the actual persistence work to plain SQL.
+// This file is an internal backend entry point; it does not require one-to-one frontend mirroring and should not carry database details directly.
+
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*
@@ -20,6 +24,5 @@ object AttractionCreationPlanner:
 
   def createTicketRule(connection: Connection, input: CreateAttractionTicketRulePlannerRequest): IO[Attraction] =
     AttractionPlannerPlainSql.createTicketRule(connection, input, Instant.now())
-
 
 

@@ -79,7 +79,7 @@ object TourGroupChatMessageRoutes:
           payload <- request.as[SendTourGroupMessagePlannerRequest]
           sessionId <- TourGroupChatRouterSupport.requireSessionId(request)
           response <- TourGroupChatRouterSupport.withTransactionConnection { connection =>
-            SendTourGroupConversationMessagePlanner.plan(SendTourGroupConversationMessagePlannerInput(conversationId, sessionId, payload), connection)
+            SendTourGroupDirectConversationMessagePlanner.plan(SendTourGroupConversationMessagePlannerInput(conversationId, sessionId, payload), connection)
           }.flatMap(TourGroupChatResponseSupport.respondJson)
         yield response
       ).handleErrorWith(TourGroupChatResponseSupport.handleRouteError)

@@ -1,3 +1,4 @@
+// GetAttractionPlanner 是 attraction 的兼容汇总入口，只保留 details / listManaged 这类过渡方法，不应作为前端新镜像对象的目标。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*
@@ -13,6 +14,5 @@ object GetAttractionPlanner:
 
   def listManaged(connection: Connection, input: ListManagedAttractionsPlannerRequest): IO[AttractionListPlannerResponse] =
     AttractionPlannerPlainSql.listManaged(connection, input)
-
 
 

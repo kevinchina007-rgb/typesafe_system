@@ -1,4 +1,4 @@
-// CreateAttractionTicketSessionPlanner 是景点模块的创建入口，负责请求校验、流程编排和结果返回�?
+// CreateAttractionTicketSessionPlanner 只负责 attraction 票种时段创建这一条后端链路，前端只需要同名请求/响应对象，不需要镜像底层数据库写入。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

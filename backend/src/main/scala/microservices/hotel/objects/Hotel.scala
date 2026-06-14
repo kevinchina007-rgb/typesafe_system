@@ -1,6 +1,9 @@
-// Hotel 定义酒店模块的数据模型。
-
+// Hotel 瀹氫箟閰掑簵妯″潡鐨勬暟鎹ā鍨嬨€?
 package com.typesafe.travel.hotel.objects
+
+// 这个文件定义的是后端 hotel 域的核心领域模型，主要给数据库映射、领域函数和 planner 内部计算使用。
+// 它不需要前端镜像，因为前端不应该直接依赖数据库领域对象；前端只拿 planner response，不接触这层内部模型。
+// 把它留在后端，可以把持久化字段、业务状态和聚合逻辑从对外契约中隔离开。
 
 import com.typesafe.travel.shared.kernel.*
 import io.circe.{Decoder, Encoder}

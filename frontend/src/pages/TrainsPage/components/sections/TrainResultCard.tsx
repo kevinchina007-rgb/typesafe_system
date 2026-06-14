@@ -1,4 +1,4 @@
-import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainPlannerResponse } from '@/lib/mvp-types/index'
 import { localizeTrainSeatClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
 import {
@@ -19,7 +19,7 @@ type TrainResultCardProps = {
   isGuestMode: boolean
   searchFromStation: string
   searchToStation: string
-  trainResponse: TrainResponse
+  trainResponse: TrainPlannerResponse
   selectedTravelerIds: string[]
   translate: (translationKey: string) => string
   onRequireLogin: () => void

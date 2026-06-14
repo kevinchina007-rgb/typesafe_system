@@ -1,14 +1,14 @@
-import type { TrainResponse } from '@/lib/mvp-types/index'
+import type { TrainPlannerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime } from '@/lib/presenters/view-models'
 import { resolveTrainSearchSegment } from '@/app/stores/models/train-booking-model'
 
 // 把车站站点对象格式化成页面里可读的时间文本。
-export function formatTrainStopTimeLabel(stop: TrainResponse['stops'][number] | null | undefined): string {
+export function formatTrainStopTimeLabel(stop: TrainPlannerResponse['stops'][number] | null | undefined): string {
   return formatIsoDateTime(stop?.departureTime ?? stop?.arrivalTime ?? null, '-')
 }
 
 // 生成列车出发站标签，区分始发和经停。
-export function getTrainDepartureStationLabel(trainResponse: TrainResponse, searchFromStation: string, searchToStation: string): string {
+export function getTrainDepartureStationLabel(trainResponse: TrainPlannerResponse, searchFromStation: string, searchToStation: string): string {
   const routeSegment = resolveTrainSearchSegment(trainResponse, searchFromStation, searchToStation)
   if (!routeSegment) {
     return '出发'
@@ -18,7 +18,7 @@ export function getTrainDepartureStationLabel(trainResponse: TrainResponse, sear
 }
 
 // 生成列车到达站标签，区分终到和经停。
-export function getTrainDestinationStationLabel(trainResponse: TrainResponse, searchFromStation: string, searchToStation: string): string {
+export function getTrainDestinationStationLabel(trainResponse: TrainPlannerResponse, searchFromStation: string, searchToStation: string): string {
   const routeSegment = resolveTrainSearchSegment(trainResponse, searchFromStation, searchToStation)
   if (!routeSegment) {
     return '到达'

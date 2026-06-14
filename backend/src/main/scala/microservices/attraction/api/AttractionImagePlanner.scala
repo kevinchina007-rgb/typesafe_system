@@ -1,3 +1,4 @@
+// AttractionImagePlanner 只负责 attraction 图片上传这一条后端链路，包括文件校验、二进制落库和返回上传结果，前端只镜像请求/响应对象，不镜像这一实现层。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*
@@ -50,6 +51,5 @@ object AttractionImagePlanner:
         fileSize = fileContent.length.toLong
       )
     }
-
 
 

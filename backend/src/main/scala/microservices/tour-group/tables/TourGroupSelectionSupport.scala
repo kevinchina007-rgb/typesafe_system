@@ -1,3 +1,6 @@
+// 这个文件只服务 tour-group 后端“行程选择”相关的 SQL 辅助逻辑。
+// 它负责 plan item、plan option、selection、selection traveler、selection -> order link 的读取和写入。
+// 前端不需要知道这些底层拼表方式，只需要同名 planner 的请求/响应对象。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO

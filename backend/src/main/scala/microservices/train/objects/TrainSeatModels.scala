@@ -1,4 +1,4 @@
-// TrainSeatModels 定义火车模块的数据模型。
+// TrainSeatModels 汇总 train 模块内部的座位相关读模型与分配模型，供 planner 组装响应时复用。
 
 package com.typesafe.travel.train.domain
 
@@ -72,4 +72,3 @@ final case class TrainSeatInventory(
 object TrainSeatInventory:
   given sourceEncoder: Encoder[TrainSeatInventory] = deriveEncoder
   given sourceDecoder: Decoder[TrainSeatInventory] = deriveDecoder
-

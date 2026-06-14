@@ -1,4 +1,7 @@
-// AttractionRuleJson 定义景点模块的规�?JSON 结构�?
+// AttractionRuleJson handles attraction rule-config JSON encoding/decoding and legacy-format compatibility.
+// This is a backend-only compatibility layer, not a frontend page counterpart and not a place for business decisions.
+// Any frontend-facing rule flow must still go through the planner request / response objects that mirror the API surface.
+
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

@@ -1,6 +1,9 @@
-// HotelSuggestionsPlannerPlainSql 封装酒店模块的plain SQL 实现。
-
+// HotelSuggestionsPlannerPlainSql 灏佽閰掑簵妯″潡鐨刾lain SQL 瀹炵幇銆?
 package com.typesafe.travel.hotel.tables
+
+// 这个文件只实现酒店搜索建议的后端查询，比如联想词、相关酒店和位置提示等轻量结果。
+// 它不需要前端镜像，因为前端只消费 suggestions 的 JSON 结果，不参与生成这些建议的 SQL 规则。
+// 单独保留它，是为了让建议链路和主搜索链路分开演进，而不把搜索提示逻辑塞进别的 planner。
 
 import cats.effect.IO
 import com.typesafe.travel.hotel.objects.*

@@ -1,3 +1,4 @@
+// TrainPlannerPlainSqlShared 只存放 train 模块后端 SQL 共享实现，例如车站别名、查询拼接和 JDBC 读写辅助，属于后端内部实现细节。
 package com.typesafe.travel.train.domain
 
 import cats.effect.IO

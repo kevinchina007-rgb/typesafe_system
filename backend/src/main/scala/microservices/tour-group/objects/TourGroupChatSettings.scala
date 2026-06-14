@@ -1,4 +1,6 @@
-// TourGroupChatSettings 定义团体游模块的数据模型。
+// 这个文件定义 tour-group 后端的聊天设置领域模型。
+// 它主要描述群组是否允许成员私聊、最后更新人、更新时间等后端持久化字段。
+// 这些字段对前端是可见结果，但这个文件本身是后端内部领域模型，不需要前端镜像。
 
 package com.typesafe.travel.tourgroup.domain
 

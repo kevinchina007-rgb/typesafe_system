@@ -1,4 +1,6 @@
-// AirlineStatusSupport 定义航班模块的航空公司状态解析辅助。
+// AirlineStatusSupport is a backend-only parser for airline status strings stored in the database or source data.
+// It exists so planners and table mappers can normalize persisted values into AirlineStatus values before building API responses.
+// The frontend does not mirror this file because it never needs to parse raw airline-status text directly.
 package com.typesafe.travel.flight.objects
 
 object AirlineStatusSupport:

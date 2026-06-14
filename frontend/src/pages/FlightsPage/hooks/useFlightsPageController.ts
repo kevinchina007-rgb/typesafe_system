@@ -107,7 +107,7 @@ export function useFlightsPageController({
 
       void (async () => {
         try {
-          const flight = await travelMvpApiClient.getFlightDetailsPlanner(target.flightId)
+          const flight = await travelMvpApiClient.getFlightDetailsPlanner({ flightId: target.flightId })
           if (cancelled) {
             return
           }
@@ -168,7 +168,7 @@ export function useFlightsPageController({
 
     void (async () => {
       try {
-        const flight = await travelMvpApiClient.getFlightDetailsPlanner(targetFlightId)
+        const flight = await travelMvpApiClient.getFlightDetailsPlanner({ flightId: targetFlightId })
         if (cancelled) {
           return
         }

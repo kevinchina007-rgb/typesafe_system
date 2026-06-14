@@ -1,4 +1,6 @@
-// AttractionSourceJsonCodecs 定义景点模块的源数据 JSON codec。
+// AttractionSourceJsonCodecs defines JSON codecs for the attraction backend domain models.
+// This is backend infrastructure for serializing / deserializing between persistence data and domain objects.
+// It does not correspond to a frontend mirror file and does not contain business logic.
 
 package com.typesafe.travel.attraction.domain
 

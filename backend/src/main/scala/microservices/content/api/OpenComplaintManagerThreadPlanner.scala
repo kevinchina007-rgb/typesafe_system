@@ -1,9 +1,9 @@
-// OpenComplaintManagerThreadPlanner 是内容模块的打开入口，负责请求校验、流程编排和结果返回。
-
+// OpenComplaintManagerThreadPlanner 鏄唴瀹规ā鍧楃殑鎵撳紑鍏ュ彛锛岃礋璐ｈ姹傛牎楠屻€佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
 package com.typesafe.travel.content.domain
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
+import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.persistence.content.FeedbackPlannerPlainSql
 import com.typesafe.travel.shared.kernel.*
 

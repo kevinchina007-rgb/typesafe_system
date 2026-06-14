@@ -4,10 +4,10 @@ import { create } from 'zustand'
 
 import type { TrainQuickDatePreset, TrainSeatPreference, TrainTripType, TrainTypePreference } from '@/app/stores/models/train-booking-model'
 import { defaultTrainSearchState } from '@/app/stores/models/train-booking-model'
-import type { TrainResponse } from '@/lib/mvp-types/index'
+import type { TrainPlannerResponse } from '@/lib/mvp-types/index'
 
 type TrainSearchStore = {
-  trainResponses: TrainResponse[]
+  trainResponses: TrainPlannerResponse[]
   hasSearchedTrains: boolean
   tripType: TrainTripType
   searchDate: string
@@ -18,7 +18,7 @@ type TrainSearchStore = {
   seatPreference: TrainSeatPreference
   trainTypePreference: TrainTypePreference
   selectedQuickDatePreset: TrainQuickDatePreset | null
-  setTrainResponses: (trainResponses: TrainResponse[]) => void
+  setTrainResponses: (trainResponses: TrainPlannerResponse[]) => void
   setHasSearchedTrains: (hasSearchedTrains: boolean) => void
   setTripType: (tripType: TrainTripType) => void
   setSearchDate: (searchDate: string) => void

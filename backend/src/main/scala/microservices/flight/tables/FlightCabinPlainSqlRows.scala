@@ -1,8 +1,7 @@
-// FlightCabinPlainSqlRows 封装航班模块的plain SQL 行映射。
-
+// FlightCabinPlainSqlRows contains backend-only row mapping for cabin-inventory queries.
+// It turns JDBC ResultSet records into planner-row objects so the planner layer can stay focused on business flow.
+// The frontend does not mirror this file because cabin inventory rows are not part of the browser-facing API contract.
 package com.typesafe.travel.flight.tables
-
-import com.typesafe.travel.flight.objects.CabinInventoryPlannerRow
 
 import java.sql.{Connection, ResultSet}
 

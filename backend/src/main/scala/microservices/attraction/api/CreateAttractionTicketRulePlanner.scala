@@ -1,4 +1,4 @@
-// CreateAttractionTicketRulePlanner 是景点模块的创建入口，负责请求校验、流程编排和结果返回�?
+// CreateAttractionTicketRulePlanner 只负责 attraction 票种规则创建这一条后端链路，前端只需要同名请求对象，不需要镜像这里的规则写入逻辑。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

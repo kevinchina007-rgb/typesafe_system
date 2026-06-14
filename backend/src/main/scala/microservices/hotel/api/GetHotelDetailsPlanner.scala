@@ -12,10 +12,10 @@ import com.typesafe.travel.shared.kernel.StayPeriod
 import java.sql.Connection
 import java.time.LocalDate
 
-object GetHotelDetailsPlanner extends ConnectionApiPlan[HotelDetailsPlannerRequest, HotelPlannerResponse]:
+object GetHotelDetailsPlanner extends ConnectionApiPlan[GetHotelDetailsPlannerRequest, HotelPlannerResponse]:
   override val name: String = "GetHotelDetailsPlanner"
 
-  override def plan(input: HotelDetailsPlannerRequest, connection: Connection): IO[HotelPlannerResponse] =
+  override def plan(input: GetHotelDetailsPlannerRequest, connection: Connection): IO[HotelPlannerResponse] =
     val stayPeriod = parseStayPeriod(input.checkInDate, input.checkOutDate)
     for
       maybeHotel <- GetHotelDetailsPlannerPlainSql.details(connection, input)

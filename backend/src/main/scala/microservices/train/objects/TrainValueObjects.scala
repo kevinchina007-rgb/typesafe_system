@@ -1,4 +1,4 @@
-// TrainValueObjects 定义火车模块的值对象。
+// TrainValueObjects 汇总 train 模块内部的站点、车次、席别、行号和退款率等值对象。
 
 package com.typesafe.travel.train.domain
 
@@ -81,4 +81,3 @@ object RefundRate:
 
   given sourceEncoder: Encoder[RefundRate] = Encoder.encodeBigDecimal.contramap(_.value)
   given sourceDecoder: Decoder[RefundRate] = Decoder.decodeBigDecimal.emap(create(_).left.map(_.message))
-

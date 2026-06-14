@@ -5,10 +5,8 @@ import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightPlannerRequest'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
-import type {
-  FlightDailyLowestPricesPlannerRequest,
-  FlightDailyLowestPricesPlannerResponse,
-} from '@/microservices/flight/objects/FlightDailyLowestPrices'
+import type { FlightDailyLowestPricesPlannerRequest } from '@/microservices/flight/objects/FlightDailyLowestPricesPlannerRequest'
+import type { FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPricesPlannerResponse'
 import type { FlightResultGroup, FlightSearchSegment, FlightSearchState } from '@/app/stores/models/flights/flightTypes'
 
 // FlightsPage 顶层参数，负责把语言、登录用户和导航能力传给页面。

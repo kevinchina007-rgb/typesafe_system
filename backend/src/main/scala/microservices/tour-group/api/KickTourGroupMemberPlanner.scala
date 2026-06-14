@@ -7,7 +7,7 @@ import com.typesafe.travel.api.routes.ConnectionApiPlan
 
 import java.sql.Connection
 
-object KickTourGroupMemberPlanner extends ConnectionApiPlan[KickTourGroupMemberPlannerRequest, TourGroupDetailsPlannerResponse]:
+object KickTourGroupMemberPlanner extends ConnectionApiPlan[KickTourGroupMemberPlannerRequest, TourGroupDetailsResponse]:
   override val name: String = "KickTourGroupMemberPlanner"
-  override def plan(input: KickTourGroupMemberPlannerRequest, connection: Connection): IO[TourGroupDetailsPlannerResponse] =
+  override def plan(input: KickTourGroupMemberPlannerRequest, connection: Connection): IO[TourGroupDetailsResponse] =
     TourGroupPlannerPlainSql.kickMember(connection, input, java.time.Instant.now())

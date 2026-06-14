@@ -1,4 +1,4 @@
-// TrainJourney 定义火车模块的数据模型。
+// TrainJourney 汇总 train 模块内部的行程、经停站、票价和退款策略模型，供 planner 与 table 层组装响应时复用。
 
 package com.typesafe.travel.train.domain
 

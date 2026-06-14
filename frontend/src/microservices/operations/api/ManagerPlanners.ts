@@ -16,7 +16,7 @@ export { createManagerRoomType } from '../hotel/api/CreateManagerRoomTypePlanner
 export { listManagedHotels } from '../hotel/api/ListManagerHotelsPlanner'
 export { registerHotelManager } from '../hotel/api/RegisterHotelManagerPlanner'
 export { updateHotelManagerProfile } from '../hotel/api/UpdateHotelManagerProfilePlanner'
-export { uploadHotelRoomTypeImage } from '../hotel/api/UploadHotelRoomTypeImagePlanner'
+export { uploadHotelRoomTypeImage } from '../../hotel/api/UploadHotelRoomTypeImagePlanner'
 export { createAttraction } from '../attraction/api/CreateAttractionPlanner'
 export { createAttractionTicketRule } from '../attraction/api/CreateAttractionTicketRulePlanner'
 export { createAttractionTicketSession } from '../attraction/api/CreateAttractionTicketSessionPlanner'

@@ -1,4 +1,4 @@
-import type { AppLanguage, AttractionResponse, FlightPlannerResponse, HotelPlannerResponse, TrainResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, FlightPlannerResponse, HotelPlannerResponse, TrainPlannerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, localizeCabinClass, localizeTrainSeatClass } from '@/lib/presenters/view-models'
 
 import { atUtc, nextDay, resolveTrainStop, toInstantString } from '@/pages/TourGroupsPage/components/TourGroupPlanComposer.utils'
@@ -149,7 +149,7 @@ export function TourGroupTrainResults({
 }: {
   currentLanguage: AppLanguage
   isBusy: boolean
-  trainResults: TrainResponse[]
+  trainResults: TrainPlannerResponse[]
   departureLocation: string
   arrivalLocation: string
   date: string

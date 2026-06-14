@@ -1,4 +1,4 @@
-// AttractionSuggestionsPlanner 是景点模块的业务入口，负责请求校验、流程编排和结果返回�?
+// AttractionSuggestionsPlanner 是 attraction 模块的建议查询入口，只负责把搜索建议请求转成后端查询和结果返回；前端只需要同名请求/响应对象，不需要复制内部查询实现。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

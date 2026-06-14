@@ -1,4 +1,4 @@
-// RailwayManager 定义火车模块的数据模型。
+// RailwayManager 定义 train 模块内部的铁路管理员读模型。
 
 package com.typesafe.travel.train.domain
 
@@ -30,4 +30,3 @@ final case class RailwayManager(
 object RailwayManager:
   given sourceEncoder: Encoder[RailwayManager] = deriveEncoder
   given sourceDecoder: Decoder[RailwayManager] = deriveDecoder
-

@@ -1,4 +1,4 @@
-// CreateAttractionTicketTypePlanner 是景点模块的创建入口，负责请求校验、流程编排和结果返回�?
+// CreateAttractionTicketTypePlanner 只负责 attraction 票种创建这一条后端链路，前端同名请求对象只承载参数，不应复制此实现。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

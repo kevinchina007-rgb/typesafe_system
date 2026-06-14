@@ -1,4 +1,4 @@
-import type { TrainResponse } from '@/lib/mvp-types/index'
+import type { TrainPlannerResponse } from '@/lib/mvp-types/index'
 
 export function nextDay(dateText: string): string {
   const date = new Date(`${dateText}T00:00:00`)
@@ -22,7 +22,7 @@ export function normalizeSearchToken(value: string): string {
   return value.trim().toLowerCase()
 }
 
-export function resolveTrainStop(train: TrainResponse, query: string): TrainResponse['stops'][number] | null {
+export function resolveTrainStop(train: TrainPlannerResponse, query: string): TrainPlannerResponse['stops'][number] | null {
   const normalizedQuery = normalizeSearchToken(query)
   return (
     train.stops.find(stop => stop.stationCode.trim().toLowerCase() === normalizedQuery) ??

@@ -1,4 +1,4 @@
-// TrainSourceJsonCodecs 定义火车模块的源数据 JSON codec。
+// TrainSourceJsonCodecs 汇总 train 模块内部值对象的 JSON 编解码器。
 
 package com.typesafe.travel.train.domain
 

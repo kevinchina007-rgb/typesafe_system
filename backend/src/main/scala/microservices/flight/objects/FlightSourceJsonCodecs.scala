@@ -1,5 +1,6 @@
-// FlightSourceJsonCodecs 定义航班模块的源数据 JSON codec。
-
+// FlightSourceJsonCodecs is a backend-only codec registry for source/internal flight value objects.
+// These codecs are used when the backend reads supplier payloads, database snapshots, and internal planner payloads.
+// They are intentionally not mirrored in the frontend because the browser never deserializes these raw source-layer types.
 package com.typesafe.travel.flight.objects
 
 import com.typesafe.travel.shared.kernel.*

@@ -1,4 +1,6 @@
-// TourGroupMessages 定义团体游模块的数据模型。
+// 这个文件定义 tour-group 后端的消息、附件、反应等会话内部模型。
+// 这些类型是聊天查询、发送、撤回、读状态更新和附件上传的基础数据结构，属于后端实现细节。
+// 前端如果要显示消息列表，只应通过同名 response DTO 获取结果，不要直接依赖这里的领域模型。
 
 package com.typesafe.travel.tourgroup.domain
 

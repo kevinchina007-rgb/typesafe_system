@@ -3,7 +3,8 @@
 package com.typesafe.travel.flight.tables
 
 import cats.effect.IO
-import com.typesafe.travel.flight.objects.{FlightDailyLowestPricePlannerRow, FlightDailyLowestPricesPlannerRequest}
+import com.typesafe.travel.flight.objects.FlightDailyLowestPricesPlannerRequest
+import com.typesafe.travel.flight.tables.FlightDailyLowestPricePlannerRow
 
 import java.sql.Connection
 import java.time.LocalDate

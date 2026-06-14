@@ -42,7 +42,7 @@ import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedba
 import { listMyReviews, listReviewsByResource, getReviewResourceSummary, getReviewEligibility, createReview, updateReview, uploadReviewImage, deleteReview } from '@/microservices/content/api/ReviewPlannerSupport'
 
 // 鑸彮銆侀厭搴椼€佽鍗曘€佹梾娓稿洟鍜屽嚭琛屼汉鐩稿叧 API銆?import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
-import { searchHotelsPlanner, getHotelDetailsPlanner, uploadHotelRoomTypeImage } from '@/microservices/hotel/api'
+import { searchHotelsPlanner, getHotelDetailsPlanner, hotelSuggestionsPlanner, uploadHotelRoomTypeImage } from '@/microservices/hotel/api'
 import { createUser } from '@/microservices/identity/api/CreateUserPlanner'
 import { loginUser } from '@/microservices/identity/api/LoginPlanner'
 import { getUser } from '@/microservices/identity/api/GetUserPlanner'
@@ -60,7 +60,7 @@ import { approveRefund } from '@/microservices/operations/api/ApproveManagerRefu
 import { rejectRefund } from '@/microservices/operations/api/RejectManagerRefundPlanner'
 import { addTrainItemToOrder } from '@/microservices/train/api/BookTrainItemPlanner'
 import { addAttractionItemToOrder } from '@/microservices/attraction/api/BookAttractionItemPlanner'
-import { createHotelOrder } from '@/microservices/hotel/api/BookHotelPlanner'
+import { bookHotelPlanner } from '@/microservices/hotel/api/BookHotelPlanner'
 import { createTourGroup, uploadTourGroupCoverImage, listTourGroups, getTourGroup, joinTourGroup, leaveTourGroup, addTourGroupMembershipTraveler, removeTourGroupMembershipTraveler, kickTourGroupMember, blacklistTourGroupMember, transferTourGroupLeader, createTourGroupPlanItem, createTourGroupPlanOption, createTourGroupSelection, submitTourGroupSelection, confirmTourGroupSelection, rejectTourGroupSelection, payTourGroupSelection, batchPayTourGroupSelections, batchConfirmTourGroupSelections, batchRejectTourGroupSelections, listTourGroupBookings, getTourGroupChatSettings, updateTourGroupChatSettings, listTourGroupChatMessages, sendTourGroupChatMessage, listTourGroupDirectConversations, listTourGroupConversations, searchTourGroupConversations, searchTourGroupMessages, getOrCreateTourGroupDirectConversation, listDirectConversationMessages, listConversationMessages, markConversationRead, uploadConversationAttachment, sendConversationMessage, sendDirectConversationMessage, editConversationMessage, deleteConversationMessage, recallConversationMessage, addConversationReaction, removeConversationReaction, updateDirectConversationMuteState, updateDirectConversationArchiveState } from '@/microservices/tour-group/api/TourGroupPlannerSupport'
 import { listTrains } from '@/microservices/train/api/SearchTrainsPlanner'
 import { getTrain } from '@/microservices/train/api/GetTrainDetailsPlanner'
@@ -71,7 +71,7 @@ import { deleteTraveler } from '@/microservices/traveler/api/DeleteTravelerPlann
 import { approveAdvertisement } from '@/microservices/advertising/api/ApproveAdvertisementPlanner'
 import { listAttractions } from '@/microservices/attraction/api/ListAttractionsPlanner'
 import { listBlogPosts, listShortBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, saveBlogDraft, publishBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost, likeBlogComment, unlikeBlogComment, favoriteBlogPost, unfavoriteBlogPost, followBlogUser, blockBlogUser, listBlogNotifications, getBlogProfile, updateBlogProfilePrivacy, listBlogFollowers, listBlogFollowing } from '@/microservices/content/api/BlogPlannerSupport'
-import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
+import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner, flightSuggestionsPlanner } from '@/microservices/flight/api'
 
 export const travelMvpApiClient = {
   approveAdvertisement,
@@ -163,8 +163,10 @@ export const travelMvpApiClient = {
   flightDailyLowestPricesPlanner,
   getFlightDetailsPlanner,
   bookFlightPlanner,
+  flightSuggestionsPlanner,
   searchHotelsPlanner,
   getHotelDetailsPlanner,
+  hotelSuggestionsPlanner,
   uploadHotelRoomTypeImage,
   createUser,
   loginUser,
@@ -202,7 +204,7 @@ export const travelMvpApiClient = {
   createOrder,
   addTrainItemToOrder,
   addAttractionItemToOrder,
-  createHotelOrder,
+  bookHotelPlanner,
   getOrder,
   listOrders,
   payOrder,

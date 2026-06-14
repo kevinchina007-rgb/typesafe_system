@@ -1,9 +1,13 @@
 // ExplorePlannerPlainSql 封装对应的数据库查询和更新。
-
 package com.typesafe.travel.persistence
 
 import cats.effect.IO
-import com.typesafe.travel.api.*
+import com.typesafe.travel.content.domain.ExploreSearchListPlannerResponse
+import com.typesafe.travel.content.domain.ExploreSearchPlannerRequest
+import com.typesafe.travel.content.domain.ExploreSearchResultPlannerResponse
+import com.typesafe.travel.content.domain.ExploreSuggestionListPlannerResponse
+import com.typesafe.travel.content.domain.ExploreSuggestionsPlannerRequest
+import com.typesafe.travel.content.domain.ExploreSuggestionPlannerResponse
 
 import java.sql.Connection
 
@@ -11,7 +15,7 @@ object ExplorePlannerPlainSql:
   def suggestions(connection: Connection, input: ExploreSuggestionsPlannerRequest): IO[ExploreSuggestionListPlannerResponse] =
     IO.blocking {
       val q = s"%${input.q.trim}%"
-      val results =
+      val results: List[ExploreSuggestionPlannerResponse] =
         querySuggestions(connection, "flight", "select flight_id as id, flight_number as title, departure_airport || ' -> ' || arrival_airport as subtitle from flights where flight_number ilike ? or departure_airport ilike ? or arrival_airport ilike ? limit 6", q) ++
           querySuggestions(connection, "hotel", "select hotel_id as id, name as title, location as subtitle from hotels where name ilike ? or location ilike ? or location ilike ? limit 6", q) ++
           querySuggestions(connection, "attraction", "select attraction_id as id, name as title, city || ' · ' || location as subtitle from attractions where name ilike ? or city ilike ? or location ilike ? limit 6", q) ++
@@ -23,7 +27,7 @@ object ExplorePlannerPlainSql:
     IO.blocking {
       val q = s"%${input.q.trim}%"
       val requested = input.resourceType.map(_.trim.toLowerCase).filter(_.nonEmpty)
-      val results =
+      val results: List[ExploreSearchResultPlannerResponse] =
         include(requested, "flight") {
           queryResults(connection, "flight", "flights", "select flight_id as id, flight_number as title, departure_airport || ' -> ' || arrival_airport as summary, cast(departure_time as text) as meta_label, null as image_url from flights where flight_number ilike ? or departure_airport ilike ? or arrival_airport ilike ? limit 10", q)
         } ++

@@ -1,4 +1,6 @@
-// FlightStatusSupport 定义航班模块的航班状态与舱位状态解析辅助。
+// FlightStatusSupport is backend-only normalization logic for persisted flight and inventory status strings.
+// It converts raw text from database rows and source feeds into typed domain statuses used by planners.
+// The frontend should never mirror this parser, because it consumes the already-shaped API contract instead of raw status text.
 package com.typesafe.travel.flight.objects
 
 object FlightStatusSupport:

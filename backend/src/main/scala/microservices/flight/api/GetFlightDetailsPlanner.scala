@@ -11,10 +11,10 @@ import com.typesafe.travel.flight.tables.GetFlightDetailsPlannerPlainSql
 import java.sql.Connection
 import java.time.Instant
 
-object GetFlightDetailsPlanner extends ConnectionApiPlan[FlightDetailsRequest, FlightPlannerResponse]:
+object GetFlightDetailsPlanner extends ConnectionApiPlan[GetFlightDetailsPlannerRequest, FlightPlannerResponse]:
   override val name: String = "GetFlightDetailsPlanner"
 
-  override def plan(input: FlightDetailsRequest, connection: Connection): IO[FlightPlannerResponse] =
+  override def plan(input: GetFlightDetailsPlannerRequest, connection: Connection): IO[FlightPlannerResponse] =
     for
       row <- GetFlightDetailsPlannerPlainSql.findFlight(connection, input.flightId).flatMap {
         case Some(value) => IO.pure(value)

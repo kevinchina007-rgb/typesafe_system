@@ -16,4 +16,4 @@ export type {
   TrainsPageController,
   TrainsPageProps,
 } from './TrainPageModels'
-export type { TrainResponse } from '@/lib/mvp-types/index'
+export type { TrainPlannerResponse } from '@/lib/mvp-types/index'

@@ -7,7 +7,7 @@ import com.typesafe.travel.api.routes.ConnectionApiPlan
 
 import java.sql.Connection
 
-object TransferTourGroupLeaderPlanner extends ConnectionApiPlan[TransferTourGroupLeaderPlannerRequest, TourGroupDetailsPlannerResponse]:
+object TransferTourGroupLeaderPlanner extends ConnectionApiPlan[TransferTourGroupLeaderPlannerRequest, TourGroupDetailsResponse]:
   override val name: String = "TransferTourGroupLeaderPlanner"
-  override def plan(input: TransferTourGroupLeaderPlannerRequest, connection: Connection): IO[TourGroupDetailsPlannerResponse] =
+  override def plan(input: TransferTourGroupLeaderPlannerRequest, connection: Connection): IO[TourGroupDetailsResponse] =
     TourGroupPlannerPlainSql.transferOrganizer(connection, input, java.time.Instant.now())

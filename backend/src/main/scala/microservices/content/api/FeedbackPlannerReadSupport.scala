@@ -1,9 +1,9 @@
-package com.typesafe.travel.content.api
+package com.typesafe.travel.content.domain
 
 import cats.effect.IO
 import cats.syntax.traverse.*
-import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.persistence.content.FeedbackPlannerPlainSql
+import com.typesafe.travel.shared.kernel.*
 
 import java.sql.Connection
 
@@ -34,4 +34,3 @@ def toThreadDetailsResponse(connection: Connection, thread: FeedbackThread): IO[
 
 def toThreadListResponse(connection: Connection)(threads: List[FeedbackThread]): IO[FeedbackThreadListPlannerResponse] =
   threads.traverse(toThreadDetailsResponse(connection, _)).map(FeedbackThreadListPlannerResponse.apply)
-

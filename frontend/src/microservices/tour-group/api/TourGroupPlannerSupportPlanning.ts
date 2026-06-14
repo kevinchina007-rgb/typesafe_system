@@ -3,6 +3,7 @@ import type { TourGroupChatSettingsResponse } from '@/microservices/tour-group/o
 import type { TourGroupDetailsResponse } from '@/microservices/tour-group/objects/TourGroupDetailsResponse'
 import type { TourGroupListResponse } from '@/microservices/tour-group/objects/TourGroupListResponse'
 import type { TourGroupPaySelectionResponse } from '@/microservices/tour-group/objects/TourGroupPaySelectionResponse'
+import type { UploadTourGroupCoverImageResponse } from '@/microservices/tour-group/objects/UploadTourGroupCoverImageResponse'
 import { executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 import { createChatQueryString, normalizeTourGroupDetails, readFileAsBase64 } from './TourGroupPlannerSupportShared'
 
@@ -19,13 +20,7 @@ export const createTourGroup = (payload: {
 }): Promise<TourGroupDetailsResponse> =>
   executeJsonApiRequest<TourGroupDetailsResponse>('/CreateTourGroupPlanner', 'POST', payload).then(normalizeTourGroupDetails)
 
-export type TourGroupCoverImageUploadResponse = {
-  assetId: string
-  publicUrl: string
-  originalFileName: string
-  mimeType: string
-  fileSize: number
-}
+export type TourGroupCoverImageUploadResponse = UploadTourGroupCoverImageResponse
 
 export const uploadTourGroupCoverImage = async (
   ownerUserId: string,

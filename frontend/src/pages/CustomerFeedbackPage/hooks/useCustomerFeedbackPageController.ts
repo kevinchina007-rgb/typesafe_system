@@ -7,7 +7,7 @@ import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { OrderListResponse } from '@/microservices/order/objects/OrderListResponse'
 import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
 import type { CustomerFeedbackPageController, CancellationOrderOption } from '../objects'
-import { buildCancellationOrderTitle, inferOrderCategory } from '../functions'
+import { buildCancellationOrderSelectionLabel, buildCancellationOrderTitle, inferOrderCategory } from '../functions'
 
 // 客户反馈页控制器，负责会话线程和可取消订单的组合状态。
 export function useCustomerFeedbackPageController({
@@ -33,6 +33,7 @@ export function useCustomerFeedbackPageController({
         response.orders.map(order => ({
           orderId: order.orderId,
           title: buildCancellationOrderTitle(order).trim() || order.orderId,
+          detailLabel: buildCancellationOrderSelectionLabel(order).trim() || order.orderId,
           category: inferOrderCategory(order),
         })),
       )

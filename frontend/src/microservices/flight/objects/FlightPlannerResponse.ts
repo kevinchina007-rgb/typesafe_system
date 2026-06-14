@@ -1,7 +1,7 @@
 // 本文件定义 flight 模块的 `FlightPlannerResponse`，作为 planner 响应数据并提供 JSON 编解码。
 
 import type { FlightBookingWindowStatus } from "./FlightBookingWindowStatus"
-import type { CabinInventoryResponse } from "./CabinInventoryResponse"
+import type { CabinInventoryPlannerResponse } from "./CabinInventoryPlannerResponse"
 
 export type FlightPlannerResponse = {
   flightId: string
@@ -24,7 +24,7 @@ export type FlightPlannerResponse = {
   basePrice: string
   currency: string
   createdAt: string
-  cabinInventories: CabinInventoryResponse[]
+  cabinInventories: CabinInventoryPlannerResponse[]
 }
 
 export const flightPlannerResponseFromJson = (json: string): FlightPlannerResponse =>

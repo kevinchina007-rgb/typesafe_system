@@ -1,6 +1,9 @@
-// HotelManagerPlainSql 负责operations相关实现。
-
+// HotelManagerPlainSql 璐熻矗operations鐩稿叧瀹炵幇銆?
 package com.typesafe.travel.persistence.operations
+
+// 这个文件是 operations/hotel 域的纯后端持久化实现，负责酒店管理员、酒店主体和房型库存的数据库写入与读取。
+// 它不对应前端同名文件，因为前端只应该看到操作 planner 的请求/响应对象；这里的 SQL、联表和写入顺序都属于内部实现。
+// 让它留在后端，可以把“管理酒店”的细节从 UI 契约中隔离出去，同时供多个 operations planner 复用。
 
 import cats.effect.IO
 import com.typesafe.travel.auth.domain.CredentialStatus

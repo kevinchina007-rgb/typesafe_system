@@ -1,4 +1,4 @@
-// CreateAttractionPlanner 是景点模块的创建入口，负责请求校验、流程编排和结果返回�?
+// CreateAttractionPlanner 只负责 attraction 本体创建，属于后端业务入口层；票种、时段、规则等更细动作应拆到各自 planner，不需要前端复制实现。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

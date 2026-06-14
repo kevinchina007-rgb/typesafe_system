@@ -1,5 +1,4 @@
-// TrainErrors 定义火车模块的错误模型。
-
+// TrainErrors 定义 train 模块内部的领域错误类型，只在后端 planner / table / domain helper 中使用，不需要前端镜像。
 package com.typesafe.travel.train.domain
 
 import com.typesafe.travel.shared.kernel.*

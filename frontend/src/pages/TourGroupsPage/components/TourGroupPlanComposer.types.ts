@@ -5,7 +5,7 @@ import type {
   GroupPlanItemResponse,
   HotelPlannerResponse,
   SearchSuggestionResponse,
-  TrainResponse,
+  TrainPlannerResponse,
 } from '@/lib/mvp-types/index'
 
 export type TourGroupPlanComposerProps = {
@@ -15,7 +15,7 @@ export type TourGroupPlanComposerProps = {
   translate: (translationKey: string) => string
   onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
   onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
-  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
+  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainPlannerResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onCreatePlanItem: (payload: {
     itemType: string
@@ -54,6 +54,6 @@ export type TourGroupPlanComposerSearchState = {
   locationSuggestions: SearchSuggestionResponse[]
   flightResults: FlightPlannerResponse[]
   hotelResults: HotelPlannerResponse[]
-  trainResults: TrainResponse[]
+  trainResults: TrainPlannerResponse[]
   attractionResults: AttractionResponse[]
 }

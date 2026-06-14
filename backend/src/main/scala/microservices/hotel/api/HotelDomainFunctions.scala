@@ -1,6 +1,9 @@
-// HotelDomainFunctions 定义酒店模块的领域辅助函数。
-
+// HotelDomainFunctions 瀹氫箟閰掑簵妯″潡鐨勯鍩熻緟鍔╁嚱鏁般€?
 package com.typesafe.travel.hotel.api
+
+// 这个文件只承载 hotel 域内部可复用的纯领域函数，例如房态判断、日期区间推导、库存可订性计算和辅助校验。
+// 前端不应该为它建立镜像文件，因为它不是 HTTP 接口，而是多个 planner 在编排数据库读写前后复用的后端计算层。
+// 这里的函数会被搜索、详情、预订和管理类 planner 共享，属于“怎么计算”的内部实现，不属于“对外暴露什么”的契约。
 
 import com.typesafe.travel.hotel.objects.*
 

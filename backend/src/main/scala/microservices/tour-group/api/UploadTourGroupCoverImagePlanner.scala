@@ -9,9 +9,9 @@ import java.sql.{Connection, Timestamp}
 import java.time.Instant
 import java.util.{Base64, UUID}
 
-object UploadTourGroupCoverImagePlanner extends ConnectionApiPlan[UploadTourGroupCoverImagePlannerRequest, UploadTourGroupCoverImagePlannerResponse]:
+object UploadTourGroupCoverImagePlanner extends ConnectionApiPlan[UploadTourGroupCoverImagePlannerRequest, UploadTourGroupCoverImageResponse]:
   override val name: String = "UploadTourGroupCoverImagePlanner"
-  override def plan(input: UploadTourGroupCoverImagePlannerRequest, connection: Connection): IO[UploadTourGroupCoverImagePlannerResponse] =
+  override def plan(input: UploadTourGroupCoverImagePlannerRequest, connection: Connection): IO[UploadTourGroupCoverImageResponse] =
     IO.blocking {
       val normalizedFileName = input.originalFileName.trim
       val normalizedMimeType = input.mimeType.trim.toLowerCase
@@ -45,7 +45,7 @@ object UploadTourGroupCoverImagePlanner extends ConnectionApiPlan[UploadTourGrou
         statement.executeUpdate()
       finally statement.close()
 
-      UploadTourGroupCoverImagePlannerResponse(
+      UploadTourGroupCoverImageResponse(
         assetId = assetId,
         publicUrl = s"/uploads/assets/$assetId/${java.net.URLEncoder.encode(normalizedFileName, java.nio.charset.StandardCharsets.UTF_8)}",
         originalFileName = normalizedFileName,

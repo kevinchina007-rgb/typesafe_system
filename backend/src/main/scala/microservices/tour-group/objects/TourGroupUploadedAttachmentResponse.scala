@@ -1,0 +1,3 @@
+package com.typesafe.travel.tourgroup.domain
+
+type TourGroupUploadedAttachmentResponse = TourGroupMessageAttachmentResponse

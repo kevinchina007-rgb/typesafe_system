@@ -1,9 +1,9 @@
-// SendFeedbackMessagePlanner 是内容模块的发送入口，负责请求校验、流程编排和结果返回。
-
+// SendFeedbackMessagePlanner 鏄唴瀹规ā鍧楃殑鍙戦€佸叆鍙ｏ紝璐熻矗璇锋眰鏍￠獙銆佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
 package com.typesafe.travel.content.domain
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
+import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.persistence.content.FeedbackPlannerPlainSql
 import com.typesafe.travel.shared.kernel.*
 
@@ -28,3 +28,4 @@ object SendFeedbackMessagePlanner extends ConnectionApiPlan[SendFeedbackMessageP
       _ <- FeedbackPlannerPlainSql.saveThread(connection, updatedThread)
       response <- toThreadDetailsResponse(connection, updatedThread)
     yield response
+

@@ -9,11 +9,11 @@ import com.typesafe.travel.persistence.auth.AuthPlannerPlainSql
 import java.sql.Connection
 import java.time.Instant
 
-object ListTourGroupConversationMessagesPlanner extends ConnectionApiPlan[ListTourGroupConversationMessagesPlannerRequest, TourGroupMessageListPlannerResponse]:
+object ListTourGroupConversationMessagesPlanner extends ConnectionApiPlan[ListTourGroupConversationMessagesPlannerRequest, TourGroupMessageListResponse]:
 
   override val name: String = "ListTourGroupConversationMessagesPlanner"
 
-  override def plan(input: ListTourGroupConversationMessagesPlannerRequest, connection: Connection): IO[TourGroupMessageListPlannerResponse] =
+  override def plan(input: ListTourGroupConversationMessagesPlannerRequest, connection: Connection): IO[TourGroupMessageListResponse] =
     for
       currentUser <- AuthPlannerPlainSql.currentUser(connection, input.sessionId, Instant.now())
       response <- TourGroupChatPlainSql.listMessages(connection, input.conversationId, currentUser.userId, Instant.now())

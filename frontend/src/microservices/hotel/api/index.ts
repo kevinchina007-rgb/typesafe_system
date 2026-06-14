@@ -1,3 +1,5 @@
+export { bookHotelPlanner } from './BookHotelPlanner'
 export { searchHotelsPlanner } from './SearchHotelsPlanner'
 export { getHotelDetailsPlanner } from './GetHotelDetailsPlanner'
+export { hotelSuggestionsPlanner } from './HotelSuggestionsPlanner'
 export { uploadHotelRoomTypeImage } from './UploadHotelRoomTypeImagePlanner'

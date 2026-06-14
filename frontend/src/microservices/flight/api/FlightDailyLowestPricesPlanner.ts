@@ -2,8 +2,8 @@
 
 import type {
   FlightDailyLowestPricesPlannerRequest,
-  FlightDailyLowestPricesPlannerResponse,
-} from '@/microservices/flight/objects/FlightDailyLowestPrices'
+} from '@/microservices/flight/objects/FlightDailyLowestPricesPlannerRequest'
+import type { FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPricesPlannerResponse'
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 
 export const flightDailyLowestPricesPlanner = (

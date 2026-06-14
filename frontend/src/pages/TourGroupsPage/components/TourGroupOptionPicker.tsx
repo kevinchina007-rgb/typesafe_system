@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
-import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TrainResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, FlightPlannerResponse, GroupPlanItemResponse, HotelPlannerResponse, TrainPlannerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, localizeCabinClass, localizeTourGroupItemType, localizeTrainSeatClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 
 type TourGroupOptionPickerProps = {
@@ -15,7 +15,7 @@ type TourGroupOptionPickerProps = {
   onClose: () => void
   onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
   onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
-  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
+  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainPlannerResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onCreateOption: (payload: {
     resourceType: string
@@ -29,7 +29,7 @@ type TourGroupOptionPickerProps = {
 }
 
 function quoteTrainSegmentAmount(
-  train: TrainResponse,
+  train: TrainPlannerResponse,
   fromStationCode: string,
   toStationCode: string,
   seatClass: string,
@@ -86,7 +86,7 @@ export function TourGroupOptionPicker({
 }: TourGroupOptionPickerProps) {
   const [flightResults, setFlightResults] = useState<FlightPlannerResponse[]>([])
   const [hotelResults, setHotelResults] = useState<HotelPlannerResponse[]>([])
-  const [trainResults, setTrainResults] = useState<TrainResponse[]>([])
+  const [trainResults, setTrainResults] = useState<TrainPlannerResponse[]>([])
   const [attractionResults, setAttractionResults] = useState<AttractionResponse[]>([])
   const [flightFrom, setFlightFrom] = useState('')
   const [flightTo, setFlightTo] = useState('')

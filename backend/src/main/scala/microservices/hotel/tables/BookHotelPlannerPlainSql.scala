@@ -1,6 +1,9 @@
-// BookHotelPlannerPlainSql 封装酒店模块的plain SQL 实现。
-
+// BookHotelPlannerPlainSql 灏佽閰掑簵妯″潡鐨刾lain SQL 瀹炵幇銆?
 package com.typesafe.travel.hotel.tables
+
+// 这个文件只负责酒店预订链路的后端数据库动作，例如校验房态、写入订单项、扣减可用房间和落库存。
+// 前端不会镜像它，因为这些步骤是业务执行过程，不是跨端契约；前端只需要知道预订请求长什么样、返回订单什么状态。
+// 将预订 SQL 独立出来，可以让 planner 保持薄层，同时避免把库存写入细节泄漏到 UI 层。
 
 import com.typesafe.travel.hotel.objects.*
 import io.circe.Json

@@ -1,4 +1,4 @@
-﻿import type { TrainResponse } from '@/lib/mvp-types/index'
+﻿import type { TrainPlannerResponse } from '@/lib/mvp-types/index'
 import { quoteTrainSegmentAmount, resolveTrainSearchSegment } from '@/app/stores/models/train-booking-model'
 import type { TrainSortMode } from '../objects'
 
@@ -53,7 +53,7 @@ function getTrainPriorityScore(trainNumber: string): number {
 }
 
 // 读取某列车在指定路线上的最低价，只做排序辅助。
-function getTrainRouteLowestPrice(train: TrainResponse, fromStationQuery: string, toStationQuery: string): number {
+function getTrainRouteLowestPrice(train: TrainPlannerResponse, fromStationQuery: string, toStationQuery: string): number {
   const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
   if (!routeSegment) {
     return Number.POSITIVE_INFINITY
@@ -72,7 +72,7 @@ function getTrainRouteLowestPrice(train: TrainResponse, fromStationQuery: string
 }
 
 // 读取某列车在指定路线上的出发时间戳，只做排序辅助。
-function getTrainRouteDepartureTimestamp(train: TrainResponse, fromStationQuery: string, toStationQuery: string): number {
+function getTrainRouteDepartureTimestamp(train: TrainPlannerResponse, fromStationQuery: string, toStationQuery: string): number {
   const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
   const departureValue = routeSegment?.fromStop.departureTime ?? routeSegment?.fromStop.arrivalTime ?? null
   if (!departureValue) {
@@ -84,11 +84,11 @@ function getTrainRouteDepartureTimestamp(train: TrainResponse, fromStationQuery:
 
 // 对列车响应按页面当前排序方式排序。
 export function sortTrainResponses(
-  trainResponses: TrainResponse[],
+  trainResponses: TrainPlannerResponse[],
   fromStationQuery: string,
   toStationQuery: string,
   sortMode: TrainSortMode,
-): TrainResponse[] {
+): TrainPlannerResponse[] {
   return [...trainResponses].sort((left, right) => {
     switch (sortMode) {
       case 'highSpeedPriority': {
@@ -118,11 +118,11 @@ export function sortTrainResponses(
 
 // 按搜索条件过滤列车响应，只保留可用路线和日期匹配项。
 export function filterTrainResponsesBySearchCriteria(
-  trainResponses: TrainResponse[],
+  trainResponses: TrainPlannerResponse[],
   fromStationQuery: string,
   toStationQuery: string,
   searchDate: string,
-): TrainResponse[] {
+): TrainPlannerResponse[] {
   const normalizedSearchDate = searchDate.trim()
   return trainResponses.filter(trainResponse => {
     const routeSegment = resolveTrainSearchSegment(trainResponse, fromStationQuery, toStationQuery)

@@ -1,3 +1,6 @@
+// 这个文件定义 tour-group 后端的核心聚合根 `TourGroup` 及其状态枚举。
+// 它描述的是数据库中的领域实体和状态流转约束，不是前端直接消费的公共响应对象。
+// 前端如果需要展示团体游信息，应通过同名 response DTO，而不是直接镜像这个内部领域模型。
 package com.typesafe.travel.tourgroup.domain
 
 import com.typesafe.travel.shared.kernel.*

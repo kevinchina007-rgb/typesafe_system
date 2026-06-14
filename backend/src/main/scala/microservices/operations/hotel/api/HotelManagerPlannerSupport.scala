@@ -1,6 +1,9 @@
-// HotelManagerPlannerSupport 负责operations相关实现。
-
+// HotelManagerPlannerSupport 璐熻矗operations鐩稿叧瀹炵幇銆?
 package com.typesafe.travel.operations.domain
+
+// 这个 support 文件只在后端使用，负责 operations/hotel 这条链路里共享的校验、日期生成、读取封装和映射辅助。
+// 前端不需要镜像它，因为它不是用户直接调用的入口，而是多个 hotel manager planner 共用的执行辅助层。
+// 这里的职责越清晰，`RegisterHotelManagerPlanner`、`UpdateHotelManagerProfilePlanner`、`CreateManagerRoomTypePlanner` 就越容易保持薄。
 
 import cats.effect.IO
 

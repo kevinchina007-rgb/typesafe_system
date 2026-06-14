@@ -1,6 +1,8 @@
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
-import type { TrainListResponse } from '@/microservices/train/objects/TrainListResponse'
-import type { TrainSearchQuery } from '@/microservices/train/objects/TrainSearchQuery'
+import type { TrainListPlannerResponse } from '@/microservices/train/objects/TrainListPlannerResponse'
+import type { SearchTrainsPlannerRequest } from '@/microservices/train/objects/SearchTrainsPlannerRequest'
 
-export const listTrains = (query: TrainSearchQuery): Promise<TrainListResponse> =>
+export const searchTrainsPlanner = (query: SearchTrainsPlannerRequest): Promise<TrainListPlannerResponse> =>
   executeJsonApiRequest('/SearchTrainsPlanner', 'POST', query)
+
+export const listTrains = searchTrainsPlanner

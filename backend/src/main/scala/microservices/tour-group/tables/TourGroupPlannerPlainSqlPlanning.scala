@@ -1,3 +1,6 @@
+// 这个文件承接 tour-group 后端“计划/成员管理”相关的数据库编排步骤。
+// 这里的职责是把多个单表动作串起来，完成创建团体、加入/退出、黑名单、转让等跨步骤流程。
+// 它是后端内部实现文件，不是给前端镜像用的 DTO 或 planner 入口。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -9,7 +12,7 @@ import java.sql.Connection
 import java.time.Instant
 
 object TourGroupPlannerPlainSqlPlanning:
-  def create(connection: Connection, input: CreateTourGroupPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def create(connection: Connection, input: CreateTourGroupPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val groupId = TourGroupPlannerPlainSqlSupport.nextId("group")
       val membershipId = TourGroupPlannerPlainSqlSupport.nextId("membership")
@@ -35,13 +38,13 @@ object TourGroupPlannerPlainSqlPlanning:
       TourGroupPlannerPlainSqlSupport.details(connection, groupId)
     }
 
-  def list(connection: Connection): IO[TourGroupListPlannerResponse] =
-    IO.blocking(TourGroupListPlannerResponse(TourGroupPlannerPlainSqlSupport.listSummaries(connection)))
+  def list(connection: Connection): IO[TourGroupListResponse] =
+    IO.blocking(TourGroupListResponse(TourGroupPlannerPlainSqlSupport.listSummaries(connection)))
 
-  def get(connection: Connection, input: TourGroupByIdPlannerRequest): IO[TourGroupDetailsPlannerResponse] =
+  def get(connection: Connection, input: GetTourGroupDetailsPlannerRequest): IO[TourGroupDetailsResponse] =
     IO.blocking(TourGroupPlannerPlainSqlSupport.details(connection, input.groupId))
 
-  def join(connection: Connection, input: JoinTourGroupPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def join(connection: Connection, input: JoinTourGroupPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       if TourGroupPlannerPlainSqlSupport.isBlacklisted(connection, input.groupId, input.userId) then
         throw TourGroupError.UserWasBlacklistedFromGroup(TourGroupId(input.groupId), UserId(input.userId))
@@ -57,7 +60,7 @@ object TourGroupPlannerPlainSqlPlanning:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def leave(connection: Connection, input: LeaveTourGroupPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def leave(connection: Connection, input: LeaveTourGroupPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val tourGroup = TourGroupPlannerPlainSqlSupport.loadGroup(connection, input.groupId)
       val actingUserId = UserId(input.userId)
@@ -68,7 +71,7 @@ object TourGroupPlannerPlainSqlPlanning:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def addMembershipTraveler(connection: Connection, input: AddMembershipTravelerPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def addMembershipTraveler(connection: Connection, input: AddMembershipTravelerPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val membershipId = TourGroupPlannerPlainSqlSupport.activeMembershipId(connection, input.groupId, input.userId)
       PlainSqlSupport.withStatement(
@@ -85,7 +88,7 @@ object TourGroupPlannerPlainSqlPlanning:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def removeMembershipTraveler(connection: Connection, input: RemoveMembershipTravelerPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def removeMembershipTraveler(connection: Connection, input: RemoveMembershipTravelerPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val membershipId = TourGroupPlannerPlainSqlSupport.activeMembershipId(connection, input.groupId, input.userId)
       PlainSqlSupport.withStatement(
@@ -106,7 +109,7 @@ object TourGroupPlannerPlainSqlPlanning:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def kickMember(connection: Connection, input: KickTourGroupMemberPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def kickMember(connection: Connection, input: KickTourGroupMemberPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val tourGroup = TourGroupPlannerPlainSqlSupport.loadGroup(connection, input.groupId)
       TourGroupPlannerPlainSqlSupport.ensureTourGroupOrganizer(tourGroup, UserId(input.organizerUserId)).fold(throw _, identity)
@@ -118,7 +121,7 @@ object TourGroupPlannerPlainSqlPlanning:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def blacklistMember(connection: Connection, input: BlacklistTourGroupMemberPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def blacklistMember(connection: Connection, input: BlacklistTourGroupMemberPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val tourGroup = TourGroupPlannerPlainSqlSupport.loadGroup(connection, input.groupId)
       TourGroupPlannerPlainSqlSupport.ensureTourGroupOrganizer(tourGroup, UserId(input.organizerUserId)).fold(throw _, identity)
@@ -148,7 +151,7 @@ object TourGroupPlannerPlainSqlPlanning:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def transferOrganizer(connection: Connection, input: TransferTourGroupLeaderPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def transferOrganizer(connection: Connection, input: TransferTourGroupLeaderPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val tourGroup = TourGroupPlannerPlainSqlSupport.loadGroup(connection, input.groupId)
       TourGroupPlannerPlainSqlSupport.ensureTourGroupOrganizer(tourGroup, UserId(input.organizerUserId)).fold(throw _, identity)

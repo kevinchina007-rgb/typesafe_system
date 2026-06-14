@@ -1,5 +1,9 @@
 package com.typesafe.travel.hotel.tables
 
+// 这个 support 文件只服务于酒店搜索链路的 SQL 组织，例如按位置、入住日期和可订状态过滤候选酒店。
+// 它只存在于后端，因为前端不应该镜像 SQL 条件拼装、分页裁剪或去重逻辑；前端只负责提交搜索条件并渲染结果。
+// 将它独立出来，可以让搜索 planner 保持薄层，而查询策略继续留在数据库实现旁边。
+
 import com.typesafe.travel.hotel.api.restorePersistedHotel
 import com.typesafe.travel.hotel.objects.*
 import com.typesafe.travel.shared.kernel.*

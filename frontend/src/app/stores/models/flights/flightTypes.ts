@@ -3,7 +3,8 @@
 import type { FlightPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import type { BookFlightPlannerRequest } from '@/microservices/flight/objects/BookFlightPlannerRequest'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
-import type { FlightDailyLowestPricesPlannerRequest, FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPrices'
+import type { FlightDailyLowestPricesPlannerRequest } from '@/microservices/flight/objects/FlightDailyLowestPricesPlannerRequest'
+import type { FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPricesPlannerResponse'
 
 export type TripType = 'oneWay' | 'roundTrip' | 'multiCity'
 

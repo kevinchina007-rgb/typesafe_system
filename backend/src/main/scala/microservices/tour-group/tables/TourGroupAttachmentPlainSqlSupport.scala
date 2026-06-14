@@ -1,3 +1,6 @@
+// 这个文件只服务 tour-group 后端的消息附件读取逻辑。
+// 它负责把附件记录从数据库读出来并映射成消息展示所需的数据结构，供聊天 planner 直接返回。
+// 前端只需要消费附件响应，不需要镜像这些 SQL 细节。
 package com.typesafe.travel.tourgroup.domain
 
 import com.typesafe.travel.persistence.PlainSqlSupport
@@ -8,7 +11,7 @@ import java.time.Instant
 import java.util.UUID
 
 object TourGroupAttachmentPlainSqlSupport:
-  def loadAttachments(connection: Connection, messageId: String): List[TourGroupMessageAttachmentPlannerResponse] =
+  def loadAttachments(connection: Connection, messageId: String): List[TourGroupMessageAttachmentResponse] =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -20,7 +23,7 @@ object TourGroupAttachmentPlainSqlSupport:
     ) { statement =>
       statement.setString(1, messageId)
       PlainSqlSupport.queryList(statement) { row =>
-        TourGroupMessageAttachmentPlannerResponse(
+        TourGroupMessageAttachmentResponse(
           attachmentId = row.getString("attachment_id"),
           attachmentType = row.getString("attachment_type"),
           publicUrl = row.getString("public_url"),

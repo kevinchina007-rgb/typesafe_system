@@ -3,6 +3,7 @@
 package com.typesafe.travel.flight.api
 
 import com.typesafe.travel.flight.objects.*
+import com.typesafe.travel.flight.tables.{FlightBookingCabinPlannerRow, FlightBookingSnapshotPlannerRow, FlightOrderInsert, FlightOrderItemInsert}
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan

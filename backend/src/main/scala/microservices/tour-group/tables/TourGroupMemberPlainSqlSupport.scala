@@ -1,3 +1,6 @@
+// 这个文件是 tour-group 后端“成员与会话参与者”相关的 SQL 工具集合。
+// 它负责加载参与者状态、用户资料、团体成员关系，以及会话访问控制所需的底层查询。
+// 这些查询属于后端内部实现，不应该被前端逐字段镜像。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -134,9 +137,9 @@ object TourGroupMemberPlainSqlSupport:
       status = TourGroupMembershipStatus.fromText(row.getString("status"))
     )
 
-  def details(connection: Connection, groupId: String): TourGroupDetailsPlannerResponse =
+  def details(connection: Connection, groupId: String): TourGroupDetailsResponse =
     val group = groupSummary(connection, groupId)
-    TourGroupDetailsPlannerResponse(
+    TourGroupDetailsResponse(
       group = group,
       memberships = memberships(connection, groupId),
       membershipTravelers = membershipTravelers(connection, groupId),
@@ -147,7 +150,7 @@ object TourGroupMemberPlainSqlSupport:
       blacklists = blacklists(connection, groupId)
     )
 
-  def groupSummary(connection: Connection, groupId: String): TourGroupSummaryPlannerResponse =
+  def groupSummary(connection: Connection, groupId: String): TourGroupSummaryResponse =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -382,14 +385,14 @@ object TourGroupMemberPlainSqlSupport:
       createdAt = row.getTimestamp("created_at").toInstant
     )
 
-  def readSummary(row: ResultSet): TourGroupSummaryPlannerResponse =
+  def readSummary(row: ResultSet): TourGroupSummaryResponse =
     val capacity = row.getInt("capacity")
     val activeTravelerCount = row.getInt("active_traveler_count")
     val tags =
       Option(row.getString("tags_json"))
         .map(value => decode[List[String]](value).fold(_ => Nil, identity))
         .getOrElse(Nil)
-    TourGroupSummaryPlannerResponse(
+    TourGroupSummaryResponse(
       groupId = row.getString("group_id"),
       organizerUserId = row.getString("organizer_user_id"),
       title = row.getString("title"),
@@ -411,16 +414,16 @@ object TourGroupMemberPlainSqlSupport:
       createdAt = row.getTimestamp("created_at").toInstant.toString
     )
 
-  def memberships(connection: Connection, groupId: String): List[TourGroupMembershipPlannerResponse] =
+  def memberships(connection: Connection, groupId: String): List[TourGroupMembershipResponse] =
     PlainSqlSupport.withStatement(connection, "select membership_id, user_id, joined_at, status from tour_group_memberships where group_id = ? order by joined_at, membership_id") { statement =>
       statement.setString(1, groupId)
       PlainSqlSupport.queryList(statement) { row =>
         val userId = row.getString("user_id")
-        TourGroupMembershipPlannerResponse(row.getString("membership_id"), userId, userId, row.getString("status"), row.getTimestamp("joined_at").toInstant.toString)
+        TourGroupMembershipResponse(row.getString("membership_id"), userId, userId, row.getString("status"), row.getTimestamp("joined_at").toInstant.toString)
       }
     }
 
-  def membershipTravelers(connection: Connection, groupId: String): List[TourGroupMembershipTravelerPlannerResponse] =
+  def membershipTravelers(connection: Connection, groupId: String): List[TourGroupMembershipTravelerResponse] =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -433,11 +436,11 @@ object TourGroupMemberPlainSqlSupport:
     ) { statement =>
       statement.setString(1, groupId)
       PlainSqlSupport.queryList(statement) { row =>
-        TourGroupMembershipTravelerPlannerResponse(row.getString("membership_traveler_id"), row.getString("membership_id"), row.getString("traveler_id"), row.getString("status"), row.getTimestamp("joined_at").toInstant.toString)
+        TourGroupMembershipTravelerResponse(row.getString("membership_traveler_id"), row.getString("membership_id"), row.getString("traveler_id"), row.getString("status"), row.getTimestamp("joined_at").toInstant.toString)
       }
     }
 
-  def blacklists(connection: Connection, groupId: String): List[TourGroupBlacklistPlannerResponse] =
+  def blacklists(connection: Connection, groupId: String): List[TourGroupBlacklistResponse] =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -449,7 +452,7 @@ object TourGroupMemberPlainSqlSupport:
     ) { statement =>
       statement.setString(1, groupId)
       PlainSqlSupport.queryList(statement) { row =>
-        TourGroupBlacklistPlannerResponse(
+        TourGroupBlacklistResponse(
           blacklistId = row.getString("blacklist_id"),
           groupId = row.getString("group_id"),
           userId = row.getString("user_id"),

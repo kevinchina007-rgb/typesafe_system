@@ -283,7 +283,7 @@ export function useHotelsPageController({
     }
 
     await runPageAction(async () => {
-      await travelMvpApiClient.createHotelOrder({
+      await travelMvpApiClient.bookHotelPlanner({
         userId: signedInUser.userId,
         roomTypeId: payload.roomTypeId,
         guestTravelerIds: payload.guestTravelerIds,

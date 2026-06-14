@@ -3,7 +3,7 @@
 package com.typesafe.travel.flight.tables
 
 import cats.effect.IO
-import com.typesafe.travel.flight.objects.{CabinInventoryPlannerRow, FlightPlannerRow}
+import com.typesafe.travel.flight.tables.{CabinInventoryPlannerRow, FlightPlannerRow}
 
 import java.sql.Connection
 

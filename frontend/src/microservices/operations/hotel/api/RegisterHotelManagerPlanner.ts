@@ -2,12 +2,7 @@
 
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
 import type { ManagerSessionResponse } from '@/microservices/auth/objects/ManagerSessionResponse'
+import type { RegisterHotelManagerPlannerRequest } from '@/microservices/operations/hotel/objects/RegisterHotelManagerPlannerRequest'
 
-export const registerHotelManager = (payload: {
-  email: string
-  displayName: string
-  hotelName: string
-  location: string
-  password: string
-}): Promise<ManagerSessionResponse> =>
+export const registerHotelManager = (payload: RegisterHotelManagerPlannerRequest): Promise<ManagerSessionResponse> =>
   executeJsonApiRequest('/RegisterHotelManagerPlanner', 'POST', payload)

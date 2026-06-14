@@ -1,8 +1,7 @@
-// FlightPlainSqlRows 封装航班模块的plain SQL 行映射。
-
+// FlightPlainSqlRows contains backend-only ResultSet-to-row mapping for the flight planner queries.
+// These row mappers are an implementation detail of the table layer: they bridge SQL result sets to planner-facing row models.
+// The frontend does not mirror this file because it never touches JDBC ResultSet objects or SQL column mapping.
 package com.typesafe.travel.flight.tables
-
-import com.typesafe.travel.flight.objects.FlightPlannerRow
 
 import java.sql.ResultSet
 

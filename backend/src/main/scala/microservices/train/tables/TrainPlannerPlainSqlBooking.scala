@@ -1,3 +1,4 @@
+// TrainPlannerPlainSqlBooking 只承载 train 订票相关的后端 SQL 流程，包括订单项、席别、库存和价格拆分，不对应前端对象文件。
 package com.typesafe.travel.train.domain
 
 import cats.effect.IO
@@ -27,9 +28,15 @@ object TrainPlannerPlainSqlBooking:
             throw new IllegalArgumentException("train_traveler_required")
           val orderItemId = s"order-item-${UUID.randomUUID().toString.take(12)}"
           val sortIndex = nextOrderItemSortIndex(connection, input.orderId)
-          val fromStop = stopIdByStationCode(connection, input.trainId, input.fromStationCode)
-          val toStop = stopIdByStationCode(connection, input.trainId, input.toStationCode)
-          val inventoryId = inventoryIdBySeatClass(connection, input.trainId, input.seatClass)
+          val fromStop = train.stops.find(_.stationCode == input.fromStationCode).map(_.stopId).getOrElse {
+            throw new IllegalArgumentException(s"Train '${input.trainId}' does not contain station '${input.fromStationCode}'")
+          }
+          val toStop = train.stops.find(_.stationCode == input.toStationCode).map(_.stopId).getOrElse {
+            throw new IllegalArgumentException(s"Train '${input.trainId}' does not contain station '${input.toStationCode}'")
+          }
+          val inventoryId = train.seatInventories.find(_.seatClass == input.seatClass).map(_.inventoryId).getOrElse {
+            throw new IllegalArgumentException(s"Train '${input.trainId}' does not have seat inventory '${input.seatClass}'")
+          }
           val pricing = resolveTrainRoutePricing(connection, input.trainId, fromStop, toStop, input.seatClass)
             .getOrElse(throw new IllegalArgumentException(s"Train '${input.trainId}' is missing a route price from '${input.fromStationCode}' to '${input.toStationCode}' for seat '${input.seatClass}'"))
           val unitPrice = pricing.amount

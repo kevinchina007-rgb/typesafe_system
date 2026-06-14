@@ -1,5 +1,9 @@
 package com.typesafe.travel.hotel.tables
 
+// 这个文件负责酒店房型相关的后端读取和辅助映射，包括房型列表、容量、床型、价格和可订性计算所需的数据。
+// 它不需要前端镜像，因为前端不会直接访问房型表；前端拿到的是 planner 组装后的 `RoomTypeSummaryResponse`。
+// 把房型读取留在后端 support 层，可以让多个 planner 共享同一套查询，而不把表结构暴露到 UI 层。
+
 import com.typesafe.travel.hotel.api.{createRoomInventory, restorePersistedRoomType}
 import com.typesafe.travel.hotel.objects.*
 import com.typesafe.travel.shared.kernel.*

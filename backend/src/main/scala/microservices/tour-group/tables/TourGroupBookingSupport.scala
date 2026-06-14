@@ -1,3 +1,6 @@
+// 这个文件只服务 tour-group 后端“选择转订单 / 预订结果”相关的辅助逻辑。
+// 它把 selection 与 order 之间的转换关系单独收口，避免把支付和预订状态散落在 planner 里。
+// 这是后端内部实现文件，前端不应直接镜像。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -98,7 +101,7 @@ object TourGroupBookingSupport:
             )
         yield order.orderId
 
-  def submitSelection(connection: Connection, input: SubmitTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def submitSelection(connection: Connection, input: SubmitTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     val loadedContext = IO.blocking {
       val selection = TourGroupSelectionSupport.selectionById(connection, input.selectionId)
       val activeMembershipRow = TourGroupMembershipSupport.activeMembership(connection, selection.groupId.value, input.userId)

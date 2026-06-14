@@ -1,3 +1,6 @@
+// 这个文件只服务 tour-group 后端会话域的 SQL 支持。
+// 它负责会话列表、会话摘要、会话访问控制、直接会话/群聊会话的基础读取与状态更新。
+// 前端只应对齐同名 planner 和 DTO，不需要直接镜像这些数据库辅助函数。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -68,14 +71,14 @@ object TourGroupConversationPlainSqlSupport:
       finally resultSet.close()
     }
 
-  def findChatSettings(connection: Connection, groupId: String): Option[TourGroupChatSettingsPlannerResponse] =
+  def findChatSettings(connection: Connection, groupId: String): Option[TourGroupChatSettingsResponse] =
     PlainSqlSupport.withStatement(
       connection,
       "select group_id, allow_member_direct_chat, updated_at, updated_by_user_id from tour_group_chat_settings where group_id = ?"
     ) { statement =>
       statement.setString(1, groupId)
       PlainSqlSupport.queryOptional(statement) { row =>
-        TourGroupChatSettingsPlannerResponse(
+        TourGroupChatSettingsResponse(
           groupId = row.getString("group_id"),
           allowMemberDirectChat = row.getBoolean("allow_member_direct_chat"),
           updatedAt = row.getTimestamp("updated_at").toInstant.toString,
@@ -136,7 +139,7 @@ object TourGroupConversationPlainSqlSupport:
       allowMemberDirectChat: Boolean,
       participant: ParticipantState,
       counterpart: Option[ChatUserProfile]
-  ): TourGroupConversationSummaryPlannerResponse =
+  ): TourGroupConversationSummaryResponse =
     val currentUserProfile = loadUserProfile(connection, currentUserId)
     val latest = latestMessage(connection, conversation.conversationId.value)
     val unreadCount = countUnreadMessages(connection, conversation.conversationId.value, participant.lastReadAt, currentUserId)
@@ -148,7 +151,7 @@ object TourGroupConversationPlainSqlSupport:
       !isArchived &&
       (conversation.conversationType != TourGroupConversationType.Direct || allowMemberDirectChat || currentUserId == organizerId || counterpart.exists(_.userId == organizerId))
 
-    TourGroupConversationSummaryPlannerResponse(
+    TourGroupConversationSummaryResponse(
       conversationId = conversation.conversationId.value,
       conversationType = conversation.conversationType.toString,
       status = conversation.status.toString,
@@ -167,7 +170,7 @@ object TourGroupConversationPlainSqlSupport:
       canSendMessage = canSendMessage
     )
 
-  def loadAccessibleConversations(connection: Connection, groupId: String, currentUserId: String, allowMemberDirectChat: Boolean): List[TourGroupConversationSummaryPlannerResponse] =
+  def loadAccessibleConversations(connection: Connection, groupId: String, currentUserId: String, allowMemberDirectChat: Boolean): List[TourGroupConversationSummaryResponse] =
     val accesses =
       PlainSqlSupport.withStatement(
         connection,
@@ -214,7 +217,7 @@ object TourGroupConversationPlainSqlSupport:
       muted: Option[Boolean],
       archived: Option[Boolean],
       now: Instant
-  ): IO[TourGroupConversationSummaryPlannerResponse] =
+  ): IO[TourGroupConversationSummaryResponse] =
     IO.blocking {
       val conversation = requireConversation(connection, conversationId)
       requireConversationAccess(connection, conversation, currentUserId)

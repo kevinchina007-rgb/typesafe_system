@@ -1,4 +1,6 @@
-// TourGroupDomainFunctions 定义团体游模块的领域辅助函数。
+// 这个文件只保存 tour-group 后端内部可复用的领域函数。
+// 它负责把“是否允许、如何归一化、如何从聚合对象里取出某一项”这类纯逻辑抽出来，供 planner 和 table support 复用。
+// 前端不应镜像这个文件，因为前端只需要同名 API/objects 的请求响应定义，不需要这些后端内部判断与组合函数。
 
 package com.typesafe.travel.tourgroup.domain
 

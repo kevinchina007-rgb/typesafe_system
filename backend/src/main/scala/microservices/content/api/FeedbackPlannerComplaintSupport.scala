@@ -1,4 +1,4 @@
-package com.typesafe.travel.content.api
+package com.typesafe.travel.content.domain
 
 import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.shared.kernel.*
@@ -104,4 +104,3 @@ def createComplaintManagerThread(
     createdAt = now,
     updatedAt = now
   ).fold(throw _, identity)
-

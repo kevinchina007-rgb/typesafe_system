@@ -1,3 +1,6 @@
+// 这个文件是 tour-group 后端消息域的底层 SQL support。
+// 它提供消息状态、反应、发送体、附件组合和可见性校验等共用逻辑，供 send/list/search/read 等动作复用。
+// 前端不应镜像这里的实现细节，因为它只属于后端聊天域内部支撑层。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -109,7 +112,7 @@ object TourGroupChatMessagePlainSqlSupport:
       finally resultSet.close()
     }
 
-  def loadReactions(connection: Connection, messageId: String, currentUserId: String): List[TourGroupMessageReactionPlannerResponse] =
+  def loadReactions(connection: Connection, messageId: String, currentUserId: String): List[TourGroupMessageReactionResponse] =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -123,7 +126,7 @@ object TourGroupChatMessagePlainSqlSupport:
       statement.setString(1, currentUserId)
       statement.setString(2, messageId)
       PlainSqlSupport.queryList(statement) { row =>
-        TourGroupMessageReactionPlannerResponse(
+        TourGroupMessageReactionResponse(
           reactionType = row.getString("reaction_type"),
           count = row.getInt("reaction_count"),
           reactedByCurrentUser = row.getBoolean("reacted_by_current_user")
@@ -131,7 +134,7 @@ object TourGroupChatMessagePlainSqlSupport:
       }
     }
 
-  def loadMessages(connection: Connection, conversationId: String, currentUserId: String): List[TourGroupMessagePlannerResponse] =
+  def loadMessages(connection: Connection, conversationId: String, currentUserId: String): List[TourGroupMessageResponse] =
     val messages =
       PlainSqlSupport.withStatement(
         connection,
@@ -148,7 +151,7 @@ object TourGroupChatMessagePlainSqlSupport:
 
     messages.map { message =>
       val sender = loadUserProfile(connection, message.senderUserId.value)
-      TourGroupMessagePlannerResponse(
+      TourGroupMessageResponse(
         messageId = message.messageId.value,
         conversationId = conversationId,
         messageType = message.messageType.toString,
@@ -171,7 +174,7 @@ object TourGroupChatMessagePlainSqlSupport:
       )
     }
 
-  def mutateMessage(connection: Connection, messageId: String, currentUserId: String, now: Instant)(action: TourGroupMessage => Unit): IO[TourGroupMessageListPlannerResponse] =
+  def mutateMessage(connection: Connection, messageId: String, currentUserId: String, now: Instant)(action: TourGroupMessage => Unit): IO[TourGroupMessageListResponse] =
     IO.blocking {
       val message = requireMessage(connection, messageId)
       val conversation = requireConversation(connection, message.conversationId.value)
@@ -182,7 +185,7 @@ object TourGroupChatMessagePlainSqlSupport:
         statement.setString(2, conversation.conversationId.value)
         statement.executeUpdate()
       }
-      TourGroupMessageListPlannerResponse(loadMessages(connection, conversation.conversationId.value, currentUserId))
+      TourGroupMessageListResponse(loadMessages(connection, conversation.conversationId.value, currentUserId))
     }
 
   def insertMessage(connection: Connection, conversationId: String, currentUserId: String, request: SendTourGroupMessagePlannerRequest, now: Instant): Unit =

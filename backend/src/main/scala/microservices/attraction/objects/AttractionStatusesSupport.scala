@@ -1,4 +1,6 @@
-// AttractionStatusesSupport 定义景点模块的状态解析辅助。
+// AttractionStatusesSupport only keeps helper functions for parsing attraction status values on the backend.
+// The frontend only needs the final enum value, so this string parsing implementation is backend-only code.
+// This file does not make business-flow decisions; it only maps persisted or external input into normalized status values.
 
 package com.typesafe.travel.attraction.domain
 

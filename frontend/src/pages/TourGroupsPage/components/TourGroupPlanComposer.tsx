@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { AttractionResponse, FlightPlannerResponse, HotelPlannerResponse, SearchSuggestionResponse, TrainResponse } from '@/lib/mvp-types/index'
+import type { AttractionResponse, FlightPlannerResponse, HotelPlannerResponse, SearchSuggestionResponse, TrainPlannerResponse } from '@/lib/mvp-types/index'
 
 import { TourGroupPlanComposerActions } from '@/pages/TourGroupsPage/components/TourGroupPlanComposerActions'
 import type { TourGroupPlanComposerProps, SearchTarget } from '@/pages/TourGroupsPage/components/TourGroupPlanComposer.types'
@@ -34,7 +34,7 @@ export function TourGroupPlanComposer({
   const [locationSuggestions, setLocationSuggestions] = useState<SearchSuggestionResponse[]>([])
   const [flightResults, setFlightResults] = useState<FlightPlannerResponse[]>([])
   const [hotelResults, setHotelResults] = useState<HotelPlannerResponse[]>([])
-  const [trainResults, setTrainResults] = useState<TrainResponse[]>([])
+  const [trainResults, setTrainResults] = useState<TrainPlannerResponse[]>([])
   const [attractionResults, setAttractionResults] = useState<AttractionResponse[]>([])
 
   const nextSequenceNo = useMemo(

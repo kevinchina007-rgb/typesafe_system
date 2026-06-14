@@ -1,4 +1,4 @@
-﻿// FeedbackDomainFunctions 瀹氫箟鍐呭妯″潡鐨勯鍩熻緟鍔╁嚱鏁般€?
+// FeedbackDomainFunctions 闂佽姘﹂～澶愭儗椤斿墽涓嶉柣鏃傚帶缁€鍐煕濞戝崬寮鹃柛鐔锋处娣囧﹪顢涘璇蹭壕闁惧浚鍋勬禒鎾⒑濮瑰洤濡奸悗姘嵆閵嗗倿顢曢敃鈧弰銉╂煟閺冨洤鍚圭紒鎰剁節閺屾盯寮悜妯荤彅闂佹悶鍊濇禍璺侯嚕椤愶附鍤嬫い鎴ｆ娴?
 package com.typesafe.travel.content.domain
 
 import com.typesafe.travel.content.domain.*
@@ -169,7 +169,7 @@ def createOrderCancellationMessage(
         senderRole = FeedbackSenderRole.User,
         senderDisplayName = thread.ownerUserDisplayName,
         messageType = FeedbackMessageType.OrderCancellationRequest,
-        content = "鐢宠鍙栨秷璁㈠崟",
+        content = "Order cancellation request",
         payload = Some(payload),
         complaintPayload = None,
         isRead = false,
@@ -213,18 +213,18 @@ def createOrderCancellationSystemMessage(
     createdAt: Instant
 ): FeedbackMessage =
   val payload = handledMessage.payload.getOrElse(throw new IllegalArgumentException("Order cancellation request payload is required"))
-  val note = payload.managerNote.filter(_.nonEmpty).map(value => s"锛屽師鍥狅細$value").getOrElse("")
+  val note = payload.managerNote.filter(_.nonEmpty).map(value => s", reason: $value").getOrElse("")
   val content = payload.status match
-    case OrderCancellationRequestStatus.Approved     => "瀹㈡湇宸插悓鎰忓彇娑堣璁㈠崟"
-    case OrderCancellationRequestStatus.Rejected     => s"瀹㈡湇宸叉嫆缁濆彇娑堣璁㈠崟$note"
-    case OrderCancellationRequestStatus.NeedMoreInfo => s"瀹㈡湇闇€瑕佷綘琛ュ厖鏇村淇℃伅$note"
-    case _                                           => "鍙栨秷璁㈠崟璇锋眰鐘舵€佸凡鏇存柊"
+    case OrderCancellationRequestStatus.Approved     => "Customer service approved the cancellation request"
+    case OrderCancellationRequestStatus.Rejected     => s"Customer service rejected the cancellation request$note"
+    case OrderCancellationRequestStatus.NeedMoreInfo => s"Customer service needs more information$note"
+    case _                                           => "Cancellation request status was updated"
   FeedbackMessage(
     messageId = messageId,
     threadId = threadId,
     senderId = "system",
     senderRole = FeedbackSenderRole.System,
-    senderDisplayName = "绯荤粺",
+    senderDisplayName = "System",
     messageType = FeedbackMessageType.System,
     content = content,
     payload = None,
@@ -232,7 +232,6 @@ def createOrderCancellationSystemMessage(
     isRead = false,
     createdAt = createdAt
   )
-
 def createComplaintCardMessage(
     messageId: SupportMessageId,
     threadId: SupportTicketId,
@@ -244,7 +243,7 @@ def createComplaintCardMessage(
     threadId = threadId,
     senderId = "site-admin",
     senderRole = FeedbackSenderRole.SiteAdmin,
-    senderDisplayName = "缃戠珯绠＄悊鑰?,
+    senderDisplayName = "Site Admin",
     messageType = FeedbackMessageType.ComplaintCard,
     content = payload.summary,
     payload = None,
@@ -264,7 +263,7 @@ def createComplaintSystemMessage(
     threadId = threadId,
     senderId = "system",
     senderRole = FeedbackSenderRole.System,
-    senderDisplayName = "绯荤粺",
+    senderDisplayName = "Site Admin",
     messageType = FeedbackMessageType.System,
     content = content,
     payload = None,
@@ -281,7 +280,7 @@ def createReviewFeedbackThread(input: EnsureReviewFeedbackThreadPlannerRequest, 
     ownerUserId = Some(UserId(input.userId)),
     ownerUserDisplayName = input.userId,
     title = s"Review feedback ${input.reviewId}",
-    subtitle = "閫€娆句笌瀹㈡湇娌熼€?,
+    subtitle = "Order cancellation and customer service communication",
     resourceType = "review",
     resourceSummaryTitle = input.reviewId,
     orderId = None,
@@ -328,14 +327,14 @@ def cancellationThreadDescriptor(summary: FeedbackOrderCancellationSummary): Can
 
   val resourceLabel =
     summary.hotelName.map(_.trim).filter(_.nonEmpty).orElse(summary.orderTitle.map(_.trim).filter(_.nonEmpty)).getOrElse {
-      if managerType == FeedbackManagerType.Hotel then "酒店"
-      else if managerType == FeedbackManagerType.Train then "火车"
-      else if managerType == FeedbackManagerType.Attraction then "景点"
-      else summary.airlineName.map(_.trim).filter(_.nonEmpty).getOrElse("航空公司")
+      if managerType == FeedbackManagerType.Hotel then "Hotel"
+      else if managerType == FeedbackManagerType.Train then "Train"
+      else if managerType == FeedbackManagerType.Attraction then "Attraction"
+      else summary.airlineName.map(_.trim).filter(_.nonEmpty).getOrElse("Airline")
     }
   val resourceSummaryTitle =
     summary.hotelName.map(_.trim).filter(_.nonEmpty).map { hotelName =>
-      summary.hotelLocation.map(_.trim).filter(_.nonEmpty).map(location => s"$hotelName · $location").getOrElse(hotelName)
+      summary.hotelLocation.map(_.trim).filter(_.nonEmpty).map(location => s"$hotelName 路 $location").getOrElse(hotelName)
     }.getOrElse(resourceLabel)
 
   val resourceType =
@@ -348,7 +347,7 @@ def cancellationThreadDescriptor(summary: FeedbackOrderCancellationSummary): Can
     managerType = managerType,
     resourceType = resourceType,
     resourceSummaryTitle = resourceSummaryTitle,
-    title = s"${resourceLabel}客服"
+    title = s"$resourceLabel Customer Service"
   )
 def createOrderCancellationThread(input: EnsureOrderCancellationThreadPlannerRequest, summary: FeedbackOrderCancellationSummary, now: Instant): FeedbackThread =
   val descriptor = cancellationThreadDescriptor(summary)
@@ -359,7 +358,7 @@ def createOrderCancellationThread(input: EnsureOrderCancellationThreadPlannerReq
     ownerUserId = Some(UserId(input.userId)),
     ownerUserDisplayName = input.userId,
     title = descriptor.title,
-    subtitle = "閫€娆句笌瀹㈡湇娌熼€?,
+    subtitle = "Order cancellation and customer service communication",
     resourceType = descriptor.resourceType,
     resourceSummaryTitle = descriptor.resourceSummaryTitle,
     orderId = Some(OrderId(summary.orderId)),
@@ -399,4 +398,5 @@ def createEscalatedFeedbackThread(source: FeedbackThread, now: Instant): Feedbac
     createdAt = now,
     updatedAt = now
   )
+
 

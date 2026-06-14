@@ -1,6 +1,9 @@
-// HotelStatusesSupport 定义酒店模块的状态解析辅助。
-
+// HotelStatusesSupport 瀹氫箟閰掑簵妯″潡鐨勭姸鎬佽В鏋愯緟鍔┿€?
 package com.typesafe.travel.hotel.objects
+
+// 这个文件只承载 hotel 域内部状态值、状态解析和状态展示辅助，不是前端契约文件。
+// 前端不需要镜像它，因为前端只消费最终的状态字符串或布尔结果；状态语义、兼容别名和后端转换规则应该留在这里。
+// 这样做可以避免前端重复维护酒店状态机，也避免把状态演进逻辑泄漏到 UI 层。
 
 object HotelStatusesSupport:
   def parseHotelStatus(value: String): HotelStatus =

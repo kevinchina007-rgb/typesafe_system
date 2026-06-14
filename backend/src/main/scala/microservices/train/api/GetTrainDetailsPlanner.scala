@@ -7,7 +7,7 @@ import com.typesafe.travel.api.routes.ConnectionApiPlan
 
 import java.sql.Connection
 
-object GetTrainDetailsPlanner extends ConnectionApiPlan[TrainByIdPlannerRequest, TrainPlannerResponse]:
+object GetTrainDetailsPlanner extends ConnectionApiPlan[GetTrainDetailsPlannerRequest, TrainPlannerResponse]:
   override val name: String = "GetTrainDetailsPlanner"
-  override def plan(input: TrainByIdPlannerRequest, connection: Connection): IO[TrainPlannerResponse] =
+  override def plan(input: GetTrainDetailsPlannerRequest, connection: Connection): IO[TrainPlannerResponse] =
     TrainPlannerPlainSql.get(connection, input, java.time.Instant.now())

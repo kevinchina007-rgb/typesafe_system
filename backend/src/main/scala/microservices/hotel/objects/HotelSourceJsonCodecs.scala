@@ -1,6 +1,9 @@
-// HotelSourceJsonCodecs 定义酒店模块的源数据 JSON codec。
-
+// HotelSourceJsonCodecs 瀹氫箟閰掑簵妯″潡鐨勬簮鏁版嵁 JSON codec銆?
 package com.typesafe.travel.hotel.objects
+
+// 这个文件只提供后端 hotel 域内部模型的 Circe codec，方便 planner、table support 和领域函数进行 JSON 转换。
+// 它不是前端镜像对象，因为前端已经有自己独立的 TypeScript JSON 编解码方式；这里的 codec 只服务于 Scala 侧。
+// 保持它在后端，可以让源码模型、数据库实体和 API response 的转换职责分离。
 
 import com.typesafe.travel.shared.kernel.*
 import io.circe.{Decoder, Encoder}

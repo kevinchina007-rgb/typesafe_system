@@ -52,7 +52,12 @@ export function getLastMessage(thread: FeedbackThread) {
 
 export function getThreadPreview(thread: FeedbackThread) {
   const lastMessage = getLastMessage(thread)
-  if (!lastMessage) return thread.subtitle || thread.resourceSummaryTitle || '暂无消息'
+  if (!lastMessage) {
+    if (thread.managerType === 'Hotel') {
+      return normalizeHotelFeedbackText(thread.subtitle || thread.resourceSummaryTitle || '暂无消息')
+    }
+    return thread.subtitle || thread.resourceSummaryTitle || '暂无消息'
+  }
   if (lastMessage.messageType === 'orderCancellationRequest') {
     return `取消订单请求：${lastMessage.payload?.reason ?? '等待查看'}`
   }
@@ -119,6 +124,14 @@ function extractHotelIdentityName(text: string) {
   const normalized = candidate.toLowerCase().replace(/\s+/g, '')
   if (normalized === 'hotel' || normalized === '酒店' || normalized === '酒店管理员' || normalized === '酒店客服' || normalized === 'hotel客服') return null
   return candidate
+}
+
+function normalizeHotelFeedbackText(text: string) {
+  return text
+    .replace(/\s+路\s+/g, ' · ')
+    .replace(/\s*·\s*/g, ' · ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 export function getThreadIdentity(
@@ -202,6 +215,5 @@ export function resolveHotelIdentityName(thread: FeedbackThread, fallbackName: s
     return hotelName.endsWith('客服') ? hotelName : `${hotelName}客服`
   }
 
-  return `${fallbackName}客服`
+  return fallbackName.endsWith('客服') ? fallbackName : `${fallbackName}客服`
 }
-

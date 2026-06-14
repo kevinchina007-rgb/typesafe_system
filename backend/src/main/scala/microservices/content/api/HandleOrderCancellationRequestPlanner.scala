@@ -2,13 +2,13 @@ package com.typesafe.travel.content.domain
 
 import cats.effect.IO
 import com.typesafe.travel.api.routes.ConnectionApiPlan
+import com.typesafe.travel.content.domain.*
 import com.typesafe.travel.persistence.content.FeedbackPlannerPlainSql
 import com.typesafe.travel.shared.kernel.*
 
 import java.sql.Connection
 import java.time.Instant
 
-// 处理订单取消申请的客服入口：校验消息类型、更新消息内容、必要时触发退款，并返回最新线程详情。
 object HandleOrderCancellationRequestPlanner extends ConnectionApiPlan[HandleOrderCancellationRequest, FeedbackThreadDetailsPlannerResponse]:
   override val name: String = "HandleOrderCancellationRequestPlanner"
 
@@ -27,7 +27,7 @@ object HandleOrderCancellationRequestPlanner extends ConnectionApiPlan[HandleOrd
         message,
         OrderCancellationRequestStatus.fromText(input.status),
         input.managerNote,
-        input.handledBy.getOrElse("客服"),
+        input.handledBy.getOrElse("Customer Service"),
         input.handlerRole.map(FeedbackSenderRole.fromText).getOrElse(FeedbackSenderRole.Manager),
         now
       )
@@ -48,3 +48,6 @@ object HandleOrderCancellationRequestPlanner extends ConnectionApiPlan[HandleOrd
       _ <- FeedbackPlannerPlainSql.saveThread(connection, updatedThread)
       response <- toThreadDetailsResponse(connection, updatedThread)
     yield response
+
+
+

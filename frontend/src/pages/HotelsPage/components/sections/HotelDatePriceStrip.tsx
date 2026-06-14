@@ -40,7 +40,7 @@ export function HotelDatePriceStrip({
                 {formatHotelWeekdayLabel(date)}
               </span>
               <strong className={`text-xl font-black ${isSelected ? 'text-white' : 'text-orange-500'}`}>
-                {lowestPrice !== null ? `楼${formatPrice(lowestPrice)}` : '--'}
+                {lowestPrice !== null ? `¥${formatPrice(lowestPrice)}` : '--'}
               </strong>
             </button>
           )

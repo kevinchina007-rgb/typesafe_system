@@ -1,3 +1,6 @@
+// 这个文件承接 tour-group 后端“行程/选择”相关的数据库编排步骤。
+// 它负责 plan item、option、selection、selection -> order link 等跨表写入和校验串联。
+// 这些都是后端内部实现细节，前端只需要看同名 planner 请求响应对象，不应该直接镜像这里的辅助逻辑。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -13,6 +16,7 @@ import com.typesafe.travel.persistence.order.OrderPlannerPlainSql
 import com.typesafe.travel.shared.kernel.*
 import com.typesafe.travel.train.domain.BookTrainItemPlanner
 import com.typesafe.travel.train.domain.BookTrainItemPlannerRequest
+import com.typesafe.travel.tourgroup.domain.*
 import io.circe.syntax.*
 
 import java.sql.Connection
@@ -21,7 +25,7 @@ import java.time.Instant
 import TourGroupPlannerPlainSqlSupport.*
 
 object TourGroupPlannerPlainSqlSelection:
-  def createPlanItem(connection: Connection, input: CreateTourGroupPlanItemPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def createPlanItem(connection: Connection, input: CreateTourGroupPlanItemPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val tourGroup = TourGroupPlannerPlainSqlSupport.loadGroup(connection, input.groupId)
       TourGroupPlannerPlainSqlSupport.ensureTourGroupOrganizer(tourGroup, UserId(input.organizerUserId)).fold(throw _, identity)
@@ -53,7 +57,7 @@ object TourGroupPlannerPlainSqlSelection:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def createPlanOption(connection: Connection, input: CreateTourGroupPlanOptionPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def createPlanOption(connection: Connection, input: CreateTourGroupPlanOptionPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val tourGroup = TourGroupPlannerPlainSqlSupport.loadGroup(connection, input.groupId)
       TourGroupPlannerPlainSqlSupport.ensureTourGroupOrganizer(tourGroup, UserId(input.organizerUserId)).fold(throw _, identity)
@@ -98,7 +102,7 @@ object TourGroupPlannerPlainSqlSelection:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def createSelection(connection: Connection, input: CreateTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
+  def createSelection(connection: Connection, input: CreateTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
     IO.blocking {
       val activeMembershipRow = TourGroupPlannerPlainSqlSupport.activeMembership(connection, input.groupId, input.userId)
       val membershipTravelerIds =
@@ -173,31 +177,36 @@ object TourGroupPlannerPlainSqlSelection:
       TourGroupPlannerPlainSqlSupport.details(connection, input.groupId)
     }
 
-  def submitSelection(connection: Connection, input: SubmitTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsPlannerResponse] =
-    IO.blocking {
-      val selection = TourGroupPlannerPlainSqlSupport.selectionById(connection, input.selectionId)
-      val activeMembershipRow = TourGroupPlannerPlainSqlSupport.activeMembership(connection, selection.groupId.value, input.userId)
-      if selection.membershipId != activeMembershipRow.membershipId then
-        throw TourGroupError.MembershipScopeDidNotMatch(activeMembershipRow.membershipId, UserId(input.userId))
-      val acceptedSelection = submitGroupPlanSelection(selection, now).fold(throw _, identity)
-      val planItem = TourGroupPlannerPlainSqlSupport.planItems(connection, selection.groupId.value).find(_.planItemId == selection.planItemId).getOrElse {
-        throw TourGroupError.PlanItemWasNotFound(selection.planItemId)
+  def submitSelection(connection: Connection, input: SubmitTourGroupSelectionPlannerRequest, now: Instant): IO[TourGroupDetailsResponse] =
+    for
+      loadedContext <- IO.blocking {
+        val selection = TourGroupPlannerPlainSqlSupport.selectionById(connection, input.selectionId)
+        val activeMembershipRow = TourGroupPlannerPlainSqlSupport.activeMembership(connection, selection.groupId.value, input.userId)
+        if selection.membershipId != activeMembershipRow.membershipId then
+          throw TourGroupError.MembershipScopeDidNotMatch(activeMembershipRow.membershipId, UserId(input.userId))
+        val acceptedSelection = submitGroupPlanSelection(selection, now).fold(throw _, identity)
+        val planItem = TourGroupPlannerPlainSqlSupport.planItems(connection, selection.groupId.value).find(_.planItemId == selection.planItemId).getOrElse {
+          throw TourGroupError.PlanItemWasNotFound(selection.planItemId)
+        }
+        val planOption = TourGroupPlannerPlainSqlSupport.planOptions(connection, selection.groupId.value).find(_.optionId == selection.optionId).getOrElse {
+          throw TourGroupError.PlanOptionWasNotFound(selection.optionId)
+        }
+        (acceptedSelection, planItem, planOption)
       }
-      val planOption = TourGroupPlannerPlainSqlSupport.planOptions(connection, selection.groupId.value).find(_.optionId == selection.optionId).getOrElse {
-        throw TourGroupError.PlanOptionWasNotFound(selection.optionId)
-      }
-      existingSelectionOrderId(connection, acceptedSelection.selectionId.value).flatMap {
-        case Some(_) => IO.blocking(TourGroupPlannerPlainSqlSupport.details(connection, acceptedSelection.groupId.value))
-        case None =>
-          createOrderForSelection(connection, input.userId, acceptedSelection, planItem, planOption, now).flatMap { orderId =>
-            IO.blocking {
-              insertSelectionOrderLink(connection, acceptedSelection.selectionId.value, orderId, now)
-              updateSelectionAsConvertedToOrder(connection, acceptedSelection.selectionId.value, now)
-              TourGroupPlannerPlainSqlSupport.details(connection, acceptedSelection.groupId.value)
-            }
+      response <- loadedContext match
+        case (acceptedSelection, planItem, planOption) =>
+          TourGroupPlannerPlainSqlSupport.existingSelectionOrderId(connection, acceptedSelection.selectionId.value).flatMap {
+            case Some(_) => IO.blocking(TourGroupPlannerPlainSqlSupport.details(connection, acceptedSelection.groupId.value))
+            case None =>
+              createOrderForSelection(connection, input.userId, acceptedSelection, planItem, planOption, now).flatMap { orderId =>
+                IO.blocking {
+                  TourGroupPlannerPlainSqlSupport.insertSelectionOrderLink(connection, acceptedSelection.selectionId.value, orderId, now)
+                  TourGroupPlannerPlainSqlSupport.updateSelectionAsConvertedToOrder(connection, acceptedSelection.selectionId.value, now)
+                  TourGroupPlannerPlainSqlSupport.details(connection, acceptedSelection.groupId.value)
+                }
+              }
           }
-      }
-    }
+    yield response
 
   private def createOrderForSelection(
       connection: Connection,

@@ -1,6 +1,6 @@
 // 本文件定义 TourGroupsPage 页面数据模型和 JSON 编解码。
 
-import type { AppLanguage, AppViewKey, AttractionResponse, FlightPlannerResponse, HotelPlannerResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AppViewKey, AttractionResponse, FlightPlannerResponse, HotelPlannerResponse, TrainPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
 export type TourGroupsPageProps = {
@@ -118,7 +118,7 @@ export type TourGroupsPanelCommonProps = {
   }) => Promise<{ group: import('@/lib/mvp-types/index').TourGroupDetailsResponse; orders: import('@/lib/mvp-types/index').OrderResponse[] }>
   onSearchFlights: (payload: { departureAirport?: string; arrivalAirport?: string; date?: string }) => Promise<FlightPlannerResponse[]>
   onSearchHotels: (payload: { location?: string; checkInDate?: string; checkOutDate?: string }) => Promise<HotelPlannerResponse[]>
-  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainResponse[]>
+  onSearchTrains: (payload: { fromStation?: string; toStation?: string; date?: string }) => Promise<TrainPlannerResponse[]>
   onSearchAttractions: (payload: { city?: string }) => Promise<AttractionResponse[]>
   onOpenBookings: () => Promise<void>
   onLoadChatSettings: (groupId: string) => Promise<import('@/lib/mvp-types/index').TourGroupChatSettingsResponse>

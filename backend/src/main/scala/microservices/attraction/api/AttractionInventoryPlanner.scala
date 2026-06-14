@@ -1,3 +1,7 @@
+// AttractionInventoryPlanner handles attraction-related inventory consumption and restoration.
+// It is an internal helper used by backend flows such as payment and cancellation, not a frontend-facing business entry point.
+// The frontend should only see the final planner request / response objects and should not mirror this inventory helper layer.
+
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*
@@ -12,6 +16,5 @@ object AttractionInventoryPlanner:
 
   def restoreInventoryForCancelledOrder(connection: Connection, orderId: String): Unit =
     AttractionPlannerPlainSql.restoreInventoryForCancelledOrder(connection, orderId)
-
 
 

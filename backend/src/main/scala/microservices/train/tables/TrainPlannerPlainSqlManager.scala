@@ -1,3 +1,4 @@
+// TrainPlannerPlainSqlManager 只负责 train 模块管理端的后端 SQL 写入与查询，前端只会看到 planner 请求/响应，不会镜像这一层。
 package com.typesafe.travel.train.domain
 
 import cats.effect.IO

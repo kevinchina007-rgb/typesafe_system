@@ -67,18 +67,18 @@ final class TourGroupChatRouter:
       case other =>
         logger.error(other)(s"TourGroupChatRouter failed: ${other.getMessage}") *> BadRequest(Json.obj("error" -> Json.fromString(other.getMessage)))
 
-  private def listDirectConversations(groupId: String, connection: Connection, currentUser: CurrentUserPlannerResponse): IO[TourGroupConversationListPlannerResponse] =
+  private def listDirectConversations(groupId: String, connection: Connection, currentUser: CurrentUserPlannerResponse): IO[TourGroupConversationListResponse] =
     TourGroupChatPlainSql
       .listConversations(connection, groupId, currentUser.userId, Instant.now())
       .map(response => response.copy(conversations = response.conversations.filter(_.conversationType == TourGroupConversationType.Direct.toString)))
 
-  private def toMessageSearchResponse(results: List[TourGroupMessageSearchResultPlannerResponse]): TourGroupMessageSearchPlannerResponse =
-    TourGroupMessageSearchPlannerResponse(results)
+  private def toMessageSearchResponse(results: List[TourGroupMessageSearchResultResponse]): TourGroupMessageSearchResponse =
+    TourGroupMessageSearchResponse(results)
 
   val routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case request @ GET -> Root / "api" / "tour-groups" / groupId / "chat-settings" =>
       withCurrentUser(request) { (connection, currentUser) =>
-        TourGroupPlannerPlainSql.get(connection, TourGroupByIdPlannerRequest(groupId)).flatMap { group =>
+        TourGroupPlannerPlainSql.get(connection, GetTourGroupDetailsPlannerRequest(groupId)).flatMap { group =>
           val isOrganizer = group.group.organizerUserId == currentUser.userId
           TourGroupChatPlainSql.loadChatSettings(connection, groupId, currentUser.userId, isOrganizer, Instant.now()).flatMap(respondJson)
         }
@@ -89,7 +89,7 @@ final class TourGroupChatRouter:
         for
           payload <- request.as[UpdateTourGroupChatSettingsPlannerRequest]
           response <- withCurrentUser(request) { (connection, currentUser) =>
-            TourGroupPlannerPlainSql.get(connection, TourGroupByIdPlannerRequest(groupId)).flatMap { group =>
+            TourGroupPlannerPlainSql.get(connection, GetTourGroupDetailsPlannerRequest(groupId)).flatMap { group =>
               TourGroupChatPlainSql.updateChatSettings(connection, groupId, currentUser.userId, payload.allowMemberDirectChat, group.group.organizerUserId == currentUser.userId, Instant.now()).flatMap(respondJson)
             }
           }

@@ -3,6 +3,7 @@
 package com.typesafe.travel.flight.api
 
 import com.typesafe.travel.flight.objects.*
+import com.typesafe.travel.flight.tables.{CabinInventoryPlannerRow, FlightBookingCabinPlannerRow, FlightBookingSnapshotPlannerRow, FlightDailyLowestPricePlannerRow, FlightOrderInsert, FlightOrderItemInsert, FlightPlannerRow}
 
 import com.typesafe.travel.shared.kernel.*
 import java.time.Instant
@@ -68,12 +69,12 @@ def buildFlightPlannerResponse(
   val departureInstant = row.departureTime.toInstant
   val flightStatus = FlightStatus.fromText(row.status)
   val bookingWindowStatus =
-    if flightStatus != FlightStatus.OpenForBooking then "Expired"
-    else if !departureInstant.isAfter(now) then "Expired"
-    else if departureInstant.isBefore(now.plusSeconds(48L * 3600L)) then "SurchargeRequired"
-    else "Available"
+    if flightStatus != FlightStatus.OpenForBooking then FlightBookingWindowStatus.Expired
+    else if !departureInstant.isAfter(now) then FlightBookingWindowStatus.Expired
+    else if departureInstant.isBefore(now.plusSeconds(48L * 3600L)) then FlightBookingWindowStatus.SurchargeRequired
+    else FlightBookingWindowStatus.Available
   val lateBookingSurcharge =
-    Option.when(bookingWindowStatus == "SurchargeRequired")(
+    Option.when(bookingWindowStatus == FlightBookingWindowStatus.SurchargeRequired)(
       (BigDecimal(row.basePriceAmount) * BigDecimal("0.15")).setScale(2, BigDecimal.RoundingMode.HALF_UP)
     )
 
@@ -91,11 +92,14 @@ def buildFlightPlannerResponse(
     arrivalTime = row.arrivalTime.toString,
     status = row.status,
     bookingWindowStatus = bookingWindowStatus,
-    canBookOnline = bookingWindowStatus == "Available" && flightStatus == FlightStatus.OpenForBooking,
+    canBookOnline = bookingWindowStatus == FlightBookingWindowStatus.Available && flightStatus == FlightStatus.OpenForBooking,
     bookingNotice =
       bookingWindowStatus match
-        case "Available" => None
-        case "SurchargeRequired" => lateBookingSurcharge.map(amount => s"Departure is within 48 hours. Online booking is paused until a late-booking surcharge of ${amount.toString} ${row.basePriceCurrency} is confirmed.")
+        case FlightBookingWindowStatus.Available => None
+        case FlightBookingWindowStatus.SurchargeRequired =>
+          lateBookingSurcharge.map(amount =>
+            s"Departure is within 48 hours. Online booking is paused until a late-booking surcharge of ${amount.toString} ${row.basePriceCurrency} is confirmed."
+          )
         case _ if flightStatus != FlightStatus.OpenForBooking => Some("This flight is no longer open for booking.")
         case _ => Some("This flight has already departed and is no longer searchable."),
     lateBookingSurchargeAmount = lateBookingSurcharge.map(_.toString),

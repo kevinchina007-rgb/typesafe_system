@@ -1,4 +1,4 @@
-// ListManagedAttractionsPlanner 是景点模块的列表查询入口，负责请求校验、流程编排和结果返回�?
+// ListManagedAttractionsPlanner 只负责 attraction 管理端列表查询这一条后端链路，属于后端内部业务入口，不需要前端复制管理实现。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

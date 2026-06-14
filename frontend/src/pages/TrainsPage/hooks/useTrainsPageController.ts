@@ -8,7 +8,7 @@ import { consumeTourGroupBookingTarget } from '@/pages/shared/tour-group-booking
 import { formatTrainRecommendation, normalizeTrainSearchRequestStations, sortTrainResponses } from '../functions'
 import type { TrainBookRequest, TrainSortMode, TrainsPageController, TrainsPageProps } from '../objects'
 import { useTrainSearchState } from './useTrainSearchState'
-import type { TrainResponse } from '@/lib/mvp-types/index'
+import type { TrainPlannerResponse } from '@/lib/mvp-types/index'
 
 // 只截取日期字符串的年月日部分，供列车搜索使用。
 function normalizeDateOnly(value: string) {
@@ -42,7 +42,7 @@ export function useTrainsPageController({
   const [dateWindowStart, setDateWindowStart] = useState(() => addHotelDays(searchDate, -3))
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
   const [isTourGroupTargetMode, setIsTourGroupTargetMode] = useState(false)
-  const [targetTrainResponses, setTargetTrainResponses] = useState<TrainResponse[]>([])
+  const [targetTrainResponses, setTargetTrainResponses] = useState<TrainPlannerResponse[]>([])
 
   // 如果来自旅游团定向预订，就先回填列车搜索条件。
   useEffect(() => {

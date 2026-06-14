@@ -20,13 +20,17 @@ export function FeedbackConversationHeader({
   onEscalate?: (thread: FeedbackThread) => void | Promise<unknown>
   onToggleComplaintMode: () => void
 }) {
+  const subtitle = activeThread.managerType === 'Hotel'
+    ? activeThread.resourceSummaryTitle.replace(/\s+路\s+/g, ' · ').replace(/\s*·\s*/g, ' · ').trim() || activeThread.subtitle
+    : activeThread.resourceSummaryTitle || activeThread.subtitle
+
   return (
     <header className="flex items-center justify-between border-b border-slate-200 px-6">
       <div className="flex min-w-0 items-center gap-3">
         <FeedbackConversationAvatar imageUrl={activeIdentity.logoPath} fallback={activeIdentity.fallback} alt={activeIdentity.name} />
         <div className="min-w-0">
           <h3 className="m-0 truncate text-xl font-bold text-slate-950">{activeIdentity.name}</h3>
-          <p className="m-0 truncate text-sm text-slate-500">{activeThread.resourceSummaryTitle || activeThread.subtitle}</p>
+          <p className="m-0 truncate text-sm text-slate-500">{subtitle}</p>
         </div>
       </div>
       {onEscalate && activeThread.kind === 'ServiceReview' ? (

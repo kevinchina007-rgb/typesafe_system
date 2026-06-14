@@ -1,4 +1,4 @@
-// GetAttractionDetailsPlanner 是景点模块的获取入口，负责请求校验、流程编排和结果返回�?
+// GetAttractionDetailsPlanner 只负责 attraction 详情查询入口，前端应镜像同名请求/响应对象，但不镜像这里的后端数据库读取实现。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

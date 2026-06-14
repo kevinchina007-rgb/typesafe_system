@@ -1,4 +1,4 @@
-// BookAttractionItemPlanner 是景点模块的预订入口，负责请求校验、流程编排和结果返回�?
+// BookAttractionItemPlanner 是 attraction 购票入口，只负责后端的校验、拼单、订单项写入和结果返回；它的请求对象需要和前端严格同名，但实现逻辑本身不应镜像到前端。
 package com.typesafe.travel.attraction.api
 
 import cats.effect.IO

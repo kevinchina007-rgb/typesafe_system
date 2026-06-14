@@ -2,7 +2,8 @@
 
 package com.typesafe.travel.api.routes
 
-import com.typesafe.travel.operations.domain.*
+import com.typesafe.travel.hotel.api.UploadHotelRoomTypeImagePlanner
+import com.typesafe.travel.operations.domain.{CreateManagerRoomTypePlanner, ListManagerHotelsPlanner, RegisterHotelManagerPlanner, UpdateHotelManagerProfilePlanner}
 
 object PlannerDefinitionsOperationsHotel:
   import PlannerRegistry.RegisteredPlan.WithConnection

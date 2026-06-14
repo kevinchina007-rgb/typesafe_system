@@ -1,4 +1,4 @@
-import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
 // TrainsPage 使用的行程类型，只保留单程和往返两种。
@@ -14,9 +14,9 @@ export type TrainSortMode = 'highSpeedPriority' | 'lowPricePriority' | 'departur
 
 // TrainsPage 搜索过程中拆分出来的一段路线，用于结果区展示。
 export type TrainSearchSegment = {
-  fromStop: TrainResponse['stops'][number]
-  toStop: TrainResponse['stops'][number]
-  segmentStops: TrainResponse['stops']
+  fromStop: TrainPlannerResponse['stops'][number]
+  toStop: TrainPlannerResponse['stops'][number]
+  segmentStops: TrainPlannerResponse['stops']
 }
 
 // TrainsPage 的页面级参数，负责承接语言、用户和导航能力。
@@ -85,7 +85,7 @@ export type TrainResultsSectionProps = {
   isGuestMode: boolean
   searchFromStation: string
   searchToStation: string
-  trainResponses: TrainResponse[]
+  trainResponses: TrainPlannerResponse[]
   travelers: TravelerResponse[]
   selectedTravelerIds: string[]
   translate: (translationKey: string) => string
@@ -103,8 +103,8 @@ export type TrainsPageController = {
   isBusy: boolean
   isGuestMode: boolean
   isTourGroupTargetMode: boolean
-  targetTrainResponses: TrainResponse[]
-  trainResponses: TrainResponse[]
+  targetTrainResponses: TrainPlannerResponse[]
+  trainResponses: TrainPlannerResponse[]
   hasSearchedTrains: boolean
   searchRecommendation: string
   searchDate: string

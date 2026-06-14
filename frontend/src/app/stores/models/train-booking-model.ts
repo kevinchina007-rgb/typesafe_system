@@ -1,6 +1,6 @@
 // 本文件定义火车预订模型，用于预订流程的数据传递。
 
-import type { TrainResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { TrainPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
 
 export type TrainTripType = 'oneWay' | 'roundTrip'
 export type TrainQuickDatePreset = 'today' | 'tomorrow' | 'weekend' | 'nextWeek'
@@ -9,9 +9,9 @@ export type TrainTypePreference = 'HighSpeed' | 'Bullet' | 'Regular'
 export type TrainSortMode = 'highSpeedPriority' | 'lowPricePriority' | 'departureTimeEarly'
 
 export type TrainSearchSegment = {
-  fromStop: TrainResponse['stops'][number]
-  toStop: TrainResponse['stops'][number]
-  segmentStops: TrainResponse['stops']
+  fromStop: TrainPlannerResponse['stops'][number]
+  toStop: TrainPlannerResponse['stops'][number]
+  segmentStops: TrainPlannerResponse['stops']
 }
 
 export const defaultTrainSearchState = {
@@ -53,7 +53,7 @@ function normalizeTrainStationInput(value: string): string {
   return value.trim()
 }
 
-export function findTrainStopByQuery(train: TrainResponse, stationQuery: string) {
+export function findTrainStopByQuery(train: TrainPlannerResponse, stationQuery: string) {
   const trimmedQuery = normalizeTrainStationInput(stationQuery)
   if (!trimmedQuery) {
     return null
@@ -69,7 +69,7 @@ export function findTrainStopByQuery(train: TrainResponse, stationQuery: string)
   )
 }
 
-function findTrainStopIndexByQuery(train: TrainResponse, stationQuery: string): number {
+function findTrainStopIndexByQuery(train: TrainPlannerResponse, stationQuery: string): number {
   const stop = findTrainStopByQuery(train, stationQuery)
   if (!stop) {
     return -1
@@ -78,7 +78,7 @@ function findTrainStopIndexByQuery(train: TrainResponse, stationQuery: string): 
 }
 
 export function resolveTrainStationCodes(
-  train: TrainResponse,
+  train: TrainPlannerResponse,
   fromStationQuery: string,
   toStationQuery: string,
 ): { fromStationCode: string; toStationCode: string } | null {
@@ -96,7 +96,7 @@ export function resolveTrainStationCodes(
 }
 
 export function resolveTrainSearchSegment(
-  train: TrainResponse,
+  train: TrainPlannerResponse,
   fromStationQuery: string,
   toStationQuery: string,
 ): TrainSearchSegment | null {
@@ -117,7 +117,7 @@ export function resolveTrainSearchSegment(
 }
 
 export function quoteTrainSegmentAmount(
-  train: TrainResponse,
+  train: TrainPlannerResponse,
   fromStationCode: string,
   toStationCode: string,
   seatClass: string,
@@ -153,11 +153,11 @@ export function quoteTrainSegmentAmount(
   return { amount: amount.toString(), currency }
 }
 
-export function renderTrainStopSummary(train: TrainResponse): string {
+export function renderTrainStopSummary(train: TrainPlannerResponse): string {
   return train.stops.map(stop => stop.stationName).join(' → ')
 }
 
-export function renderTrainSearchSegmentSummary(train: TrainResponse, fromStationQuery: string, toStationQuery: string): string {
+export function renderTrainSearchSegmentSummary(train: TrainPlannerResponse, fromStationQuery: string, toStationQuery: string): string {
   const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
   if (!routeSegment) {
     return renderTrainStopSummary(train)
@@ -176,7 +176,7 @@ function getTrainPriorityScore(trainNumber: string): number {
   return 2
 }
 
-function getTrainRouteLowestPrice(train: TrainResponse, fromStationQuery: string, toStationQuery: string): number {
+function getTrainRouteLowestPrice(train: TrainPlannerResponse, fromStationQuery: string, toStationQuery: string): number {
   const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
   if (!routeSegment) {
     return Number.POSITIVE_INFINITY
@@ -194,7 +194,7 @@ function getTrainRouteLowestPrice(train: TrainResponse, fromStationQuery: string
   return Math.min(...routeQuotes)
 }
 
-function getTrainRouteDepartureTimestamp(train: TrainResponse, fromStationQuery: string, toStationQuery: string): number {
+function getTrainRouteDepartureTimestamp(train: TrainPlannerResponse, fromStationQuery: string, toStationQuery: string): number {
   const routeSegment = resolveTrainSearchSegment(train, fromStationQuery, toStationQuery)
   const departureValue = routeSegment?.fromStop.departureTime ?? routeSegment?.fromStop.arrivalTime ?? null
   if (!departureValue) {
@@ -205,11 +205,11 @@ function getTrainRouteDepartureTimestamp(train: TrainResponse, fromStationQuery:
 }
 
 export function sortTrainResponses(
-  trainResponses: TrainResponse[],
+  trainResponses: TrainPlannerResponse[],
   fromStationQuery: string,
   toStationQuery: string,
   sortMode: TrainSortMode,
-): TrainResponse[] {
+): TrainPlannerResponse[] {
   return [...trainResponses].sort((left, right) => {
     switch (sortMode) {
       case 'highSpeedPriority': {
@@ -254,7 +254,7 @@ export function applyTrainQuickDatePreset(preset: TrainQuickDatePreset, today = 
   return baseDate.toISOString().slice(0, 10)
 }
 
-export function formatTrainPriceInsight(trains: TrainResponse[], translate: (translationKey: string) => string) {
+export function formatTrainPriceInsight(trains: TrainPlannerResponse[], translate: (translationKey: string) => string) {
   const allSegmentPrices = trains.flatMap(train => train.segmentPrices.map(segmentPrice => Number(segmentPrice.amount)))
   if (allSegmentPrices.length === 0) {
     return translate('trains.priceInsightFallback')

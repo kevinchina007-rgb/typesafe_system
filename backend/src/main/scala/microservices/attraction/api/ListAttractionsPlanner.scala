@@ -1,4 +1,4 @@
-// ListAttractionsPlanner 是景点模块的列表查询入口，负责请求校验、流程编排和结果返回�?
+// ListAttractionsPlanner 只负责 attraction 列表查询入口，前端应镜像同名请求/响应对象，但不镜像这里的 plain SQL 或结果映射实现。
 package com.typesafe.travel.attraction.api
 
 import com.typesafe.travel.attraction.domain.*

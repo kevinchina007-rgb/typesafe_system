@@ -7,6 +7,7 @@ import type { OrderCategory } from '@/pages/BookingsPage/objects'
 export type CancellationOrderOption = {
   orderId: string
   title: string
+  detailLabel: string
   category: OrderCategory
 }
 

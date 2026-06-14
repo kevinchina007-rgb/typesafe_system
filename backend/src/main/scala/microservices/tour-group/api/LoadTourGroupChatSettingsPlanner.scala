@@ -10,14 +10,14 @@ import com.typesafe.travel.tourgroup.domain.{TourGroupChatPlainSql, TourGroupPla
 import java.sql.Connection
 import java.time.Instant
 
-object LoadTourGroupChatSettingsPlanner extends ConnectionApiPlan[LoadTourGroupChatSettingsPlannerRequest, TourGroupChatSettingsPlannerResponse]:
+object LoadTourGroupChatSettingsPlanner extends ConnectionApiPlan[LoadTourGroupChatSettingsPlannerRequest, TourGroupChatSettingsResponse]:
 
   override val name: String = "LoadTourGroupChatSettingsPlanner"
 
-  override def plan(input: LoadTourGroupChatSettingsPlannerRequest, connection: Connection): IO[TourGroupChatSettingsPlannerResponse] =
+  override def plan(input: LoadTourGroupChatSettingsPlannerRequest, connection: Connection): IO[TourGroupChatSettingsResponse] =
     for
       currentUser <- AuthPlannerPlainSql.currentUser(connection, input.sessionId, Instant.now())
-      group <- TourGroupPlannerPlainSql.get(connection, TourGroupByIdPlannerRequest(input.groupId))
+      group <- TourGroupPlannerPlainSql.get(connection, GetTourGroupDetailsPlannerRequest(input.groupId))
       isOrganizer = group.group.organizerUserId == currentUser.userId
       response <- TourGroupChatPlainSql.loadChatSettings(connection, input.groupId, currentUser.userId, isOrganizer, Instant.now())
     yield response

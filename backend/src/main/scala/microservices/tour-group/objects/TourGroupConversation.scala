@@ -1,4 +1,6 @@
-// TourGroupConversation 定义团体游模块的数据模型。
+// 这个文件定义 tour-group 后端的会话领域模型。
+// 这里包含群聊、私聊、状态、参与者可见性等后端内部概念，主要服务 planner 编排和 SQL 映射。
+// 它不应该被前端逐字段镜像；前端只需要与具体 planner 对齐的请求/响应文件。
 
 package com.typesafe.travel.tourgroup.domain
 

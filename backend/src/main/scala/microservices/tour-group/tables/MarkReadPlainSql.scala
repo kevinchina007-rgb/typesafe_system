@@ -1,3 +1,6 @@
+// 这个文件只负责 tour-group 后端“标记已读”这一类数据库动作。
+// 它更新会话参与者的最后阅读位置，并返回最新会话摘要。
+// 前端只应消费结果对象，不应直接镜像这层 SQL 实现。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -12,7 +15,7 @@ import TourGroupMemberPlainSqlSupport.*
 import TourGroupChatMessagePlainSqlSupport.*
 
 object MarkReadPlainSql:
-  def markConversationRead(connection: Connection, conversationId: String, currentUserId: String, now: Instant): IO[TourGroupConversationSummaryPlannerResponse] =
+  def markConversationRead(connection: Connection, conversationId: String, currentUserId: String, now: Instant): IO[TourGroupConversationSummaryResponse] =
     IO.blocking {
       val conversation = requireConversation(connection, conversationId)
       if conversation.conversationType == TourGroupConversationType.GroupPublic then
@@ -36,10 +39,10 @@ object MarkReadPlainSql:
       summaryForConversation(connection, conversation, currentUserId, findChatSettings(connection, conversation.groupId.value).exists(_.allowMemberDirectChat), participant, counterpart)
     }
 
-  def updateMuteState(connection: Connection, conversationId: String, currentUserId: String, muted: Boolean, now: Instant): IO[TourGroupConversationSummaryPlannerResponse] =
+  def updateMuteState(connection: Connection, conversationId: String, currentUserId: String, muted: Boolean, now: Instant): IO[TourGroupConversationSummaryResponse] =
     updateParticipantFlags(connection, conversationId, currentUserId, muted = Some(muted), archived = None, now)
 
-  def updateArchiveState(connection: Connection, conversationId: String, currentUserId: String, archived: Boolean, now: Instant): IO[TourGroupConversationSummaryPlannerResponse] =
+  def updateArchiveState(connection: Connection, conversationId: String, currentUserId: String, archived: Boolean, now: Instant): IO[TourGroupConversationSummaryResponse] =
     updateParticipantFlags(connection, conversationId, currentUserId, muted = None, archived = Some(archived), now)
 
   def ensureConversationAccess(connection: Connection, conversationId: String, currentUserId: String, now: Instant): IO[Unit] =

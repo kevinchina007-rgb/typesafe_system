@@ -3,7 +3,8 @@
 package com.typesafe.travel.flight.tables
 
 import cats.effect.IO
-import com.typesafe.travel.flight.objects.{FlightPlannerRow, FlightSuggestionsPlannerRequest}
+import com.typesafe.travel.flight.objects.FlightSuggestionsPlannerRequest
+import com.typesafe.travel.flight.tables.FlightPlannerRow
 
 import java.sql.Connection
 

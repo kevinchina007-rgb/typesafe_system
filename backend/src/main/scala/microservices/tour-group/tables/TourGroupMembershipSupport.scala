@@ -1,3 +1,6 @@
+// 这个文件只服务 tour-group 后端的团体详情聚合查询。
+// 它把 membership、traveler、plan、selection、blacklist 等多张表拼装成详情视图，方便 planner 一次性返回完整页面数据。
+// 前端不应直接镜像这里的 SQL 组装逻辑，只需要消费同名 response DTO。
 package com.typesafe.travel.tourgroup.domain
 
 import com.typesafe.travel.persistence.PlainSqlSupport
@@ -9,7 +12,7 @@ import java.time.Instant
 import java.util.UUID
 
 object TourGroupMembershipSupport:
-  def listSummaries(connection: Connection): List[TourGroupSummaryPlannerResponse] =
+  def listSummaries(connection: Connection): List[TourGroupSummaryResponse] =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -26,9 +29,9 @@ object TourGroupMembershipSupport:
       PlainSqlSupport.queryList(statement)(readSummary)
     }
 
-  def details(connection: Connection, groupId: String): TourGroupDetailsPlannerResponse =
+  def details(connection: Connection, groupId: String): TourGroupDetailsResponse =
     val group = groupSummary(connection, groupId)
-    TourGroupDetailsPlannerResponse(
+    TourGroupDetailsResponse(
       group = group,
       memberships = memberships(connection, groupId),
       membershipTravelers = membershipTravelers(connection, groupId),
@@ -39,7 +42,7 @@ object TourGroupMembershipSupport:
       blacklists = blacklists(connection, groupId)
     )
 
-  def groupSummary(connection: Connection, groupId: String): TourGroupSummaryPlannerResponse =
+  def groupSummary(connection: Connection, groupId: String): TourGroupSummaryResponse =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -120,9 +123,9 @@ object TourGroupMembershipSupport:
       status = TourGroupMembershipStatus.fromText(row.getString("status"))
     )
 
-  def readSummary(row: ResultSet): TourGroupSummaryPlannerResponse =
+  def readSummary(row: ResultSet): TourGroupSummaryResponse =
     val activeTravelerCount = row.getInt("active_traveler_count")
-    TourGroupSummaryPlannerResponse(
+    TourGroupSummaryResponse(
       groupId = row.getString("group_id"),
       organizerUserId = row.getString("organizer_user_id"),
       title = row.getString("title"),
@@ -144,7 +147,7 @@ object TourGroupMembershipSupport:
       createdAt = row.getTimestamp("created_at").toInstant.toString
     )
 
-  def memberships(connection: Connection, groupId: String): List[TourGroupMembershipPlannerResponse] =
+  def memberships(connection: Connection, groupId: String): List[TourGroupMembershipResponse] =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -156,7 +159,7 @@ object TourGroupMembershipSupport:
     ) { statement =>
       statement.setString(1, groupId)
       PlainSqlSupport.queryList(statement) { row =>
-        TourGroupMembershipPlannerResponse(
+        TourGroupMembershipResponse(
           membershipId = row.getString("membership_id"),
           userId = row.getString("user_id"),
           userDisplayName = row.getString("user_id"),
@@ -166,7 +169,7 @@ object TourGroupMembershipSupport:
       }
     }
 
-  def membershipTravelers(connection: Connection, groupId: String): List[TourGroupMembershipTravelerPlannerResponse] =
+  def membershipTravelers(connection: Connection, groupId: String): List[TourGroupMembershipTravelerResponse] =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -179,7 +182,7 @@ object TourGroupMembershipSupport:
     ) { statement =>
       statement.setString(1, groupId)
       PlainSqlSupport.queryList(statement) { row =>
-        TourGroupMembershipTravelerPlannerResponse(
+        TourGroupMembershipTravelerResponse(
           membershipTravelerId = row.getString("membership_traveler_id"),
           membershipId = row.getString("membership_id"),
           travelerId = row.getString("traveler_id"),
@@ -189,7 +192,7 @@ object TourGroupMembershipSupport:
       }
     }
 
-  def blacklists(connection: Connection, groupId: String): List[TourGroupBlacklistPlannerResponse] =
+  def blacklists(connection: Connection, groupId: String): List[TourGroupBlacklistResponse] =
     PlainSqlSupport.withStatement(
       connection,
       """
@@ -201,7 +204,7 @@ object TourGroupMembershipSupport:
     ) { statement =>
       statement.setString(1, groupId)
       PlainSqlSupport.queryList(statement) { row =>
-        TourGroupBlacklistPlannerResponse(
+        TourGroupBlacklistResponse(
           blacklistId = row.getString("blacklist_id"),
           groupId = row.getString("group_id"),
           userId = row.getString("user_id"),

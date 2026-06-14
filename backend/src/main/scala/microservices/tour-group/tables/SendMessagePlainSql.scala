@@ -1,3 +1,6 @@
+// 这个文件只负责 tour-group 后端“发送消息”这一类数据库动作。
+// 它承接群聊、私聊和附件上传时的消息写入、附件落库和消息返回拼装。
+// 这里是纯后端实现，不是前端镜像对象。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -14,7 +17,7 @@ import TourGroupChatMessagePlainSqlSupport.*
 import TourGroupAttachmentPlainSqlSupport.*
 
 object SendMessagePlainSql:
-  def sendGroupChatMessage(connection: Connection, groupId: String, currentUserId: String, request: SendTourGroupMessagePlannerRequest, now: Instant): IO[TourGroupMessageListPlannerResponse] =
+  def sendGroupChatMessage(connection: Connection, groupId: String, currentUserId: String, request: SendTourGroupMessagePlannerRequest, now: Instant): IO[TourGroupMessageListResponse] =
     ConversationPlainSql.listConversations(connection, groupId, currentUserId, now).flatMap { list =>
       val conversationId = list.groupChatConversationId.getOrElse {
         throw TourGroupError.ConversationWasNotFound(TourGroupConversationId(groupId))
@@ -23,19 +26,19 @@ object SendMessagePlainSql:
         val conversation = requireConversation(connection, conversationId)
         requireConversationAccess(connection, conversation, currentUserId)
         insertMessage(connection, conversationId, currentUserId, request, now)
-        TourGroupMessageListPlannerResponse(loadMessages(connection, conversationId, currentUserId))
+        TourGroupMessageListResponse(loadMessages(connection, conversationId, currentUserId))
       }
     }
 
-  def sendMessage(connection: Connection, conversationId: String, currentUserId: String, request: SendTourGroupMessagePlannerRequest, now: Instant): IO[TourGroupMessageListPlannerResponse] =
+  def sendMessage(connection: Connection, conversationId: String, currentUserId: String, request: SendTourGroupMessagePlannerRequest, now: Instant): IO[TourGroupMessageListResponse] =
     IO.blocking {
       val conversation = requireConversation(connection, conversationId)
       requireConversationAccess(connection, conversation, currentUserId)
       insertMessage(connection, conversationId, currentUserId, request, now)
-      TourGroupMessageListPlannerResponse(loadMessages(connection, conversationId, currentUserId))
+      TourGroupMessageListResponse(loadMessages(connection, conversationId, currentUserId))
     }
 
-  def editMessage(connection: Connection, messageId: String, currentUserId: String, content: String, now: Instant): IO[TourGroupMessageListPlannerResponse] =
+  def editMessage(connection: Connection, messageId: String, currentUserId: String, content: String, now: Instant): IO[TourGroupMessageListResponse] =
     mutateMessage(connection, messageId, currentUserId, now) { message =>
       if message.senderUserId.value != currentUserId then throw TourGroupError.MessageAccessWasDenied(message.messageId, UserId(currentUserId))
       if content.trim.isEmpty then throw TourGroupError.MessageContentWasEmpty()
@@ -48,7 +51,7 @@ object SendMessagePlainSql:
       }
     }
 
-  def deleteMessage(connection: Connection, messageId: String, currentUserId: String, now: Instant): IO[TourGroupMessageListPlannerResponse] =
+  def deleteMessage(connection: Connection, messageId: String, currentUserId: String, now: Instant): IO[TourGroupMessageListResponse] =
     mutateMessage(connection, messageId, currentUserId, now) { message =>
       if message.senderUserId.value != currentUserId then throw TourGroupError.MessageAccessWasDenied(message.messageId, UserId(currentUserId))
       PlainSqlSupport.withStatement(connection, "update tour_group_messages set status = ?, deleted_at = ?, updated_at = ? where message_id = ?") { statement =>
@@ -60,7 +63,7 @@ object SendMessagePlainSql:
       }
     }
 
-  def recallMessage(connection: Connection, messageId: String, currentUserId: String, now: Instant): IO[TourGroupMessageListPlannerResponse] =
+  def recallMessage(connection: Connection, messageId: String, currentUserId: String, now: Instant): IO[TourGroupMessageListResponse] =
     mutateMessage(connection, messageId, currentUserId, now) { message =>
       if message.senderUserId.value != currentUserId then throw TourGroupError.MessageAccessWasDenied(message.messageId, UserId(currentUserId))
       PlainSqlSupport.withStatement(connection, "update tour_group_messages set status = ?, recalled_at = ?, updated_at = ? where message_id = ?") { statement =>
@@ -72,7 +75,7 @@ object SendMessagePlainSql:
       }
     }
 
-  def addReaction(connection: Connection, messageId: String, currentUserId: String, reactionType: String, now: Instant): IO[TourGroupMessageListPlannerResponse] =
+  def addReaction(connection: Connection, messageId: String, currentUserId: String, reactionType: String, now: Instant): IO[TourGroupMessageListResponse] =
     mutateMessage(connection, messageId, currentUserId, now) { _ =>
       validateReactionType(reactionType)
       PlainSqlSupport.withStatement(
@@ -88,7 +91,7 @@ object SendMessagePlainSql:
       }
     }
 
-  def removeReaction(connection: Connection, messageId: String, currentUserId: String, reactionType: String): IO[TourGroupMessageListPlannerResponse] =
+  def removeReaction(connection: Connection, messageId: String, currentUserId: String, reactionType: String): IO[TourGroupMessageListResponse] =
     mutateMessage(connection, messageId, currentUserId, Instant.now()) { _ =>
       PlainSqlSupport.withStatement(connection, "delete from tour_group_message_reactions where message_id = ? and user_id = ? and reaction_type = ?") { statement =>
         statement.setString(1, messageId)
@@ -98,7 +101,7 @@ object SendMessagePlainSql:
       }
     }
 
-  def uploadAttachment(connection: Connection, currentUserId: String, request: UploadConversationAttachmentPlannerRequest, now: Instant): IO[TourGroupMessageAttachmentPlannerResponse] =
+  def uploadAttachment(connection: Connection, currentUserId: String, request: UploadConversationAttachmentPlannerRequest, now: Instant): IO[TourGroupMessageAttachmentResponse] =
     IO.blocking {
       val bytes = Base64.getDecoder.decode(request.base64Content.trim)
       val assetId = s"asset-${UUID.randomUUID().toString.take(12)}"
@@ -121,7 +124,7 @@ object SendMessagePlainSql:
         statement.setTimestamp(9, Timestamp.from(now))
         statement.executeUpdate()
       }
-      TourGroupMessageAttachmentPlannerResponse(
+      TourGroupMessageAttachmentResponse(
         attachmentId = assetId,
         attachmentType = if request.mimeType.toLowerCase.startsWith("image/") then "Image" else "File",
         publicUrl = s"/uploads/assets/$assetId",

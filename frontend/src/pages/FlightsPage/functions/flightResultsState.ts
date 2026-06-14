@@ -1,9 +1,7 @@
 import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
-import type {
-  FlightDailyLowestPricePlannerResponse,
-  FlightDailyLowestPricesPlannerRequest,
-  FlightDailyLowestPricesPlannerResponse,
-} from '@/microservices/flight/objects/FlightDailyLowestPrices'
+import type { FlightDailyLowestPricesPlannerRequest } from '@/microservices/flight/objects/FlightDailyLowestPricesPlannerRequest'
+import type { FlightDailyLowestPricePlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPricePlannerResponse'
+import type { FlightDailyLowestPricesPlannerResponse } from '@/microservices/flight/objects/FlightDailyLowestPricesPlannerResponse'
 import type { FlightSearchPlannerRequest } from '@/microservices/flight/objects/FlightSearchPlannerRequest'
 import {
   getFlightDetailsPlannerAirlineDisplayNameByCode,

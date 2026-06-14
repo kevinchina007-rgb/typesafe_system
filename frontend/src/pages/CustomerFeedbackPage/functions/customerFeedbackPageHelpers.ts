@@ -20,13 +20,7 @@ export function buildCancellationOrderTitle(order: OrderResponse) {
     const hotelItem = order.orderLineItems.find(isLikelyHotelOrderLineItem)
     if (hotelItem) {
       const display = buildHotelOrderDisplay(hotelItem)
-      return joinTitleParts([
-        display.hotelName || '酒店订单',
-        display.hotelLocation,
-        display.roomTypeName,
-        display.checkInDate && display.checkOutDate ? `${display.checkInDate} 至 ${display.checkOutDate}` : display.checkInDate || display.checkOutDate,
-        formatOrderPrice(order.totalPrice, order.orderCurrency),
-      ])
+      return display.hotelName || '酒店订单'
     }
   }
 
@@ -119,6 +113,67 @@ export function buildCancellationOrderTitle(order: OrderResponse) {
     display.cabinClass ?? undefined,
     formatOrderPrice(order.totalPrice, order.orderCurrency),
   ])
+}
+
+export function buildCancellationOrderSelectionLabel(order: OrderResponse) {
+  const orderCategory = orderTypeToOrderCategory(order.orderType)
+
+  if (orderCategory === 'hotelOrders') {
+    const hotelItem = order.orderLineItems.find(isLikelyHotelOrderLineItem)
+    if (hotelItem) {
+      const display = buildHotelOrderDisplay(hotelItem)
+      return joinTitleParts([
+        display.hotelName || '酒店订单',
+        display.hotelLocation,
+        display.roomTypeName,
+        display.checkInDate && display.checkOutDate ? `${display.checkInDate} 至 ${display.checkOutDate}` : display.checkInDate || display.checkOutDate,
+        formatOrderPrice(order.totalPrice, order.orderCurrency),
+      ])
+    }
+  }
+
+  if (orderCategory === 'trainOrders') {
+    const trainItem = order.orderLineItems.find(isLikelyTrainOrderLineItem)
+    if (trainItem) {
+      const display = buildTrainOrderDisplay(trainItem)
+      return joinTitleParts([
+        display.trainNumber || '火车订单',
+        buildRouteLabel(display.departureStationName || display.departureStationCode, display.arrivalStationName || display.arrivalStationCode),
+        display.seatClass ?? undefined,
+        formatOrderPrice(display.totalPrice || order.totalPrice, display.currency || order.orderCurrency),
+      ])
+    }
+  }
+
+  if (orderCategory === 'attractionOrders') {
+    const attractionItem = order.orderLineItems.find(isLikelyAttractionOrderLineItem)
+    if (attractionItem) {
+      const display = buildAttractionOrderDisplay(attractionItem)
+      return joinTitleParts([
+        display.attractionName || '景点订单',
+        display.ticketTypeName,
+        display.useDate,
+        formatOrderPrice(display.totalPrice || order.totalPrice, display.currency || order.orderCurrency),
+      ])
+    }
+  }
+
+  if (orderCategory === 'flightOrders') {
+    const flightItem = order.orderLineItems.find(isLikelyFlightOrderLineItem) ?? order.orderLineItems[0]
+    if (flightItem) {
+      const display = buildFlightOrderDisplay(flightItem)
+      return joinTitleParts([
+        display.airlineName || '航班订单',
+        display.flightNumber,
+        buildRouteLabel(display.departureAirport || display.departureCity, display.arrivalAirport || display.arrivalCity),
+        display.departureTime ? formatFlightClock(display.departureTime) : undefined,
+        display.cabinClass ?? undefined,
+        formatOrderPrice(order.totalPrice, order.orderCurrency),
+      ])
+    }
+  }
+
+  return buildCancellationOrderTitle(order)
 }
 
 export function inferOrderCategory(order: OrderResponse): OrderCategory {

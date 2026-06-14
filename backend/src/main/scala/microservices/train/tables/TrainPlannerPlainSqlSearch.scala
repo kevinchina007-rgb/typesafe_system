@@ -1,3 +1,4 @@
+// TrainPlannerPlainSqlSearch 只负责 train 模块的后端搜索 SQL 与结果映射，属于纯后端实现，不需要前端镜像。
 package com.typesafe.travel.train.domain
 
 import cats.effect.IO
@@ -6,7 +7,7 @@ import java.sql.Connection
 import java.time.Instant
 
 object TrainPlannerPlainSqlSearch:
-  def suggestions(connection: Connection, input: TrainSuggestionPlannerRequest): IO[TrainSuggestionListPlannerResponse] =
+  def suggestions(connection: Connection, input: TrainSuggestionsPlannerRequest): IO[TrainSuggestionListPlannerResponse] =
     TrainPlannerPlainSqlShared.ensureReferenceData(connection) *>
       IO.blocking {
         val q = s"%${TrainPlannerPlainSqlShared.normalizeTrainStationQuery(input.q).toLowerCase}%"
@@ -27,7 +28,7 @@ object TrainPlannerPlainSqlSearch:
           statement.setString(3, q)
           TrainSuggestionListPlannerResponse(
             com.typesafe.travel.persistence.PlainSqlSupport.queryList(statement) { row =>
-              TrainSuggestionPlannerResponse(
+              TrainSuggestionsPlannerResponse(
                 resourceType = "train",
                 value = row.getString("train_id"),
                 title = row.getString("train_number"),

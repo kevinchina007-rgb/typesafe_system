@@ -1,20 +1,23 @@
 import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
-import type { TrainAdminSessionResponse } from '@/microservices/auth/objects/TrainAdminSessionResponse'
-import type { TrainListResponse } from '@/microservices/train/objects/TrainListResponse'
+import type { TrainAdminSessionPlannerResponse } from '@/microservices/train/objects/TrainAdminSessionPlannerResponse'
+import type { TrainListPlannerResponse } from '@/microservices/train/objects/TrainListPlannerResponse'
+import type { CreateTrainJourneyPlannerRequest } from '@/microservices/train/objects/CreateTrainJourneyPlannerRequest'
+import type { ListManagedTrainsPlannerRequest } from '@/microservices/train/objects/ListManagedTrainsPlannerRequest'
+import type { RegisterRailwayManagerPlannerRequest } from '@/microservices/train/objects/RegisterRailwayManagerPlannerRequest'
+import type { TrainPlannerResponse } from '@/microservices/train/objects/TrainPlannerResponse'
 
-export const createTrainJourney = (payload: {
-  managerId: string
-  trainNumber: string
-  saleStartsAt: string
-  stops: Array<{ stationCode: string; stationName: string; arrivalTime?: string | null; departureTime?: string | null }>
-  seatInventories: Array<{ seatClass: string; totalSeats: number; saleableSeats: number; carriageCount: number; rowsPerCarriage: number; seatLayoutSpec: string }>
-  segmentPrices: Array<{ fromStationCode: string; toStationCode: string; seatClass: string; amount: string; currency: string }>
-  refundPolicies: Array<{ startOffsetMinutesBeforeDeparture: number; endOffsetMinutesBeforeDeparture: number; refundType: string; refundRate: string }>
-}) =>
+export const createTrainJourneyPlanner = (payload: CreateTrainJourneyPlannerRequest): Promise<TrainPlannerResponse> =>
   executeJsonApiRequest('/CreateTrainJourneyPlanner', 'POST', payload)
 
-export const listManagedTrains = (managerId: string): Promise<TrainListResponse> =>
-  executeJsonApiRequest('/ListManagedTrainsPlanner', 'POST', { managerId })
+export const createTrainJourney = createTrainJourneyPlanner
 
-export const registerRailwayManager = (payload: { operatorCode: string; email: string; displayName: string; password: string }): Promise<TrainAdminSessionResponse> =>
+export const listManagedTrainsPlanner = (payload: ListManagedTrainsPlannerRequest): Promise<TrainListPlannerResponse> =>
+  executeJsonApiRequest('/ListManagedTrainsPlanner', 'POST', payload)
+
+export const listManagedTrains = (managerId: string): Promise<TrainListPlannerResponse> =>
+  listManagedTrainsPlanner({ managerId })
+
+export const registerRailwayManagerPlanner = (payload: RegisterRailwayManagerPlannerRequest): Promise<TrainAdminSessionPlannerResponse> =>
   executeJsonApiRequest('/RegisterRailwayManagerPlanner', 'POST', payload)
+
+export const registerRailwayManager = registerRailwayManagerPlanner

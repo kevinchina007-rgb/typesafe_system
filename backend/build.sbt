@@ -160,7 +160,7 @@ lazy val attractionDomain = module("attraction-domain")
   )
 
 lazy val tourGroupDomain = module("tour-group-domain")
-  .dependsOn(sharedKernel, travelerDomain)
+  .dependsOn(sharedKernel, travelerDomain, orderDomain)
   .settings(
     libraryDependencies ++= Seq(catsCoreDependency, circeGenericDependency, circeParserDependency, munitDependency)
   )

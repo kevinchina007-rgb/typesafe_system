@@ -1,3 +1,6 @@
+// 这个文件承载 tour-group 后端会话域的核心 Plain SQL 实现。
+// 它负责会话设置、会话列表、直接会话创建、会话基础查询等底层数据库动作。
+// 这些动作是后端内部实现细节，不应该被前端逐文件镜像。
 package com.typesafe.travel.tourgroup.domain
 
 import cats.effect.IO
@@ -23,11 +26,11 @@ object ConversationPlainSql:
       currentUserId: String,
       isOrganizer: Boolean,
       now: Instant
-  ): IO[TourGroupChatSettingsPlannerResponse] =
+  ): IO[TourGroupChatSettingsResponse] =
     IO.blocking {
       val row = findChatSettings(connection, groupId).getOrElse {
         insertDefaultChatSettings(connection, groupId, currentUserId, now)
-        TourGroupChatSettingsPlannerResponse(groupId, allowMemberDirectChat = false, now.toString, currentUserId, canUpdate = isOrganizer)
+        TourGroupChatSettingsResponse(groupId, allowMemberDirectChat = false, now.toString, currentUserId, canUpdate = isOrganizer)
       }
       row.copy(canUpdate = isOrganizer)
     }
@@ -39,7 +42,7 @@ object ConversationPlainSql:
       allowMemberDirectChat: Boolean,
       isOrganizer: Boolean,
       now: Instant
-  ): IO[TourGroupChatSettingsPlannerResponse] =
+  ): IO[TourGroupChatSettingsResponse] =
     IO.blocking {
       if !isOrganizer then throw new IllegalArgumentException("Only the organizer can update chat settings")
       PlainSqlSupport.withStatement(
@@ -59,26 +62,26 @@ object ConversationPlainSql:
         statement.setString(4, currentUserId)
         statement.executeUpdate()
       }
-      TourGroupChatSettingsPlannerResponse(groupId, allowMemberDirectChat, now.toString, currentUserId, canUpdate = true)
+      TourGroupChatSettingsResponse(groupId, allowMemberDirectChat, now.toString, currentUserId, canUpdate = true)
     }
 
-  def listConversations(connection: Connection, groupId: String, currentUserId: String, now: Instant): IO[TourGroupConversationListPlannerResponse] =
+  def listConversations(connection: Connection, groupId: String, currentUserId: String, now: Instant): IO[TourGroupConversationListResponse] =
     IO.blocking {
       requireGroupMemberOrOrganizer(connection, groupId, currentUserId)
       val settings =
         findChatSettings(connection, groupId).getOrElse {
           insertDefaultChatSettings(connection, groupId, currentUserId, now)
-          TourGroupChatSettingsPlannerResponse(groupId, allowMemberDirectChat = false, now.toString, currentUserId, canUpdate = false)
+          TourGroupChatSettingsResponse(groupId, allowMemberDirectChat = false, now.toString, currentUserId, canUpdate = false)
         }
       ensureGroupPublicParticipant(connection, groupId, currentUserId, now)
       val conversations = loadAccessibleConversations(connection, groupId, currentUserId, settings.allowMemberDirectChat)
-      TourGroupConversationListPlannerResponse(
+      TourGroupConversationListResponse(
         conversations = conversations,
         groupChatConversationId = conversations.find(_.conversationType == groupPublicType).map(_.conversationId)
       )
     }
 
-  def searchConversations(connection: Connection, groupId: String, currentUserId: String, query: String, now: Instant): IO[List[TourGroupConversationSummaryPlannerResponse]] =
+  def searchConversations(connection: Connection, groupId: String, currentUserId: String, query: String, now: Instant): IO[List[TourGroupConversationSummaryResponse]] =
     listConversations(connection, groupId, currentUserId, now).map { response =>
       val normalized = query.trim.toLowerCase
       response.conversations.filter { conversation =>
@@ -89,7 +92,7 @@ object ConversationPlainSql:
       }
     }
 
-  def getOrCreateDirectConversation(connection: Connection, groupId: String, currentUserId: String, targetUserId: String, now: Instant): IO[TourGroupConversationSummaryPlannerResponse] =
+  def getOrCreateDirectConversation(connection: Connection, groupId: String, currentUserId: String, targetUserId: String, now: Instant): IO[TourGroupConversationSummaryResponse] =
     IO.blocking {
       val organizerId = loadGroupOrganizer(connection, groupId)
       if currentUserId == targetUserId then throw TourGroupError.DirectConversationTargetWasInvalid(UserId(targetUserId))
@@ -98,7 +101,7 @@ object ConversationPlainSql:
       val settings =
         findChatSettings(connection, groupId).getOrElse {
           insertDefaultChatSettings(connection, groupId, currentUserId, now)
-          TourGroupChatSettingsPlannerResponse(groupId, allowMemberDirectChat = false, now.toString, currentUserId, canUpdate = false)
+          TourGroupChatSettingsResponse(groupId, allowMemberDirectChat = false, now.toString, currentUserId, canUpdate = false)
         }
       val currentIsOrganizer = currentUserId == organizerId
       val targetIsOrganizer = targetUserId == organizerId

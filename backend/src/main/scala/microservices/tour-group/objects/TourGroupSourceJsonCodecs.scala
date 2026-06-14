@@ -1,4 +1,6 @@
-// TourGroupSourceJsonCodecs 定义团体游模块的源数据 JSON codec。
+// 这个文件只放 tour-group 后端内部共享的 JSON codec。
+// 它负责把 Instant、LocalDate 以及 tour-group 自己的标识和值对象统一编解码，避免每个模型重复写同样的 codec。
+// 这里不包含业务判断，也不对应前端文件；它只是后端领域层和 persistence 层共享的底层工具。
 
 package com.typesafe.travel.tourgroup.domain
 

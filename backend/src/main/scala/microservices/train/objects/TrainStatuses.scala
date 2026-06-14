@@ -1,4 +1,4 @@
-// TrainStatuses defines state models for the train module.
+// TrainStatuses 汇总 train 模块内部使用的状态值与字符串转换。
 package com.typesafe.travel.train.domain
 
 import com.typesafe.travel.shared.kernel.*

@@ -29,7 +29,7 @@ export function FeedbackConversationActions({
   onToggleCancellationForm: () => void
   cancellationOrderId: string
   onCancellationOrderIdChange: (value: string) => void
-  visibleCancellationOrders: Array<{ orderId: string; title: string }>
+  visibleCancellationOrders: Array<{ orderId: string; title: string; detailLabel: string }>
   onCreateCancellationRequest?: (threadId: string, orderId: string, reason: string) => void | Promise<unknown>
   onSendMessage: (threadId: string, body: string) => void | Promise<unknown>
   onSendDraft: (body: string) => void
@@ -106,7 +106,7 @@ export function FeedbackConversationActions({
                 <option value="">请选择订单</option>
                 {visibleCancellationOrders.map(order => (
                   <option key={order.orderId} value={order.orderId}>
-                    {order.title || order.orderId}
+                    {order.detailLabel || order.title || order.orderId}
                   </option>
                 ))}
               </select>

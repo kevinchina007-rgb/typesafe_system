@@ -1,4 +1,6 @@
-// Attraction 定义景点模块的数据模型。
+// Attraction defines the core backend domain model for the attraction domain.
+// This file contains reusable backend-only domain objects such as status, ticket type, session, rule, and error models.
+// It serves planner / table / codec code only and is not meant to mirror a standalone frontend API file or page model.
 
 package com.typesafe.travel.attraction.domain
 
