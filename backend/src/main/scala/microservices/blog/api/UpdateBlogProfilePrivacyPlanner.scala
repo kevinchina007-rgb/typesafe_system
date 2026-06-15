@@ -1,4 +1,4 @@
-// UpdateBlogProfilePrivacyPlanner 是内容模块的更新入口，负责请求校验、流程编排和结果返回。
+// UpdateBlogProfilePrivacyPlanner：博客域更新博客主页隐私入口。
 
 package com.typesafe.travel.blog.domain
 

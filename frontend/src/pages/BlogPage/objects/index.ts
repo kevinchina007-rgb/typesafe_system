@@ -1,4 +1,5 @@
-﻿// Blog 页面模型统一导出。
+// BlogPage objects：博客页面对象统一导出入口。
+
 export type {
   BlogDraft,
   BlogPageController,

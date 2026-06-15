@@ -1,5 +1,4 @@
-// SettleRefundPlanner 是订单模块的业务入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是退款结算入口，属于订单退款内部流程的收尾步骤。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

@@ -1,9 +1,9 @@
 # Planner Service
 
-This module packages the smart trip planner domain models and planner application logic as one backend service area.
+这个目录是“智能行程规划器”的后端内部实现区，不是前后端一一镜像的业务微服务。
 
-- `objects`: planner data models.
-- `api`: planner behavior and orchestration code.
-- `support`: internal helpers for the planner engine only.
+- `objects`：只放 planner 引擎使用的领域模型、状态值、错误与标识符。
+- `api`：只放 planner 引擎内部的生成、评分、约束、匹配等应用层契约。
+- `support`：如果后续继续拆分，只能放 planner 引擎内部辅助代码。
 
-This is a backend-only planning engine. It does not have a matching frontend microservice directory, so the code here is intentionally organized around generation, scoring, constraints, and matching rather than a frontend/backed one-to-one planner mapping.
+这里没有对应的前端微服务目录，是因为 planner 目前只是后端基础能力/算法引擎，而不是一个独立的前端可见业务域。前端会调用其他业务域暴露出来的 planner 接口，但不会直接镜像这个模块本身。

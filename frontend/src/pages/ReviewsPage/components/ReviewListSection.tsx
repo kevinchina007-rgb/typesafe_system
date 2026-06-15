@@ -1,15 +1,15 @@
 // 本文件定义 ReviewsPage 页面的页面分区，负责某一块独立内容的展示。
 
-import type { AppLanguage, ReviewResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, ReviewPlannerResponse } from '@/lib/mvp-types/index'
 import { ReviewCard } from './ReviewCard'
 
 type ReviewListSectionProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
-  reviews: ReviewResponse[]
+  reviews: ReviewPlannerResponse[]
   signedInUser: unknown | null
   translate: (translationKey: string) => string
-  onEditReview: (review: ReviewResponse) => void
+  onEditReview: (review: ReviewPlannerResponse) => void
   onDeleteReview: (reviewId: string) => void
 }
 

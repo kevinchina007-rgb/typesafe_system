@@ -1,4 +1,6 @@
-// SearchRanking 定义 search 基础层的排序和打分工具。
+// SearchRanking 是 search 后端内部基础层的排序和打分工具。
+// 它不会暴露给前端独立调用，也不对应单独的 frontend 搜索微服务目录。
+// 其职责是为各业务 planner 提供统一的关键词归一化、得分计算和排序规则。
 package com.typesafe.travel.api.application
 
 object SearchRanking:

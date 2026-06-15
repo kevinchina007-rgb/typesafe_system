@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ EditTourGroupMessagePlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„å¤„ç†ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { editConversationMessage as editConversationMessageImpl } from './TourGroupPlannerSupportConversation'
 
-export { editConversationMessage } from './TourGroupPlannerSupport'
+export const editConversationMessage = (...args: Parameters<typeof editConversationMessageImpl>) => editConversationMessageImpl(...args)
+
+

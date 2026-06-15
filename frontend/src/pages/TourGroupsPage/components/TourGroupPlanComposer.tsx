@@ -55,7 +55,7 @@ export function TourGroupPlanComposer({
     }
 
     try {
-      const response = await travelMvpApiClient.listExploreSuggestions(normalizedLocation)
+      const response = await travelMvpApiClient.listExploreSuggestions({ q: normalizedLocation })
       const allowedTypes =
         itemType === 'Flight'
           ? new Set(['flight'])

@@ -1,15 +1,17 @@
-// 本文件定义 CreatePaymentLinkPlanner，负责 order 模块的创建编排和接口入口。
+// 本文件定义 `CreatePaymentLinkPlanner`，负责生成订单支付链接。
 
+import type { CreatePaymentLinkPlannerRequest } from '@/microservices/order/objects/CreatePaymentLinkPlannerRequest'
 import type { PaymentLinkResponse } from '@/microservices/order/objects/PaymentLinkResponse'
-
 import { getTravelBackendOrigin } from '@/lib/config/runtime-config'
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-export const createPaymentLink = (orderId: string, userId: string, paymentMethod: string, language: 'zh'): Promise<PaymentLinkResponse> =>
-    executeJsonApiRequest('/CreatePaymentLinkPlanner', 'POST', {
-        orderId,
-        userId,
-        paymentMethod,
-        language,
-        publicBackendOrigin: getTravelBackendOrigin(),
-    })
+export const createPaymentLink = (orderId: string, userId: string, paymentMethod: string, language: 'zh'): Promise<PaymentLinkResponse> => {
+  const request: CreatePaymentLinkPlannerRequest = {
+    orderId,
+    userId,
+    paymentMethod,
+    language,
+    publicBackendOrigin: getTravelBackendOrigin(),
+  }
+  return executeJsonApiRequest('/CreatePaymentLinkPlanner', 'POST', request)
+}

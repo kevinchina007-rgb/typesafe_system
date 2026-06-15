@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
-import type { AppLanguage, AppViewKey, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AppViewKey, ResourceReviewSummaryPlannerResponse, ReviewPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { HotelPlannerResponse } from '@/lib/mvp-types/index'
 import type { HotelPreference } from '@/app/stores/models/hotel-booking-model'
@@ -97,8 +97,8 @@ export type HotelResultsSectionProps = {
     checkOutDate: string
     roomCount: number
   }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
 }
 
 // 酒店页面 controller 暴露给视图层的全部状态和动作。
@@ -137,8 +137,8 @@ export type HotelsPageController = {
   onRequireLogin: () => void
   onAuthDialogClose: () => void
   onAuthDialogConfirm: () => void
-  loadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  loadReviewsByResource: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  loadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  loadReviewsByResource: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
   bookHotel: (payload: {
     roomTypeId: string
     guestTravelerIds: string[]
@@ -175,6 +175,6 @@ export type ReviewLoaderRequest = { resourceType: string; resourceId: string }
 
 // 评论资源加载器集合。
 export type ReviewLoaders = {
-  onLoadReviewSummary: (payload: ReviewLoaderRequest) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: ReviewLoaderRequest) => Promise<ReviewResponse[]>
+  onLoadReviewSummary: (payload: ReviewLoaderRequest) => Promise<ResourceReviewSummaryPlannerResponse>
+  onLoadReviews: (payload: ReviewLoaderRequest) => Promise<ReviewPlannerResponse[]>
 }

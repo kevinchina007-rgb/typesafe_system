@@ -1,5 +1,4 @@
-// TravelerProfileStatusesSupport 定义旅客模块的状态解析辅助。
-
+// 本文件仅保存 traveler 后端内部状态解析 helper，不对应前端镜像文件。
 package com.typesafe.travel.traveler.domain
 
 object TravelerProfileStatusesSupport:

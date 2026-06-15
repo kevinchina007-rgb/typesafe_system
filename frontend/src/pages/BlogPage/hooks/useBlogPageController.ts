@@ -1,10 +1,14 @@
+// useBlogPageController: blog page state orchestration and event handling.
+
 import { useEffect, useMemo, useState } from 'react'
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { BlogNotificationResponse } from '@/microservices/blog/objects/BlogNotificationResponse'
 import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
-import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
-import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/blog/objects/BlogProfileResponse'
+import type { BlogPostSummaryResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
+import type { BlogTagResponse } from '@/microservices/blog/objects/BlogTagResponse'
+import type { BlogProfileResponse } from '@/microservices/blog/objects/BlogProfileResponse'
+import type { BlogProfileUserResponse } from '@/microservices/blog/objects/BlogProfileUserResponse'
 import type { BlogCommentResponse } from '@/microservices/blog/objects/BlogCommentResponse'
 import type { BlogDraft, BlogPageController, BlogPageProps, BlogTab, MineTab, NotificationFilter, ProfileRelationTab } from '../objects'
 import {
@@ -21,7 +25,7 @@ import {
   getSelectedTagLabel,
 } from '../functions'
 import { usePageActions } from '@/pages/shared/usePageActions'
-import type { ContentImageResponse } from '@/lib/mvp-types/index'
+import type { ContentImagePlannerResponse } from '@/lib/mvp-types/index'
 
 // 把本地图片转成页面可直接展示的内容图片对象。
 async function fileToContentImage(file: File, sortOrder: number) {
@@ -35,9 +39,8 @@ async function fileToContentImage(file: File, sortOrder: number) {
     imageId: `local-blog-image-${Date.now()}-${sortOrder}`,
     publicUrl,
     originalFileName: file.name,
-    contentType: file.type,
-    byteSize: file.size,
     sortOrder,
+    createdAt: new Date().toISOString(),
   }
 }
 
@@ -411,7 +414,7 @@ export function useBlogPageController({
   }
 
   // 把单张图片文件转成页面可用的内容图片。
-  async function uploadDraftImage(imageFile: File): Promise<ContentImageResponse> {
+  async function uploadDraftImage(imageFile: File): Promise<ContentImagePlannerResponse> {
     return fileToContentImage(imageFile, Date.now())
   }
 

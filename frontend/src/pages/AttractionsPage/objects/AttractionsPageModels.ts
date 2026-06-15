@@ -1,4 +1,4 @@
-import type { AppLanguage, AttractionResponse, ResourceReviewSummaryResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionResponse, ResourceReviewSummaryPlannerResponse, ReviewPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
 import type { AppViewKey } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
@@ -74,8 +74,8 @@ export type AttractionsPageController = {
   handleSelectHotAttraction: (value: string) => void
   handleOpenAdvertisement: (advertisement: AdvertisementResponse) => Promise<void>
   handleBookAttraction: (payload: AttractionBookingPayload) => Promise<void>
-  handleLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  handleLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  handleLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  handleLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
   handleSelectQuickDatePreset: (preset: AttractionQuickDatePreset, nextDate: string) => void
   handleOpenAuthDialog: () => void
   handleCloseAuthDialog: () => void
@@ -129,8 +129,8 @@ export type AttractionResultsSectionProps = {
   onToggleTravelerSelection: (travelerId: string) => void
   onRequireLogin: () => void
   onBookAttraction: (payload: AttractionBookingPayload) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
 }
 
 // AttractionResultCard 的参数，负责单条景点结果的展示和操作。
@@ -146,8 +146,8 @@ export type AttractionResultCardProps = {
   useDateDraft: string
   onRequireLogin: () => void
   onBookAttraction: (payload: AttractionBookingPayload) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
 }
 
 // AttractionTypeSelector 的参数，只负责切换景点类型筛选。

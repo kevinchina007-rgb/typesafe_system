@@ -1,5 +1,4 @@
-// TravelerPlannerSupport 定义旅客模块的业务入口。
-
+// 本文件定义 traveler 模块的业务入口辅助方法，只服务于 traveler 的 planner 编排，不对应前端镜像文件。
 package com.typesafe.travel.traveler.domain
 
 import cats.effect.IO

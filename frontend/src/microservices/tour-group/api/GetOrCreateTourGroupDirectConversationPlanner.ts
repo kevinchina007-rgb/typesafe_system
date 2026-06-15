@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ GetOrCreateTourGroupDirectConversationPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„è·å–æˆ–åˆ›å»ºç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { getOrCreateTourGroupDirectConversation as getOrCreateTourGroupDirectConversationImpl } from './TourGroupPlannerSupportConversation'
 
-export { getOrCreateTourGroupDirectConversation } from './TourGroupPlannerSupport'
+export const getOrCreateTourGroupDirectConversation = (...args: Parameters<typeof getOrCreateTourGroupDirectConversationImpl>) => getOrCreateTourGroupDirectConversationImpl(...args)
+
+

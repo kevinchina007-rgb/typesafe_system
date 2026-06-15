@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
-import type { ReviewResponse } from '@/lib/mvp-types/index'
+import type { ReviewPlannerResponse } from '@/lib/mvp-types/index'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { getReviewsPageResourceTypes, getVisibleReviews } from '../functions'
@@ -15,11 +15,11 @@ export function useReviewsPageController({
   onShowNotice,
 }: ReviewsPageProps): ReviewsPageController {
   const { isBusy, runPageAction, runPageActionWithResult } = usePageActions(currentLanguage, translate, onShowNotice)
-  const [reviews, setReviews] = useState<ReviewResponse[]>([])
+  const [reviews, setReviews] = useState<ReviewPlannerResponse[]>([])
   const [activeResourceType, setActiveResourceType] = useState('All')
   const [searchText, setSearchText] = useState('')
   const [searchDraft, setSearchDraft] = useState('')
-  const [editingReview, setEditingReview] = useState<ReviewResponse | null>(null)
+  const [editingReview, setEditingReview] = useState<ReviewPlannerResponse | null>(null)
 
   function requireSignedInUser() {
     if (!signedInUser) {
@@ -34,7 +34,7 @@ export function useReviewsPageController({
       return
     }
     const nextSignedInUser = requireSignedInUser()
-    const response = await travelMvpApiClient.listMyReviews(nextSignedInUser.userId)
+    const response = await travelMvpApiClient.listMyReviews({ userId: nextSignedInUser.userId })
     setReviews(response.reviews)
   }
 
@@ -74,8 +74,9 @@ export function useReviewsPageController({
       const nextSignedInUser = requireSignedInUser()
       return runPageActionWithResult(
         async () =>
-          travelMvpApiClient.updateReview(reviewId, {
+          travelMvpApiClient.updateReview({
             userId: nextSignedInUser.userId,
+            reviewId,
             rating: payload.rating,
             title: payload.title,
             content: payload.content,
@@ -88,15 +89,16 @@ export function useReviewsPageController({
     handleDeleteReview: async reviewId => {
       const nextSignedInUser = requireSignedInUser()
       await runPageAction(async () => {
-        await travelMvpApiClient.deleteReview(reviewId, { userId: nextSignedInUser.userId })
+        await travelMvpApiClient.deleteReview({ userId: nextSignedInUser.userId, reviewId })
       }, translate('reviews.delete'), translate('notice.actionSuccess'))
     },
     handleSubmitReviewEdit: async payload => {
       if (!editingReview) {
         return
       }
-      await travelMvpApiClient.updateReview(editingReview.reviewId, {
+      await travelMvpApiClient.updateReview({
         userId: requireSignedInUser().userId,
+        reviewId: editingReview.reviewId,
         rating: payload.rating,
         title: payload.title,
         content: payload.content,

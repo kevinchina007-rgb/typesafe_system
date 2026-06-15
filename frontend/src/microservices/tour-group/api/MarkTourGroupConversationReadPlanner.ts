@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ MarkTourGroupConversationReadPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„æ ‡è®°ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { markConversationRead as markConversationReadImpl } from './TourGroupPlannerSupportConversation'
 
-export { markConversationRead } from './TourGroupPlannerSupport'
+export const markConversationRead = (...args: Parameters<typeof markConversationReadImpl>) => markConversationReadImpl(...args)
+
+

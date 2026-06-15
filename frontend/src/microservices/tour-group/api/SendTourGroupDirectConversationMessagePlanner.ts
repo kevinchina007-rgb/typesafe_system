@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ SendTourGroupDirectConversationMessagePlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„å‘é€ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { sendDirectConversationMessage as sendDirectConversationMessageImpl } from './TourGroupPlannerSupportConversation'
 
-export { sendDirectConversationMessage } from './TourGroupPlannerSupport'
+export const sendDirectConversationMessage = (...args: Parameters<typeof sendDirectConversationMessageImpl>) => sendDirectConversationMessageImpl(...args)
+
+

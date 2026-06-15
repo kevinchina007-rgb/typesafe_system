@@ -1,7 +1,7 @@
 // 本文件定义 AttractionsPage 的辅助函数，负责整理景点卡片、搜索条件和筛选结果。
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { AttractionResponse, ReviewResponse, ResourceReviewSummaryResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AttractionResponse, ReviewPlannerResponse, ResourceReviewSummaryPlannerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { AttractionsSearchRequest } from '../objects'
 
 // 把热词选择拆成城市和关键词两部分。
@@ -40,7 +40,7 @@ export async function loadAttractionReviewSummary(
   signedInUser: UserResponse | null,
   translate: (translationKey: string) => string,
   payload: { resourceType: string; resourceId: string },
-): Promise<ResourceReviewSummaryResponse> {
+): Promise<ResourceReviewSummaryPlannerResponse> {
   if (!signedInUser) {
     throw new Error(translate('error.loginRequired'))
   }
@@ -56,7 +56,7 @@ export async function loadAttractionReviews(
   signedInUser: UserResponse | null,
   translate: (translationKey: string) => string,
   payload: { resourceType: string; resourceId: string },
-): Promise<ReviewResponse[]> {
+): Promise<ReviewPlannerResponse[]> {
   if (!signedInUser) {
     throw new Error(translate('error.loginRequired'))
   }

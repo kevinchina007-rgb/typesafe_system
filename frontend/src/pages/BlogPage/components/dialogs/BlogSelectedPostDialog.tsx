@@ -1,4 +1,6 @@
-﻿import { X } from 'lucide-react'
+// BlogSelectedPostDialog：博客页面中已选文章详情弹窗组件。
+
+import { X } from 'lucide-react'
 
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { BlogPageController } from '../../objects'

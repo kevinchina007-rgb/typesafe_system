@@ -1,3 +1,8 @@
-// 本文件定义 ExploreSuggestionsPlanner，负责 content 模块的处理编排和接口入口。
+// ExploreSuggestionsPlanner：content 域探索推荐入口。
 
-export { listExploreSuggestions } from './ExplorePlannerSupport'
+import type { ExploreSuggestionsPlannerRequest } from '@/microservices/content/objects/ExploreSuggestionsPlannerRequest'
+import type { ExploreSuggestionListPlannerResponse } from '@/microservices/content/objects/ExploreSuggestionListPlannerResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const listExploreSuggestions = (payload: ExploreSuggestionsPlannerRequest): Promise<ExploreSuggestionListPlannerResponse> =>
+  executeJsonApiRequest('/ExploreSuggestionsPlanner', 'POST', payload)

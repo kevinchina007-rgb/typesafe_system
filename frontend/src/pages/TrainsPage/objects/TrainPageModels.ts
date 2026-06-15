@@ -1,4 +1,4 @@
-import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, ResourceReviewSummaryPlannerResponse, ReviewPlannerResponse, TrainPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
 // TrainsPage 使用的行程类型，只保留单程和往返两种。
@@ -92,8 +92,8 @@ export type TrainResultsSectionProps = {
   onToggleTravelerSelection: (travelerId: string) => void
   onRequireLogin: () => void
   onBookTrain: (payload: TrainBookRequest) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
 }
 
 // TrainsPage 控制器对页面暴露的完整状态和动作集合。
@@ -126,6 +126,6 @@ export type TrainsPageController = {
   onAuthDialogClose: () => void
   onAuthDialogConfirm: () => void
   onBookTrain: (payload: TrainBookRequest) => Promise<void>
-  loadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  loadReviewsByResource: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  loadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  loadReviewsByResource: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
 }

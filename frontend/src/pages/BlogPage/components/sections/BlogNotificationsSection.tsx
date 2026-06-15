@@ -1,4 +1,6 @@
-﻿import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
+// BlogNotificationsSection：博客页面博客通知区块组件。
+
+import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { BlogPageController } from '../../objects'
 import { buildFallbackInitials, formatShortDate, notificationFilters } from '../../functions'
 

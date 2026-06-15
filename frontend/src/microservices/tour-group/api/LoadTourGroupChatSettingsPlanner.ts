@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ LoadTourGroupChatSettingsPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„åŠ è½½ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { getTourGroupChatSettings as getTourGroupChatSettingsImpl } from './TourGroupPlannerSupportPlanning'
 
-export { getTourGroupChatSettings } from './TourGroupPlannerSupport'
+export const getTourGroupChatSettings = (...args: Parameters<typeof getTourGroupChatSettingsImpl>) => getTourGroupChatSettingsImpl(...args)
+
+

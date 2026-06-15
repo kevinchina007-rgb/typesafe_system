@@ -1,4 +1,5 @@
-﻿// Blog 页面组件统一导出，供页面入口集中引用。
+// BlogPage components：博客页面组件统一导出入口。
+
 export { BlogDetail } from './BlogDetail'
 export { BlogEditor } from './BlogEditor'
 export { BlogPostCard } from './BlogPostCard'

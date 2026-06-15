@@ -1,6 +1,8 @@
-﻿import { useEffect, useState } from 'react'
+// BlogEditor：博客页面博客编辑器组件。
 
-import type { ContentImageResponse } from '@/lib/mvp-types/index'
+import { useEffect, useState } from 'react'
+
+import type { ContentImagePlannerResponse } from '@/lib/mvp-types/index'
 import { ContentImageUploader } from '@/pages/shared/content/ContentImageUploader'
 
 // Blog 编辑器参数，负责文章标题、摘要、正文和配图。
@@ -11,15 +13,15 @@ type BlogEditorProps = {
     title: string
     summary: string
     content: string
-    images: ContentImageResponse[]
+    images: ContentImagePlannerResponse[]
   } | null
   translate: (translationKey: string) => string
-  onUploadImage: (imageFile: File) => Promise<ContentImageResponse>
+  onUploadImage: (imageFile: File) => Promise<ContentImagePlannerResponse>
   onSubmit: (payload: {
     title: string
     summary: string
     content: string
-    images: ContentImageResponse[]
+    images: ContentImagePlannerResponse[]
   }) => Promise<void>
   onCancel?: () => void
 }
@@ -41,7 +43,7 @@ export function BlogEditor({
   // 正文输入值。
   const [content, setContent] = useState(initialValue?.content ?? '')
   // 上传图片列表。
-  const [images, setImages] = useState<ContentImageResponse[]>(initialValue?.images ?? [])
+  const [images, setImages] = useState<ContentImagePlannerResponse[]>(initialValue?.images ?? [])
 
   useEffect(() => {
     setTitle(initialValue?.title ?? '')

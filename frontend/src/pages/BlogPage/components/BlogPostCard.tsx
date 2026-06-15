@@ -1,3 +1,5 @@
+// BlogPostCard：博客页面博客文章卡片组件。
+
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { BlogPostSummaryResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
 

@@ -1,4 +1,4 @@
-// ListBlogPostsPlanner 是内容模块的列表查询入口，负责请求校验、流程编排和结果返回。
+// ListBlogPostsPlanner：博客域博客文章列表入口。
 
 package com.typesafe.travel.blog.domain
 

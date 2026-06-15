@@ -1,7 +1,10 @@
-import type { ContentImageResponse } from '@/lib/mvp-types/index'
+// blogPageHelpers：博客页面通用计算、格式化和视图派生辅助函数。
+
+import type { ContentImagePlannerResponse } from '@/lib/mvp-types/index'
 import type { BlogNotificationResponse } from '@/microservices/blog/objects/BlogNotificationResponse'
 import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
-import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
+import type { BlogPostSummaryResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
+import type { BlogTagResponse } from '@/microservices/blog/objects/BlogTagResponse'
 import type { BlogTab, MineTab, NotificationFilter } from '@/pages/BlogPage/objects'
 
 // 左侧导航项，直接驱动 Blog 页签切换。
@@ -38,7 +41,7 @@ export const emptyDraft = {
   coverText: '',
   content: '',
   travelCities: [] as string[],
-  images: [] as ContentImageResponse[],
+  images: [] as ContentImagePlannerResponse[],
   tags: [] as BlogTagResponse[],
 }
 

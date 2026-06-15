@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ JoinTourGroupPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„åŠ å…¥ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { joinTourGroup as joinTourGroupImpl } from './TourGroupPlannerSupportPlanning'
 
-export { joinTourGroup } from './TourGroupPlannerSupport'
+export const joinTourGroup = (...args: Parameters<typeof joinTourGroupImpl>) => joinTourGroupImpl(...args)
+
+

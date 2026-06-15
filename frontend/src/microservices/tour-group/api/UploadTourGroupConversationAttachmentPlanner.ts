@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ UploadTourGroupConversationAttachmentPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„ä¸Šä¼ ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { uploadConversationAttachment as uploadConversationAttachmentImpl } from './TourGroupPlannerSupportAttachment'
 
-export { uploadConversationAttachment } from './TourGroupPlannerSupport'
+export const uploadConversationAttachment = (...args: Parameters<typeof uploadConversationAttachmentImpl>) => uploadConversationAttachmentImpl(...args)
+
+

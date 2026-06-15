@@ -1,3 +1,7 @@
-// 本文件定义 ApproveBlogPostPlanner，负责 content 模块的审批通过编排和接口入口。
+// 本文件定义 ApproveBlogPostPlanner，负责博客域对应接口入口。
 
-export { approveBlogPost } from './BlogPlannerSupport'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const approveBlogPost = (postId: string): Promise<BlogPostResponse> =>
+  executeJsonApiRequest('/ApproveBlogPostPlanner', 'POST', { postId })

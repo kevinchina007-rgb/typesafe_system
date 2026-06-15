@@ -1,3 +1,8 @@
-// 本文件定义 UpdateReviewPlanner，负责 content 模块的更新编排和接口入口。
+// UpdateReviewPlanner：content 域更新评论入口。
 
-export { updateReview } from './ReviewPlannerSupport'
+import type { UpdateReviewPlannerRequest } from '@/microservices/content/objects/UpdateReviewPlannerRequest'
+import type { ReviewPlannerResponse } from '@/microservices/content/objects/ReviewPlannerResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const updateReview = (payload: UpdateReviewPlannerRequest): Promise<ReviewPlannerResponse> =>
+  executeJsonApiRequest('/UpdateReviewPlanner', 'POST', payload)

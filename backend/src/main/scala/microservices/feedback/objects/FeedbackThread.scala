@@ -1,3 +1,4 @@
+// 本文件定义 feedback 域的 `FeedbackThread` 实体，承载线程的基础身份、归属、状态和未读计数。
 package com.typesafe.travel.feedback.domain
 
 import com.typesafe.travel.shared.kernel.*

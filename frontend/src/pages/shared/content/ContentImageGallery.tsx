@@ -1,11 +1,11 @@
 // 本文件定义共享页面组件或工具，负责页面间复用逻辑。
 
-import type { ContentImageResponse } from '@/lib/mvp-types/index'
+import type { ContentImagePlannerResponse } from '@/lib/mvp-types/index'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 
 // 内容图片画廊的输入参数。
 type ContentImageGalleryProps = {
-  images: ContentImageResponse[]
+  images: ContentImagePlannerResponse[]
 }
 
 // 内容图片画廊，负责把多张内容图片按网格展示出来。

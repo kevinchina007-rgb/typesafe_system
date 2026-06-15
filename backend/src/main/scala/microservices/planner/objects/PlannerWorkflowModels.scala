@@ -1,3 +1,5 @@
+// 这个文件只定义后端 planner 引擎内部的流程模型，供生成、匹配、评分、验证等步骤在同一条链路里传递。
+// 它不是前端镜像对象，也不对应一个独立的前端 microservice；这里的模型仅服务于后端智能行程规划引擎。
 package com.typesafe.travel.planner.application
 
 import com.typesafe.travel.planner.domain.*

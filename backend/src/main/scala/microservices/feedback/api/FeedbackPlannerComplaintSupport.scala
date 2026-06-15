@@ -1,3 +1,4 @@
+// 本文件封装 feedback 域投诉卡片、投诉线程和摘要计算的辅助逻辑，供投诉与升级相关 planner 复用。
 package com.typesafe.travel.feedback.domain
 
 import com.typesafe.travel.feedback.domain.*

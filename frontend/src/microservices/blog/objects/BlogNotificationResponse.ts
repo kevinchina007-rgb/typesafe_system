@@ -1,4 +1,4 @@
-// 本文件定义 content 模块的 `BlogNotificationResponse`，作为响应数据并提供 JSON 编解码。
+// BlogNotificationResponse：博客域博客通知返回对象。
 
 export type BlogNotificationResponse = {
   notificationId: string
@@ -13,7 +13,8 @@ export type BlogNotificationResponse = {
   isRead: boolean
   createdAt: string
 }
+export const blogNotificationResponseFromJson = (json: string): BlogNotificationResponse =>
+  JSON.parse(json) as BlogNotificationResponse
 
-export type BlogNotificationListResponse = {
-  notifications: BlogNotificationResponse[]
-}
+export const blogNotificationResponseToJson = (value: BlogNotificationResponse): string =>
+  JSON.stringify(value)

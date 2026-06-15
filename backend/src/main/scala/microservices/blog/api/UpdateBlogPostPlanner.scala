@@ -1,4 +1,4 @@
-// UpdateBlogPostPlanner 是内容模块的更新入口，负责请求校验、流程编排和结果返回。
+// UpdateBlogPostPlanner：博客域更新博客文章入口。
 
 package com.typesafe.travel.blog.domain
 

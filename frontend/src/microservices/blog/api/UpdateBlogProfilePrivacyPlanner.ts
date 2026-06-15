@@ -1,3 +1,7 @@
-// 本文件定义 UpdateBlogProfilePrivacyPlanner，负责 content 模块的更新编排和接口入口。
+// 本文件定义 UpdateBlogProfilePrivacyPlanner，负责博客域对应接口入口。
 
-export { updateBlogProfilePrivacy } from './BlogPlannerSupport'
+import type { BlogProfileResponse } from '@/microservices/blog/objects/BlogProfileResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const updateBlogProfilePrivacy = (userId: string, hideRelations: boolean): Promise<BlogProfileResponse> =>
+  executeJsonApiRequest('/UpdateBlogProfilePrivacyPlanner', 'POST', { userId, hideRelations })

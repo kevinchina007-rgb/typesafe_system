@@ -1,5 +1,4 @@
-// ApproveRefundPlanner 是订单模块的审批入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是退款审批入口，属于订单退款内部流程的一步。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

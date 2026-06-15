@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ SearchTourGroupConversationsPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„æŸ¥è¯¢ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { searchTourGroupConversations as searchTourGroupConversationsImpl } from './TourGroupPlannerSupportConversation'
 
-export { searchTourGroupConversations } from './TourGroupPlannerSupport'
+export const searchTourGroupConversations = (...args: Parameters<typeof searchTourGroupConversationsImpl>) => searchTourGroupConversationsImpl(...args)
+
+

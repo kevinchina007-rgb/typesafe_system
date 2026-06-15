@@ -1,3 +1,5 @@
+// 这个文件声明后端 planner 引擎的“候选评分”契约，以及默认评分实现。
+// 评分属于后端内部决策逻辑，前端不会直接镜像这套接口，而是只接收最终生成的行程结果。
 package com.typesafe.travel.planner.application
 
 import com.typesafe.travel.planner.domain.*

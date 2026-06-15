@@ -1,5 +1,4 @@
-// FindOrderPaymentPlanner 是订单模块的业务入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是订单支付查询入口，属于订单内部查询能力，不直接面向用户界面。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

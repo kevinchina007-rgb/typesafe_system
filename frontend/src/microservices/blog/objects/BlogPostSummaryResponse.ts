@@ -1,11 +1,7 @@
-// 本文件定义 content 模块的 `BlogPostSummaryResponse`，作为摘要响应数据并提供 JSON 编解码。
+// BlogPostSummaryResponse：博客域博客文章摘要返回对象。
 
-import type { ContentImageResponse } from './ContentImageResponse'
-
-export type BlogTagResponse = {
-  tagType: string
-  tagValue: string
-}
+import type { ContentImagePlannerResponse } from '@/microservices/content/objects/ContentImagePlannerResponse'
+import type { BlogTagResponse } from './BlogTagResponse'
 
 export type BlogPostSummaryResponse = {
   postId: string
@@ -30,7 +26,7 @@ export type BlogPostSummaryResponse = {
   isMyPost: boolean
   canEdit: boolean
   canArchive: boolean
-  images: ContentImageResponse[]
+  images: ContentImagePlannerResponse[]
   tags: BlogTagResponse[]
   searchResultSnippet: string | null
 }

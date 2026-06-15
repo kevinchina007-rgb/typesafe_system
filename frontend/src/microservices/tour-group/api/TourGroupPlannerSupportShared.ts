@@ -35,3 +35,4 @@ export function normalizeTourGroupDetails<T extends { planItems?: unknown[]; pla
     bookings: response.bookings ?? [],
   }
 }
+

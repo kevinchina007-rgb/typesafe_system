@@ -1,4 +1,4 @@
-import type { OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { OrderResponse, ReviewPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { FlightRoutePoint } from '@/pages/BookingsPage/components/shared/FlightRoutePoint'
 import { FlightTravelerBadges } from '@/pages/BookingsPage/components/shared/FlightTravelerBadges'
@@ -29,7 +29,7 @@ export function FlightOrderCard({
   currentLanguage: OrderPanelProps['currentLanguage']
   isBusy: boolean
   order: OrderResponse
-  reviews: ReviewResponse[]
+  reviews: ReviewPlannerResponse[]
   travelers: TravelerResponse[]
   translate: OrderPanelProps['translate']
   onCancelOrder: (orderId: string) => Promise<void>

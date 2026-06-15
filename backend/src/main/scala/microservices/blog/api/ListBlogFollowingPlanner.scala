@@ -1,4 +1,4 @@
-// ListBlogFollowingPlanner 是内容模块的列表查询入口，负责请求校验、流程编排和结果返回。
+// ListBlogFollowingPlanner：博客域博客关注中用户列表入口。
 
 package com.typesafe.travel.blog.domain
 

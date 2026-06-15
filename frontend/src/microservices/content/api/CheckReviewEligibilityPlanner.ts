@@ -1,3 +1,8 @@
-// 本文件定义 CheckReviewEligibilityPlanner，负责 content 模块的处理编排和接口入口。
+// CheckReviewEligibilityPlanner：content 域评论资格判断入口。
 
-export { getReviewEligibility } from './ReviewPlannerSupport'
+import type { CheckReviewEligibilityPlannerRequest } from '@/microservices/content/objects/CheckReviewEligibilityPlannerRequest'
+import type { ReviewEligibilityPlannerResponse } from '@/microservices/content/objects/ReviewEligibilityPlannerResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const getReviewEligibility = (payload: CheckReviewEligibilityPlannerRequest): Promise<ReviewEligibilityPlannerResponse> =>
+  executeJsonApiRequest('/CheckReviewEligibilityPlanner', 'POST', payload)

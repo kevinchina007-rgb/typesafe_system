@@ -31,7 +31,6 @@ object TourGroupBookingSupport:
   ): IO[String] =
     planItem.itemType match
       case GroupPlanItemType.Flight =>
-        val (departureAirport, arrivalAirport, departureDate) = TourGroupSelectionSupport.parseTripContext(planOption.resourceContext.getOrElse(throw new IllegalArgumentException("Flight selection is missing resource context")))
         BookFlightPlanner
           .plan(
           BookFlightPlannerRequest(
@@ -41,10 +40,11 @@ object TourGroupBookingSupport:
             cabinClass = planOption.resourceVariantCode.getOrElse("Economy")
           ),
           connection
-        )
+          )
           .map(_.orderId)
       case GroupPlanItemType.Hotel =>
-        val (checkInDate, checkOutDate) = TourGroupSelectionSupport.parseStayContext(planOption.resourceContext.getOrElse(throw new IllegalArgumentException("Hotel selection is missing stay context")))
+        val checkInDate = TourGroupSelectionSupport.normalizeDateOnly(planItem.scheduledAt.toString.take(10))
+        val checkOutDate = planItem.endsAt.map(endAt => TourGroupSelectionSupport.normalizeDateOnly(endAt.toString.take(10))).getOrElse(checkInDate)
         BookHotelPlanner
           .plan(
           BookHotelPlannerRequest(

@@ -1,5 +1,4 @@
-// CancelOrderPlanner 是订单模块的业务入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是订单取消入口，负责取消校验、库存回收和退款额度清零。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

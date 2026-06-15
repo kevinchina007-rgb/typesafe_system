@@ -1,4 +1,4 @@
-import type { AppLanguage, AppViewKey, OrderLineItemResponse, OrderResponse, PaymentLinkResponse, ReviewResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AppViewKey, OrderLineItemResponse, OrderResponse, PaymentLinkResponse, ReviewPlannerResponse, TravelerResponse, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
 // BookingsPage 使用的订单分类，只对应当前页面会展示的几种订单。
@@ -35,7 +35,7 @@ export type OrderPanelProps = {
   isBusy: boolean
   isGuestMode: boolean
   orders: OrderResponse[]
-  reviews: ReviewResponse[]
+  reviews: ReviewPlannerResponse[]
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
   onRequireLogin: () => void
@@ -61,7 +61,7 @@ export type PaymentModalProps = {
 export type OrderLineItemDetailsProps = {
   currentLanguage: AppLanguage
   orderLineItem: OrderLineItemResponse
-  existingReview: ReviewResponse | null
+  existingReview: ReviewPlannerResponse | null
   travelers: TravelerResponse[]
   translate: (translationKey: string) => string
 }
@@ -169,7 +169,7 @@ export type TrainOrderDisplay = {
 // BookingsPage 控制器对页面暴露的完整状态和动作集合。
 export type BookingsPageController = {
   orders: OrderResponse[]
-  reviews: ReviewResponse[]
+  reviews: ReviewPlannerResponse[]
   travelers: TravelerResponse[]
   pendingPaymentOrder: OrderResponse | null
   isAuthDialogOpen: boolean

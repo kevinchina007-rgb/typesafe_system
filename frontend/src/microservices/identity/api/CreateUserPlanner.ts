@@ -1,7 +1,7 @@
-// 本文件定义 CreateUserPlanner，负责 identity 模块的创建编排和接口入口。
-
-import type { UserResponse } from '@/microservices/auth/objects/UserResponse'
+﻿// Identity CreateUserPlanner entry point.
+import type { CreateUserPlannerRequest } from '@/microservices/identity/objects/CreateUserPlannerRequest'
+import type { UserPlannerResponse } from '@/microservices/identity/objects/UserPlannerResponse'
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-export const createUser = (payload: { email: string; nickname: string; phone: string }): Promise<UserResponse> =>
+export const createUserPlanner = (payload: CreateUserPlannerRequest): Promise<UserPlannerResponse> =>
   executeJsonApiRequest('/CreateUserPlanner', 'POST', payload)

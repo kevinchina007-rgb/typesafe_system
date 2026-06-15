@@ -1,4 +1,4 @@
-// GetBlogPostPlanner 是内容模块的获取入口，负责请求校验、流程编排和结果返回。
+// GetBlogPostPlanner：博客域获取博客文章入口。
 
 package com.typesafe.travel.blog.domain
 

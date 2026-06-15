@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ UpdateTourGroupDirectConversationMuteStatePlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„æ›´æ–°ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { updateDirectConversationMuteState as updateDirectConversationMuteStateImpl } from './TourGroupPlannerSupportConversation'
 
-export { updateDirectConversationMuteState } from './TourGroupPlannerSupport'
+export const updateDirectConversationMuteState = (...args: Parameters<typeof updateDirectConversationMuteStateImpl>) => updateDirectConversationMuteStateImpl(...args)
+
+

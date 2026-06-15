@@ -29,7 +29,7 @@ export function useExplorePageController(_: ExplorePageProps): ExplorePageContro
     const timeoutId = window.setTimeout(async () => {
       try {
         setIsLoadingSuggestions(true)
-        const response = await travelMvpApiClient.listExploreSuggestions(normalizedDraft)
+        const response = await travelMvpApiClient.listExploreSuggestions({ q: normalizedDraft })
         if (!cancelled) {
           setSuggestions(response.suggestions)
         }
@@ -65,7 +65,7 @@ export function useExplorePageController(_: ExplorePageProps): ExplorePageContro
         setIsSearching(true)
         const response = await travelMvpApiClient.searchExplore({
           q: normalizedSearchText,
-          type: searchType,
+          resourceType: searchType === 'all' ? undefined : searchType,
         })
         if (!cancelled) {
           setResults(response.results)

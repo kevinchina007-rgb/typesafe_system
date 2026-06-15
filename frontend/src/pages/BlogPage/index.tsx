@@ -1,4 +1,6 @@
-﻿import type { BlogPageProps } from './objects'
+// BlogPage：博客页面路由入口。
+
+import type { BlogPageProps } from './objects'
 import { sidebarItems } from './functions'
 import { useBlogPageController } from './hooks'
 import {

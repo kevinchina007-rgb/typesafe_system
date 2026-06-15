@@ -1,4 +1,6 @@
-﻿import { Settings } from 'lucide-react'
+// BlogProfilePanel：博客页面博客主页面板组件。
+
+import { Settings } from 'lucide-react'
 
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import { BlogPostCard } from '../BlogPostCard'

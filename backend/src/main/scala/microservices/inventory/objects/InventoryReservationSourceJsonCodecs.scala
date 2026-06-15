@@ -1,5 +1,5 @@
-// InventoryReservationSourceJsonCodecs 定义inventory模块的源数据 JSON codec。
-
+// InventoryReservationSourceJsonCodecs 只负责 inventory 域内部对象的 JSON codec。
+// 这里的定义仅供后端库存预留模型使用，前端不会直接镜像这一层。
 package com.typesafe.travel.inventory.domain
 
 import com.typesafe.travel.shared.kernel.*
@@ -9,6 +9,7 @@ import java.time.{Instant, LocalDate}
 import scala.util.Try
 
 private[domain] object InventoryReservationSourceJsonCodecs:
+  // 下面这些 codec 只服务 InventoryReservation 以及它所依赖的后端内部值对象。
   given Encoder[Instant] = Encoder.encodeString.contramap(_.toString)
   given Decoder[Instant] = Decoder.decodeString.emap(value => Try(Instant.parse(value)).toEither.left.map(_.getMessage))
   given Encoder[LocalDate] = Encoder.encodeString.contramap(_.toString)

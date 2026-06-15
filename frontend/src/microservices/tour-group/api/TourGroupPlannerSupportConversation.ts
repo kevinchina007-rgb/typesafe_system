@@ -64,3 +64,4 @@ export const updateDirectConversationMuteState = (conversationId: string, muted:
 
 export const updateDirectConversationArchiveState = (conversationId: string, archived: boolean): Promise<TourGroupConversationSummaryResponse> =>
   executeJsonApiRequest(`/direct-conversations/${conversationId}/archive${createChatQueryString()}`, 'PATCH', { archived })
+

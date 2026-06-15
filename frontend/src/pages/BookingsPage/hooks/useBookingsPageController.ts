@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { ensureOrderCancellationThread, setActiveFeedbackMiniThread } from '@/app/stores/feedback-chat-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { OrderResponse, ReviewResponse, TravelerResponse, PaymentLinkResponse } from '@/lib/mvp-types/index'
+import type { OrderResponse, ReviewPlannerResponse, TravelerResponse, PaymentLinkResponse } from '@/lib/mvp-types/index'
 import { usePageActions } from '@/pages/shared/usePageActions'
 import type { BookingsPageController, BookingsPageProps, PaymentMethodValue } from '../objects'
 
@@ -15,7 +15,7 @@ export function useBookingsPageController({
   onShowNotice,
 }: BookingsPageProps): BookingsPageController {
   const [orders, setOrders] = useState<OrderResponse[]>([])
-  const [reviews, setReviews] = useState<ReviewResponse[]>([])
+  const [reviews, setReviews] = useState<ReviewPlannerResponse[]>([])
   const [travelers, setTravelers] = useState<TravelerResponse[]>([])
   const [pendingPaymentOrder, setPendingPaymentOrder] = useState<OrderResponse | null>(null)
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false)
@@ -41,7 +41,7 @@ export function useBookingsPageController({
       setReviews([])
       return
     }
-    const reviewListResponse = await travelMvpApiClient.listMyReviews(signedInUser.userId)
+    const reviewListResponse = await travelMvpApiClient.listMyReviews({ userId: signedInUser.userId })
     setReviews(reviewListResponse.reviews)
   }
 
@@ -105,7 +105,7 @@ export function useBookingsPageController({
     onDeleteReview: async reviewId => {
       const nextSignedInUser = requireSignedInUser()
       await runPageAction(async () => {
-        await travelMvpApiClient.deleteReview(reviewId, { userId: nextSignedInUser.userId })
+        await travelMvpApiClient.deleteReview({ userId: nextSignedInUser.userId, reviewId })
         await reloadReviews()
       }, translate('reviews.delete'), translate('notice.actionSuccess'))
     },

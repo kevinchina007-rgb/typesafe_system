@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ LeaveTourGroupPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„é€€å‡ºç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { leaveTourGroup as leaveTourGroupImpl } from './TourGroupPlannerSupportPlanning'
 
-export { leaveTourGroup } from './TourGroupPlannerSupport'
+export const leaveTourGroup = (...args: Parameters<typeof leaveTourGroupImpl>) => leaveTourGroupImpl(...args)
+
+

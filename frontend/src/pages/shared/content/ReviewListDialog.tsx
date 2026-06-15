@@ -1,6 +1,6 @@
 // 本文件定义共享页面组件或工具，负责页面间复用逻辑。
 
-import type { AppLanguage, ReviewResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, ReviewPlannerResponse } from '@/lib/mvp-types/index'
 import { formatReviewMeta, localizeReviewResourceType, localizeReviewStatus, summarizeRating } from '@/lib/presenters/content-presenter'
 import { ContentImageGallery } from '@/pages/shared/content/ContentImageGallery'
 
@@ -10,7 +10,7 @@ type ReviewListDialogProps = {
   isBusy: boolean
   isOpen: boolean
   title: string
-  reviews: ReviewResponse[]
+  reviews: ReviewPlannerResponse[]
   translate: (translationKey: string) => string
   onClose: () => void
 }

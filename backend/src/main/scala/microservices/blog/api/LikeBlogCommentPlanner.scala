@@ -1,3 +1,5 @@
+// LikeBlogCommentPlanner：博客域点赞博客评论入口。
+
 package com.typesafe.travel.blog.domain
 
 import cats.effect.IO

@@ -126,3 +126,4 @@ export const getTourGroupChatSettings = (groupId: string): Promise<TourGroupChat
 
 export const updateTourGroupChatSettings = (groupId: string, payload: { allowMemberDirectChat: boolean }): Promise<TourGroupChatSettingsResponse> =>
   executeJsonApiRequest(`/tour-groups/${groupId}/chat-settings${createChatQueryString()}`, 'PATCH', payload)
+

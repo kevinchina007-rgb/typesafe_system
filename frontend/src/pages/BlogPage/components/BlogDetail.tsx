@@ -1,4 +1,6 @@
-﻿import { useState } from 'react'
+// BlogDetail：博客页面博客Detail组件。
+
+import { useState } from 'react'
 
 import type { AppLanguage, BlogPostResponse } from '@/lib/mvp-types/index'
 import { formatBlogMeta, localizeBlogStatus } from '@/lib/presenters/content-presenter'

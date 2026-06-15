@@ -1,7 +1,7 @@
-// 本文件定义 GetUserPlanner，负责 identity 模块的获取编排和接口入口。
-
-import type { UserResponse } from '@/microservices/auth/objects/UserResponse'
+﻿// Identity GetUserPlanner entry point.
+import type { GetUserPlannerRequest } from '@/microservices/identity/objects/GetUserPlannerRequest'
+import type { UserPlannerResponse } from '@/microservices/identity/objects/UserPlannerResponse'
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-export const getUser = (userId: string): Promise<UserResponse> =>
-  executeJsonApiRequest('/GetUserPlanner', 'POST', { userId })
+export const getUserPlanner = (payload: GetUserPlannerRequest): Promise<UserPlannerResponse> =>
+  executeJsonApiRequest('/GetUserPlanner', 'POST', payload)

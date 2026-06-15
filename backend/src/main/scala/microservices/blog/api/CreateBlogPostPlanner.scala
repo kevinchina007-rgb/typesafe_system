@@ -1,4 +1,4 @@
-// CreateBlogPostPlanner 是内容模块的创建入口，负责请求校验、流程编排和结果返回。
+// CreateBlogPostPlanner：博客域创建博客文章入口。
 
 package com.typesafe.travel.blog.domain
 

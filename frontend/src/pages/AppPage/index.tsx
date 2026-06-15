@@ -8,21 +8,8 @@ import { APP_PAGE_REGIONS, type AppPageController } from './objects'
 export function MvpApp() {
   const currentNotice = useAppShellStore(state => state.currentNotice)
   const controller = useAppPageController()
-  const loadingRegion = APP_PAGE_REGIONS[0]
   const shellRegion = APP_PAGE_REGIONS[1]
   const noticeRegion = APP_PAGE_REGIONS[2]
-
-  if (!controller.hasResolvedPrincipalState) {
-    return (
-      <main className="grid min-h-screen bg-slate-50 text-slate-950" aria-label={loadingRegion.title}>
-        <section className="grid w-full gap-6">
-          <section className="grid place-items-center gap-3 border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
-            <strong>正在恢复工作台状态</strong>
-          </section>
-        </section>
-      </main>
-    )
-  }
 
   return (
     <>

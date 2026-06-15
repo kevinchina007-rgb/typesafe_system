@@ -1,3 +1,7 @@
-// 本文件定义 ListBlogNotificationsPlanner，负责 content 模块的列表查询编排和接口入口。
+// 本文件定义 ListBlogNotificationsPlanner，负责博客域对应接口入口。
 
-export { listBlogNotifications } from './BlogPlannerSupport'
+import type { BlogNotificationListResponse } from '@/microservices/blog/objects/BlogNotificationListResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const listBlogNotifications = (userId: string): Promise<BlogNotificationListResponse> =>
+  executeJsonApiRequest('/ListBlogNotificationsPlanner', 'POST', { userId })

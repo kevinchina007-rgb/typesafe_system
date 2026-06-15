@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ AddMembershipTravelerPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„æ·»åŠ ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { addTourGroupMembershipTraveler as addTourGroupMembershipTravelerImpl } from './TourGroupPlannerSupportPlanning'
 
-export { addTourGroupMembershipTraveler } from './TourGroupPlannerSupport'
+export const addTourGroupMembershipTraveler = (...args: Parameters<typeof addTourGroupMembershipTravelerImpl>) => addTourGroupMembershipTravelerImpl(...args)
+
+

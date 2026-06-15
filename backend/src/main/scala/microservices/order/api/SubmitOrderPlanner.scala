@@ -1,5 +1,4 @@
-// SubmitOrderPlanner 是订单模块的提交入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是订单提交入口，负责把订单推进到待支付状态。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

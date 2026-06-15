@@ -1,5 +1,4 @@
-// UploadUserAvatarPlanner 是身份模块的上传入口，负责请求校验、流程编排和结果返回。
-
+// 本文件定义 UploadUserAvatarPlanner，是 identity 模块的头像上传入口，只负责请求校验、流程编排和结果返回。
 package com.typesafe.travel.identity.domain
 
 import cats.effect.IO

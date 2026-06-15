@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ DeleteTourGroupMessagePlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„åˆ é™¤ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { deleteConversationMessage as deleteConversationMessageImpl } from './TourGroupPlannerSupportConversation'
 
-export { deleteConversationMessage } from './TourGroupPlannerSupport'
+export const deleteConversationMessage = (...args: Parameters<typeof deleteConversationMessageImpl>) => deleteConversationMessageImpl(...args)
+
+

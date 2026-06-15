@@ -1,3 +1,7 @@
-// 本文件定义 DeleteReviewPlanner，负责 content 模块的删除编排和接口入口。
+// DeleteReviewPlanner：content 域删除评论入口。
 
-export { deleteReview } from './ReviewPlannerSupport'
+import type { DeleteReviewPlannerRequest } from '@/microservices/content/objects/DeleteReviewPlannerRequest'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const deleteReview = (payload: DeleteReviewPlannerRequest): Promise<void> =>
+  executeJsonApiRequest('/DeleteReviewPlanner', 'POST', payload)

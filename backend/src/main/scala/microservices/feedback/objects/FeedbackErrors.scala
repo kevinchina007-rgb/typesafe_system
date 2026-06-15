@@ -1,5 +1,4 @@
-// FeedbackErrors 定义内容模块的错误模型。
-
+// 本文件定义 feedback 域对外可见的错误模型，供 planner 和 domain functions 在找不到线程、校验失败或引用缺失时统一抛出。
 package com.typesafe.travel.feedback.domain
 
 import com.typesafe.travel.shared.kernel.*

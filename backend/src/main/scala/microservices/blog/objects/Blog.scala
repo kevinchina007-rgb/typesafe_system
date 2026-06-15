@@ -1,4 +1,4 @@
-// Blog 定义内容模块的数据模型。
+// Blog.scala：博客域后端内部领域模型，供 planner 和 tables 组合业务使用，不直接镜像前端。
 
 package com.typesafe.travel.blog.domain
 

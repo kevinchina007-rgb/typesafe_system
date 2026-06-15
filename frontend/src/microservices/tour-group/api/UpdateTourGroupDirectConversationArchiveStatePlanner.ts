@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ UpdateTourGroupDirectConversationArchiveStatePlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„æ›´æ–°ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { updateDirectConversationArchiveState as updateDirectConversationArchiveStateImpl } from './TourGroupPlannerSupportConversation'
 
-export { updateDirectConversationArchiveState } from './TourGroupPlannerSupport'
+export const updateDirectConversationArchiveState = (...args: Parameters<typeof updateDirectConversationArchiveStateImpl>) => updateDirectConversationArchiveStateImpl(...args)
+
+

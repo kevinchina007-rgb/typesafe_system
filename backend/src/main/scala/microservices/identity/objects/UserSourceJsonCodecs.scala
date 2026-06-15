@@ -1,5 +1,4 @@
-// UserSourceJsonCodecs 定义身份模块的源数据 JSON codec。
-
+// 本文件定义 identity 用户域源数据的 JSON codec，只负责把基础值对象和时间类型转换成 JSON。
 package com.typesafe.travel.identity.domain
 
 import com.typesafe.travel.shared.kernel.*

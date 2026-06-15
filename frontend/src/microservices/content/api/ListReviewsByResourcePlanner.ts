@@ -1,3 +1,8 @@
-// 本文件定义 ListReviewsByResourcePlanner，负责 content 模块的列表查询编排和接口入口。
+// ListReviewsByResourcePlanner：content 域资源评论列表入口。
 
-export { listReviewsByResource } from './ReviewPlannerSupport'
+import type { ListReviewsByResourcePlannerRequest } from '@/microservices/content/objects/ListReviewsByResourcePlannerRequest'
+import type { ReviewListPlannerResponse } from '@/microservices/content/objects/ReviewListPlannerResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const listReviewsByResource = (payload: ListReviewsByResourcePlannerRequest): Promise<ReviewListPlannerResponse> =>
+  executeJsonApiRequest('/ListReviewsByResourcePlanner', 'POST', payload)

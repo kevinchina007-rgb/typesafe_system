@@ -1,6 +1,6 @@
 import type { UserSessionPlannerResponse } from './UserSessionPlannerResponse'
 
-// 本文件保留为兼容层，补充“当前会话是否命中本地登录态”的前端展示字段。
+// 本文件定义用户会话展示对象，并附带当前会话标记。
 export type UserSessionResponse = UserSessionPlannerResponse & {
   isCurrent: boolean
 }

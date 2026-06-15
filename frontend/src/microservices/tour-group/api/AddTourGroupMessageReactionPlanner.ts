@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ AddTourGroupMessageReactionPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„æ·»åŠ ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { addConversationReaction as addConversationReactionImpl } from './TourGroupPlannerSupportConversation'
 
-export { addConversationReaction } from './TourGroupPlannerSupport'
+export const addConversationReaction = (...args: Parameters<typeof addConversationReactionImpl>) => addConversationReactionImpl(...args)
+
+

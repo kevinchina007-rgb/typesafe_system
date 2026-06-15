@@ -1,6 +1,6 @@
 // 本文件定义 BookingsPage 页面的卡片组件，负责单条数据摘要展示。
 
-import type { OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { OrderResponse, ReviewPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { formatIsoDateTime, localizeBookingKind, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { OrderLineItemDetails } from '@/pages/BookingsPage/components/OrderLineItemDetails'
 import { OrderItemFeedbackActions } from '@/pages/BookingsPage/components/shared/OrderItemFeedbackActions'
@@ -24,7 +24,7 @@ export function GenericOrderCard({
   currentLanguage: OrderPanelProps['currentLanguage']
   isBusy: boolean
   order: OrderResponse
-  reviews: ReviewResponse[]
+  reviews: ReviewPlannerResponse[]
   travelers: TravelerResponse[]
   translate: OrderPanelProps['translate']
   onCancelOrder: (orderId: string) => Promise<void>

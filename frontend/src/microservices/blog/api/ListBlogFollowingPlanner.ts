@@ -1,3 +1,7 @@
-// 本文件定义 ListBlogFollowingPlanner，负责 content 模块的列表查询编排和接口入口。
+// 本文件定义 ListBlogFollowingPlanner，负责博客域对应接口入口。
 
-export { listBlogFollowing } from './BlogPlannerSupport'
+import type { BlogProfileUserListResponse } from '@/microservices/blog/objects/BlogProfileUserListResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const listBlogFollowing = (profileUserId: string, viewerUserId?: string): Promise<BlogProfileUserListResponse> =>
+  executeJsonApiRequest('/ListBlogFollowingPlanner', 'POST', { profileUserId, viewerUserId })

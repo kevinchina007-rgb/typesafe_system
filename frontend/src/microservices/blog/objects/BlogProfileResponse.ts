@@ -1,4 +1,4 @@
-// 本文件定义 content 模块的 `BlogProfileResponse`，作为响应数据并提供 JSON 编解码。
+// BlogProfileResponse：博客域博客主页返回对象。
 
 export type BlogProfileResponse = {
   userId: string
@@ -11,19 +11,8 @@ export type BlogProfileResponse = {
   hideRelations: boolean
   relationListHidden: boolean
 }
+export const blogProfileResponseFromJson = (json: string): BlogProfileResponse =>
+  JSON.parse(json) as BlogProfileResponse
 
-export type BlogProfileUserResponse = {
-  userId: string
-  nickname: string
-  avatarUrl: string | null
-  followerCount: number
-  followingCount: number
-  receivedLikeCount: number
-  isFollowing: boolean
-  hideRelations: boolean
-  relationListHidden: boolean
-}
-
-export type BlogProfileUserListResponse = {
-  users: BlogProfileUserResponse[]
-}
+export const blogProfileResponseToJson = (value: BlogProfileResponse): string =>
+  JSON.stringify(value)

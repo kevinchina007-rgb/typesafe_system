@@ -1,4 +1,4 @@
-// SaveBlogDraftPlanner 是内容模块的保存入口，负责请求校验、流程编排和结果返回。
+// SaveBlogDraftPlanner：博客域保存博客草稿入口。
 
 package com.typesafe.travel.blog.domain
 

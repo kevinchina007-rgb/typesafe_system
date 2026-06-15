@@ -1,3 +1,5 @@
+// 这个文件定义 planner 后端引擎的核心数据结构：请求、行程计划、候选结果、约束与时间块。
+// 它属于后端基础能力层，没有独立的前端微服务目录；前端只会通过其他业务域的入口间接使用这些规划结果。
 package com.typesafe.travel.planner.domain
 
 import com.typesafe.travel.shared.kernel.*

@@ -1,4 +1,4 @@
-// FavoriteBlogPostPlanner 是内容模块的收藏入口，负责请求校验、流程编排和结果返回。
+// FavoriteBlogPostPlanner：博客域收藏博客文章入口。
 
 package com.typesafe.travel.blog.domain
 

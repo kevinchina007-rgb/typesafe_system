@@ -1,2 +1,9 @@
-// 本文件定义 ListManagedTrainsPlanner，负责 train 模块的管理列表入口。
-export { listManagedTrainsPlanner, listManagedTrains } from './TrainPlannerManagerSupport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+import type { TrainListPlannerResponse } from '@/microservices/train/objects/TrainListPlannerResponse'
+import type { ListManagedTrainsPlannerRequest } from '@/microservices/train/objects/ListManagedTrainsPlannerRequest'
+
+export const listManagedTrainsPlanner = (payload: ListManagedTrainsPlannerRequest): Promise<TrainListPlannerResponse> =>
+  executeJsonApiRequest('/ListManagedTrainsPlanner', 'POST', payload)
+
+export const listManagedTrains = (managerId: string): Promise<TrainListPlannerResponse> =>
+  listManagedTrainsPlanner({ managerId })

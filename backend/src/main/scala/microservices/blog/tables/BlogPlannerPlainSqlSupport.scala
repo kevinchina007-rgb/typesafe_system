@@ -1,4 +1,5 @@
-// BlogPlannerPlainSqlSupport 提供内容模块博客表操作所需的通用查询和写入辅助函数。
+// BlogPlannerPlainSqlSupport：博客域表访问与映射辅助。
+
 package com.typesafe.travel.persistence.blog
 
 import cats.effect.IO

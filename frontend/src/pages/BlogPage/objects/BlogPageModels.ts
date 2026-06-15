@@ -1,10 +1,14 @@
+// BlogPageModels：博客页面使用的视图模型与状态结构。
+
 import type { AppLanguage, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { BlogNotificationResponse } from '@/microservices/blog/objects/BlogNotificationResponse'
 import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
-import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
-import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/blog/objects/BlogProfileResponse'
-import type { ContentImageResponse } from '@/lib/mvp-types/index'
+import type { BlogPostSummaryResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
+import type { BlogTagResponse } from '@/microservices/blog/objects/BlogTagResponse'
+import type { BlogProfileResponse } from '@/microservices/blog/objects/BlogProfileResponse'
+import type { BlogProfileUserResponse } from '@/microservices/blog/objects/BlogProfileUserResponse'
+import type { ContentImagePlannerResponse } from '@/lib/mvp-types/index'
 
 // Blog 页面顶层参数，负责把语言、登录用户和通知回调传给整页。
 export type BlogPageProps = {
@@ -31,7 +35,7 @@ export type BlogDraft = {
   coverText: string
   content: string
   travelCities: string[]
-  images: ContentImageResponse[]
+  images: ContentImagePlannerResponse[]
   tags: BlogTagResponse[]
 }
 
@@ -103,7 +107,7 @@ export type BlogPageController = {
   submitComment: () => Promise<void>
   likeComment: (comment: BlogPostResponse['comments'][number]) => Promise<void>
   handleImages: (files: FileList | null) => Promise<void>
-  uploadDraftImage: (imageFile: File) => Promise<ContentImageResponse>
+  uploadDraftImage: (imageFile: File) => Promise<ContentImagePlannerResponse>
   removeDraftImage: (imageId: string) => void
   setProfileRelationTab: (tab: ProfileRelationTab | null) => void
   setProfileRelationUsers: (users: BlogProfileUserResponse[]) => void

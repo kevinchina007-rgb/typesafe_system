@@ -1,5 +1,4 @@
-// CreateOrderPlanner 是订单模块的创建入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是订单创建入口，负责校验请求、执行创建流程并返回订单详情。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

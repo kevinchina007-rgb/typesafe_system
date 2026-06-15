@@ -2,26 +2,26 @@
 
 import { useEffect, useState } from 'react'
 
-import type { ContentImageResponse, ReviewEligibilityResponse } from '@/lib/mvp-types/index'
+import type { ContentImagePlannerResponse, ReviewEligibilityPlannerResponse } from '@/lib/mvp-types/index'
 import { ContentImageUploader } from '@/pages/shared/content/ContentImageUploader'
 
 // 评价编辑弹窗的输入参数。
 type ReviewComposerDialogProps = {
   isOpen: boolean
   isBusy: boolean
-  eligibility: ReviewEligibilityResponse | null
+  eligibility: ReviewEligibilityPlannerResponse | null
   title: string
   mode?: 'create' | 'edit'
   initialValue?: {
     rating: number
     title: string
     content: string
-    images: ContentImageResponse[]
+    images: ContentImagePlannerResponse[]
   } | null
   translate: (translationKey: string) => string
   onClose: () => void
-  onUploadImage: (imageFile: File) => Promise<ContentImageResponse>
-  onSubmit: (payload: { rating: number; title: string; content: string; images: ContentImageResponse[] }) => Promise<void>
+  onUploadImage: (imageFile: File) => Promise<ContentImagePlannerResponse>
+  onSubmit: (payload: { rating: number; title: string; content: string; images: ContentImagePlannerResponse[] }) => Promise<void>
 }
 
 // 评价编辑弹窗，负责初始化草稿并提交评价内容。
@@ -41,7 +41,7 @@ export function ReviewComposerDialog({
   const [rating, setRating] = useState(5)
   const [reviewTitle, setReviewTitle] = useState('')
   const [content, setContent] = useState('')
-  const [images, setImages] = useState<ContentImageResponse[]>([])
+  const [images, setImages] = useState<ContentImagePlannerResponse[]>([])
 
   useEffect(() => {
     // 打开弹窗时，把已有内容或默认值同步进表单。

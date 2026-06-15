@@ -1,9 +1,9 @@
-﻿import type { AppLanguage, OrderLineItemResponse, OrderResponse, ReviewResponse, TravelerResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, OrderLineItemResponse, OrderResponse, ReviewPlannerResponse, TravelerResponse } from '@/lib/mvp-types/index'
 import { localizePaymentMethod } from '@/lib/presenters/view-models'
 import { hasTrainSnapshot, parseAttractionSnapshot, parseFlightSnapshot, parseHotelSnapshot } from './bookingOrderDisplayHelpers'
 import type { OrderCategory } from '@/pages/BookingsPage/objects'
 
-export function findOrderItemReview(reviews: ReviewResponse[], orderItemId: string) {
+export function findOrderItemReview(reviews: ReviewPlannerResponse[], orderItemId: string) {
   return reviews.find(review => review.orderItemId === orderItemId) ?? null
 }
 

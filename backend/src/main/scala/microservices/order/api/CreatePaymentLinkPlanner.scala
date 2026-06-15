@@ -1,5 +1,4 @@
-// CreatePaymentLinkPlanner 是订单模块的创建入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是订单支付链接生成入口，属于订单对外支付流程。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

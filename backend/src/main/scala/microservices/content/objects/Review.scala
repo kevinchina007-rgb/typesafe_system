@@ -1,4 +1,4 @@
-// Review 定义内容模块的数据模型。
+// Review.scala：content 域的后端内部评论领域模型。
 
 package com.typesafe.travel.content.domain
 

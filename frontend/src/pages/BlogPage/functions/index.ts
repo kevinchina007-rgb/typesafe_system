@@ -1,4 +1,5 @@
-﻿// Blog 页面 helper 统一导出，供组件和 controller 复用。
+// BlogPage functions：博客页面函数统一导出入口。
+
 export {
   buildFallbackInitials,
   buildNotificationTypeSet,

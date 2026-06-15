@@ -1,6 +1,6 @@
 // 本文件定义 advertising 模块的 `AdvertisementResponse`，作为响应数据并提供 JSON 编解码。
 
-import type { AdvertisementReviewResponse } from './AdvertisementReviewResponse'
+import type { AdvertisementReviewPlannerResponse } from './AdvertisementReviewPlannerResponse'
 
 export type AdvertisementResponse = {
   advertisementId: string
@@ -31,7 +31,7 @@ export type AdvertisementResponse = {
   rejectionNote: string | null
   createdAt: string
   updatedAt: string
-  reviews: AdvertisementReviewResponse[]
+  reviews: AdvertisementReviewPlannerResponse[]
 }
 
 export const advertisementResponseFromJson = (json: string): AdvertisementResponse =>

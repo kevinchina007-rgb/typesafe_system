@@ -1,4 +1,4 @@
-// BlogSuggestionsPlanner 是内容模块的业务入口，负责请求校验、流程编排和结果返回。
+// BlogSuggestionsPlanner：博客域博客推荐入口。
 
 package com.typesafe.travel.blog.domain
 

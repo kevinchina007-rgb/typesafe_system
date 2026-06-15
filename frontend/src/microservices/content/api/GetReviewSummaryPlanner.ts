@@ -1,3 +1,8 @@
-// 本文件定义 GetReviewSummaryPlanner，负责 content 模块的获取编排和接口入口。
+// GetReviewSummaryPlanner：content 域资源评论摘要入口。
 
-export { getReviewResourceSummary } from './ReviewPlannerSupport'
+import type { GetReviewSummaryPlannerRequest } from '@/microservices/content/objects/GetReviewSummaryPlannerRequest'
+import type { ResourceReviewSummaryPlannerResponse } from '@/microservices/content/objects/ResourceReviewSummaryPlannerResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const getReviewResourceSummary = (payload: GetReviewSummaryPlannerRequest): Promise<ResourceReviewSummaryPlannerResponse> =>
+  executeJsonApiRequest('/GetReviewSummaryPlanner', 'POST', payload)

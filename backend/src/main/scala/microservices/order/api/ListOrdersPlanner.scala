@@ -1,5 +1,4 @@
-// ListOrdersPlanner 是订单模块的列表查询入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是订单列表查询入口，负责按用户读取订单集合。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

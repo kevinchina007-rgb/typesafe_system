@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ ListTourGroupsPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„åˆ—è¡¨æŸ¥è¯¢ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { listTourGroups as listTourGroupsImpl } from './TourGroupPlannerSupportPlanning'
 
-export { listTourGroups } from './TourGroupPlannerSupport'
+export const listTourGroups = (...args: Parameters<typeof listTourGroupsImpl>) => listTourGroupsImpl(...args)
+
+

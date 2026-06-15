@@ -1,3 +1,7 @@
-// 本文件定义 UnlikeBlogCommentPlanner，负责 content 模块的取消点赞编排和接口入口。
+// 本文件定义 UnlikeBlogCommentPlanner，负责博客域对应接口入口。
 
-export { unlikeBlogComment } from './BlogPlannerSupport'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const unlikeBlogComment = (commentId: string, payload: { userId: string }): Promise<BlogPostResponse> =>
+  executeJsonApiRequest('/UnlikeBlogCommentPlanner', 'POST', { commentId, userId: payload.userId })

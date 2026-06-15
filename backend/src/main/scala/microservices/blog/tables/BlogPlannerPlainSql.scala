@@ -1,4 +1,4 @@
-// BlogPlannerPlainSql 封装内容模块的plain SQL 实现。
+// BlogPlannerPlainSql：博客域表访问与映射辅助。
 
 package com.typesafe.travel.persistence.blog
 

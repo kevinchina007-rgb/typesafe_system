@@ -1,11 +1,9 @@
-// ??????????????????????
+// shared-kernel 模块只保留跨业务通用的类型，不再放 content 域的搜索对象。
 
 export type { HealthResponse } from '@/shared-kernel/objects/HealthResponse'
 export type { ApiErrorResponse } from '@/shared-kernel/objects/ApiErrorResponse'
-export type { ExploreSearchResponse } from '@/shared-kernel/objects/ExploreSearchResponse'
-export type { ExploreSearchResultResponse } from '@/shared-kernel/objects/ExploreSearchResultResponse'
-export type { SearchSuggestionListResponse } from '@/shared-kernel/objects/SearchSuggestionListResponse'
 export type { SearchSuggestionResponse } from '@/shared-kernel/objects/SearchSuggestionResponse'
+export type { ExploreSearchResultResponse } from '@/shared-kernel/objects/ExploreSearchResultResponse'
 
 export type AppLanguage = 'zh'
 

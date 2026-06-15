@@ -1,4 +1,4 @@
-// DeleteBlogCommentPlanner 是内容模块的删除入口，负责请求校验、流程编排和结果返回。
+// DeleteBlogCommentPlanner：博客域删除博客评论入口。
 
 package com.typesafe.travel.blog.domain
 

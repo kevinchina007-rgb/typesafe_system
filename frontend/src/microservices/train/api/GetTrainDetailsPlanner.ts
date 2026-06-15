@@ -1,2 +1,9 @@
-// 本文件定义 GetTrainDetailsPlanner，负责 train 模块的详情入口。
-export { getTrainDetailsPlanner, getTrain } from './TrainPlannerDetailsSupport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+import type { GetTrainDetailsPlannerRequest } from '@/microservices/train/objects/GetTrainDetailsPlannerRequest'
+import type { TrainPlannerResponse } from '@/microservices/train/objects/TrainPlannerResponse'
+
+export const getTrainDetailsPlanner = (payload: GetTrainDetailsPlannerRequest): Promise<TrainPlannerResponse> =>
+  executeJsonApiRequest('/GetTrainDetailsPlanner', 'POST', payload)
+
+export const getTrain = (trainId: string): Promise<TrainPlannerResponse> =>
+  getTrainDetailsPlanner({ trainId })

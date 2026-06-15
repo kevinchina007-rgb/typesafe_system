@@ -2,7 +2,7 @@ import type { UserSessionListPlannerResponse } from './UserSessionListPlannerRes
 import type { UserSessionResponse } from './UserSessionResponse'
 import { userSessionResponseFromPlannerResponse } from './UserSessionResponse'
 
-// 本文件保留为兼容层，把后端会话列表转换成前端还在使用的“带当前会话标记”结构。
+// 本文件定义用户会话列表展示对象，并把当前会话标记收口在这里。
 export type UserSessionListResponse = {
   sessions: UserSessionResponse[]
 }

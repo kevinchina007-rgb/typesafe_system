@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ GetTourGroupDetailsPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„è·å–ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { getTourGroup as getTourGroupImpl } from './TourGroupPlannerSupportPlanning'
 
-export { getTourGroup } from './TourGroupPlannerSupport'
+export const getTourGroup = (...args: Parameters<typeof getTourGroupImpl>) => getTourGroupImpl(...args)
+
+

@@ -1,5 +1,4 @@
-// UserDomainFunctions 定义身份模块的领域辅助函数。
-
+// 本文件定义 identity 用户域的纯辅助函数，只提供可复用的状态流转和对象构造逻辑。
 package com.typesafe.travel.identity.domain
 
 import com.typesafe.travel.shared.kernel.*

@@ -1,4 +1,4 @@
-// FollowBlogUserPlanner 是内容模块的关注入口，负责请求校验、流程编排和结果返回。
+// FollowBlogUserPlanner：博客域关注博客用户入口。
 
 package com.typesafe.travel.blog.domain
 

@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ ListTourGroupConversationMessagesPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„åˆ—è¡¨æŸ¥è¯¢ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { listConversationMessages as listConversationMessagesImpl } from './TourGroupPlannerSupportConversation'
 
-export { listConversationMessages } from './TourGroupPlannerSupport'
+export const listConversationMessages = (...args: Parameters<typeof listConversationMessagesImpl>) => listConversationMessagesImpl(...args)
+
+

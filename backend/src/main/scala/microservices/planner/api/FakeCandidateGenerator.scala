@@ -1,3 +1,5 @@
+// 这个文件提供后端 planner 引擎的本地/测试用假候选生成器。
+// 它的作用是让后端在没有接入完整算法或真实数据源时，仍能跑通规划链路；因此它也是后端专用实现，没有前端对应模块。
 package com.typesafe.travel.planner.application
 
 import com.typesafe.travel.planner.domain.*

@@ -1,11 +1,12 @@
-// 本文件定义 UploadUserAvatarPlanner，负责 identity 模块的上传编排和接口入口。
-
-import type { UserResponse } from '@/microservices/auth/objects/UserResponse'
+﻿// Identity UploadUserAvatarPlanner entry point.
+import type { UploadUserAvatarPlannerRequest } from '@/microservices/identity/objects/UploadUserAvatarPlannerRequest'
+import type { UserPlannerResponse } from '@/microservices/identity/objects/UserPlannerResponse'
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-export const uploadUserAvatar = async (userId: string, avatarFile: File | string): Promise<UserResponse> => {
+export const uploadUserAvatarPlanner = async (userId: string, avatarFile: File | string): Promise<UserPlannerResponse> => {
   if (typeof avatarFile === 'string') {
-    return executeJsonApiRequest('/UploadUserAvatarPlanner', 'POST', { userId, publicUrl: avatarFile })
+    const payload: UploadUserAvatarPlannerRequest = { userId, publicUrl: avatarFile }
+    return executeJsonApiRequest('/UploadUserAvatarPlanner', 'POST', payload)
   }
 
   const publicUrl = await new Promise<string>((resolve, reject) => {
@@ -14,5 +15,6 @@ export const uploadUserAvatar = async (userId: string, avatarFile: File | string
     reader.onerror = () => reject(reader.error ?? new Error('Failed to read avatar'))
     reader.readAsDataURL(avatarFile)
   })
-  return executeJsonApiRequest('/UploadUserAvatarPlanner', 'POST', { userId, publicUrl })
+  const payload: UploadUserAvatarPlannerRequest = { userId, publicUrl }
+  return executeJsonApiRequest('/UploadUserAvatarPlanner', 'POST', payload)
 }

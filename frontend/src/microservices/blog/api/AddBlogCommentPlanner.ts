@@ -1,3 +1,10 @@
-// 本文件定义 AddBlogCommentPlanner，负责 content 模块的添加编排和接口入口。
+// 本文件定义 AddBlogCommentPlanner，负责博客域对应接口入口。
 
-export { addBlogComment } from './BlogPlannerSupport'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const addBlogComment = (
+  postId: string,
+  payload: { userId: string; content: string; parentCommentId?: string | null; replyToUserId?: string | null },
+): Promise<BlogPostResponse> =>
+  executeJsonApiRequest('/AddBlogCommentPlanner', 'POST', { postId, ...payload })

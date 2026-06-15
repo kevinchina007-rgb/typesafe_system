@@ -1,4 +1,6 @@
-﻿import { ArrowLeft, X } from 'lucide-react'
+// BlogProfileOverlay：博客主页浮层展示组件。
+
+import { ArrowLeft, X } from 'lucide-react'
 
 import type { BlogPageController } from '../../objects'
 import { BlogProfilePanel } from '../panels/BlogProfilePanel'

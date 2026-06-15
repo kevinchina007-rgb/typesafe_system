@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ RemoveMembershipTravelerPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„ç§»é™¤ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { removeTourGroupMembershipTraveler as removeTourGroupMembershipTravelerImpl } from './TourGroupPlannerSupportPlanning'
 
-export { removeTourGroupMembershipTraveler } from './TourGroupPlannerSupport'
+export const removeTourGroupMembershipTraveler = (...args: Parameters<typeof removeTourGroupMembershipTravelerImpl>) => removeTourGroupMembershipTravelerImpl(...args)
+
+

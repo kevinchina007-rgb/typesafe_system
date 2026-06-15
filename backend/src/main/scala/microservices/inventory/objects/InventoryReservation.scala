@@ -1,5 +1,6 @@
-// InventoryReservation 定义inventory模块的数据模型。
-
+// InventoryReservation 是 inventory 域的核心数据模型。
+// 这个域只存在于后端，用来描述库存预留、确认、过期和释放。
+// 前端不会直接镜像这一层，因为它只是航班/酒店/火车等供应域背后的内部支撑结构。
 package com.typesafe.travel.inventory.domain
 
 import com.typesafe.travel.shared.kernel.*
@@ -8,6 +9,7 @@ import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 
 import java.time.{Instant, LocalDate}
 
+// 库存预留所对应的资源类型：航班舱位、酒店房型、火车座位。
 final case class ReservationResourceType(value: String):
   override def toString: String = value
 
@@ -24,6 +26,7 @@ object ReservationResourceType:
       case "trainseatinventory" | "train_seat_inventory" => TrainSeatInventory
       case _ => FlightCabinInventory
 
+// 库存预留的生命周期状态。
 final case class ReservationStatus(value: String):
   override def toString: String = value
 
@@ -42,6 +45,7 @@ object ReservationStatus:
       case "released" => Released
       case _ => Active
 
+// 库存预留域错误。这里只做领域表达，不承载前端页面错误文案。
 sealed trait InventoryReservationError extends DomainError:
   def message: String
 
@@ -59,6 +63,8 @@ object InventoryReservationError:
     override val message: String =
       s"Inventory '$resourceId' does not have enough remaining quantity for request '$requestedQuantity'; remaining '$remainingQuantity'"
 
+// 单条库存预留记录。
+// 它不是前端 UI 对象，而是后端用来驱动订单、库存和资源锁定的内部对象。
 final case class InventoryReservation(
     reservationId: ReservationId,
     resourceType: ReservationResourceType,
@@ -76,6 +82,7 @@ final case class InventoryReservation(
 )
 
 object InventoryReservation:
+  // 这里使用后端内部 codec，把 shared-kernel 值对象与 JSON 互转。
   import InventoryReservationSourceJsonCodecs.given
   given sourceEncoder: Encoder[InventoryReservation] = deriveEncoder
   given sourceDecoder: Decoder[InventoryReservation] = deriveDecoder

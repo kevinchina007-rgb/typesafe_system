@@ -5,10 +5,12 @@ package com.typesafe.travel.api
 import cats.effect.IO
 import cats.effect.kernel.Resource
 import cats.syntax.all.*
-import com.typesafe.travel.api.routes.*
 import com.typesafe.travel.persistence.*
 import com.typesafe.travel.persistence.order.TrainOrderExpirySweeper
 import com.typesafe.travel.static.StaticAssetRouter
+import com.typesafe.travel.api.routes.PlannerDefinitions
+import com.typesafe.travel.api.routes.PlannerRouter
+import com.typesafe.travel.api.routes.HealthRouter
 
 import ApplicationWiringPaths.resolveConfiguredPath
 

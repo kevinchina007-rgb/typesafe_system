@@ -1,4 +1,4 @@
-// 本文件封装状态管理逻辑。
+// 鏈枃浠跺皝瑁呯姸鎬佺鐞嗛€昏緫銆?
 
 import { create } from 'zustand'
 
@@ -9,10 +9,10 @@ import type { FeedbackAudience } from '@/microservices/feedback/objects/Feedback
 import type { FeedbackManagerType } from '@/microservices/feedback/objects/FeedbackManagerType'
 import type { FeedbackSenderRole } from '@/microservices/feedback/objects/FeedbackSenderRole'
 import type { FeedbackSiteAdminChannel } from '@/microservices/feedback/objects/FeedbackSiteAdminChannel'
-import type { FeedbackThreadResponse } from '@/microservices/feedback/objects/FeedbackThreadResponse'
+import type { FeedbackThreadDetailsPlannerResponse } from '@/microservices/feedback/objects/FeedbackThreadDetailsPlannerResponse'
 import type { OrderCancellationRequestStatus } from '@/microservices/feedback/objects/OrderCancellationRequestPayload'
 
-export type FeedbackThread = FeedbackThreadResponse
+export type FeedbackThread = FeedbackThreadDetailsPlannerResponse
 export type FeedbackMessage = FeedbackThread['messages'][number]
 
 export type FeedbackAudienceView = 'user' | 'manager' | 'siteAdmin'
@@ -60,12 +60,12 @@ type FeedbackChatActions = {
 
 type FeedbackChatStore = FeedbackChatState & FeedbackChatActions
 
-// 按更新时间倒序排列反馈线程。
+// 鎸夋洿鏂版椂闂村€掑簭鎺掑垪鍙嶉绾跨▼銆?
 function sortThreads(threads: FeedbackThread[]) {
   return [...threads].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt))
 }
 
-// 插入或更新单个线程。
+// 鎻掑叆鎴栨洿鏂板崟涓嚎绋嬨€?
 function upsertThread(threads: FeedbackThread[], nextThread: FeedbackThread) {
   const existingIndex = threads.findIndex(thread => thread.threadId === nextThread.threadId)
   if (existingIndex < 0) {
@@ -77,7 +77,7 @@ function upsertThread(threads: FeedbackThread[], nextThread: FeedbackThread) {
   return sortThreads(nextThreads)
 }
 
-// 把同一个线程同步到不同的状态桶里。
+// 鎶婂悓涓€涓嚎绋嬪悓姝ュ埌涓嶅悓鐨勭姸鎬佹《閲屻€?
 function syncThreadBuckets(state: FeedbackChatState, nextThread: FeedbackThread): FeedbackChatState {
   return {
     ...state,
@@ -93,7 +93,7 @@ function syncThreadBuckets(state: FeedbackChatState, nextThread: FeedbackThread)
   }
 }
 
-// 反馈聊天仓库，保存用户、管理者和站点管理员的反馈线程。
+// 鍙嶉鑱婂ぉ浠撳簱锛屼繚瀛樼敤鎴枫€佺鐞嗚€呭拰绔欑偣绠＄悊鍛樼殑鍙嶉绾跨▼銆?
 export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
   userThreads: [],
   managerThreads: [],
@@ -236,7 +236,7 @@ export const useFeedbackChatStore = create<FeedbackChatStore>()((set, get) => ({
   }),
 }))
 
-// 读取反馈聊天仓库快照。
+// 璇诲彇鍙嶉鑱婂ぉ浠撳簱蹇収銆?
 export function getFeedbackChatSnap() {
   const {
     userThreads,
@@ -257,12 +257,12 @@ export function getFeedbackChatSnap() {
   }
 }
 
-// 确保订单取消线程存在。
+// 纭繚璁㈠崟鍙栨秷绾跨▼瀛樺湪銆?
 export function ensureOrderCancellationThread(params: { userId: string; orderId: string }) {
   return useFeedbackChatStore.getState().ensureOrderCancellationThread(params)
 }
 
-// 发送一条反馈消息。
+// 鍙戦€佷竴鏉″弽棣堟秷鎭€?
 export function sendFeedbackMessage(params: {
   threadId: string
   senderRole: Exclude<FeedbackSenderRole, 'System'>
@@ -272,12 +272,12 @@ export function sendFeedbackMessage(params: {
   return useFeedbackChatStore.getState().sendMessage(params)
 }
 
-// 创建订单取消消息。
+// 鍒涘缓璁㈠崟鍙栨秷娑堟伅銆?
 export function createOrderCancellationMessage(params: { threadId: string; orderId: string; reason: string }) {
   return useFeedbackChatStore.getState().createOrderCancellationMessage(params)
 }
 
-// 处理订单取消请求。
+// 澶勭悊璁㈠崟鍙栨秷璇锋眰銆?
 export function handleOrderCancellationRequest(params: {
   threadId: string
   messageId: string
@@ -289,50 +289,50 @@ export function handleOrderCancellationRequest(params: {
   return useFeedbackChatStore.getState().handleOrderCancellationRequest(params)
 }
 
-// 标记反馈线程已读。
+// 鏍囪鍙嶉绾跨▼宸茶銆?
 export function markFeedbackThreadRead(threadId: string, audience: FeedbackAudience) {
   return useFeedbackChatStore.getState().markThreadRead(threadId, audience)
 }
 
-// 创建管理者升级线程。
+// 鍒涘缓绠＄悊鑰呭崌绾х嚎绋嬨€?
 export function createManagerEscalationThread(params: { threadId: string; senderDisplayName: string; body: string }) {
   return useFeedbackChatStore.getState().escalateThread(params)
 }
 
-// 创建投诉线程。
+// 鍒涘缓鎶曡瘔绾跨▼銆?
 export function createFeedbackComplaint(params: { sourceThreadId: string; selectedMessageIds: string[]; userExplanation: string; userDisplayName: string }) {
   return useFeedbackChatStore.getState().createComplaint(params)
 }
 
-// 打开投诉对应的管理者线程。
+// 鎵撳紑鎶曡瘔瀵瑰簲鐨勭鐞嗚€呯嚎绋嬨€?
 export function openComplaintManagerThread(params: { complaintMessageId: string; siteAdminActorId: string }) {
   return useFeedbackChatStore.getState().openComplaintManagerThread(params)
 }
 
-// 设置当前激活的迷你反馈线程。
+// 璁剧疆褰撳墠婵€娲荤殑杩蜂綘鍙嶉绾跨▼銆?
 export function setActiveFeedbackMiniThread(thread: FeedbackThread | null) {
   useFeedbackChatStore.getState().setActiveMiniThread(thread)
 }
 
-// 读取用户侧反馈线程。
+// 璇诲彇鐢ㄦ埛渚у弽棣堢嚎绋嬨€?
 export function getFeedbackThreadsForUser() {
   return useFeedbackChatStore.getState().userThreads
 }
 
-// 读取管理者侧反馈线程。
+// 璇诲彇绠＄悊鑰呬晶鍙嶉绾跨▼銆?
 export function getFeedbackThreadsForManager(managerType?: FeedbackManagerType) {
   const threads = useFeedbackChatStore.getState().managerThreads
   return managerType ? threads.filter(thread => thread.managerType === managerType) : threads
 }
 
-// 读取站点管理员侧反馈线程。
+// 璇诲彇绔欑偣绠＄悊鍛樹晶鍙嶉绾跨▼銆?
 export function getFeedbackThreadsForSiteAdmin(channel: FeedbackSiteAdminChannel) {
   return channel === 'user'
   ? useFeedbackChatStore.getState().siteAdminUserThreads
     : useFeedbackChatStore.getState().siteAdminManagerThreads
 }
 
-// 清空所有反馈线程缓存。
+// 娓呯┖鎵€鏈夊弽棣堢嚎绋嬬紦瀛樸€?
 export function clearAllThreads() {
   useFeedbackChatStore.getState().clearAllThreads()
 }

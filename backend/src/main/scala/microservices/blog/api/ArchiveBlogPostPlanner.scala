@@ -1,4 +1,4 @@
-// ArchiveBlogPostPlanner 是内容模块的归档入口，负责请求校验、流程编排和结果返回。
+// ArchiveBlogPostPlanner：博客域归档博客文章入口。
 
 package com.typesafe.travel.blog.domain
 

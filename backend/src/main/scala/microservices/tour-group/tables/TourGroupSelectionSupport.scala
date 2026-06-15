@@ -253,7 +253,7 @@ object TourGroupSelectionSupport:
         membershipId = membershipId,
         quantity = quantity,
         travelerIds = travelerIds,
-        status = GroupPlanSelectionStatus.Submitted,
+        status = GroupPlanSelectionStatus.Draft,
         createdAt = now,
         confirmedAt = None,
         reviewedByOrganizerUserId = None,

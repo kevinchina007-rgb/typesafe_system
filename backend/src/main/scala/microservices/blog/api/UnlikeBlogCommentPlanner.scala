@@ -1,4 +1,4 @@
-// UnlikeBlogCommentPlanner 是内容模块的取消点赞入口，负责请求校验、流程编排和结果返回。
+// UnlikeBlogCommentPlanner：博客域取消点赞博客评论入口。
 
 package com.typesafe.travel.blog.domain
 

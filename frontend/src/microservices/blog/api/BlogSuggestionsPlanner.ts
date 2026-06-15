@@ -1,3 +1,7 @@
-// 本文件定义 BlogSuggestionsPlanner，负责 content 模块的处理编排和接口入口。
+// 本文件定义 BlogSuggestionsPlanner，负责博客域对应接口入口。
 
-export { listBlogSuggestions } from './BlogPlannerSupport'
+import type { SearchSuggestionListResponse } from '@/shared-kernel/objects/SearchSuggestionListResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const listBlogSuggestions = (q: string): Promise<SearchSuggestionListResponse> =>
+  executeJsonApiRequest('/BlogSuggestionsPlanner', 'POST', { q })

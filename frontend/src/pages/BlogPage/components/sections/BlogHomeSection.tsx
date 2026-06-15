@@ -1,4 +1,6 @@
-﻿import { Search } from 'lucide-react'
+// BlogHomeSection：博客页面博客首页区块组件。
+
+import { Search } from 'lucide-react'
 
 import { BlogPostCard } from '../BlogPostCard'
 import type { BlogPageController } from '../../objects'

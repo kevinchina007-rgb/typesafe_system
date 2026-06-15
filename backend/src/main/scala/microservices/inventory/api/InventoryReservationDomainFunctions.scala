@@ -1,14 +1,17 @@
-// InventoryReservationDomainFunctions 定义inventory模块的领域辅助函数。
-
+// InventoryReservationDomainFunctions 是 inventory 域的纯领域辅助函数集合。
+// 这里负责库存预留的状态流转、过期、确认和创建，不对应任何前端页面入口。
+// 这个域是后端内部支撑层，服务于订单、航班、酒店和火车等业务。
 package com.typesafe.travel.inventory.domain
 
 import com.typesafe.travel.shared.kernel.*
 import java.time.{Instant, LocalDate}
 
+// 判断某条库存预留在某个时刻是否仍然有效。
 def inventoryReservationIsActiveAt(inventoryReservation: InventoryReservation, currentTime: Instant): Boolean =
   inventoryReservation.reservationStatus == ReservationStatus.Active &&
     inventoryReservation.expiresAt.isAfter(currentTime)
 
+// 将已过期的库存预留标记为 Expired。
 def markInventoryReservationExpired(
     inventoryReservation: InventoryReservation,
     expiredAt: Instant
@@ -19,6 +22,7 @@ def markInventoryReservationExpired(
     case _ =>
       Left(InventoryReservationError.ReservationWasNotActive(inventoryReservation.reservationId, inventoryReservation.reservationStatus))
 
+// 将活动中的库存预留标记为 Confirmed。
 def confirmInventoryReservation(
     inventoryReservation: InventoryReservation,
     confirmedAt: Instant
@@ -29,6 +33,7 @@ def confirmInventoryReservation(
     case _ =>
       Left(InventoryReservationError.ReservationWasNotActive(inventoryReservation.reservationId, inventoryReservation.reservationStatus))
 
+// 将活动中的库存预留标记为 Released。
 def releaseInventoryReservation(
     inventoryReservation: InventoryReservation,
     releasedAt: Instant
@@ -39,6 +44,7 @@ def releaseInventoryReservation(
     case _ =>
       Left(InventoryReservationError.ReservationWasNotActive(inventoryReservation.reservationId, inventoryReservation.reservationStatus))
 
+// 创建一条新的活动库存预留。
 def createActiveInventoryReservation(
     reservationId: ReservationId,
     resourceType: ReservationResourceType,
@@ -71,6 +77,7 @@ def createActiveInventoryReservation(
       )
     )
 
+// 从持久化记录中恢复库存预留对象。
 def restorePersistedInventoryReservation(
     reservationId: ReservationId,
     resourceType: ReservationResourceType,

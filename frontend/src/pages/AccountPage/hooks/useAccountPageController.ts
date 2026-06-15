@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { setCurrentUserTravelers } from '@/app/stores/user-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { TravelerListResponse } from '@/microservices/traveler/objects/TravelerListResponse'
+import type { TravelerListPlannerResponse } from '@/microservices/traveler/objects/TravelerListPlannerResponse'
 import type { AccountPageController, AccountPageProps, AccountEntryMode } from '../objects'
 import { createProfileDraft } from '../functions'
 import { usePageActions } from '@/pages/shared/usePageActions'
@@ -44,7 +44,7 @@ export function useAccountPageController({
     }
     void travelMvpApiClient
       .listTravelers(signedInUser.userId)
-      .then((response: TravelerListResponse) => setCurrentUserTravelers(response.travelers))
+      .then((response: TravelerListPlannerResponse) => setCurrentUserTravelers(response.travelers))
       .catch(() => setCurrentUserTravelers([]))
   }, [signedInUser?.userId])
 
@@ -110,7 +110,7 @@ export function useAccountPageController({
     onUploadAvatar: async avatarFile => {
       if (!signedInUser) throw new Error(translate('error.loginRequired'))
       await runPageAction(async () => {
-        const updatedAccount = await travelMvpApiClient.uploadUserAvatar(signedInUser.userId, avatarFile)
+        const updatedAccount = await travelMvpApiClient.uploadUserAvatarPlanner(signedInUser.userId, avatarFile)
         onSignedInUserChange(updatedAccount)
       }, translate('account.avatarUpload'), translate('notice.avatarUploaded'))
     },
@@ -118,7 +118,7 @@ export function useAccountPageController({
     onUseDefaultAvatar: async avatarUrl => {
       if (!signedInUser) throw new Error(translate('error.loginRequired'))
       await runPageAction(async () => {
-        const updatedAccount = await travelMvpApiClient.uploadUserAvatar(signedInUser.userId, avatarUrl)
+        const updatedAccount = await travelMvpApiClient.uploadUserAvatarPlanner(signedInUser.userId, avatarUrl)
         onSignedInUserChange(updatedAccount)
       }, translate('account.changeAvatar'), translate('notice.avatarUploaded'))
     },
@@ -126,7 +126,7 @@ export function useAccountPageController({
     onUpdateProfile: async payload => {
       if (!signedInUser) throw new Error(translate('error.loginRequired'))
       await runPageAction(async () => {
-        const updatedAccount = await travelMvpApiClient.updateUserProfile({
+        const updatedAccount = await travelMvpApiClient.updateUserProfilePlanner({
           userId: signedInUser.userId,
           nickname: payload.nickname,
           phone: payload.phone,

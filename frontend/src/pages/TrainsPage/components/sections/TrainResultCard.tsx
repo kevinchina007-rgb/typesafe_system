@@ -1,4 +1,4 @@
-import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse, TrainPlannerResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, ResourceReviewSummaryPlannerResponse, ReviewPlannerResponse, TrainPlannerResponse } from '@/lib/mvp-types/index'
 import { localizeTrainSeatClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import { ResourceReviewSummaryLoader } from '@/pages/shared/content/ResourceReviewSummaryLoader'
 import {
@@ -32,8 +32,8 @@ type TrainResultCardProps = {
     seatPreference?: string | null
     orderCurrency: string
   }) => Promise<void>
-  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  onLoadReviewSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
 }
 
 // 列车结果卡片，只负责展示路线、座位和下单动作。

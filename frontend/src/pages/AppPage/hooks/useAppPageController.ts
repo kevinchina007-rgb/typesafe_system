@@ -89,6 +89,10 @@ export function useAppPageController() {
     return (
       error.message.startsWith('user_not_found|') ||
       error.message.startsWith('manager_not_found|') ||
+      error.message.startsWith('planner_error|Unknown planner:') ||
+      error.message.includes('|HTTP 404') ||
+      error.message.includes('HTTP 404') ||
+      error.message.includes('Unknown planner') ||
       error.message.includes('signed-in user session is required') ||
       error.message.includes('signed-in manager session is required') ||
       error.message.includes('session was not found') ||

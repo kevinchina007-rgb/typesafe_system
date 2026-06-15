@@ -1,7 +1,7 @@
-// 本文件定义 UpdateUserProfilePlanner，负责 identity 模块的更新编排和接口入口。
-
-import type { UserResponse } from '@/microservices/auth/objects/UserResponse'
+﻿// Identity UpdateUserProfilePlanner entry point.
+import type { UpdateUserProfilePlannerRequest } from '@/microservices/identity/objects/UpdateUserProfilePlannerRequest'
+import type { UserPlannerResponse } from '@/microservices/identity/objects/UserPlannerResponse'
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-export const updateUserProfile = (payload: { userId: string; nickname: string; phone: string }): Promise<UserResponse> =>
+export const updateUserProfilePlanner = (payload: UpdateUserProfilePlannerRequest): Promise<UserPlannerResponse> =>
   executeJsonApiRequest('/UpdateUserProfilePlanner', 'POST', payload)

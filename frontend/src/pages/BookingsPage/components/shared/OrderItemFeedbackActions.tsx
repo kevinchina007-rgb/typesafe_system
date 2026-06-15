@@ -1,5 +1,5 @@
 // 订单行项目上的评价/退款反馈动作区，只负责按钮呈现。
-import type { OrderResponse, ReviewResponse } from '@/lib/mvp-types/index'
+import type { OrderResponse, ReviewPlannerResponse } from '@/lib/mvp-types/index'
 
 export function OrderItemFeedbackActions({
   isBusy,
@@ -16,7 +16,7 @@ export function OrderItemFeedbackActions({
   order: OrderResponse
   bookedAmount: string | number
   bookedCurrency: string
-  existingReview: ReviewResponse | null
+  existingReview: ReviewPlannerResponse | null
   translate: (translationKey: string) => string
   onDeleteReview: (reviewId: string) => Promise<void>
   onOpenOrderCancellationFeedback: (orderId: string) => Promise<void>

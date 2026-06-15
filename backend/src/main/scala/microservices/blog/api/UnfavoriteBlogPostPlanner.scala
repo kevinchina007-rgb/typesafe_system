@@ -1,4 +1,4 @@
-// UnfavoriteBlogPostPlanner 是内容模块的取消收藏入口，负责请求校验、流程编排和结果返回。
+// UnfavoriteBlogPostPlanner：博客域取消收藏博客文章入口。
 
 package com.typesafe.travel.blog.domain
 

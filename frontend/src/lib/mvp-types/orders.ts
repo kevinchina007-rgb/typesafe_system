@@ -1,4 +1,5 @@
-// 本文件定义订单服务前端传输类型，覆盖订单创建、支付和退款接口。
+// 前端订单类型统一出口，同时保留旧短名与新的 planner 同名对象。
+// 新代码优先使用 planner 后缀对象，旧代码可以继续通过这里兼容访问。
 
 export type { AttractionItemDetailsResponse } from '@/microservices/order/objects/AttractionItemDetailsResponse'
 export type { FlightItemDetailsResponse } from '@/microservices/order/objects/FlightItemDetailsResponse'
@@ -11,3 +12,18 @@ export type { PaymentResponse } from '@/microservices/order/objects/PaymentRespo
 export type { RefundResponse } from '@/microservices/order/objects/RefundResponse'
 export type { SupplierReviewDecisionResponse } from '@/microservices/order/objects/SupplierReviewDecisionResponse'
 export type { TrainItemDetailsResponse } from '@/microservices/order/objects/TrainItemDetailsResponse'
+
+export type { CreateOrderPlannerRequest } from '@/microservices/order/objects/CreateOrderPlannerRequest'
+export type { CreatePaymentLinkPlannerRequest } from '@/microservices/order/objects/CreatePaymentLinkPlannerRequest'
+export type { FindOrderPaymentPlannerRequest } from '@/microservices/order/objects/FindOrderPaymentPlannerRequest'
+export type { ListOrdersPlannerRequest } from '@/microservices/order/objects/ListOrdersPlannerRequest'
+export type { OrderIdPlannerRequest } from '@/microservices/order/objects/OrderIdPlannerRequest'
+export type { OrderLineItemPlannerResponse } from '@/microservices/order/objects/OrderLineItemPlannerResponse'
+export type { OrderListPlannerResponse } from '@/microservices/order/objects/OrderListPlannerResponse'
+export type { OrderPlannerResponse } from '@/microservices/order/objects/OrderPlannerResponse'
+export type { PaymentLinkPlannerResponse } from '@/microservices/order/objects/PaymentLinkPlannerResponse'
+export type { PaymentPlannerResponse } from '@/microservices/order/objects/PaymentPlannerResponse'
+export type { PayOrderPlannerRequest } from '@/microservices/order/objects/PayOrderPlannerRequest'
+export type { RefundDecisionPlannerRequest } from '@/microservices/order/objects/RefundDecisionPlannerRequest'
+export type { RefundPlannerResponse } from '@/microservices/order/objects/RefundPlannerResponse'
+export type { RequestRefundPlannerRequest } from '@/microservices/order/objects/RequestRefundPlannerRequest'

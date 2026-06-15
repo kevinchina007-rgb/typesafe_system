@@ -1,4 +1,4 @@
-import type { AppLanguage, BlogPostSummaryResponse, ResourceReviewSummaryResponse, ReviewResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, BlogPostSummaryResponse, ResourceReviewSummaryPlannerResponse, ReviewPlannerResponse } from '@/lib/mvp-types/index'
 
 import { formatIsoDateTime } from '@/lib/presenters/shared-presenters'
 
@@ -41,7 +41,7 @@ export function formatBlogMeta(post: BlogPostSummaryResponse, fallbackLabel: str
   return formatIsoDateTime(post.publishedAt ?? post.createdAt, fallbackLabel)
 }
 
-export function formatReviewMeta(review: ReviewResponse, fallbackLabel: string): string {
+export function formatReviewMeta(review: ReviewPlannerResponse, fallbackLabel: string): string {
   return formatIsoDateTime(review.updatedAt || review.createdAt, fallbackLabel)
 }
 
@@ -49,7 +49,7 @@ export function summarizeRating(rating: number): string {
   return '★'.repeat(Math.max(0, Math.min(5, rating)))
 }
 
-export function summarizeReviewAggregate(summary: ResourceReviewSummaryResponse, language: AppLanguage): string {
+export function summarizeReviewAggregate(summary: ResourceReviewSummaryPlannerResponse, language: AppLanguage): string {
   void language
   if (summary.reviewCount === 0) {
     return '暂无评价'

@@ -32,7 +32,7 @@ export function useTravelersPageController({
     if (!signedInUser) {
       return
     }
-    const userResponse = await travelMvpApiClient.getUser(signedInUser.userId)
+    const userResponse = await travelMvpApiClient.getUserPlanner({ userId: signedInUser.userId })
     onSignedInUserChange(userResponse)
   }
 

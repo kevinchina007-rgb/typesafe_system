@@ -1,4 +1,4 @@
-// BlogDomainFunctions 定义内容模块的领域辅助函数。
+// BlogDomainFunctions：博客域复用的纯领域辅助函数。
 
 package com.typesafe.travel.blog.domain
 

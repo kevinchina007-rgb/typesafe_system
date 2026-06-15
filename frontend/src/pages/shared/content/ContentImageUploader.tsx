@@ -1,15 +1,15 @@
 // 本文件定义共享页面组件或工具，负责页面间复用逻辑。
 
-import type { ContentImageResponse } from '@/lib/mvp-types/index'
+import type { ContentImagePlannerResponse } from '@/lib/mvp-types/index'
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 
 // 内容图片上传器的输入参数。
 type ContentImageUploaderProps = {
-  images: ContentImageResponse[]
+  images: ContentImagePlannerResponse[]
   isBusy: boolean
   translate: (translationKey: string) => string
-  onUploadImage: (imageFile: File) => Promise<ContentImageResponse>
-  onChangeImages: (images: ContentImageResponse[]) => void
+  onUploadImage: (imageFile: File) => Promise<ContentImagePlannerResponse>
+  onChangeImages: (images: ContentImagePlannerResponse[]) => void
 }
 
 const maximumImageBytes = 5 * 1024 * 1024
@@ -32,7 +32,7 @@ export function ContentImageUploader({
 
     const remainingSlots = Math.max(0, maximumImageCount - images.length)
     const nextFiles = Array.from(fileList).slice(0, remainingSlots)
-    const uploadedImages: ContentImageResponse[] = []
+    const uploadedImages: ContentImagePlannerResponse[] = []
 
     for (const imageFile of nextFiles) {
       if (!allowedImageMimeTypes.has(imageFile.type.toLowerCase())) {

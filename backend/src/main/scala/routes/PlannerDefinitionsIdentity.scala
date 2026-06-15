@@ -1,5 +1,4 @@
-// PlannerDefinitionsIdentity 负责请求路由分发。
-
+// 本文件负责 identity 模块的请求路由注册，只把 identity 的 planner 入口挂到总路由中。
 package com.typesafe.travel.api.routes
 
 import com.typesafe.travel.identity.domain.*
@@ -11,7 +10,7 @@ object PlannerDefinitionsIdentity:
     PlannerRegistry(
       List(
         WithConnection(CreateUserPlanner),
-        WithConnection(IdentityLoginPlanner),
+        WithConnection(LoginPlanner),
         WithConnection(GetUserPlanner),
         WithConnection(UploadUserAvatarPlanner),
         WithConnection(UpdateUserProfilePlanner)

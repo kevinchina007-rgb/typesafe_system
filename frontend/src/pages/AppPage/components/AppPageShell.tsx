@@ -88,21 +88,21 @@ export function AppPageShell({ controller }: { controller: AppPageController }) 
         onUploadUserAvatar: async avatarFile => {
           await controller.runHeaderAccountAction(async () => {
             if (!controller.signedInUserResponse) throw new Error(controller.translate('error.loginRequired'))
-            const updatedAccount = await travelMvpApiClient.uploadUserAvatar(controller.signedInUserResponse.userId, avatarFile)
+            const updatedAccount = await travelMvpApiClient.uploadUserAvatarPlanner(controller.signedInUserResponse.userId, avatarFile)
             controller.setCurrentUserSession(updatedAccount)
           }, controller.translate('notice.avatarUploaded'))
         },
         onUseDefaultUserAvatar: async avatarUrl => {
           await controller.runHeaderAccountAction(async () => {
             if (!controller.signedInUserResponse) throw new Error(controller.translate('error.loginRequired'))
-            const updatedAccount = await travelMvpApiClient.uploadUserAvatar(controller.signedInUserResponse.userId, avatarUrl)
+            const updatedAccount = await travelMvpApiClient.uploadUserAvatarPlanner(controller.signedInUserResponse.userId, avatarUrl)
             controller.setCurrentUserSession(updatedAccount)
           }, controller.translate('notice.avatarUploaded'))
         },
         onUpdateUserProfile: async payload => {
           await controller.runHeaderAccountAction(async () => {
             if (!controller.signedInUserResponse) throw new Error(controller.translate('error.loginRequired'))
-            const updatedAccount = await travelMvpApiClient.updateUserProfile({
+            const updatedAccount = await travelMvpApiClient.updateUserProfilePlanner({
               userId: controller.signedInUserResponse.userId,
               nickname: payload.nickname,
               phone: payload.phone,

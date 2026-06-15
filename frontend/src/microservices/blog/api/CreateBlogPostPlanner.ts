@@ -1,3 +1,19 @@
-// 本文件定义 CreateBlogPostPlanner，负责 content 模块的创建编排和接口入口。
+// 本文件定义 CreateBlogPostPlanner，负责博客域对应接口入口。
 
-export { createBlogPost } from './BlogPlannerSupport'
+import type { ContentImagePlannerResponse } from '@/microservices/content/objects/ContentImagePlannerResponse'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import type { BlogTagResponse } from '@/microservices/blog/objects/BlogTagResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const createBlogPost = (payload: {
+  userId: string
+  title: string
+  summary: string
+  content: string
+  images: ContentImagePlannerResponse[]
+  tags?: BlogTagResponse[]
+  coverText?: string
+  travelCity?: string | null
+  travelCities?: string[] | null
+}): Promise<BlogPostResponse> =>
+  executeJsonApiRequest('/CreateBlogPostPlanner', 'POST', payload)

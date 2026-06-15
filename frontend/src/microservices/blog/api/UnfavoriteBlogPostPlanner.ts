@@ -1,3 +1,7 @@
-// 本文件定义 UnfavoriteBlogPostPlanner，负责 content 模块的取消收藏编排和接口入口。
+// 本文件定义 UnfavoriteBlogPostPlanner，负责博客域对应接口入口。
 
-export { unfavoriteBlogPost } from './BlogPlannerSupport'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const unfavoriteBlogPost = (postId: string, payload: { userId: string }): Promise<BlogPostResponse> =>
+  executeJsonApiRequest('/UnfavoriteBlogPostPlanner', 'POST', { postId, userId: payload.userId })

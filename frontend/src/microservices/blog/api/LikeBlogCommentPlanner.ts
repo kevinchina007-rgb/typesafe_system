@@ -1,3 +1,7 @@
-// 本文件定义 LikeBlogCommentPlanner，负责 content 模块的点赞编排和接口入口。
+// 本文件定义 LikeBlogCommentPlanner，负责博客域对应接口入口。
 
-export { likeBlogComment } from './BlogPlannerSupport'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const likeBlogComment = (commentId: string, payload: { userId: string }): Promise<BlogPostResponse> =>
+  executeJsonApiRequest('/LikeBlogCommentPlanner', 'POST', { commentId, userId: payload.userId })

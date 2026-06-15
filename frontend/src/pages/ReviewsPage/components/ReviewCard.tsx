@@ -3,10 +3,10 @@
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import { ContentImageGallery } from '@/pages/shared/content/ContentImageGallery'
 import { formatReviewMeta, localizeReviewResourceType, localizeReviewStatus, summarizeRating } from '@/lib/presenters/content-presenter'
-import type { ReviewResponse } from '@/lib/mvp-types/index'
+import type { ReviewPlannerResponse } from '@/lib/mvp-types/index'
 
 type ReviewCardProps = {
-  review: ReviewResponse
+  review: ReviewPlannerResponse
   currentLanguage: import('@/lib/mvp-types/index').AppLanguage
   isBusy: boolean
   translate: (translationKey: string) => string

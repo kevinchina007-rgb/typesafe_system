@@ -1,4 +1,4 @@
-// ContentSourceJsonCodecs 定义内容模块的源数据 JSON codec。
+// ContentSourceJsonCodecs：content 域后端内部的源数据 JSON codec。
 
 package com.typesafe.travel.content.domain
 

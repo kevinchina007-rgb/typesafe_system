@@ -1,3 +1,4 @@
+// 本文件封装 feedback 域线程列表与线程详情的组装逻辑，把数据库读取结果整理成 planner 返回对象。
 package com.typesafe.travel.feedback.domain
 
 import cats.effect.IO

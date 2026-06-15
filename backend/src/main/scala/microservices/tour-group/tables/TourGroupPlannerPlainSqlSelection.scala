@@ -219,7 +219,6 @@ object TourGroupPlannerPlainSqlSelection:
     val travelerIds = selection.travelerIds.map(_.value).toList
     planOption.resourceType match
       case GroupPlanOptionResourceType.Flight =>
-        val (departureAirport, arrivalAirport, departureDate) = parseTripContext(planOption.resourceContext.getOrElse(throw new IllegalArgumentException("Flight selection is missing resource context")))
         val cabinClass = planOption.resourceVariantCode.getOrElse(throw new IllegalArgumentException("Flight selection is missing cabin class"))
         BookFlightPlanner
           .plan(
@@ -233,7 +232,8 @@ object TourGroupPlannerPlainSqlSelection:
           )
           .map(_.orderId)
       case GroupPlanOptionResourceType.HotelRoomType =>
-        val (checkInDate, checkOutDate) = parseStayContext(planOption.resourceContext.getOrElse(throw new IllegalArgumentException("Hotel selection is missing stay context")))
+        val checkInDate = normalizeDateOnly(planItem.scheduledAt.toString.take(10))
+        val checkOutDate = planItem.endsAt.map(endAt => normalizeDateOnly(endAt.toString.take(10))).getOrElse(checkInDate)
         BookHotelPlanner
           .plan(
             BookHotelPlannerRequest(

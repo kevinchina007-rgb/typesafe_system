@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ CreateTourGroupSelectionPlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„åˆ›å»ºç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { createTourGroupSelection as createTourGroupSelectionImpl } from './TourGroupPlannerSupportPlanning'
 
-export { createTourGroupSelection } from './TourGroupPlannerSupport'
+export const createTourGroupSelection = (...args: Parameters<typeof createTourGroupSelectionImpl>) => createTourGroupSelectionImpl(...args)
+
+

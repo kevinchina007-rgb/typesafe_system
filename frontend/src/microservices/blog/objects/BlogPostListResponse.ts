@@ -1,4 +1,4 @@
-// 本文件定义 content 模块的 `BlogPostListResponse`，作为列表响应数据并提供 JSON 编解码。
+// BlogPostListResponse：博客域博客文章列表返回对象。
 
 import type { BlogPostSummaryResponse } from './BlogPostSummaryResponse'
 

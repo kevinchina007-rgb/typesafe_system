@@ -1,3 +1,6 @@
-// æœ¬æ–‡ä»¶å®šä¹‰ UploadTourGroupCoverImagePlannerï¼Œè´Ÿè´£ tour-group æ¨¡å—çš„ä¸Šä¼ ç¼–æ’å’Œæ¥å£å…¥å£ã€‚
+// ±¾ÎÄ¼ş¶¨Òå tour-group ×ÓÓòµÄÇ°¶Ë planner Èë¿Ú£¬±¾µØ±£Áôº¯Êı·â×°ÒÔ±ÜÃâ´¿×ª·¢¿Ç¡£
+import { uploadTourGroupCoverImage as uploadTourGroupCoverImageImpl } from './TourGroupPlannerSupportPlanning'
 
-export { uploadTourGroupCoverImage } from './TourGroupPlannerSupport'
+export const uploadTourGroupCoverImage = (...args: Parameters<typeof uploadTourGroupCoverImageImpl>) => uploadTourGroupCoverImageImpl(...args)
+
+

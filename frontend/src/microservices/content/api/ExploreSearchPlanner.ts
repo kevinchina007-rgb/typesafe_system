@@ -1,3 +1,8 @@
-// 本文件定义 ExploreSearchPlanner，负责 content 模块的处理编排和接口入口。
+// ExploreSearchPlanner：content 域探索搜索入口。
 
-export { searchExplore } from './ExplorePlannerSupport'
+import type { ExploreSearchPlannerRequest } from '@/microservices/content/objects/ExploreSearchPlannerRequest'
+import type { ExploreSearchListPlannerResponse } from '@/microservices/content/objects/ExploreSearchListPlannerResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const searchExplore = (payload: ExploreSearchPlannerRequest): Promise<ExploreSearchListPlannerResponse> =>
+  executeJsonApiRequest('/ExploreSearchPlanner', 'POST', payload)

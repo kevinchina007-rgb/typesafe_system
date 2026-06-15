@@ -7,3 +7,4 @@ export const listTourGroupChatMessages = (groupId: string): Promise<TourGroupMes
 
 export const sendTourGroupChatMessage = (groupId: string, payload: { content: string }): Promise<TourGroupMessageListResponse> =>
   executeJsonApiRequest(`/tour-groups/${groupId}/chat/messages${createChatQueryString()}`, 'POST', payload)
+

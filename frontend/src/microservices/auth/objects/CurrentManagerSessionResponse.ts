@@ -1,6 +1,6 @@
 import type { CurrentManagerPlannerResponse } from './CurrentManagerPlannerResponse'
 
-// 本文件保留为兼容层，供旧页面继续使用“管理员会话对象”的外壳。
+// 本文件定义当前管理员会话展示对象，保留给旧页面直接消费。
 export type CurrentManagerSessionResponse = Omit<CurrentManagerPlannerResponse, 'sessionId'>
 
 export function currentManagerSessionResponseFromPlannerResponse(

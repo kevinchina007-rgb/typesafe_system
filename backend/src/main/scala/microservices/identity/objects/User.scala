@@ -1,5 +1,4 @@
-// User 定义身份模块的数据模型。
-
+// 本文件定义 identity 用户域核心模型，包括用户状态、会员等级、用户主体和领域错误。
 package com.typesafe.travel.identity.domain
 
 import com.typesafe.travel.shared.kernel.*

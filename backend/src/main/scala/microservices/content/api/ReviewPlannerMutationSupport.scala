@@ -1,3 +1,6 @@
+// ReviewPlannerMutationSupport：content 域后端内部写入支持层。
+// 这里集中放评论创建、更新、删除和图片上传的 SQL 辅助逻辑。
+// 它只服务后端 planner，不对应前端镜像文件。
 package com.typesafe.travel.content.api
 
 import cats.effect.IO

@@ -1,4 +1,6 @@
-﻿import { BlogEditor } from '../BlogEditor'
+// BlogPublishSection：博客页面博客发布区块组件。
+
+import { BlogEditor } from '../BlogEditor'
 import type { BlogPageController } from '../../objects'
 import { emptyDraft, tagGroups, travelCities } from '../../functions'
 

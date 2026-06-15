@@ -1,5 +1,7 @@
 // PlannerStatuses 定义planner模块的状态模型。
 
+// 这个文件只保存 planner 引擎内部会用到的状态值对象与文本解析逻辑。
+// 这些状态用于描述规划偏好、行程计划阶段、匹配状态等后端流程，不需要也不会在前端单独镜像成同名模块。
 package com.typesafe.travel.planner.domain
 
 final case class PreferenceLevel(value: String):

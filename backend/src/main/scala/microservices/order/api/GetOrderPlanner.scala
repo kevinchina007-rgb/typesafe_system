@@ -1,5 +1,4 @@
-// GetOrderPlanner 是订单模块的获取入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是订单详情查询入口，负责按订单 ID 读取完整订单信息。
 package com.typesafe.travel.order.domain
 
 import cats.effect.IO

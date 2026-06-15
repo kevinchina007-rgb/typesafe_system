@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import type { AppLanguage, ResourceReviewSummaryResponse, ReviewResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, ResourceReviewSummaryPlannerResponse, ReviewPlannerResponse } from '@/lib/mvp-types/index'
 import { ResourceReviewSummary } from '@/pages/shared/content/ResourceReviewSummary'
 import { ReviewListDialog } from '@/pages/shared/content/ReviewListDialog'
 
@@ -15,8 +15,8 @@ type ResourceReviewSummaryLoaderProps = {
   resourceId: string
   title: string
   translate: (translationKey: string) => string
-  onLoadSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryResponse>
-  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewResponse[]>
+  onLoadSummary: (payload: { resourceType: string; resourceId: string }) => Promise<ResourceReviewSummaryPlannerResponse>
+  onLoadReviews: (payload: { resourceType: string; resourceId: string }) => Promise<ReviewPlannerResponse[]>
 }
 
 // 资源评价汇总加载器，负责先加载摘要，再按需打开评论列表。
@@ -31,8 +31,8 @@ export function ResourceReviewSummaryLoader({
   onLoadSummary,
   onLoadReviews,
 }: ResourceReviewSummaryLoaderProps) {
-  const [summary, setSummary] = useState<ResourceReviewSummaryResponse | null>(null)
-  const [reviews, setReviews] = useState<ReviewResponse[]>([])
+  const [summary, setSummary] = useState<ResourceReviewSummaryPlannerResponse | null>(null)
+  const [reviews, setReviews] = useState<ReviewPlannerResponse[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   // 资源启用时自动加载评价摘要。

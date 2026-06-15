@@ -1,7 +1,7 @@
 import type { CurrentUserPlannerResponse } from './CurrentUserPlannerResponse'
 import type { UserResponse } from './UserResponse'
 
-// 本文件保留为兼容层，供旧页面继续使用“用户对象 + 过期时间”的会话外壳。
+// 本文件定义当前用户会话展示对象，保留给旧页面直接消费。
 export type CurrentUserSessionResponse = {
   user: UserResponse
   expiresAt: string

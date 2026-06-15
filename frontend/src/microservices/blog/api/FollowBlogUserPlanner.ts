@@ -1,3 +1,7 @@
-// 本文件定义 FollowBlogUserPlanner，负责 content 模块的关注编排和接口入口。
+// 本文件定义 FollowBlogUserPlanner，负责博客域对应接口入口。
 
-export { followBlogUser } from './BlogPlannerSupport'
+import type { BlogProfileResponse } from '@/microservices/blog/objects/BlogProfileResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+
+export const followBlogUser = (userId: string, targetUserId: string): Promise<BlogProfileResponse> =>
+  executeJsonApiRequest('/FollowBlogUserPlanner', 'POST', { userId, targetUserId })

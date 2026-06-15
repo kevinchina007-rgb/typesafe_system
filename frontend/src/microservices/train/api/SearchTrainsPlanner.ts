@@ -1,2 +1,8 @@
-// 本文件定义 SearchTrainsPlanner，负责 train 模块的查询入口。
-export { searchTrainsPlanner, listTrains } from './TrainPlannerSearchSupport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+import type { SearchTrainsPlannerRequest } from '@/microservices/train/objects/SearchTrainsPlannerRequest'
+import type { TrainListPlannerResponse } from '@/microservices/train/objects/TrainListPlannerResponse'
+
+export const searchTrainsPlanner = (query: SearchTrainsPlannerRequest): Promise<TrainListPlannerResponse> =>
+  executeJsonApiRequest('/SearchTrainsPlanner', 'POST', query)
+
+export const listTrains = searchTrainsPlanner

@@ -1,4 +1,4 @@
-// RejectBlogPostPlanner 是内容模块的拒绝入口，负责请求校验、流程编排和结果返回。
+// RejectBlogPostPlanner：博客域驳回博客文章入口。
 
 package com.typesafe.travel.blog.domain
 

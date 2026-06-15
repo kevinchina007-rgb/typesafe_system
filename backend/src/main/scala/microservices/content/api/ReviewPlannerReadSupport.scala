@@ -1,3 +1,6 @@
+// ReviewPlannerReadSupport：content 域后端内部只读支持层。
+// 这个文件只负责复用评论查询 SQL、ResultSet 映射和查询辅助逻辑。
+// 它不对应前端文件，也不作为对外 planner 入口暴露。
 package com.typesafe.travel.content.api
 
 import cats.effect.IO

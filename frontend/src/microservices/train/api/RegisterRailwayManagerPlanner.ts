@@ -1,2 +1,8 @@
-// 本文件定义 RegisterRailwayManagerPlanner，负责 train 模块的铁路管理员注册入口。
-export { registerRailwayManagerPlanner, registerRailwayManager } from './TrainPlannerManagerSupport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+import type { TrainAdminSessionPlannerResponse } from '@/microservices/train/objects/TrainAdminSessionPlannerResponse'
+import type { RegisterRailwayManagerPlannerRequest } from '@/microservices/train/objects/RegisterRailwayManagerPlannerRequest'
+
+export const registerRailwayManagerPlanner = (payload: RegisterRailwayManagerPlannerRequest): Promise<TrainAdminSessionPlannerResponse> =>
+  executeJsonApiRequest('/RegisterRailwayManagerPlanner', 'POST', payload)
+
+export const registerRailwayManager = registerRailwayManagerPlanner
