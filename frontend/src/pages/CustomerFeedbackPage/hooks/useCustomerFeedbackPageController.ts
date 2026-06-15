@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { OrderListResponse } from '@/microservices/order/objects/OrderListResponse'
-import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
+import type { FeedbackThread } from '@/microservices/feedback/objects/FeedbackThread'
 import type { CustomerFeedbackPageController, CancellationOrderOption } from '../objects'
 import { buildCancellationOrderSelectionLabel, buildCancellationOrderTitle, inferOrderCategory } from '../functions'
 

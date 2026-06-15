@@ -1,9 +1,9 @@
 import type { AppLanguage, UserResponse } from '@/lib/mvp-types/index'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
-import type { BlogNotificationResponse } from '@/microservices/content/objects/BlogNotificationResponse'
-import type { BlogPostResponse } from '@/microservices/content/objects/BlogPostResponse'
-import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
-import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/content/objects/BlogProfileResponse'
+import type { BlogNotificationResponse } from '@/microservices/blog/objects/BlogNotificationResponse'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
+import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/blog/objects/BlogProfileResponse'
 import type { ContentImageResponse } from '@/lib/mvp-types/index'
 
 // Blog 页面顶层参数，负责把语言、登录用户和通知回调传给整页。

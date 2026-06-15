@@ -1,5 +1,6 @@
-// 鏈枃浠堕泦涓眹鎬诲墠绔彲璋冪敤鐨勫悗绔?Planner 鎺ュ彛銆?
-// 骞垮憡鐩稿叧 API銆?import { approveAdvertisement } from '@/microservices/advertising/api/ApproveAdvertisementPlanner'
+// 本文件汇总前端可调用的后端 Planner 接口。
+// 下方按业务域分组导出。
+import { approveAdvertisement } from '@/microservices/advertising/api/ApproveAdvertisementPlanner'
 import { assignAdvertisementSlot } from '@/microservices/advertising/api/AssignAdvertisementSlotPlanner'
 import { getAdvertisementDeliverySettings } from '@/microservices/advertising/api/GetAdvertisementDeliverySettingsPlanner'
 import { saveAdvertisementDeliverySettings } from '@/microservices/advertising/api/SaveAdvertisementDeliverySettingsPlanner'
@@ -14,7 +15,8 @@ import { submitAdvertisementForReview } from '@/microservices/advertising/api/Su
 import { updateAdvertisement } from '@/microservices/advertising/api/UpdateAdvertisementPlanner'
 import { uploadAdvertisementImage } from '@/microservices/advertising/api/UploadAdvertisementImagePlanner'
 
-// 鏅偣鐩稿叧 API銆?import { listAttractions } from '@/microservices/attraction/api/ListAttractionsPlanner'
+// 广告相关 API。
+import { listAttractions } from '@/microservices/attraction/api/ListAttractionsPlanner'
 import { getAttraction } from '@/microservices/attraction/api/GetAttractionDetailsPlanner'
 import { uploadAttractionImage } from '@/microservices/attraction/api/UploadAttractionImagePlanner'
 
@@ -35,13 +37,14 @@ import { listManagerSessions } from '@/microservices/auth/api/ListManagerSession
 import { logoutCurrentManagerSession } from '@/microservices/auth/api/ManagerLogoutPlanner'
 import { logoutOtherManagerSessions } from '@/microservices/auth/api/ManagerLogoutOtherSessionsPlanner'
 
-
-// 鍐呭涓庣ぞ鍖虹浉鍏?API銆?import { listBlogPosts, listShortBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, saveBlogDraft, publishBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost, likeBlogComment, unlikeBlogComment, favoriteBlogPost, unfavoriteBlogPost, followBlogUser, blockBlogUser, listBlogNotifications, getBlogProfile, updateBlogProfilePrivacy, listBlogFollowers, listBlogFollowing } from '@/microservices/content/api/BlogPlannerSupport'
+// 内容 / 文档相关 API。
+import { listBlogPosts, listShortBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, saveBlogDraft, publishBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost, likeBlogComment, unlikeBlogComment, favoriteBlogPost, unfavoriteBlogPost, followBlogUser, blockBlogUser, listBlogNotifications, getBlogProfile, updateBlogProfilePrivacy, listBlogFollowers, listBlogFollowing } from '@/microservices/blog/api'
 import { listExploreSuggestions, searchExplore } from '@/microservices/content/api/ExplorePlannerSupport'
-import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedbackThreads, listSiteAdminFeedbackThreads, sendFeedbackMessage, createOrderCancellationMessage, handleOrderCancellationRequest, markFeedbackThreadRead, escalateFeedbackThread, createFeedbackComplaint, openComplaintManagerThread } from '@/microservices/content/api/FeedbackPlannerSupport'
+import { ensureOrderCancellationThread, listMyFeedbackThreads, listManagerFeedbackThreads, listSiteAdminFeedbackThreads, sendFeedbackMessage, createOrderCancellationMessage, handleOrderCancellationRequest, markFeedbackThreadRead, escalateFeedbackThread, createFeedbackComplaint, openComplaintManagerThread } from '@/microservices/feedback/api'
 import { listMyReviews, listReviewsByResource, getReviewResourceSummary, getReviewEligibility, createReview, updateReview, uploadReviewImage, deleteReview } from '@/microservices/content/api/ReviewPlannerSupport'
 
-// 鑸彮銆侀厭搴椼€佽鍗曘€佹梾娓稿洟鍜屽嚭琛屼汉鐩稿叧 API銆?import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner } from '@/microservices/flight/api'
+// 航班、酒店、订单、旅游团和出行相关 API。
+import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner, flightSuggestionsPlanner } from '@/microservices/flight/api'
 import { searchHotelsPlanner, getHotelDetailsPlanner, hotelSuggestionsPlanner, uploadHotelRoomTypeImage } from '@/microservices/hotel/api'
 import { createUser } from '@/microservices/identity/api/CreateUserPlanner'
 import { loginUser } from '@/microservices/identity/api/LoginPlanner'
@@ -68,11 +71,6 @@ import { createTraveler } from '@/microservices/traveler/api/CreateTravelerPlann
 import { updateTraveler } from '@/microservices/traveler/api/UpdateTravelerPlanner'
 import { listTravelers } from '@/microservices/traveler/api/ListTravelersPlanner'
 import { deleteTraveler } from '@/microservices/traveler/api/DeleteTravelerPlanner'
-import { approveAdvertisement } from '@/microservices/advertising/api/ApproveAdvertisementPlanner'
-import { listAttractions } from '@/microservices/attraction/api/ListAttractionsPlanner'
-import { listBlogPosts, listShortBlogPosts, listBlogSuggestions, uploadBlogImage, getBlogPost, listBlogModerationPosts, approveBlogPost, rejectBlogPost, saveBlogDraft, publishBlogPost, createBlogPost, updateBlogPost, archiveBlogPost, addBlogComment, deleteBlogComment, likeBlogPost, unlikeBlogPost, likeBlogComment, unlikeBlogComment, favoriteBlogPost, unfavoriteBlogPost, followBlogUser, blockBlogUser, listBlogNotifications, getBlogProfile, updateBlogProfilePrivacy, listBlogFollowers, listBlogFollowing } from '@/microservices/content/api/BlogPlannerSupport'
-import { searchFlightsPlanner, flightDailyLowestPricesPlanner, getFlightDetailsPlanner, bookFlightPlanner, flightSuggestionsPlanner } from '@/microservices/flight/api'
-
 export const travelMvpApiClient = {
   approveAdvertisement,
   assignAdvertisementSlot,
@@ -263,5 +261,9 @@ export const travelMvpApiClient = {
   listTravelers,
   deleteTraveler,
 }
+
+
+
+
 
 

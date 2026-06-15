@@ -1,6 +1,6 @@
 import type { OrderListResponse } from '@/microservices/order/objects/OrderListResponse'
 import type { OrderResponse } from '@/microservices/order/objects/OrderResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 export const createOrder = (payload: { ownerUserId: string; orderCurrency: string }): Promise<OrderResponse> =>
   executeJsonApiRequest('/CreateOrderPlanner', 'POST', payload)

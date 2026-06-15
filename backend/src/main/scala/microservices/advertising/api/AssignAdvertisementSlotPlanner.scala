@@ -1,5 +1,4 @@
-// AssignAdvertisementSlotPlanner 是广告模块的分配入口，负责请求校验、流程编排和结果返回。
-
+// 本文件提供广告位分配入口。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO

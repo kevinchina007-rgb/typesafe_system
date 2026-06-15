@@ -2,7 +2,7 @@
 
 import type { GetHotelDetailsPlannerRequest } from '@/microservices/hotel/objects/GetHotelDetailsPlannerRequest'
 import type { HotelPlannerResponse } from '@/microservices/hotel/objects/HotelPlannerResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 export const getHotelDetailsPlanner = (
   hotelId: string,

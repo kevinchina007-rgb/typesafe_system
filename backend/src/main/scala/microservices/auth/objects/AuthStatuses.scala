@@ -1,3 +1,4 @@
+// 本文件定义 auth 域的状态值对象，只供后端内部判定与序列化使用，不对应前端镜像文件。
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*

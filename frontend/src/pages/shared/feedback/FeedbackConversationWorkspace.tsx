@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import type { FeedbackMessageResponse } from '@/microservices/content/objects/FeedbackMessageResponse'
+import type { FeedbackMessageResponse } from '@/microservices/feedback/objects/FeedbackMessageResponse'
 import { FeedbackConversationActions } from './FeedbackConversationActions'
 import { FeedbackConversationEmptyState } from './FeedbackConversationEmptyState'
 import { FeedbackConversationHeader } from './FeedbackConversationHeader'

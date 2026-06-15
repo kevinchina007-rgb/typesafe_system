@@ -1,5 +1,5 @@
-import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
-import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
+import type { FeedbackAudience } from '@/microservices/feedback/objects/FeedbackAudience'
+import type { FeedbackThread } from '@/microservices/feedback/objects/FeedbackThread'
 import { FeedbackConversationAvatar } from './FeedbackConversationAvatar'
 import { formatListTime, getLastMessage, getThreadPreview, getThreadIdentity } from './FeedbackConversationWorkspace.utils'
 import type { SupportIdentityOverride } from './FeedbackConversationWorkspace.types'
@@ -26,7 +26,7 @@ export function FeedbackConversationThreadList({
   return (
     <aside className="min-h-0 border-r border-slate-300 bg-slate-50">
       <div className="border-b border-slate-200 p-4">
-        <h2 className="m-0 text-2xl font-bold text-slate-950">客服反馈</h2>
+        <h2 className="m-0 text-2xl font-bold text-slate-950">鐎广垺婀囬崣宥夘洯</h2>
       </div>
 
       <div className="grid">

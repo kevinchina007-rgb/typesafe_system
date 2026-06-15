@@ -1,5 +1,4 @@
-// ApproveAdvertisementPlanner 是广告模块的审批入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告审核通过入口，只服务后端广告审核流程，不对应前端镜像文件。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO
@@ -19,7 +18,7 @@ object ApproveAdvertisementPlanner extends ConnectionApiPlan[AdvertisementReview
         connection,
         advertisement,
         input.reviewerManagerId,
-        s"广告「${advertisement.title}」已通过审核，可以进入投放。",
+        s"Advertisement '${advertisement.title}' passed review and can be delivered.",
         now
       )
     yield advertisement

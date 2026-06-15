@@ -4,7 +4,7 @@ import type { TourGroupDetailsResponse } from '@/microservices/tour-group/object
 import type { TourGroupListResponse } from '@/microservices/tour-group/objects/TourGroupListResponse'
 import type { TourGroupPaySelectionResponse } from '@/microservices/tour-group/objects/TourGroupPaySelectionResponse'
 import type { UploadTourGroupCoverImageResponse } from '@/microservices/tour-group/objects/UploadTourGroupCoverImageResponse'
-import { executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeApiRequest, executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import { createChatQueryString, normalizeTourGroupDetails, readFileAsBase64 } from './TourGroupPlannerSupportShared'
 
 export const createTourGroup = (payload: {

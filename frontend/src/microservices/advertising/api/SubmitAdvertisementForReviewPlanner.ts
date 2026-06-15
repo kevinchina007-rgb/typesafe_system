@@ -1,12 +1,10 @@
-// 本文件定义 SubmitAdvertisementForReviewPlanner，负责 advertising 模块的提交编排和接口入口。
+﻿// 本文件定义 advertising 模块的 `SubmitAdvertisementForReviewPlanner`，负责广告提交审核入口。
 
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
-import type { SubmitAdvertisementForReviewRequest } from '@/microservices/advertising/objects/SubmitAdvertisementForReviewRequest'
+import type { AdvertisementOwnerActionRequest } from '@/microservices/advertising/objects/AdvertisementOwnerActionRequest'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-
-
-
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
-
-export const submitAdvertisementForReview = (payload: SubmitAdvertisementForReviewRequest): Promise<AdvertisementResponse> =>
+export const submitAdvertisementForReview = (
+  payload: AdvertisementOwnerActionRequest,
+): Promise<AdvertisementResponse> =>
   executeJsonApiRequest('/SubmitAdvertisementForReviewPlanner', 'POST', payload)

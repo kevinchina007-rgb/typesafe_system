@@ -1,4 +1,4 @@
-// AuthSourceJsonCodecs 瀹氫箟璁よ瘉妯″潡鐨勬簮鏁版嵁 JSON codec銆?
+// 本文件提供 auth 域内部值对象的 JSON codec，只服务后端持久化与 planner 编排。
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*

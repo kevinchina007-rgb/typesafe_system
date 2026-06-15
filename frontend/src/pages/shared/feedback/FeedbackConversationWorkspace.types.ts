@@ -1,7 +1,7 @@
-import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
-import type { FeedbackMessageResponse } from '@/microservices/content/objects/FeedbackMessageResponse'
-import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
-import type { OrderCancellationRequestStatus } from '@/microservices/content/objects/OrderCancellationRequestPayload'
+import type { FeedbackAudience } from '@/microservices/feedback/objects/FeedbackAudience'
+import type { FeedbackMessageResponse } from '@/microservices/feedback/objects/FeedbackMessageResponse'
+import type { FeedbackThread } from '@/microservices/feedback/objects/FeedbackThread'
+import type { OrderCancellationRequestStatus } from '@/microservices/feedback/objects/OrderCancellationRequestPayload'
 import type { OrderCategory } from '@/pages/BookingsPage/objects'
 
 export type CancellationOrderOption = {

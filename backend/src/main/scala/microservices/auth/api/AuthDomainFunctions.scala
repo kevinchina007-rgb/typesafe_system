@@ -1,4 +1,4 @@
-// AuthDomainFunctions 瀹氫箟璁よ瘉妯″潡鐨勯鍩熻緟鍔╁嚱鏁般€?
+// 本文件是 auth 域的后端内部辅助函数集合，只服务 planner 编排与密码处理，不对应前端镜像文件。
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO

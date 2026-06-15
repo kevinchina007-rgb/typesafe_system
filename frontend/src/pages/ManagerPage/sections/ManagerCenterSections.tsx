@@ -4,7 +4,7 @@ import { handleOrderCancellationRequest, markFeedbackThreadRead, openComplaintMa
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
 import { AdvertisementReviewWorkspace } from '@/pages/ManagerPage/components/advertising/AdvertisementReviewWorkspace'
-import type { BlogPostSummaryResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
+import type { BlogPostSummaryResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
 import type { AttractionAdminSessionResponse, CurrentManagerSessionResponse, FlightPlannerResponse, ManagerRefundTaskResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
 
 // 管理中心的中间层页面区块，负责把反馈、审核和站点管理内容拼起来。

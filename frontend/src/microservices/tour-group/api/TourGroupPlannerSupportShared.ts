@@ -1,4 +1,4 @@
-import { createQueryString } from '@/microservices/common/api/ApiTransport'
+import { createQueryString } from '@/shared-kernel/api/ApiTransport'
 
 const userSessionStorageKey = 'flypig.userSessionId'
 

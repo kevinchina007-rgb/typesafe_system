@@ -1,12 +1,6 @@
-// 本文件定义 advertising 模块的 `GenerateAdvertisementImageCandidatesResponse`，作为响应数据并提供 JSON 编解码。
+﻿// 本文件定义 advertising 模块的 `GenerateAdvertisementImageCandidatesResponse`，作为图片候选响应并提供 JSON 编解码。
 
-export type AdvertisementImageCandidateResponse = {
-  assetId: string
-  publicUrl: string
-  prompt: string
-  mimeType: string
-  seed: number
-}
+import type { AdvertisementImageCandidateResponse } from './AdvertisementImageCandidateResponse'
 
 export type GenerateAdvertisementImageCandidatesResponse = {
   candidates: AdvertisementImageCandidateResponse[]

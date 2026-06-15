@@ -1,4 +1,4 @@
-import { ArrowLeft, X } from 'lucide-react'
+﻿import { ArrowLeft, X } from 'lucide-react'
 
 import type { BlogPageController } from '../../objects'
 import { BlogProfilePanel } from '../panels/BlogProfilePanel'

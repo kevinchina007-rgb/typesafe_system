@@ -1,5 +1,4 @@
-// GenerateAdvertisementImageCandidatesPlanner 是广告模块的生成入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告图片候选生成入口，只服务后端广告编辑流程，不对应前端镜像文件。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO
@@ -173,9 +172,9 @@ object GenerateAdvertisementImageCandidatesPlanner extends ConnectionApiPlan[Gen
   private def localFallbackImage(width: Int, height: Int, seed: Int, tone: String, transparentBackground: Boolean): GeneratedImage =
     val (startColor, endColor) =
       tone.toLowerCase match
-        case value if value.contains("高级") || value.contains("premium") => ("#111827", "#d4af37")
-        case value if value.contains("活力") || value.contains("energetic") => ("#be185d", "#fb923c")
-        case value if value.contains("温暖") || value.contains("warm") => ("#166534", "#facc15")
+        case value if value.contains("楂樼骇") || value.contains("premium") => ("#111827", "#d4af37")
+        case value if value.contains("娲诲姏") || value.contains("energetic") => ("#be185d", "#fb923c")
+        case value if value.contains("娓╂殩") || value.contains("warm") => ("#166534", "#facc15")
         case _ => ("#075985", "#38bdf8")
 
     val circleX = width - 180 + (seed % 30)

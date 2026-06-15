@@ -4,7 +4,7 @@ import { createFeedbackComplaint, createOrderCancellationMessage, markFeedbackTh
 import type { UserResponse } from '@/lib/mvp-types/index'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
 import type { CancellationOrderOption } from '@/pages/CustomerFeedbackPage/objects'
-import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
+import type { FeedbackThread } from '@/microservices/feedback/objects/FeedbackThread'
 
 type CustomerFeedbackWorkspaceProps = {
   signedInUser: UserResponse

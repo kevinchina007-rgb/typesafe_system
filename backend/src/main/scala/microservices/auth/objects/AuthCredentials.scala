@@ -1,4 +1,4 @@
-// AuthCredentials 瀹氫箟璁よ瘉妯″潡鐨勬暟鎹ā鍨嬨€?
+// 本文件定义 auth 域的凭证、管理员类型和会话主体值对象，只供后端内部流转使用。
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*

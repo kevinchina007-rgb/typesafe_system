@@ -1,5 +1,4 @@
-// PauseAdvertisementPlanner 是广告模块的暂停入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告暂停入口，只负责广告暂停这一件事。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO
@@ -13,4 +12,3 @@ object PauseAdvertisementPlanner extends ConnectionApiPlan[AdvertisementOwnerAct
 
   override def plan(input: AdvertisementOwnerActionRequest, connection: Connection): IO[AdvertisementResponse] =
     AdvertisementPlainSql.pause(connection, input, Instant.now())
-

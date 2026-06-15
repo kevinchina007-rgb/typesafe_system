@@ -1,7 +1,8 @@
-// 本文件定义 UploadAdvertisementImagePlanner，负责 advertising 模块的上传编排和接口入口。
+﻿// 本文件定义 advertising 模块的 `UploadAdvertisementImagePlanner`，负责广告图片上传入口。
 
-import type { AdvertisementImageUploadResponse } from '@/microservices/advertising/objects/AdvertisementImageUploadResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import type { UploadAdvertisementImageRequest } from '@/microservices/advertising/objects/UploadAdvertisementImageRequest'
+import type { UploadAdvertisementImageResponse } from '@/microservices/advertising/objects/UploadAdvertisementImageResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 async function toBase64(imageFile: File): Promise<string> {
   const bytes = new Uint8Array(await imageFile.arrayBuffer())
@@ -12,10 +13,12 @@ async function toBase64(imageFile: File): Promise<string> {
   return window.btoa(binary)
 }
 
-export async function uploadAdvertisementImage(imageFile: File): Promise<AdvertisementImageUploadResponse> {
-  return executeJsonApiRequest('/UploadAdvertisementImagePlanner', 'POST', {
+export async function uploadAdvertisementImage(imageFile: File): Promise<UploadAdvertisementImageResponse> {
+  const payload: UploadAdvertisementImageRequest = {
     originalFileName: imageFile.name,
     mimeType: imageFile.type || 'application/octet-stream',
     fileContentBase64: await toBase64(imageFile),
-  })
+  }
+
+  return executeJsonApiRequest('/UploadAdvertisementImagePlanner', 'POST', payload)
 }

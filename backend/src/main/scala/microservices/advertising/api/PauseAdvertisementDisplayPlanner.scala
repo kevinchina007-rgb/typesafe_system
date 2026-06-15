@@ -1,5 +1,4 @@
-// PauseAdvertisementDisplayPlanner 是广告模块的暂停入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告暂停展示入口，只服务后端广告审核流程，不对应前端镜像文件。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO
@@ -13,14 +12,14 @@ object PauseAdvertisementDisplayPlanner extends ConnectionApiPlan[AdvertisementR
 
   override def plan(input: AdvertisementReviewDecisionRequest, connection: Connection): IO[AdvertisementResponse] =
     val now = Instant.now()
-    val note = input.reviewNote.map(_.trim).filter(_.nonEmpty).getOrElse("网站管理者已暂时取消展示")
+    val note = input.reviewNote.map(_.trim).filter(_.nonEmpty).getOrElse("Paused by site admin")
     for
       advertisement <- AdvertisementPlainSql.pauseDisplayBySiteAdmin(connection, input.copy(reviewNote = Some(note)), now)
       _ <- AdvertisementFeedbackNotifications.notifyOwner(
         connection,
         advertisement,
         input.reviewerManagerId,
-        s"广告「${advertisement.title}」已被暂时取消展示，原因：$note。审核记录会保留，后续可重新安排展示。",
+        s"Advertisement '${advertisement.title}' was paused from display for review note: $note.",
         now
       )
     yield advertisement

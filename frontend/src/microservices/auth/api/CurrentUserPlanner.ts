@@ -1,20 +1,9 @@
-// 本文件定义 CurrentUserPlanner，负责 auth 模块的获取当前编排和接口入口。
-
+import type { CurrentUserPlannerResponse } from '@/microservices/auth/objects/CurrentUserPlannerResponse'
 import type { CurrentUserSessionResponse } from '@/microservices/auth/objects/CurrentUserSessionResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { currentUserSessionResponseFromPlannerResponse } from '@/microservices/auth/objects/CurrentUserSessionResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-type CurrentUserPlannerResponse = {
-  sessionId: string
-  userId: string
-  email: string
-  nickname: string
-  phone: string
-  avatarUrl: string | null
-  membershipLevel: string
-  points: number
-  expiresAt: string
-}
-
+// 本文件负责 auth 模块的当前用户会话入口，仅编排 session 读取与容错。
 const userSessionStorageKey = 'flypig.userSessionId'
 
 const staleUserSessionErrorFragments = [
@@ -48,26 +37,13 @@ function isStaleUserSessionError(error: unknown): boolean {
 
 function toCurrentUserSessionResponse(plannerResponse: CurrentUserPlannerResponse): CurrentUserSessionResponse {
   rememberUserSession(plannerResponse.sessionId)
-  return {
-    user: {
-      userId: plannerResponse.userId,
-      email: plannerResponse.email,
-      nickname: plannerResponse.nickname,
-      phone: plannerResponse.phone,
-      avatarUrl: plannerResponse.avatarUrl,
-      status: 'Active',
-      membershipLevel: plannerResponse.membershipLevel,
-      points: plannerResponse.points,
-      defaultTravelerProfileId: null,
-      createdAt: new Date().toISOString(),
-    },
-    expiresAt: plannerResponse.expiresAt,
-  }
+  return currentUserSessionResponseFromPlannerResponse(plannerResponse)
 }
 
-export const getCurrentUserSession = (): Promise<CurrentUserSessionResponse> =>
-  readUserSessionId()
-    ? executeJsonApiRequest<CurrentUserPlannerResponse>('/CurrentUserPlanner', 'POST', { sessionId: readUserSessionId() })
+export const getCurrentUserSession = (): Promise<CurrentUserSessionResponse> => {
+  const sessionId = readUserSessionId()
+  return sessionId
+    ? executeJsonApiRequest<CurrentUserPlannerResponse>('/CurrentUserPlanner', 'POST', { sessionId })
         .then(toCurrentUserSessionResponse)
         .catch(error => {
           if (isStaleUserSessionError(error)) {
@@ -78,3 +54,4 @@ export const getCurrentUserSession = (): Promise<CurrentUserSessionResponse> =>
           throw error
         })
     : Promise.reject(new Error('user_not_found|No active user session'))
+}

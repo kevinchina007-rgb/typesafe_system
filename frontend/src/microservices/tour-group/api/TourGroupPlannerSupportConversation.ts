@@ -3,7 +3,7 @@ import type { TourGroupConversationSummaryResponse } from '@/microservices/tour-
 import type { TourGroupMessageListResponse } from '@/microservices/tour-group/objects/TourGroupMessageListResponse'
 import type { TourGroupMessageSearchResponse } from '@/microservices/tour-group/objects/TourGroupMessageSearchResponse'
 import type { TourGroupUploadedAttachmentResponse } from '@/microservices/tour-group/objects/TourGroupUploadedAttachmentResponse'
-import { executeApiRequest, executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeApiRequest, executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import { createChatQueryString } from './TourGroupPlannerSupportShared'
 
 export const listTourGroupDirectConversations = (groupId: string): Promise<TourGroupConversationListResponse> =>

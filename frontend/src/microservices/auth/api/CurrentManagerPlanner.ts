@@ -1,8 +1,9 @@
-// 本文件定义 CurrentManagerPlanner，负责 auth 模块的获取当前编排和接口入口。
-
+import type { CurrentManagerPlannerResponse } from '@/microservices/auth/objects/CurrentManagerPlannerResponse'
 import type { CurrentManagerSessionResponse } from '@/microservices/auth/objects/CurrentManagerSessionResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { currentManagerSessionResponseFromPlannerResponse } from '@/microservices/auth/objects/CurrentManagerSessionResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
+// 本文件负责 auth 模块的当前管理员会话入口，仅编排 session 读取与容错。
 const managerSessionStorageKey = 'flypig.managerSessionId'
 
 const staleManagerSessionErrorFragments = [
@@ -21,11 +22,11 @@ function forgetManagerSession() {
   window.localStorage.removeItem(managerSessionStorageKey)
 }
 
-function rememberManagerSession(sessionResponse: CurrentManagerSessionResponse & { sessionId?: string }): CurrentManagerSessionResponse {
+function rememberManagerSession(sessionResponse: CurrentManagerPlannerResponse & { sessionId?: string }): CurrentManagerSessionResponse {
   if (sessionResponse.sessionId) {
     window.localStorage.setItem(managerSessionStorageKey, sessionResponse.sessionId)
   }
-  return sessionResponse
+  return currentManagerSessionResponseFromPlannerResponse(sessionResponse)
 }
 
 function isStaleManagerSessionError(error: unknown): boolean {
@@ -37,9 +38,10 @@ function isStaleManagerSessionError(error: unknown): boolean {
   return staleManagerSessionErrorFragments.some(fragment => normalizedMessage.includes(fragment))
 }
 
-export const getCurrentManagerSession = (): Promise<CurrentManagerSessionResponse> =>
-  readManagerSessionId()
-    ? executeJsonApiRequest<CurrentManagerSessionResponse & { sessionId?: string }>('/CurrentManagerPlanner', 'POST', { sessionId: readManagerSessionId() })
+export const getCurrentManagerSession = (): Promise<CurrentManagerSessionResponse> => {
+  const sessionId = readManagerSessionId()
+  return sessionId
+    ? executeJsonApiRequest<CurrentManagerPlannerResponse & { sessionId?: string }>('/CurrentManagerPlanner', 'POST', { sessionId })
         .then(rememberManagerSession)
         .catch(error => {
           if (isStaleManagerSessionError(error)) {
@@ -50,3 +52,4 @@ export const getCurrentManagerSession = (): Promise<CurrentManagerSessionRespons
           throw error
         })
     : Promise.reject(new Error('manager_not_found|No active manager session'))
+}

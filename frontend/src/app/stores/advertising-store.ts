@@ -1,20 +1,17 @@
-// 本文件封装状态管理逻辑。
-
+// 广告投放状态仓库。
 import { create } from 'zustand'
 
 import { getManagerSnap } from '@/app/stores/manager-store'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { AdvertisementImageUploadResponse } from '@/microservices/advertising/objects/AdvertisementImageUploadResponse'
+import type { UploadAdvertisementImageResponse } from '@/microservices/advertising/objects/UploadAdvertisementImageResponse'
 import type { AdvertisementDeliverySettingsResponse } from '@/microservices/advertising/objects/AdvertisementDeliverySettingsResponse'
 import type { GenerateAdvertisementImageCandidatesResponse } from '@/microservices/advertising/objects/GenerateAdvertisementImageCandidatesResponse'
 import type { GenerateAdvertisementTextCandidatesResponse } from '@/microservices/advertising/objects/GenerateAdvertisementTextCandidatesResponse'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
-import type { ApproveAdvertisementRequest } from '@/microservices/advertising/objects/ApproveAdvertisementRequest'
-import type { RejectAdvertisementRequest } from '@/microservices/advertising/objects/RejectAdvertisementRequest'
+import type { AdvertisementReviewDecisionRequest } from '@/microservices/advertising/objects/AdvertisementReviewDecisionRequest'
 import type { AdvertisementSlotAssignmentRequest } from '@/microservices/advertising/objects/AdvertisementSlotAssignmentRequest'
 import type { CreateAdvertisementRequest } from '@/microservices/advertising/objects/CreateAdvertisementRequest'
 import type { UpdateAdvertisementRequest } from '@/microservices/advertising/objects/UpdateAdvertisementRequest'
-
 type AdvertisingPlacementKey = 'flightBooking' | 'hotelBooking' | 'trainBooking' | 'attractionBooking'
 
 type AdvertisingState = {
@@ -37,7 +34,7 @@ type AdvertisingActions = {
   createAdvertisement: (
     payload: Omit<CreateAdvertisementRequest, 'ownerManagerId' | 'ownerType' | 'ownerDisplayName'>
   ) => Promise<AdvertisementResponse>
-  uploadAdvertisementImage: (imageFile: File) => Promise<AdvertisementImageUploadResponse>
+  uploadAdvertisementImage: (imageFile: File) => Promise<UploadAdvertisementImageResponse>
   generateAdvertisementImageCandidates: (payload: {
     prompt: string
     supportingCopy?: string | null
@@ -68,9 +65,18 @@ type AdvertisingActions = {
   ) => Promise<AdvertisementResponse>
   submitAdvertisementForReview: (advertisementId: string) => Promise<AdvertisementResponse>
   pauseAdvertisement: (advertisementId: string) => Promise<AdvertisementResponse>
-  approveAdvertisement: (advertisementId: string, payload: ApproveAdvertisementRequest) => Promise<AdvertisementResponse>
-  rejectAdvertisement: (advertisementId: string, payload: RejectAdvertisementRequest) => Promise<AdvertisementResponse>
-  assignAdvertisementSlot: (advertisementId: string, payload: AdvertisementSlotAssignmentRequest) => Promise<AdvertisementResponse>
+  approveAdvertisement: (
+    advertisementId: string,
+    payload: Omit<AdvertisementReviewDecisionRequest, 'reviewerManagerId' | 'advertisementId'>
+  ) => Promise<AdvertisementResponse>
+  rejectAdvertisement: (
+    advertisementId: string,
+    payload: Omit<AdvertisementReviewDecisionRequest, 'reviewerManagerId' | 'advertisementId'>
+  ) => Promise<AdvertisementResponse>
+  assignAdvertisementSlot: (
+    advertisementId: string,
+    payload: Omit<AdvertisementSlotAssignmentRequest, 'reviewerManagerId' | 'advertisementId'>
+  ) => Promise<AdvertisementResponse>
   pauseAdvertisementDisplay: (advertisementId: string, reviewNote?: string | null) => Promise<AdvertisementResponse>
   loadAdvertisementDeliverySettings: (placement: string) => Promise<AdvertisementDeliverySettingsResponse>
   saveAdvertisementDeliverySettings: (payload: {
@@ -111,7 +117,7 @@ function sortAdvertisements(advertisements: AdvertisementResponse[]) {
   })
 }
 
-// 按投放槽位和更新时间排序可展示广告。
+// 按投放位和更新时间排序可展示广告。
 function sortDeliverableAdvertisements(advertisements: AdvertisementResponse[]) {
   return [...advertisements].sort((left, right) => {
     const slotDelta = (left.slotIndex ?? 999) - (right.slotIndex ?? 999)
@@ -120,7 +126,7 @@ function sortDeliverableAdvertisements(advertisements: AdvertisementResponse[]) 
   })
 }
 
-// 新广告插入或覆盖已有同 ID 广告。
+// 在广告列表中插入或更新指定广告。
 function upsertAdvertisement(advertisements: AdvertisementResponse[], nextAdvertisement: AdvertisementResponse) {
   const existingIndex = advertisements.findIndex(item => item.advertisementId === nextAdvertisement.advertisementId)
   if (existingIndex < 0) {
@@ -132,12 +138,12 @@ function upsertAdvertisement(advertisements: AdvertisementResponse[], nextAdvert
   return sortAdvertisements(nextAdvertisements)
 }
 
-// 从列表里移除指定广告。
+// 从列表中移除指定广告。
 function removeAdvertisement(advertisements: AdvertisementResponse[], advertisementId: string) {
   return advertisements.filter(item => item.advertisementId !== advertisementId)
 }
 
-// 在指定投放槽位里替换广告并保持排序。
+// 在指定投放位里替换广告并保持排序。
 function replaceAdvertisementSlot(
   advertisements: AdvertisementResponse[],
   nextAdvertisement: AdvertisementResponse,
@@ -241,9 +247,7 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   uploadAdvertisementImage: async imageFile => travelMvpApiClient.uploadAdvertisementImage(imageFile),
-  // 生成广告图片候选。
   generateAdvertisementImageCandidates: async payload => travelMvpApiClient.generateAdvertisementImageCandidates(payload),
-  // 生成广告文案候选。
   generateAdvertisementTextCandidates: async payload => travelMvpApiClient.generateAdvertisementTextCandidates(payload),
   updateAdvertisement: async (advertisementId, payload) => {
     const manager = requireSignedInManager()
@@ -293,6 +297,7 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   approveAdvertisement: async (advertisementId, payload) => {
     const manager = requireSignedInManager()
     const advertisement = await travelMvpApiClient.approveAdvertisement(advertisementId, {
+      advertisementId,
       ...payload,
       reviewerManagerId: manager.managerId,
     })
@@ -322,6 +327,7 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   rejectAdvertisement: async (advertisementId, payload) => {
     const manager = requireSignedInManager()
     const advertisement = await travelMvpApiClient.rejectAdvertisement(advertisementId, {
+      advertisementId,
       ...payload,
       reviewerManagerId: manager.managerId,
     })
@@ -375,8 +381,9 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
   pauseAdvertisementDisplay: async (advertisementId, reviewNote) => {
     const manager = requireSignedInManager()
     const advertisement = await travelMvpApiClient.pauseAdvertisementDisplay(advertisementId, {
+      advertisementId,
       reviewerManagerId: manager.managerId,
-      reviewNote,
+      reviewNote: reviewNote ?? null,
     })
     set(state => ({
       ownerAdvertisements: upsertAdvertisement(state.ownerAdvertisements, advertisement),
@@ -389,7 +396,7 @@ export const useAdvertisingStore = create<AdvertisingStore>()(set => ({
     return advertisement
   },
   loadAdvertisementDeliverySettings: async placement => {
-    const settings = await travelMvpApiClient.getAdvertisementDeliverySettings(placement)
+    const settings = await travelMvpApiClient.getAdvertisementDeliverySettings({ placement })
     set(state => ({ deliverySettingsByPlacement: { ...state.deliverySettingsByPlacement, [placement]: settings } }))
     return settings
   },
@@ -432,3 +439,9 @@ export function loadReviewedAdvertisements() {
 export function loadDeliverableAdvertisements(placement: AdvertisingPlacementKey) {
   return useAdvertisingStore.getState().loadDeliverableAdvertisements(placement)
 }
+
+
+
+
+
+

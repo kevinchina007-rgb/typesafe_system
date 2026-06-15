@@ -1,4 +1,4 @@
-// Hotel 瀹氫箟閰掑簵妯″潡鐨勬暟鎹ā鍨嬨€?
+// 本文件定义 hotel 域的核心领域模型。
 package com.typesafe.travel.hotel.objects
 
 // 这个文件定义的是后端 hotel 域的核心领域模型，主要给数据库映射、领域函数和 planner 内部计算使用。

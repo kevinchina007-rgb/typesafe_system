@@ -1,4 +1,4 @@
-import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
+import type { FeedbackThread } from '@/microservices/feedback/objects/FeedbackThread'
 import { FeedbackConversationInputArea } from './FeedbackConversationInputArea'
 
 export function FeedbackConversationActions({

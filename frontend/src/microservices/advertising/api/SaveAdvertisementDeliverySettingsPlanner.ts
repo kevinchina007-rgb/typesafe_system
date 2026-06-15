@@ -1,16 +1,8 @@
-// 本文件定义 SaveAdvertisementDeliverySettingsPlanner，负责 advertising 模块的保存编排和接口入口。
+﻿// 本文件定义 advertising 模块的 `SaveAdvertisementDeliverySettingsPlanner`，负责投放设置保存入口。
 
 import type { AdvertisementDeliverySettingsResponse } from '@/microservices/advertising/objects/AdvertisementDeliverySettingsResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
-
-export type SaveAdvertisementDeliverySettingsRequest = {
-  placement: string
-  rotationIntervalSeconds: number
-  playOrder: string
-  startAt: string | null
-  endAt: string | null
-  updatedByManagerId: string
-}
+import type { SaveAdvertisementDeliverySettingsRequest } from '@/microservices/advertising/objects/SaveAdvertisementDeliverySettingsRequest'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 export const saveAdvertisementDeliverySettings = (
   payload: SaveAdvertisementDeliverySettingsRequest,

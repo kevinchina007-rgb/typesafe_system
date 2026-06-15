@@ -1,4 +1,4 @@
-import { Settings } from 'lucide-react'
+﻿import { Settings } from 'lucide-react'
 
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import { BlogPostCard } from '../BlogPostCard'

@@ -1,4 +1,4 @@
-// ManagerAuthPlannerPlainSql 灏佽璁よ瘉妯″潡鐨刾lain SQL 瀹炵幇銆?
+// 本文件是 auth 域管理员侧 plain SQL 实现，只供后端 planner 编排，不对应前端镜像文件。
 package com.typesafe.travel.persistence.auth
 
 import cats.effect.IO

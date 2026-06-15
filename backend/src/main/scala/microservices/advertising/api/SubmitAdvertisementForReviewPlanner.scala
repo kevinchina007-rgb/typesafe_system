@@ -1,5 +1,4 @@
-// SubmitAdvertisementForReviewPlanner 是广告模块的提交入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告提交审核入口，只负责把广告送入审核流程。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO
@@ -13,4 +12,3 @@ object SubmitAdvertisementForReviewPlanner extends ConnectionApiPlan[Advertiseme
 
   override def plan(input: AdvertisementOwnerActionRequest, connection: Connection): IO[AdvertisementResponse] =
     AdvertisementPlainSql.submitForReview(connection, input, Instant.now())
-

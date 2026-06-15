@@ -1,6 +1,6 @@
 // 本文件定义 CreateManagerFlightPlanner，负责 operations 模块的创建编排和接口入口。
 
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import type { FlightPlannerResponse } from '@/microservices/flight/objects/FlightPlannerResponse'
 import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
 

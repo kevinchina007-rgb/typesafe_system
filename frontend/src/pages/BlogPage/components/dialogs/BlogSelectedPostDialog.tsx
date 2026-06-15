@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+﻿import { X } from 'lucide-react'
 
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { BlogPageController } from '../../objects'

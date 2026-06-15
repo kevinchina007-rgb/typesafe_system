@@ -1,4 +1,4 @@
-// HotelDomainFunctions 瀹氫箟閰掑簵妯″潡鐨勯鍩熻緟鍔╁嚱鏁般€?
+// 本文件只承载 hotel 域内可复用的纯领域函数。
 package com.typesafe.travel.hotel.api
 
 // 这个文件只承载 hotel 域内部可复用的纯领域函数，例如房态判断、日期区间推导、库存可订性计算和辅助校验。

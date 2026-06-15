@@ -1,15 +1,10 @@
-// 本文件定义内容服务前端传输类型，覆盖博客、评论、反馈和点评接口。
+// 内容域只保留 review / explore 相关的前端传输类型。
 
 export type { ContentImageResponse } from '@/microservices/content/objects/ContentImageResponse'
-export type { BlogCommentResponse } from '@/microservices/content/objects/BlogCommentResponse'
-export type { BlogPostListResponse } from '@/microservices/content/objects/BlogPostListResponse'
-export type { BlogPostResponse } from '@/microservices/content/objects/BlogPostResponse'
-export type { BlogPostSummaryResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
 export type { ResourceReviewSummaryResponse } from '@/microservices/content/objects/ResourceReviewSummaryResponse'
 export type { ReviewEligibilityResponse } from '@/microservices/content/objects/ReviewEligibilityResponse'
 export type { ReviewListResponse } from '@/microservices/content/objects/ReviewListResponse'
 export type { ReviewResponse } from '@/microservices/content/objects/ReviewResponse'
-export type { FeedbackMessageType } from '@/microservices/content/objects/FeedbackMessageType'
-export type { FeedbackSenderRole } from '@/microservices/content/objects/FeedbackSenderRole'
-export type { FeedbackThreadResponse } from '@/microservices/content/objects/FeedbackThreadResponse'
-export type { OrderCancellationRequestPayload, OrderCancellationRequestStatus } from '@/microservices/content/objects/OrderCancellationRequestPayload'
+export type { ExploreSearchResultResponse } from '@/shared-kernel/objects/ExploreSearchResultResponse'
+export type { SearchSuggestionResponse } from '@/shared-kernel/objects/SearchSuggestionResponse'
+export type { SearchSuggestionListResponse } from '@/shared-kernel/objects/SearchSuggestionListResponse'

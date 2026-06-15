@@ -1,6 +1,8 @@
-// 本文件定义 index 前端传输类型，供 API Client 和页面模型复用。
+// ????????????? API Client ????????
 
-export * from '@/lib/mvp-types/common'
+export * from '@/lib/mvp-types/shared-kernel'
+export * from '@/lib/mvp-types/blog'
+export * from '@/lib/mvp-types/feedback'
 export * from '@/lib/mvp-types/content'
 export * from '@/lib/mvp-types/auth'
 export * from '@/lib/mvp-types/flights'

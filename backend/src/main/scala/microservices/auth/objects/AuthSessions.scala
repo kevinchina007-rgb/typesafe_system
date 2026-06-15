@@ -1,3 +1,4 @@
+// 本文件定义 auth 域的会话与当前主体模型，只供后端内部流转，不对应前端镜像文件。
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*

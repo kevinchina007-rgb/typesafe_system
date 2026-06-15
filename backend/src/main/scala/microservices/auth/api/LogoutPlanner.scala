@@ -1,4 +1,4 @@
-// LogoutPlanner 鏄璇佹ā鍧楃殑閫€鍑虹櫥褰曞叆鍙ｏ紝璐熻矗璇锋眰鏍￠獙銆佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
+// 本文件是 auth 域的用户登出入口，只负责 session 校验和结果返回。
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO

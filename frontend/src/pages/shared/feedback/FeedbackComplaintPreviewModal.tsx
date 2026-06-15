@@ -1,4 +1,4 @@
-import type { FeedbackMessageResponse } from '@/microservices/content/objects/FeedbackMessageResponse'
+import type { FeedbackMessageResponse } from '@/microservices/feedback/objects/FeedbackMessageResponse'
 import { formatCenterTime } from './FeedbackConversationWorkspace.utils'
 
 export function FeedbackComplaintPreviewModal({

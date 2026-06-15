@@ -1,4 +1,4 @@
-// Blog 页面 helper 统一导出，供组件和 controller 复用。
+﻿// Blog 页面 helper 统一导出，供组件和 controller 复用。
 export {
   buildFallbackInitials,
   buildNotificationTypeSet,

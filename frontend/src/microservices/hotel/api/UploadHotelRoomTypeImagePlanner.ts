@@ -2,7 +2,7 @@
 
 import type { HotelRoomTypeImageUploadResponse } from '@/microservices/hotel/objects/HotelRoomTypeImageUploadResponse'
 import type { UploadHotelRoomTypeImagePlannerRequest } from '@/microservices/hotel/objects/UploadHotelRoomTypeImagePlannerRequest'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 async function toBase64(imageFile: File): Promise<string> {
   const bytes = new Uint8Array(await imageFile.arrayBuffer())

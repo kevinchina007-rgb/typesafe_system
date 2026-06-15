@@ -1,4 +1,4 @@
-import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
+﻿import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
 import type { BlogPageController } from '../../objects'
 import { buildFallbackInitials, formatShortDate, notificationFilters } from '../../functions'
 

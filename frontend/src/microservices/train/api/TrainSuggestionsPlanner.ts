@@ -1,4 +1,4 @@
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import type { TrainSuggestionListPlannerResponse } from '@/microservices/train/objects/TrainSuggestionListPlannerResponse'
 import type { TrainSuggestionsPlannerRequest } from '@/microservices/train/objects/TrainSuggestionsPlannerRequest'
 

@@ -1,10 +1,14 @@
-// 本文件定义 ListAdvertisementsPlanner，负责 advertising 模块的列表查询编排和接口入口。
+﻿// 本文件定义 advertising 模块的 `ListAdvertisementsPlanner`，负责列表查询编排和接口入口。
 
-import type { AdvertisementListResponse } from '@/microservices/advertising/objects/AdvertisementListResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import type { ListAdvertisementsRequest } from '@/microservices/advertising/objects/ListAdvertisementsRequest'
+import type { ListAdvertisementsResponse } from '@/microservices/advertising/objects/ListAdvertisementsResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-export const listMyAdvertisements = (ownerManagerId: string, ownerType: string): Promise<AdvertisementListResponse> =>
-  executeJsonApiRequest('/ListAdvertisementsPlanner', 'POST', {
+const listAdvertisements = (payload: ListAdvertisementsRequest): Promise<ListAdvertisementsResponse> =>
+  executeJsonApiRequest('/ListAdvertisementsPlanner', 'POST', payload)
+
+export const listMyAdvertisements = (ownerManagerId: string, ownerType: string): Promise<ListAdvertisementsResponse> =>
+  listAdvertisements({
     placement: undefined,
     reviewStatus: undefined,
     reviewStatuses: undefined,
@@ -14,8 +18,8 @@ export const listMyAdvertisements = (ownerManagerId: string, ownerType: string):
     currentTime: undefined,
   })
 
-export const listPendingAdvertisements = (): Promise<AdvertisementListResponse> =>
-  executeJsonApiRequest('/ListAdvertisementsPlanner', 'POST', {
+export const listPendingAdvertisements = (): Promise<ListAdvertisementsResponse> =>
+  listAdvertisements({
     placement: undefined,
     reviewStatus: 'PendingReview',
     reviewStatuses: undefined,
@@ -25,8 +29,8 @@ export const listPendingAdvertisements = (): Promise<AdvertisementListResponse> 
     currentTime: undefined,
   })
 
-export const listReviewedAdvertisements = (): Promise<AdvertisementListResponse> =>
-  executeJsonApiRequest('/ListAdvertisementsPlanner', 'POST', {
+export const listReviewedAdvertisements = (): Promise<ListAdvertisementsResponse> =>
+  listAdvertisements({
     placement: undefined,
     reviewStatus: undefined,
     reviewStatuses: ['Approved', 'Rejected'],
@@ -36,8 +40,8 @@ export const listReviewedAdvertisements = (): Promise<AdvertisementListResponse>
     currentTime: undefined,
   })
 
-export const listDeliverableAdvertisements = (placement: string): Promise<AdvertisementListResponse> =>
-  executeJsonApiRequest('/ListAdvertisementsPlanner', 'POST', {
+export const listDeliverableAdvertisements = (placement: string): Promise<ListAdvertisementsResponse> =>
+  listAdvertisements({
     placement,
     reviewStatus: 'Approved',
     reviewStatuses: undefined,

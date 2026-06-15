@@ -1,20 +1,26 @@
-// 当前管理员登录后返回的会话结构。
-export type CurrentManagerSessionResponse = {
-  managerId: string
-  managerType: string
-  email: string
-  displayName: string
-  status: string
-  scopeId: string
-  logoAssetPath?: string | null
-  createdAt: string
-  expiresAt: string
+import type { CurrentManagerPlannerResponse } from './CurrentManagerPlannerResponse'
+
+// 本文件保留为兼容层，供旧页面继续使用“管理员会话对象”的外壳。
+export type CurrentManagerSessionResponse = Omit<CurrentManagerPlannerResponse, 'sessionId'>
+
+export function currentManagerSessionResponseFromPlannerResponse(
+  plannerResponse: CurrentManagerPlannerResponse,
+): CurrentManagerSessionResponse {
+  return {
+    managerId: plannerResponse.managerId,
+    managerType: plannerResponse.managerType,
+    email: plannerResponse.email,
+    displayName: plannerResponse.displayName,
+    status: plannerResponse.status,
+    scopeId: plannerResponse.scopeId,
+    logoAssetPath: plannerResponse.logoAssetPath,
+    createdAt: plannerResponse.createdAt,
+    expiresAt: plannerResponse.expiresAt,
+  }
 }
 
-// 把当前管理员会话 JSON 解析成对象。
 export const currentManagerSessionResponseFromJson = (json: string): CurrentManagerSessionResponse =>
   JSON.parse(json) as CurrentManagerSessionResponse
 
-// 把当前管理员会话对象序列化成 JSON。
 export const currentManagerSessionResponseToJson = (value: CurrentManagerSessionResponse): string =>
   JSON.stringify(value)

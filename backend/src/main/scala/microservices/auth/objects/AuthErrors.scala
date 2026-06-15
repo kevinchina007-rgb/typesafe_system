@@ -1,4 +1,4 @@
-// AuthErrors 瀹氫箟璁よ瘉妯″潡鐨勯敊璇ā鍨嬨€?
+// 本文件定义 auth 域的后端错误类型，只供 planner 和 table 层复用，不对应前端镜像文件。
 package com.typesafe.travel.auth.domain
 
 import com.typesafe.travel.shared.kernel.*

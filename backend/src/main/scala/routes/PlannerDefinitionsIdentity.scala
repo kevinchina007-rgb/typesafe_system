@@ -11,7 +11,7 @@ object PlannerDefinitionsIdentity:
     PlannerRegistry(
       List(
         WithConnection(CreateUserPlanner),
-        WithConnection(LoginPlanner),
+        WithConnection(IdentityLoginPlanner),
         WithConnection(GetUserPlanner),
         WithConnection(UploadUserAvatarPlanner),
         WithConnection(UpdateUserProfilePlanner)

@@ -1,4 +1,4 @@
-// 本文件定义 advertising 模块的 `AdvertisementDeliverySettingsResponse`，作为响应数据并提供 JSON 编解码。
+﻿// 本文件定义 advertising 模块的 `AdvertisementDeliverySettingsResponse`，用于投放设置响应并提供 JSON 编解码。
 
 export type AdvertisementDeliverySettingsResponse = {
   placement: string
@@ -9,3 +9,9 @@ export type AdvertisementDeliverySettingsResponse = {
   updatedByManagerId: string | null
   updatedAt: string
 }
+
+export const advertisementDeliverySettingsResponseFromJson = (json: string): AdvertisementDeliverySettingsResponse =>
+  JSON.parse(json) as AdvertisementDeliverySettingsResponse
+
+export const advertisementDeliverySettingsResponseToJson = (value: AdvertisementDeliverySettingsResponse): string =>
+  JSON.stringify(value)

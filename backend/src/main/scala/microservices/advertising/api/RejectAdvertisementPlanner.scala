@@ -1,5 +1,4 @@
-// RejectAdvertisementPlanner 是广告模块的拒绝入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告驳回入口，只服务后端广告审核流程，不对应前端镜像文件。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO
@@ -22,7 +21,7 @@ object RejectAdvertisementPlanner extends ConnectionApiPlan[AdvertisementReviewD
         connection,
         advertisement,
         input.reviewerManagerId,
-        s"广告「${advertisement.title}」被驳回，原因：$note。你可以保留这条历史记录，修改后重新提交。",
+        s"Advertisement '${advertisement.title}' was rejected. Reason: $note.",
         now
       )
     yield advertisement

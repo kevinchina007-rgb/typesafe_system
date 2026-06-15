@@ -1,4 +1,4 @@
-// HotelManagerPlainSql 璐熻矗operations鐩稿叧瀹炵幇銆?
+// 本文件封装 operations/hotel 模块的 plain SQL 实现。
 package com.typesafe.travel.persistence.operations
 
 // 这个文件是 operations/hotel 域的纯后端持久化实现，负责酒店管理员、酒店主体和房型库存的数据库写入与读取。

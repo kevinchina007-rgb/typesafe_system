@@ -1,7 +1,7 @@
 import type { ResourceReviewSummaryResponse } from '@/microservices/content/objects/ResourceReviewSummaryResponse'
 import type { ReviewEligibilityResponse } from '@/microservices/content/objects/ReviewEligibilityResponse'
 import type { ReviewListResponse } from '@/microservices/content/objects/ReviewListResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 export const listMyReviews = (userId: string): Promise<ReviewListResponse> =>
   executeJsonApiRequest('/ListMyReviewsPlanner', 'POST', { userId })

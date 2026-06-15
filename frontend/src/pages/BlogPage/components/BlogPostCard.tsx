@@ -1,5 +1,5 @@
 import { BackendAssetImage } from '@/pages/shared/base/BackendAssetImage'
-import type { BlogPostSummaryResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
+import type { BlogPostSummaryResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
 
 import {
   buildFallbackInitials,

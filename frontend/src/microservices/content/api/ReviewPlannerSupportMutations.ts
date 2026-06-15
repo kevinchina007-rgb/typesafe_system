@@ -1,6 +1,6 @@
 import type { ContentImageResponse } from '@/microservices/content/objects/ContentImageResponse'
 import type { ReviewResponse } from '@/microservices/content/objects/ReviewResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 export const createReview = (payload: {
   userId: string

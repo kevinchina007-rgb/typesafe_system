@@ -1,11 +1,11 @@
-// 本文件定义 ApproveAdvertisementPlanner，负责 advertising 模块的审批通过编排和接口入口。
+﻿// 本文件定义 advertising 模块的 `ApproveAdvertisementPlanner`，负责广告审核通过入口。
 
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
-import type { ApproveAdvertisementRequest } from '@/microservices/advertising/objects/ApproveAdvertisementRequest'
+import type { AdvertisementReviewDecisionRequest } from '@/microservices/advertising/objects/AdvertisementReviewDecisionRequest'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-
-
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
-
-export const approveAdvertisement = (advertisementId: string, payload: ApproveAdvertisementRequest): Promise<AdvertisementResponse> =>
+export const approveAdvertisement = (
+  advertisementId: string,
+  payload: AdvertisementReviewDecisionRequest,
+): Promise<AdvertisementResponse> =>
   executeJsonApiRequest('/ApproveAdvertisementPlanner', 'POST', { ...payload, advertisementId })

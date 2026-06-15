@@ -1,7 +1,10 @@
-// 本文件定义 GetAdvertisementDeliverySettingsPlanner，负责 advertising 模块的获取编排和接口入口。
+﻿// 本文件定义 advertising 模块的 `GetAdvertisementDeliverySettingsPlanner`，负责投放设置读取入口。
 
 import type { AdvertisementDeliverySettingsResponse } from '@/microservices/advertising/objects/AdvertisementDeliverySettingsResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import type { GetAdvertisementDeliverySettingsRequest } from '@/microservices/advertising/objects/GetAdvertisementDeliverySettingsRequest'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-export const getAdvertisementDeliverySettings = (placement: string): Promise<AdvertisementDeliverySettingsResponse> =>
-  executeJsonApiRequest('/GetAdvertisementDeliverySettingsPlanner', 'POST', { placement })
+export const getAdvertisementDeliverySettings = (
+  payload: GetAdvertisementDeliverySettingsRequest,
+): Promise<AdvertisementDeliverySettingsResponse> =>
+  executeJsonApiRequest('/GetAdvertisementDeliverySettingsPlanner', 'POST', payload)

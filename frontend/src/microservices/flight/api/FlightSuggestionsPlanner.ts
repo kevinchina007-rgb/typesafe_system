@@ -2,7 +2,7 @@
 
 import type { SearchSuggestionListPlannerResponse } from '@/microservices/flight/objects/SearchSuggestionListPlannerResponse'
 import type { FlightSuggestionsPlannerRequest } from '@/microservices/flight/objects/FlightSuggestionsPlannerRequest'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 export const flightSuggestionsPlanner = (
   payload: FlightSuggestionsPlannerRequest,

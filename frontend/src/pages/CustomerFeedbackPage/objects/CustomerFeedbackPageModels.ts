@@ -1,5 +1,5 @@
 import type { AppLanguage, UserResponse } from '@/lib/mvp-types/index'
-import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
+import type { FeedbackThread } from '@/microservices/feedback/objects/FeedbackThread'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 import type { OrderCategory } from '@/pages/BookingsPage/objects'
 

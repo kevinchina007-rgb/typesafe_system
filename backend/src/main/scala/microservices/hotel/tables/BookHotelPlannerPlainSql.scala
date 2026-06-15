@@ -1,4 +1,4 @@
-// BookHotelPlannerPlainSql 灏佽閰掑簵妯″潡鐨刾lain SQL 瀹炵幇銆?
+// 本文件封装 BookHotelPlanner 对应的 plain SQL 实现。
 package com.typesafe.travel.hotel.tables
 
 // 这个文件只负责酒店预订链路的后端数据库动作，例如校验房态、写入订单项、扣减可用房间和落库存。

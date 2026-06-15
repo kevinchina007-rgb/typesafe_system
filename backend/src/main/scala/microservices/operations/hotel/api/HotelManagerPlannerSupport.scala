@@ -1,4 +1,4 @@
-// HotelManagerPlannerSupport 璐熻矗operations鐩稿叧瀹炵幇銆?
+// 本文件封装 operations/hotel 模块的公共支撑逻辑。
 package com.typesafe.travel.operations.domain
 
 // 这个 support 文件只在后端使用，负责 operations/hotel 这条链路里共享的校验、日期生成、读取封装和映射辅助。

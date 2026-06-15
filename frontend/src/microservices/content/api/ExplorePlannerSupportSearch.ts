@@ -1,6 +1,6 @@
-import type { ExploreSearchResponse } from '@/microservices/common/objects/ExploreSearchResponse'
-import type { SearchSuggestionListResponse } from '@/microservices/common/objects/SearchSuggestionListResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import type { ExploreSearchResponse } from '@/shared-kernel/objects/ExploreSearchResponse'
+import type { SearchSuggestionListResponse } from '@/shared-kernel/objects/SearchSuggestionListResponse'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 export const listExploreSuggestions = (q: string): Promise<SearchSuggestionListResponse> =>
   executeJsonApiRequest('/ExploreSuggestionsPlanner', 'POST', { q })

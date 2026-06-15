@@ -1,5 +1,5 @@
-import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
-import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
+import type { FeedbackAudience } from '@/microservices/feedback/objects/FeedbackAudience'
+import type { FeedbackThread } from '@/microservices/feedback/objects/FeedbackThread'
 import { FeedbackConversationAvatar } from './FeedbackConversationAvatar'
 import type { ChatIdentity } from './FeedbackConversationWorkspace.types'
 

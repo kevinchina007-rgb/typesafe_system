@@ -452,3 +452,6 @@ object AdvertisementPlainSqlSupport:
       mimeType = request.mimeType,
       fileSize = binaryContent.length.toLong
     )
+
+
+

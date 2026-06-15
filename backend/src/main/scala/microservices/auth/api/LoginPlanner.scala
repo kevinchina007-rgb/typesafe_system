@@ -1,4 +1,4 @@
-// LoginPlanner 鏄璇佹ā鍧楃殑鐧诲綍鍏ュ彛锛岃礋璐ｈ姹傛牎楠屻€佹祦绋嬬紪鎺掑拰缁撴灉杩斿洖銆?
+// 本文件是 auth 域的用户登录入口，只负责请求校验、密码比对和结果返回。
 package com.typesafe.travel.auth.domain
 
 import cats.effect.IO

@@ -1,4 +1,4 @@
-// SearchHotelsPlannerPlainSql 灏佽閰掑簵妯″潡鐨刾lain SQL 瀹炵幇銆?
+// 本文件封装 SearchHotelsPlanner 对应的 plain SQL 实现。
 package com.typesafe.travel.hotel.tables
 
 // 这个类是搜索酒店 planner 的后端 SQL 门面，用来收口搜索条件、分页/排序策略以及搜索结果映射。

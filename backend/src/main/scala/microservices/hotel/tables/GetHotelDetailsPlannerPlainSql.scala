@@ -1,4 +1,4 @@
-// GetHotelDetailsPlannerPlainSql 灏佽閰掑簵妯″潡鐨刾lain SQL 瀹炵幇銆?
+// 本文件封装 GetHotelDetailsPlanner 对应的 plain SQL 实现。
 package com.typesafe.travel.hotel.tables
 
 // 这个类是 GetHotelDetailsPlanner 的后端 SQL 门面，只负责把详情动作拆成若干次数据库查询并返回组合结果。

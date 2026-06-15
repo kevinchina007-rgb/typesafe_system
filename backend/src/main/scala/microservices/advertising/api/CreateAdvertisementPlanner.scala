@@ -1,5 +1,4 @@
-// CreateAdvertisementPlanner 是广告模块的创建入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告创建入口，只负责创建广告本体，不兼管其他动作。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO

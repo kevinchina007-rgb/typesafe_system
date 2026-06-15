@@ -1,4 +1,4 @@
-// HotelStatusesSupport 瀹氫箟閰掑簵妯″潡鐨勭姸鎬佽В鏋愯緟鍔┿€?
+// 本文件定义 hotel 域状态值及其解析辅助。
 package com.typesafe.travel.hotel.objects
 
 // 这个文件只承载 hotel 域内部状态值、状态解析和状态展示辅助，不是前端契约文件。

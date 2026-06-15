@@ -1,5 +1,4 @@
-// GenerateAdvertisementTextCandidatesPlanner 是广告模块的生成入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告文案候选生成入口，只服务后端广告编辑流程，不对应前端镜像文件。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO
@@ -74,12 +73,12 @@ object GenerateAdvertisementTextCandidatesPlanner extends ConnectionApiPlan[Gene
 
     val userPrompt =
       List(
-        Some(s"""我希望得到当前文本：“$sourceText”的艺术字体。"""),
-        Some(s"""要求：“$styleRequirement”"""),
-        input.resourceLabel.map(_.trim).filter(_.nonEmpty).map(value => s"资源或品牌：$value"),
-        input.advertisementKind.map(_.trim).filter(_.nonEmpty).map(value => s"广告类型：$value"),
-        input.avoidText.map(_.trim).filter(_.nonEmpty).map(value => s"不要出现：$value")
-      ).flatten.mkString("\n")
+        Some(s"Source text: $sourceText"),
+        Some(s"Style requirement: $styleRequirement"),
+        input.resourceLabel.map(_.trim).filter(_.nonEmpty).map(value => s"Resource label: $value"),
+        input.advertisementKind.map(_.trim).filter(_.nonEmpty).map(value => s"Advertisement kind: $value"),
+        input.avoidText.map(_.trim).filter(_.nonEmpty).map(value => s"Avoid: $value")
+      ).flatten.mkString("\\n")
 
     Json
       .obj(
@@ -120,8 +119,8 @@ object GenerateAdvertisementTextCandidatesPlanner extends ConnectionApiPlan[Gene
         .flatMap { case (json, index) =>
           for
             returnedText <- json.hcursor.downField("text").as[String].toOption.map(_.trim).filter(_.nonEmpty)
-            emphasis = json.hcursor.downField("emphasis").as[String].fold(_ => "粗标题", identity).trim match
-              case "" => "粗标题"
+            emphasis = json.hcursor.downField("emphasis").as[String].fold(_ => "Bold heading", identity).trim match
+              case "" => "Bold heading"
               case value => value
           yield AdvertisementTextCandidateResponse(
             text = if returnedText == sourceText then returnedText else sourceText,
@@ -142,20 +141,20 @@ object GenerateAdvertisementTextCandidatesPlanner extends ConnectionApiPlan[Gene
   ): List[AdvertisementTextCandidateResponse] =
     val sourceText = normalizedSourceText(input) match
       case value if value.nonEmpty => value
-      case _ => "广告标题"
+      case _ => "Advertisement copy"
     val styleRequirement = normalizedStyleRequirement(input)
     val styleSummary = styleRequirement.take(10)
     val emphasisOptions =
       List(
-        s"粗标题 / $styleSummary",
-        s"海报感 / $styleSummary",
-        s"横幅字 / $styleSummary"
+        s"Bold heading / $styleSummary",
+        s"Poster style / $styleSummary",
+        s"Art text / $styleSummary"
       ).map(_.stripSuffix(" / ").trim)
 
     emphasisOptions.take(candidateCount).zipWithIndex.map { case (emphasis, index) =>
       AdvertisementTextCandidateResponse(
         text = sourceText,
-        emphasis = if emphasis.nonEmpty then emphasis else (if index == 0 then "粗标题" else "海报感"),
+        emphasis = if emphasis.nonEmpty then emphasis else (if index == 0 then "Bold heading" else "Poster style"),
         seed = 2000 + index * 97
       )
     }
@@ -167,8 +166,8 @@ object GenerateAdvertisementTextCandidatesPlanner extends ConnectionApiPlan[Gene
     List(
       input.styleRequirement.map(_.trim).filter(_.nonEmpty),
       input.focus.map(_.trim).filter(_.nonEmpty),
-      input.tone.map(_.trim).filter(_.nonEmpty).map(value => s"整体风格偏$value"),
-      input.avoidText.map(_.trim).filter(_.nonEmpty).map(value => s"不要出现$value")
+      input.tone.map(_.trim).filter(_.nonEmpty).map(value => s"Tone: $value"),
+      input.avoidText.map(_.trim).filter(_.nonEmpty).map(value => s"Avoid: $value")
     ).flatten match
-      case Nil => "做成适合广告横幅的艺术字体"
-      case values => values.mkString("，")
+      case Nil => "Suitable for a banner art-text style"
+      case values => values.mkString(", ")

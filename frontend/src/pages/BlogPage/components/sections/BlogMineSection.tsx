@@ -1,4 +1,4 @@
-import type { BlogPageController } from '../../objects'
+﻿import type { BlogPageController } from '../../objects'
 import { BlogProfilePanel } from '../panels/BlogProfilePanel'
 
 // 我的页面参数，包含 controller 和当前登录用户。

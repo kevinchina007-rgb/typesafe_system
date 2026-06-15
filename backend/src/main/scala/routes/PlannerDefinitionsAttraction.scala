@@ -1,4 +1,4 @@
-// PlannerDefinitionsAttraction 负责请求路由分发�?
+// 本文件汇总 attraction 域的 Planner 路由定义。
 package com.typesafe.travel.api.routes
 
 import com.typesafe.travel.attraction.api.*

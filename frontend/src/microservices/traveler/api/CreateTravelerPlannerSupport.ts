@@ -1,4 +1,4 @@
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import type { CreateTravelerRequest } from '@/microservices/traveler/objects/CreateTravelerRequest'
 import type { TravelerResponse } from '@/microservices/traveler/objects/TravelerResponse'
 

@@ -1,5 +1,5 @@
 import type { TourGroupUploadedAttachmentResponse } from '@/microservices/tour-group/objects/TourGroupUploadedAttachmentResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import { createChatQueryString, readFileAsBase64 } from './TourGroupPlannerSupportShared'
 
 export const uploadConversationAttachment = (groupId: string, conversationId: string, attachmentFile: File): Promise<TourGroupUploadedAttachmentResponse> =>

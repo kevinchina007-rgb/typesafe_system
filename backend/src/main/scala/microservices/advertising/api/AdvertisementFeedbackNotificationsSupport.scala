@@ -1,7 +1,6 @@
-// AdvertisementFeedbackNotificationsSupport 提取广告通知编排中的线程和消息构建辅助逻辑。
+// 本文件提取 advertising 模块通知编排中的线程和消息构造辅助逻辑，供后端审核反馈流程复用。它属于后端内部支撑代码，不需要前端镜像。
 package com.typesafe.travel.advertising.domain
-
-import com.typesafe.travel.content.domain.*
+import com.typesafe.travel.feedback.domain.*
 import com.typesafe.travel.shared.kernel.*
 
 import java.time.Instant
@@ -15,7 +14,7 @@ object AdvertisementFeedbackNotificationsSupport:
       ownerUserId = None,
       ownerUserDisplayName = advertisement.ownerDisplayName,
       title = s"广告审核：${advertisement.ownerDisplayName}",
-      subtitle = "网站管理员与业务管理员沟通",
+      subtitle = "网站管理者与业务管理者沟通",
       resourceType = "advertisement",
       resourceSummaryTitle = advertisement.title,
       orderId = None,
@@ -37,7 +36,7 @@ object AdvertisementFeedbackNotificationsSupport:
       threadId = threadId,
       senderId = siteAdminId,
       senderRole = FeedbackSenderRole.SiteAdmin,
-      senderDisplayName = "网站管理员",
+      senderDisplayName = "网站管理者",
       messageType = FeedbackMessageType.System,
       content = messageBody.trim,
       payload = None,
@@ -52,3 +51,6 @@ object AdvertisementFeedbackNotificationsSupport:
       case "train" | "railway" | "railwaymanager" => FeedbackManagerType.Train
       case "attraction" | "attractionmanager"     => FeedbackManagerType.Attraction
       case _                                       => FeedbackManagerType.Airline
+
+
+

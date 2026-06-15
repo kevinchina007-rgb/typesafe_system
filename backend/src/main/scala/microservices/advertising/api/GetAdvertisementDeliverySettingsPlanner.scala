@@ -1,5 +1,4 @@
-// GetAdvertisementDeliverySettingsPlanner 是广告模块的获取入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告投放设置读取入口，只负责查询和返回投放设置。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO

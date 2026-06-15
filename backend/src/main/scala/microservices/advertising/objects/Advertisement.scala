@@ -1,5 +1,4 @@
-// Advertisement 定义广告模块的数据模型。
-
+// 本文件定义 advertising 模块的后端内部广告领域模型，包括广告 ID、所有者类型、投放位、审核状态和创意数据。这里承载的是服务端领域建模，不对应前端单独镜像文件；前端只消费最终的 DTO。
 package com.typesafe.travel.advertising.domain
 
 import com.typesafe.travel.shared.kernel.*
@@ -394,3 +393,4 @@ def advertisementCanDisplay(advertisement: Advertisement, currentTime: Instant):
     advertisement.slotIndex.nonEmpty &&
     !currentTime.isBefore(advertisement.displayPolicy.startAt) &&
     !currentTime.isAfter(advertisement.displayPolicy.endAt)
+

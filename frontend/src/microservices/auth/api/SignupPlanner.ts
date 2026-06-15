@@ -1,20 +1,10 @@
-// 本文件定义 SignupPlanner，负责 auth 模块的处理编排和接口入口。
-
+import type { CurrentUserPlannerResponse } from '@/microservices/auth/objects/CurrentUserPlannerResponse'
 import type { CurrentUserSessionResponse } from '@/microservices/auth/objects/CurrentUserSessionResponse'
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { currentUserSessionResponseFromPlannerResponse } from '@/microservices/auth/objects/CurrentUserSessionResponse'
+import type { SignupPlannerRequest } from '@/microservices/auth/objects/SignupPlannerRequest'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
-type CurrentUserPlannerResponse = {
-  sessionId: string
-  userId: string
-  email: string
-  nickname: string
-  phone: string
-  avatarUrl: string | null
-  membershipLevel: string
-  points: number
-  expiresAt: string
-}
-
+// 本文件负责 auth 模块的注册入口，仅编排请求转换与本地会话缓存。
 const userSessionStorageKey = 'flypig.userSessionId'
 
 function rememberUserSession(sessionId: string) {
@@ -23,27 +13,8 @@ function rememberUserSession(sessionId: string) {
 
 function toCurrentUserSessionResponse(plannerResponse: CurrentUserPlannerResponse): CurrentUserSessionResponse {
   rememberUserSession(plannerResponse.sessionId)
-  return {
-    user: {
-      userId: plannerResponse.userId,
-      email: plannerResponse.email,
-      nickname: plannerResponse.nickname,
-      phone: plannerResponse.phone,
-      avatarUrl: plannerResponse.avatarUrl,
-      status: 'Active',
-      membershipLevel: plannerResponse.membershipLevel,
-      points: plannerResponse.points,
-      defaultTravelerProfileId: null,
-      createdAt: new Date().toISOString(),
-    },
-    expiresAt: plannerResponse.expiresAt,
-  }
+  return currentUserSessionResponseFromPlannerResponse(plannerResponse)
 }
 
-export const signupUser = (payload: {
-  email: string
-  nickname: string
-  phone: string
-  password: string
-}): Promise<CurrentUserSessionResponse> =>
+export const signupUser = (payload: SignupPlannerRequest): Promise<CurrentUserSessionResponse> =>
   executeJsonApiRequest<CurrentUserPlannerResponse>('/SignupPlanner', 'POST', payload).then(toCurrentUserSessionResponse)

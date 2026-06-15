@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import type { FeedbackThread } from '@/microservices/content/objects/FeedbackThread'
+import type { FeedbackThread } from '@/microservices/feedback/objects/FeedbackThread'
 
 // 迷你客服对话框的输入参数。
 type MiniFeedbackChatDialogProps = {

@@ -8,7 +8,7 @@ import { setCurrentManagerSession, setManagerStateResolved, useManagerStore } fr
 import { setCurrentUserSession, setUserStateResolved, useUserStore } from '@/app/stores/user-store'
 import { getActiveTopNav, getSidebarItemsForTopNav, getVisibleTopNavItems } from '@/app/navigation'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import { isUnauthorizedApiError } from '@/microservices/common/api/ApiTransport'
+import { isUnauthorizedApiError } from '@/shared-kernel/api/ApiTransport'
 import type { AppNotice, HealthResponse } from '@/lib/mvp-types/index'
 import { getInitialBackendHealth } from '@/lib/config/runtime-config'
 import { createTranslator } from '@/lib/i18n/index'

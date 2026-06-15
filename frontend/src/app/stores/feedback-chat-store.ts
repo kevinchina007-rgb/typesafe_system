@@ -5,12 +5,12 @@ import { create } from 'zustand'
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { getManagerSnap } from '@/app/stores/manager-store'
 import { getUserSnap } from '@/app/stores/user-store'
-import type { FeedbackAudience } from '@/microservices/content/objects/FeedbackAudience'
-import type { FeedbackManagerType } from '@/microservices/content/objects/FeedbackManagerType'
-import type { FeedbackSenderRole } from '@/microservices/content/objects/FeedbackSenderRole'
-import type { FeedbackSiteAdminChannel } from '@/microservices/content/objects/FeedbackSiteAdminChannel'
-import type { FeedbackThreadResponse } from '@/microservices/content/objects/FeedbackThreadResponse'
-import type { OrderCancellationRequestStatus } from '@/microservices/content/objects/OrderCancellationRequestPayload'
+import type { FeedbackAudience } from '@/microservices/feedback/objects/FeedbackAudience'
+import type { FeedbackManagerType } from '@/microservices/feedback/objects/FeedbackManagerType'
+import type { FeedbackSenderRole } from '@/microservices/feedback/objects/FeedbackSenderRole'
+import type { FeedbackSiteAdminChannel } from '@/microservices/feedback/objects/FeedbackSiteAdminChannel'
+import type { FeedbackThreadResponse } from '@/microservices/feedback/objects/FeedbackThreadResponse'
+import type { OrderCancellationRequestStatus } from '@/microservices/feedback/objects/OrderCancellationRequestPayload'
 
 export type FeedbackThread = FeedbackThreadResponse
 export type FeedbackMessage = FeedbackThread['messages'][number]

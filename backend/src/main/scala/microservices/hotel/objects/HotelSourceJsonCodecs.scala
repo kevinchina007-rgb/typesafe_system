@@ -1,4 +1,4 @@
-// HotelSourceJsonCodecs 瀹氫箟閰掑簵妯″潡鐨勬簮鏁版嵁 JSON codec銆?
+// 本文件定义 hotel 域源数据的 JSON codec。
 package com.typesafe.travel.hotel.objects
 
 // 这个文件只提供后端 hotel 域内部模型的 Circe codec，方便 planner、table support 和领域函数进行 JSON 转换。

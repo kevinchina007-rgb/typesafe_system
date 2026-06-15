@@ -1,4 +1,4 @@
-// OrderPlainSql 灏佽璁㈠崟妯″潡鐨刾lain SQL 瀹炵幇銆?
+// 本文件封装订单模块的 plain SQL 实现。
 package com.typesafe.travel.persistence.order
 
 import cats.effect.IO

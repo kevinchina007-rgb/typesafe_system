@@ -1,6 +1,5 @@
-// AdvertisementPlainSql 封装广告模块的对外入口，只保留公共 Planner 调用。
+// 本文件封装 advertising 模块的数据库读写入口，只负责后端 planner 调用的 SQL 编排和事务结果拼装。它是后端专用表层，不对应前端文件。
 package com.typesafe.travel.advertising.domain
-
 import cats.effect.IO
 
 import java.sql.Connection
@@ -204,3 +203,6 @@ object AdvertisementPlainSql:
     IO.blocking {
       AdvertisementPlainSqlSupport.uploadImage(connection, request, createdAt)
     }
+
+
+

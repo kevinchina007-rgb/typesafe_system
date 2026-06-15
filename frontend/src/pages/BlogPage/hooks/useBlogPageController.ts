@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
-import type { BlogNotificationResponse } from '@/microservices/content/objects/BlogNotificationResponse'
-import type { BlogPostResponse } from '@/microservices/content/objects/BlogPostResponse'
-import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
-import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/content/objects/BlogProfileResponse'
-import type { BlogCommentResponse } from '@/microservices/content/objects/BlogCommentResponse'
+import type { BlogNotificationResponse } from '@/microservices/blog/objects/BlogNotificationResponse'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
+import type { BlogProfileResponse, BlogProfileUserResponse } from '@/microservices/blog/objects/BlogProfileResponse'
+import type { BlogCommentResponse } from '@/microservices/blog/objects/BlogCommentResponse'
 import type { BlogDraft, BlogPageController, BlogPageProps, BlogTab, MineTab, NotificationFilter, ProfileRelationTab } from '../objects'
 import {
   emptyDraft,

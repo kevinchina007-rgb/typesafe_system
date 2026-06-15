@@ -1,6 +1,6 @@
 // 本文件定义 ListManagerFlightsPlanner，负责 operations 模块的列表查询编排和接口入口。
 
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import type { FlightListPlannerResponse } from '@/microservices/flight/objects/FlightListPlannerResponse'
 
 export const listManagerFlights = (

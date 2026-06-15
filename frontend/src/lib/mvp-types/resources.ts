@@ -1,4 +1,4 @@
-// ????????????????????store ? API ???????
+// 本文件汇总 resources store 与 API 之间共享的类型声明。
 export type { AttractionResponse } from '@/microservices/attraction/objects/AttractionResponse'
 export type { AttractionListPlannerResponse } from '@/microservices/attraction/objects/AttractionListPlannerResponse'
 export type { ListAttractionsPlannerRequest } from '@/microservices/attraction/objects/ListAttractionsPlannerRequest'

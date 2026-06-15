@@ -1,19 +1,10 @@
-// 管理员会话接口返回的数据结构。
-export type ManagerSessionResponse = {
-  managerId: string
-  managerType: string
-  email: string
-  displayName: string
-  status: string
-  scopeId: string
-  logoAssetPath?: string | null
-  createdAt: string
-}
+import type { CurrentManagerPlannerResponse } from './CurrentManagerPlannerResponse'
 
-// 把管理员会话 JSON 解析成对象。
+// 本文件保留为兼容层，供旧管理页继续使用管理员会话摘要结构。
+export type ManagerSessionResponse = Omit<CurrentManagerPlannerResponse, 'sessionId' | 'expiresAt'>
+
 export const managerSessionResponseFromJson = (json: string): ManagerSessionResponse =>
   JSON.parse(json) as ManagerSessionResponse
 
-// 把管理员会话对象序列化成 JSON。
 export const managerSessionResponseToJson = (value: ManagerSessionResponse): string =>
   JSON.stringify(value)

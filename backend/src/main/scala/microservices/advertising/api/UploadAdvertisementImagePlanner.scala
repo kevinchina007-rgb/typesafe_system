@@ -1,5 +1,4 @@
-// UploadAdvertisementImagePlanner 是广告模块的上传入口，负责请求校验、流程编排和结果返回。
-
+// 本文件是广告图片上传入口，只负责上传广告图片。
 package com.typesafe.travel.advertising.domain
 
 import cats.effect.IO
@@ -13,4 +12,3 @@ object UploadAdvertisementImagePlanner extends ConnectionApiPlan[UploadAdvertise
 
   override def plan(input: UploadAdvertisementImageRequest, connection: Connection): IO[UploadAdvertisementImageResponse] =
     AdvertisementPlainSql.uploadImage(connection, input, Instant.now())
-

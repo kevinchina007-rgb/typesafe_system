@@ -1,7 +1,7 @@
 import type { ContentImageResponse } from '@/lib/mvp-types/index'
-import type { BlogNotificationResponse } from '@/microservices/content/objects/BlogNotificationResponse'
-import type { BlogPostResponse } from '@/microservices/content/objects/BlogPostResponse'
-import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/content/objects/BlogPostSummaryResponse'
+import type { BlogNotificationResponse } from '@/microservices/blog/objects/BlogNotificationResponse'
+import type { BlogPostResponse } from '@/microservices/blog/objects/BlogPostResponse'
+import type { BlogPostSummaryResponse, BlogTagResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
 import type { BlogTab, MineTab, NotificationFilter } from '@/pages/BlogPage/objects'
 
 // 左侧导航项，直接驱动 Blog 页签切换。

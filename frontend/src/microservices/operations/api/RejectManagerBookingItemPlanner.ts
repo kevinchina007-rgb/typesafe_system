@@ -1,6 +1,6 @@
 // 本文件定义 RejectManagerBookingItemPlanner，负责 operations 模块的驳回编排和接口入口。
 
-import { executeJsonApiRequest } from '@/microservices/common/api/ApiTransport'
+import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 
 export const rejectManagerBookingItem = (
   orderItemId: string,

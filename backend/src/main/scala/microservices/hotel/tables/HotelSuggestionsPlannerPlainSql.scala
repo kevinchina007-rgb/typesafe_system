@@ -1,4 +1,4 @@
-// HotelSuggestionsPlannerPlainSql 灏佽閰掑簵妯″潡鐨刾lain SQL 瀹炵幇銆?
+// 本文件封装 HotelSuggestionsPlanner 对应的 plain SQL 实现。
 package com.typesafe.travel.hotel.tables
 
 // 这个文件只实现酒店搜索建议的后端查询，比如联想词、相关酒店和位置提示等轻量结果。

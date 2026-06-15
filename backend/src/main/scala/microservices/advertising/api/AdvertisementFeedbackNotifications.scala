@@ -1,9 +1,8 @@
-// AdvertisementFeedbackNotifications 负责广告审核结果对应的站内反馈通知编排。
+// 本文件实现 advertising 模块的审核反馈通知编排，把广告审核结果转换成站内反馈线程和消息落库。它是纯后端业务编排，不对应前端文件。
 package com.typesafe.travel.advertising.domain
-
 import cats.effect.IO
-import com.typesafe.travel.content.domain.*
-import com.typesafe.travel.persistence.content.FeedbackPlannerPlainSql
+import com.typesafe.travel.feedback.domain.*
+import com.typesafe.travel.persistence.feedback.FeedbackPlannerPlainSql
 import com.typesafe.travel.shared.kernel.*
 
 import java.sql.Connection
@@ -30,3 +29,6 @@ object AdvertisementFeedbackNotifications:
       _ <- FeedbackPlannerPlainSql.saveThread(connection, updatedThread)
       _ <- FeedbackPlannerPlainSql.insertMessage(connection, message)
     yield ()
+
+
+

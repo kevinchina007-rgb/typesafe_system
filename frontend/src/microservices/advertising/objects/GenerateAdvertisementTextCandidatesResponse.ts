@@ -1,10 +1,6 @@
-// 本文件定义 advertising 模块的 `GenerateAdvertisementTextCandidatesResponse`，作为响应数据并提供 JSON 编解码。
+﻿// 本文件定义 advertising 模块的 `GenerateAdvertisementTextCandidatesResponse`，作为文案候选响应并提供 JSON 编解码。
 
-export type AdvertisementTextCandidateResponse = {
-  text: string
-  emphasis: string
-  seed: number
-}
+import type { AdvertisementTextCandidateResponse } from './AdvertisementTextCandidateResponse'
 
 export type GenerateAdvertisementTextCandidatesResponse = {
   candidates: AdvertisementTextCandidateResponse[]
