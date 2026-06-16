@@ -12,9 +12,9 @@ import java.sql.Connection
 import java.time.Instant
 import java.util.UUID
 
-object RegisterHotelManagerPlanner extends ConnectionApiPlan[RegisterHotelManagerPlannerRequest, ManagerSessionPlannerResponse]:
+object RegisterHotelManagerPlanner extends ConnectionApiPlan[RegisterHotelManagerPlannerRequest, HotelManagerSessionPlannerResponse]:
   override val name: String = "RegisterHotelManagerPlanner"
-  override def plan(input: RegisterHotelManagerPlannerRequest, connection: Connection): IO[ManagerSessionPlannerResponse] =
+  override def plan(input: RegisterHotelManagerPlannerRequest, connection: Connection): IO[HotelManagerSessionPlannerResponse] =
     val now = Instant.now()
     val hotelId = s"hotel-${UUID.randomUUID().toString.take(12)}"
     val managerId = s"manager-${UUID.randomUUID().toString.take(12)}"
@@ -25,4 +25,4 @@ object RegisterHotelManagerPlanner extends ConnectionApiPlan[RegisterHotelManage
       _ <- HotelManagerPlainSql.insertHotel(connection, hotelId, input.hotelName, input.location, now)
       _ <- HotelManagerPlainSql.insertHotelManager(connection, managerId, hotelId, input.email, input.displayName, now)
       _ <- HotelManagerPlainSql.insertHotelManagerCredential(connection, managerId, input.email, passwordHash, now)
-    yield ManagerSessionPlannerResponse(managerId, "Hotel", input.email, input.displayName, "Active", hotelId, None, now.toString)
+    yield HotelManagerSessionPlannerResponse(managerId, "Hotel", input.email, input.displayName, "Active", hotelId, None, now.toString)

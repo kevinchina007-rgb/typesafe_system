@@ -24,7 +24,7 @@ object SiteAdminManagerPlainSql:
       }
     }
 
-  def updateSiteAdminProfile(connection: Connection, managerId: String, displayName: String, logoAssetPath: Option[String]): IO[ManagerSessionPlannerResponse] =
+  def updateSiteAdminProfile(connection: Connection, managerId: String, displayName: String, logoAssetPath: Option[String]): IO[SiteAdminManagerSessionPlannerResponse] =
     IO.blocking {
       PlainSqlSupport.withStatement(connection, "update site_admin_managers set display_name = ?, logo_asset_path = ? where manager_id = ?") { statement =>
         statement.setString(1, displayName.trim)
@@ -61,8 +61,8 @@ object SiteAdminManagerPlainSql:
       }
     }
 
-  private def readSiteAdminSession(resultSet: ResultSet): ManagerSessionPlannerResponse =
-    ManagerSessionPlannerResponse(
+  private def readSiteAdminSession(resultSet: ResultSet): SiteAdminManagerSessionPlannerResponse =
+    SiteAdminManagerSessionPlannerResponse(
       managerId = resultSet.getString("manager_id"),
       managerType = "SiteAdmin",
       email = resultSet.getString("email"),

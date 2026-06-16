@@ -3,7 +3,7 @@ import { ArrowLeftRight } from 'lucide-react'
 
 import { formatFlightAirportLabel, formatFlightRouteCity } from '@/app/stores/models/flights/flightConstants'
 import { getFlightDetailsPlannerAirlineDisplayNameByCode, getFlightDetailsPlannerAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
-import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
+import type { ManagerFlightPlannerResponse } from '@/lib/mvp-types/manager'
 import { localizeCabinClass, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
 import type { ManagerPanelProps } from '@/pages/ManagerPage/components/managers/manager-panel-shared'
 import { formatFlightClock, type AirlineProfileDraft } from './manager-panel-workspace-profile'
@@ -128,7 +128,7 @@ export function FlightManagementSection({
   onSortDirectionChange,
 }: {
   currentLanguage: ManagerPanelProps['currentLanguage']
-  flights: FlightPlannerResponse[]
+  flights: ManagerFlightPlannerResponse[]
   totalCount: number
   searchDraft: ManagerFlightSearchDraft
   hasSubmittedSearch: boolean
@@ -142,7 +142,7 @@ export function FlightManagementSection({
   onSearchDraftChange: (value: ManagerFlightSearchDraft) => void
   onSearchSubmit: () => void
   onSwapSearchRoute: () => void
-  onOpenFlight: (flight: FlightPlannerResponse) => void | Promise<void>
+  onOpenFlight: (flight: ManagerFlightPlannerResponse) => void | Promise<void>
   onToggleFlightStatus: (flightId: string) => void | Promise<void>
   onDepartureAirportChange: (value: string) => void
   onArrivalAirportChange: (value: string) => void
@@ -209,7 +209,7 @@ function ManagerFlightCard({
   onOpen,
   onToggleStatus,
 }: {
-  flight: FlightPlannerResponse
+  flight: ManagerFlightPlannerResponse
   profile: AirlineProfileDraft
   currentLanguage: ManagerPanelProps['currentLanguage']
   onOpen: () => void

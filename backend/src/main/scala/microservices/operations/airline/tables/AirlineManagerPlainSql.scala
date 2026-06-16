@@ -88,7 +88,7 @@ object AirlineManagerPlainSql:
       PlainSqlSupport.withStatement(
         connection,
         s"""
-          select f.flight_id, f.airline_id, a.name as airline_name, a.code as airline_code, f.flight_number,
+          select f.flight_id, f.airline_id, a.name as airline_name, a.code as airline_code, a.logo_asset_path as airline_logo_path, f.flight_number, f.aircraft_model,
                  f.departure_airport, f.arrival_airport, f.departure_time, f.arrival_time, f.status,
                  f.base_price_amount, f.base_price_currency, f.created_at,
                  ci.inventory_id, ci.cabin_class, ci.available_seats, ci.unit_price_amount,
@@ -126,7 +126,7 @@ object AirlineManagerPlainSql:
       }
     }
 
-  def listFlightOrders(connection: Connection, input: ManagerFlightOrdersPlannerRequest): IO[ManagerFlightOrderListPlannerResponse] =
+  def listFlightOrders(connection: Connection, input: ManagerFlightOrdersPlannerRequest): IO[ManagerFlightOrderListResponse] =
     IO.blocking {
       requireManagedFlightBlocking(connection, input.managerId, input.flightId)
       val rows = PlainSqlSupport.withStatement(
@@ -149,9 +149,9 @@ object AirlineManagerPlainSql:
       }
       val travelerIds = rows.flatMap(_.travelerIds).distinct
       val travelersById = listTravelersByIds(connection, travelerIds).map(traveler => traveler.travelerId -> traveler).toMap
-      ManagerFlightOrderListPlannerResponse(
+      ManagerFlightOrderListResponse(
         rows.map(row =>
-          ManagerFlightOrderPlannerResponse(
+          ManagerFlightOrderResponse(
             orderId = row.orderId,
             orderItemId = row.orderItemId,
             buyerUserId = row.buyerUserId,
@@ -196,7 +196,7 @@ object AirlineManagerPlainSql:
       }
     }
 
-  def readAirlineManagerSession(connection: Connection, managerId: String, fallbackCreatedAt: Instant): IO[ManagerSessionPlannerResponse] =
+  def readAirlineManagerSession(connection: Connection, managerId: String, fallbackCreatedAt: Instant): IO[AirlineManagerSessionPlannerResponse] =
     IO.blocking {
       PlainSqlSupport.withStatement(
         connection,
@@ -211,7 +211,7 @@ object AirlineManagerPlainSql:
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
-            ManagerSessionPlannerResponse(
+            AirlineManagerSessionPlannerResponse(
               managerId = resultSet.getString("manager_id"),
               managerType = "Airline",
               email = resultSet.getString("email"),
@@ -305,7 +305,7 @@ object AirlineManagerPlainSql:
       PlainSqlSupport.withStatement(
         connection,
         """
-          select f.flight_id, f.airline_id, a.name as airline_name, a.code as airline_code, f.flight_number,
+          select f.flight_id, f.airline_id, a.name as airline_name, a.code as airline_code, a.logo_asset_path as airline_logo_path, f.flight_number, f.aircraft_model,
                  f.departure_airport, f.arrival_airport, f.departure_time, f.arrival_time, f.status,
                  f.base_price_amount, f.base_price_currency, f.created_at
           from flights f

@@ -12,9 +12,9 @@ import java.sql.Connection
 import java.time.Instant
 import java.util.UUID
 
-object RegisterSiteAdminPlanner extends ConnectionApiPlan[RegisterSiteAdminPlannerRequest, ManagerSessionPlannerResponse]:
+object RegisterSiteAdminPlanner extends ConnectionApiPlan[RegisterSiteAdminPlannerRequest, SiteAdminManagerSessionPlannerResponse]:
   override val name: String = "RegisterSiteAdminPlanner"
-  override def plan(input: RegisterSiteAdminPlannerRequest, connection: Connection): IO[ManagerSessionPlannerResponse] =
+  override def plan(input: RegisterSiteAdminPlannerRequest, connection: Connection): IO[SiteAdminManagerSessionPlannerResponse] =
     val now = Instant.now()
     val managerId = s"site-admin-${UUID.randomUUID().toString.take(12)}"
     for
@@ -23,4 +23,4 @@ object RegisterSiteAdminPlanner extends ConnectionApiPlan[RegisterSiteAdminPlann
       passwordHash <- hashPasswordForLoginEmail(input.password, email)
       _ <- SiteAdminManagerPlainSql.insertSiteAdminManager(connection, managerId, input.email, input.displayName, now)
       _ <- SiteAdminManagerPlainSql.insertSiteAdminCredential(connection, managerId, input.email, passwordHash, now)
-    yield ManagerSessionPlannerResponse(managerId, "SiteAdmin", input.email, input.displayName, "Active", "site-admin", None, now.toString)
+    yield SiteAdminManagerSessionPlannerResponse(managerId, "SiteAdmin", input.email, input.displayName, "Active", "site-admin", None, now.toString)

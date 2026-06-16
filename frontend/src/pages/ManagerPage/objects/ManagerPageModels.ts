@@ -3,7 +3,6 @@ import type {
   AppViewKey,
   AttractionAdminSessionResponse,
   CurrentManagerSessionResponse,
-  FlightPlannerResponse,
   HotelPlannerResponse,
   ManagerFlightOrderResponse,
   ManagerRefundTaskResponse,
@@ -12,10 +11,10 @@ import type {
   TrainAdminSessionResponse,
   UserResponse,
 } from '@/lib/mvp-types/index'
-import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
+import type { ManagerFlightPlannerResponse, ManagerCabinPricingInput } from '@/lib/mvp-types/manager'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
-// 管理页面根入口需要的 props。
+// 绠＄悊椤甸潰鏍瑰叆鍙ｉ渶瑕佺殑 props銆?
 export type ManagerPageProps = {
   currentLanguage: AppLanguage
   currentViewKey: AppViewKey
@@ -28,13 +27,13 @@ export type ManagerPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
-// 管理员登录类型，与前后端命名保持一致。
+// 绠＄悊鍛樼櫥褰曠被鍨嬶紝涓庡墠鍚庣鍛藉悕淇濇寔涓€鑷淬€?
 export type LoginManagerType = 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin'
-// 认证模式只有注册和登录两种。
+// 璁よ瘉妯″紡鍙湁娉ㄥ唽鍜岀櫥褰曚袱绉嶃€?
 export type ManagerAuthMode = 'register' | 'login'
-// 非站点管理员的业务类型，便于复用入口和权限判断。
+// 闈炵珯鐐圭鐞嗗憳鐨勪笟鍔＄被鍨嬶紝渚夸簬澶嶇敤鍏ュ彛鍜屾潈闄愬垽鏂€?
 export type BusinessManagerType = Exclude<LoginManagerType, 'siteAdmin'>
-// 广告资源选项，供管理后台的广告模块复用。
+// 骞垮憡璧勬簮閫夐」锛屼緵绠＄悊鍚庡彴鐨勫箍鍛婃ā鍧楀鐢ㄣ€?
 export type AdvertisementResourceOption = {
   value: string
   label: string
@@ -45,7 +44,7 @@ export type AdvertisementResourceOption = {
   timeRange?: string
 }
 
-// 管理首页入口卡片的展示参数。
+// 绠＄悊棣栭〉鍏ュ彛鍗＄墖鐨勫睍绀哄弬鏁般€?
 export type ManagerEntryCardProps = {
   title: string
   shortTitle: string
@@ -55,7 +54,7 @@ export type ManagerEntryCardProps = {
   onSelect: (authMode: ManagerAuthMode) => void
 }
 
-// 管理员认证卡片的展示参数。
+// 绠＄悊鍛樿璇佸崱鐗囩殑灞曠ず鍙傛暟銆?
 export type ManagerAuthCardProps = {
   title: string
   registerTitle: string
@@ -74,14 +73,14 @@ export type ManagerAuthCardProps = {
   translate: (translationKey: string) => string
 }
 
-// 管理页面控制器对页面层暴露的完整状态和动作。
+// 绠＄悊椤甸潰鎺у埗鍣ㄥ椤甸潰灞傛毚闇茬殑瀹屾暣鐘舵€佸拰鍔ㄤ綔銆?
 export type ManagerPageController = {
   activeManagerType: 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin' | null
   activeSection: 'workspace' | 'feedback' | 'advertising' | 'blogAudit' | 'advertisingReview' | 'siteAdminFeedback'
   selectedEntryType: LoginManagerType | null
   selectedEntryAuthMode: ManagerAuthMode
   currentSupplierManagerSession: ManagerSessionResponse | null
-  managedFlightPlannerResponses: FlightPlannerResponse[]
+  managedFlightPlannerResponses: ManagerFlightPlannerResponse[]
   managedHotelPlannerResponses: HotelPlannerResponse[]
   currentTrainAdminSession: TrainAdminSessionResponse | null
   currentAttractionAdminSession: AttractionAdminSessionResponse | null
@@ -240,3 +239,4 @@ export type ManagerPageController = {
   approveRefundTask: (payload: { orderId: string }) => Promise<void>
   rejectRefundTask: (payload: { orderId: string }) => Promise<void>
 }
+

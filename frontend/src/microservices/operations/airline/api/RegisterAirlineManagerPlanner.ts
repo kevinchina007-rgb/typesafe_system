@@ -1,13 +1,8 @@
 // 本文件定义 RegisterAirlineManagerPlanner，负责 operations 模块的注册编排和接口入口。
 
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
-import type { ManagerSessionResponse } from '@/microservices/auth/objects/ManagerSessionResponse'
+import type { RegisterAirlineManagerPlannerRequest } from '@/microservices/operations/airline/objects/RegisterAirlineManagerPlannerRequest'
+import type { AirlineManagerSessionPlannerResponse } from '@/microservices/operations/airline/objects/AirlineManagerSessionPlannerResponse'
 
-export const registerAirlineManager = (payload: {
-  email: string
-  displayName: string
-  airlineName: string
-  airlineCode: string
-  password: string
-}): Promise<ManagerSessionResponse> =>
-  executeJsonApiRequest('/RegisterAirlineManagerPlanner', 'POST', payload)
+export const registerAirlineManager = (payload: RegisterAirlineManagerPlannerRequest): Promise<AirlineManagerSessionPlannerResponse> =>
+  executeJsonApiRequest<AirlineManagerSessionPlannerResponse>('/RegisterAirlineManagerPlanner', 'POST', payload)

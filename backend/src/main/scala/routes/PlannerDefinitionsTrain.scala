@@ -11,12 +11,8 @@ object PlannerDefinitionsTrain:
     PlannerRegistry(
       List(
         WithConnection(TrainSuggestionsPlanner),
-        WithConnection(RegisterRailwayManagerPlanner),
-        WithConnection(ListManagedTrainsPlanner),
-        WithConnection(CreateTrainJourneyPlanner),
         WithConnection(SearchTrainsPlanner),
         WithConnection(GetTrainDetailsPlanner),
         WithConnection(BookTrainItemPlanner)
       ).map(planner => planner.name -> planner).toMap
     )
-

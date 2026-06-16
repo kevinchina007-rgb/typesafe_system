@@ -38,7 +38,7 @@ def validateUpdateAirlineProfile(input: UpdateAirlineManagerProfilePlannerReques
     require(input.airlineCode.trim.nonEmpty, "airlineCode is required")
   }
 
-def validateCabin(cabin: ManagerCabinPricingPlannerInput): Unit =
+def validateCabin(cabin: ManagerCabinPricingInput): Unit =
   require(cabin.seatCount >= 0, "seatCount cannot be negative")
   require(BigDecimal(cabin.originalPrice) >= BigDecimal(0), "originalPrice cannot be negative")
   require(BigDecimal(cabin.discountRate) >= BigDecimal(0), "discountRate cannot be negative")
@@ -53,7 +53,7 @@ def calculateCabinPrices(input: CreateManagerFlightPlannerRequest): List[(String
     (cabinClass, cabin.seatCount, calculateActualCabinPrice(cabin))
   }
 
-def calculateActualCabinPrice(cabin: ManagerCabinPricingPlannerInput): BigDecimal =
+def calculateActualCabinPrice(cabin: ManagerCabinPricingInput): BigDecimal =
   val price = BigDecimal(cabin.originalPrice)
   val rate = BigDecimal(cabin.discountRate)
   val actualPrice = if cabin.discounted then price * rate / BigDecimal(10) else price

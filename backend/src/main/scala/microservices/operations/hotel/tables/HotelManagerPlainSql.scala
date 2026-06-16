@@ -117,7 +117,7 @@ object HotelManagerPlainSql:
       }
     }
 
-  def readHotelManagerSession(connection: Connection, managerId: String, fallbackCreatedAt: Instant): IO[ManagerSessionPlannerResponse] =
+  def readHotelManagerSession(connection: Connection, managerId: String, fallbackCreatedAt: Instant): IO[HotelManagerSessionPlannerResponse] =
     IO.blocking {
       PlainSqlSupport.withStatement(
         connection,
@@ -131,7 +131,7 @@ object HotelManagerPlainSql:
         val resultSet = statement.executeQuery()
         try
           if resultSet.next() then
-            ManagerSessionPlannerResponse(
+            HotelManagerSessionPlannerResponse(
               managerId = resultSet.getString("manager_id"),
               managerType = "Hotel",
               email = resultSet.getString("email"),

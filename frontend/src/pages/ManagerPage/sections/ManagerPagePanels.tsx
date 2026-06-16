@@ -1,7 +1,8 @@
 import { AttractionAdminPanel } from '@/pages/ManagerPage/components/managers/AttractionAdminPanel'
 import { ManagerPanel } from '@/pages/ManagerPage/components/managers/ManagerPanel'
 import { TrainAdminPanel } from '@/pages/ManagerPage/components/managers/TrainAdminPanel'
-import type { AppLanguage, AttractionAdminSessionResponse, FlightPlannerResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
+import type { AppLanguage, AttractionAdminSessionResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
+import type { ManagerFlightPlannerResponse } from '@/lib/mvp-types/manager'
 
 // 管理后台不同业务面板的分发层，按是否展示来决定渲染哪个面板。
 type BasePanelProps = {
@@ -13,7 +14,7 @@ type BasePanelProps = {
 type SupplierManagerPanelSectionProps = BasePanelProps & {
   isVisible: boolean
   managerSession: ManagerSessionResponse | null
-  managedFlights: FlightPlannerResponse[]
+  managedFlights: ManagerFlightPlannerResponse[]
   managedHotels: Parameters<typeof ManagerPanel>[0]['managedHotels']
   managerTasks: ManagerTaskResponse[]
   managerRefundTasks: ManagerRefundTaskResponse[]

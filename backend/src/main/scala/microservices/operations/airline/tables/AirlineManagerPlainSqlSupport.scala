@@ -49,7 +49,9 @@ object AirlineManagerPlainSqlSupport:
       airlineId = resultSet.getString("airline_id"),
       airlineName = resultSet.getString("airline_name"),
       airlineCode = resultSet.getString("airline_code"),
+      airlineLogoPath = Option(resultSet.getString("airline_logo_path")).map(_.trim).filter(_.nonEmpty),
       flightNumber = resultSet.getString("flight_number"),
+      aircraftModel = Option(resultSet.getString("aircraft_model")).map(_.trim).filter(_.nonEmpty),
       departureAirport = resultSet.getString("departure_airport"),
       arrivalAirport = resultSet.getString("arrival_airport"),
       departureTime = resultSet.getObject("departure_time", classOf[OffsetDateTime]).toString,
@@ -112,7 +114,7 @@ object AirlineManagerPlainSqlSupport:
       travelerIds = if typedTravelerIds.nonEmpty then typedTravelerIds else snapshotTravelerIds
     )
 
-  def listTravelersByIds(connection: Connection, travelerIds: List[String]): List[ManagerFlightOrderTravelerPlannerResponse] =
+  def listTravelersByIds(connection: Connection, travelerIds: List[String]): List[ManagerFlightOrderTravelerResponse] =
     if travelerIds.isEmpty then Nil
     else
       PlainSqlSupport.withStatement(
@@ -178,7 +180,7 @@ object AirlineManagerPlainSqlSupport:
             requirementLabel = if requirementLabel.nonEmpty then requirementLabel else "none",
             warningLevel = if specialRequirementInfo.assistanceType != "none" || specialRequirementInfo.requirementNote.exists(_.trim.nonEmpty) then "attention" else "normal"
           )
-          ManagerFlightOrderTravelerPlannerResponse(
+          ManagerFlightOrderTravelerResponse(
             travelerId = resultSet.getString("traveler_id"),
             fullName = fullName,
             documentNumber = documentNumber,

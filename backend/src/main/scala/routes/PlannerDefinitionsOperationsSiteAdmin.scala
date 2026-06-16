@@ -11,14 +11,6 @@ object PlannerDefinitionsOperationsSiteAdmin:
     PlannerRegistry(
       List(
         WithConnection(RegisterSiteAdminPlanner),
-        WithConnection(UpdateSiteAdminManagerProfilePlanner),
-        WithConnection(ListManagerTasksPlanner),
-        WithConnection(BatchConfirmManagerTasksPlanner),
-        WithConnection(BatchRejectManagerTasksPlanner),
-        WithConnection(ListManagerRefundTasksPlanner),
-        WithConnection(ConfirmManagerBookingItemPlanner),
-        WithConnection(RejectManagerBookingItemPlanner),
-        WithConnection(ApproveManagerRefundPlanner),
-        WithConnection(RejectManagerRefundPlanner)
+        WithConnection(UpdateSiteAdminManagerProfilePlanner)
       ).map(planner => planner.name -> planner).toMap
     )

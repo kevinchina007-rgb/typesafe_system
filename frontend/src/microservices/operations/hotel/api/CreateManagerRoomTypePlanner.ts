@@ -5,4 +5,4 @@ import type { ManagerHotelPlannerResponse } from '@/microservices/operations/hot
 import type { CreateManagerRoomTypePlannerRequest } from '@/microservices/operations/hotel/objects/CreateManagerRoomTypePlannerRequest'
 
 export const createManagerRoomType = (payload: CreateManagerRoomTypePlannerRequest): Promise<ManagerHotelPlannerResponse> =>
-  executeJsonApiRequest('/CreateManagerRoomTypePlanner', 'POST', payload)
+  executeJsonApiRequest<ManagerHotelPlannerResponse>('/CreateManagerRoomTypePlanner', 'POST', payload)

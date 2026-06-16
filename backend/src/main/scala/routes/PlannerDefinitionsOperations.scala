@@ -7,8 +7,10 @@ import com.typesafe.travel.operations.domain.*
 object PlannerDefinitionsOperations:
   val registry: PlannerRegistry =
     PlannerRegistry.combine(
+      PlannerDefinitionsOperationsOverall.registry,
       PlannerDefinitionsOperationsAirline.registry,
       PlannerDefinitionsOperationsHotel.registry,
+      PlannerDefinitionsOperationsTrain.registry,
       PlannerDefinitionsOperationsSiteAdmin.registry,
       PlannerDefinitionsOperationsAttraction.registry
     )

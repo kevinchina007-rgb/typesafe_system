@@ -6,5 +6,5 @@ import type { ManagerScopedPlannerRequest } from '@/microservices/operations/hot
 
 export const listManagedHotels = (managerId: string): Promise<ManagerHotelListPlannerResponse> => {
   const payload: ManagerScopedPlannerRequest = { managerId, managerType: 'Hotel' }
-  return executeJsonApiRequest('/ListManagerHotelsPlanner', 'POST', payload)
+  return executeJsonApiRequest<ManagerHotelListPlannerResponse>('/ListManagerHotelsPlanner', 'POST', payload)
 }

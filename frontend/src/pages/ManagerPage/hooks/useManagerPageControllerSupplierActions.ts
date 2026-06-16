@@ -1,6 +1,6 @@
-import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+﻿import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { CurrentManagerSessionResponse } from '@/lib/mvp-types/index'
-import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
+import type { ManagerCabinPricingInput } from '@/lib/mvp-types/manager'
 import type { ManagerPageProps } from '../objects'
 import type { ManagerPageControllerCoreState } from './useManagerPageControllerCore'
 
@@ -332,3 +332,4 @@ export function createManagerPageControllerSupplierActions({
     rejectRefundTask,
   }
 }
+

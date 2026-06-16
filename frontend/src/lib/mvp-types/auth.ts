@@ -8,7 +8,6 @@ export type { UserSessionListPlannerResponse } from '@/microservices/auth/object
 export type { ManagerLoginPlannerRequest } from '@/microservices/auth/objects/ManagerLoginPlannerRequest'
 export type { CurrentManagerPlannerResponse } from '@/microservices/auth/objects/CurrentManagerPlannerResponse'
 export type { ManagerSessionPlannerRequest } from '@/microservices/auth/objects/ManagerSessionPlannerRequest'
-export type { ManagerSessionPlannerResponse } from '@/microservices/auth/objects/ManagerSessionPlannerResponse'
 export type { ManagerSessionListPlannerResponse } from '@/microservices/auth/objects/ManagerSessionListPlannerResponse'
 export type { SignupPlannerRequest } from '@/microservices/auth/objects/SignupPlannerRequest'
 export type { LogoutOtherSessionsPlannerRequest } from '@/microservices/auth/objects/LogoutOtherSessionsPlannerRequest'

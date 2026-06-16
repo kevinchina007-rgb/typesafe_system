@@ -12,9 +12,9 @@ import java.sql.Connection
 import java.time.Instant
 import java.util.UUID
 
-object RegisterAirlineManagerPlanner extends ConnectionApiPlan[RegisterAirlineManagerPlannerRequest, ManagerSessionPlannerResponse]:
+object RegisterAirlineManagerPlanner extends ConnectionApiPlan[RegisterAirlineManagerPlannerRequest, AirlineManagerSessionPlannerResponse]:
   override val name: String = "RegisterAirlineManagerPlanner"
-  override def plan(input: RegisterAirlineManagerPlannerRequest, connection: Connection): IO[ManagerSessionPlannerResponse] =
+  override def plan(input: RegisterAirlineManagerPlannerRequest, connection: Connection): IO[AirlineManagerSessionPlannerResponse] =
     val now = Instant.now()
     val airlineId = s"airline-${UUID.randomUUID().toString.take(12)}"
     val managerId = s"manager-${UUID.randomUUID().toString.take(12)}"
@@ -25,4 +25,4 @@ object RegisterAirlineManagerPlanner extends ConnectionApiPlan[RegisterAirlineMa
       _ <- AirlineManagerPlainSql.insertAirline(connection, airlineId, input.airlineName, input.airlineCode, now)
       _ <- AirlineManagerPlainSql.insertAirlineManager(connection, managerId, airlineId, input.email, input.displayName, now)
       _ <- AirlineManagerPlainSql.insertAirlineManagerCredential(connection, managerId, input.email, passwordHash, now)
-    yield ManagerSessionPlannerResponse(managerId, "Airline", input.email, input.displayName, "Active", airlineId, None, now.toString)
+    yield AirlineManagerSessionPlannerResponse(managerId, "Airline", input.email, input.displayName, "Active", airlineId, None, now.toString)

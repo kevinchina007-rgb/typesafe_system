@@ -1,9 +1,7 @@
-import type { AppLanguage, FlightPlannerResponse, HotelPlannerResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, ManagerType } from '@/lib/mvp-types/index'
-import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
+import type { AppLanguage, HotelPlannerResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, ManagerType } from '@/lib/mvp-types/index'
+import type { ManagerFlightPlannerResponse, ManagerCabinPricingInput, ManagerFlightOrderResponse } from '@/lib/mvp-types/manager'
 
-import type { ManagerFlightOrderResponse } from '@/lib/mvp-types/index'
-
-// 把可能输入的日期时间统一归一成 ISO 字符串，保证后端接收格式一致。
+// 鎶婂彲鑳借緭鍏ョ殑鏃ユ湡鏃堕棿缁熶竴褰掍竴鎴?ISO 瀛楃涓诧紝淇濊瘉鍚庣鎺ユ敹鏍煎紡涓€鑷淬€?
 export function normalizeDateTimeInput(rawValue: string): string {
   const trimmedValue = rawValue.trim()
   if (!trimmedValue) {
@@ -18,15 +16,15 @@ export function normalizeDateTimeInput(rawValue: string): string {
   return parsedDate.toISOString()
 }
 
-// 航空管理后台内部使用的分区名称。
+// 鑸┖绠＄悊鍚庡彴鍐呴儴浣跨敤鐨勫垎鍖哄悕绉般€?
 export type AirlineWorkspaceSection = 'createFlight' | 'flightManagement' | 'userFeedback' | 'managerProfile'
 
-// 管理后台主面板需要的全部 props，尽量集中在这里对齐。
+// 绠＄悊鍚庡彴涓婚潰鏉块渶瑕佺殑鍏ㄩ儴 props锛屽敖閲忛泦涓湪杩欓噷瀵归綈銆?
 export type ManagerPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean
   managerSession: ManagerSessionResponse | null
-  managedFlights: FlightPlannerResponse[]
+  managedFlights: ManagerFlightPlannerResponse[]
   managedHotels: HotelPlannerResponse[]
   managerTasks: ManagerTaskResponse[]
   managerRefundTasks: ManagerRefundTaskResponse[]
@@ -107,3 +105,4 @@ export type ManagerPanelProps = {
   onRejectRefundTask: (payload: { orderId: string }) => Promise<void>
   onLogoutManager: () => void
 }
+

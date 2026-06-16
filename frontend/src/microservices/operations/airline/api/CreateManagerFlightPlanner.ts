@@ -1,20 +1,9 @@
-// 本文件定义 CreateManagerFlightPlanner，负责 operations 模块的创建编排和接口入口。
+// 鏈枃浠跺畾涔?CreateManagerFlightPlanner锛岃礋璐?operations 妯″潡鐨勫垱寤虹紪鎺掑拰鎺ュ彛鍏ュ彛銆?
 
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
-import type { FlightPlannerResponse } from '@/microservices/flight/objects/FlightPlannerResponse'
-import type { ManagerCabinPricingInput } from '@/microservices/operations/objects/ManagerCabinPricingInput'
+import type { CreateManagerFlightPlannerRequest } from '@/microservices/operations/airline/objects/CreateManagerFlightPlannerRequest'
+import type { ManagerFlightPlannerResponse } from '@/microservices/operations/airline/objects/ManagerFlightPlannerResponse'
 
-export const createManagerFlight = (payload: {
-  managerId: string
-  flightNumber: string
-  departureAirport: string
-  arrivalAirport: string
-  departureTime: string
-  arrivalTime: string
-  economyCabin: ManagerCabinPricingInput
-  premiumEconomyCabin: ManagerCabinPricingInput
-  businessCabin: ManagerCabinPricingInput
-  firstCabin: ManagerCabinPricingInput
-  currency: string
-}): Promise<FlightPlannerResponse> =>
-  executeJsonApiRequest('/CreateManagerFlightPlanner', 'POST', payload)
+export const createManagerFlight = (payload: CreateManagerFlightPlannerRequest): Promise<ManagerFlightPlannerResponse> =>
+  executeJsonApiRequest<ManagerFlightPlannerResponse>('/CreateManagerFlightPlanner', 'POST', payload)
+

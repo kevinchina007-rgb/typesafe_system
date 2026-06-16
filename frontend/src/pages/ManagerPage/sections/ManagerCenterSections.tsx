@@ -5,7 +5,8 @@ import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
 import { AdvertisementReviewWorkspace } from '@/pages/ManagerPage/components/advertising/AdvertisementReviewWorkspace'
 import type { BlogPostSummaryResponse } from '@/microservices/blog/objects/BlogPostSummaryResponse'
-import type { AttractionAdminSessionResponse, CurrentManagerSessionResponse, FlightPlannerResponse, ManagerRefundTaskResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
+import type { AttractionAdminSessionResponse, CurrentManagerSessionResponse, ManagerRefundTaskResponse, ManagerTaskResponse, TrainAdminSessionResponse } from '@/lib/mvp-types/index'
+import type { ManagerFlightPlannerResponse } from '@/lib/mvp-types/manager'
 
 // 管理中心的中间层页面区块，负责把反馈、审核和站点管理内容拼起来。
 export type ManagerCenterSectionKey =
@@ -20,7 +21,7 @@ export type ManagerCenterSectionKey =
 type SupplierFeedbackSectionProps = {
   title: string
   currentManagerSession: CurrentManagerSessionResponse | null
-  managedFlightPlannerResponses: FlightPlannerResponse[]
+  managedFlightPlannerResponses: ManagerFlightPlannerResponse[]
   managerTaskResponses: ManagerTaskResponse[]
   managerRefundTaskResponses: ManagerRefundTaskResponse[]
   currentTrainAdminSession: TrainAdminSessionResponse | null

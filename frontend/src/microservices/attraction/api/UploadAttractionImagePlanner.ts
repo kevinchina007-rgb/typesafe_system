@@ -13,7 +13,7 @@ async function toBase64(imageFile: File): Promise<string> {
 }
 
 export async function uploadAttractionImage(imageFile: File): Promise<UploadAttractionImagePlannerResponse> {
-  return executeJsonApiRequest('/UploadAttractionImagePlanner', 'POST', {
+  return executeJsonApiRequest<UploadAttractionImagePlannerResponse>('/UploadAttractionImagePlanner', 'POST', {
     originalFileName: imageFile.name,
     mimeType: imageFile.type || 'application/octet-stream',
     fileContentBase64: await toBase64(imageFile),

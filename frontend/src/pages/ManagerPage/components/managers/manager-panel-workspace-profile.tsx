@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { formatIsoDateTime, localizeBedType, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
-import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
+import type { ManagerFlightPlannerResponse } from '@/lib/mvp-types/manager'
 import type { ManagerFlightOrderResponse } from '@/lib/mvp-types/manager'
 import type { ManagerPanelProps } from '@/pages/ManagerPage/components/managers/manager-panel-shared'
 import { getFlightDetailsPlannerAirlineDisplayNameByCode, getFlightDetailsPlannerAirlineLogoPathByCode } from '@/app/stores/models/flights/flightAirlineCatalog'
@@ -298,7 +298,7 @@ export function buildHotelProfileDraft(
 
 // 把航司管理者和已有航班信息整理成资料草稿。
 // 把航司会话和现有航班数据整理成资料草稿。
-export function buildProfileDraft(managerSession: ManagerPanelProps['managerSession'], managedFlights: FlightPlannerResponse[]): AirlineProfileDraft {
+export function buildProfileDraft(managerSession: ManagerPanelProps['managerSession'], managedFlights: ManagerFlightPlannerResponse[]): AirlineProfileDraft {
   const firstFlight = managedFlights[0]
   return {
     displayName: managerSession?.displayName ?? '',

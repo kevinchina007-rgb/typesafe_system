@@ -206,6 +206,9 @@ lazy val persistenceJdbc = module("persistence-jdbc")
       moduleSourceDir("inventory-domain") / "api",
       moduleSourceDir("order-domain") / "api",
       moduleSourceDir("operations-domain") / "api",
+      moduleSourceDir("operations-domain") / "overall" / "api",
+      moduleSourceDir("operations-domain") / "train" / "tables",
+      moduleSourceDir("operations-domain") / "overall" / "tables",
       moduleSourceDir("operations-domain") / "airline" / "api",
       moduleSourceDir("operations-domain") / "hotel" / "api",
       moduleSourceDir("operations-domain") / "attraction" / "api",
@@ -245,9 +248,11 @@ lazy val contentDomain = module("content-domain")
   )
 
 lazy val operationsDomain = module("operations-domain")
-  .dependsOn(sharedKernel)
+  .dependsOn(sharedKernel, trainDomain)
   .settings(
     Compile / unmanagedSourceDirectories ++= Seq(
+      moduleSourceDir("operations-domain") / "overall" / "objects",
+      moduleSourceDir("operations-domain") / "train" / "objects",
       moduleSourceDir("operations-domain") / "airline" / "objects",
       moduleSourceDir("operations-domain") / "hotel" / "objects",
       moduleSourceDir("operations-domain") / "attraction" / "objects",
@@ -303,6 +308,8 @@ lazy val apiGateway = Project(id = "api-gateway", base = file("projects/api-gate
       moduleSourceDir("inventory-domain") / "api",
       moduleSourceDir("order-domain") / "api",
       moduleSourceDir("operations-domain") / "api",
+      moduleSourceDir("operations-domain") / "overall" / "api",
+      moduleSourceDir("operations-domain") / "train" / "api",
       moduleSourceDir("operations-domain") / "airline" / "api",
       moduleSourceDir("operations-domain") / "hotel" / "api",
       moduleSourceDir("operations-domain") / "attraction" / "api",

@@ -1,5 +1,5 @@
 import { formatIsoDateTime, mapBackendStatusToProductLabel } from '@/lib/presenters/view-models'
-import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
+import type { ManagerFlightPlannerResponse } from '@/lib/mvp-types/manager'
 import type { ManagerFlightOrderResponse } from '@/lib/mvp-types/manager'
 import type { ManagerPanelProps } from '@/pages/ManagerPage/components/managers/manager-panel-shared'
 import { formatFlightAirportLabel } from '@/app/stores/models/flights/flightConstants'
@@ -16,7 +16,7 @@ export function ManagerFlightOrdersSection({
   onBack,
 }: {
   currentLanguage: ManagerPanelProps['currentLanguage']
-  flight: FlightPlannerResponse
+  flight: ManagerFlightPlannerResponse
   isLoading: boolean
   orders: ManagerFlightOrderResponse[]
   profile: AirlineProfileDraft

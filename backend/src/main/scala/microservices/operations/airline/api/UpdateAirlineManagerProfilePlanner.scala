@@ -9,9 +9,9 @@ import com.typesafe.travel.persistence.operations.AirlineManagerPlainSql
 import java.sql.Connection
 import java.time.Instant
 
-object UpdateAirlineManagerProfilePlanner extends ConnectionApiPlan[UpdateAirlineManagerProfilePlannerRequest, ManagerSessionPlannerResponse]:
+object UpdateAirlineManagerProfilePlanner extends ConnectionApiPlan[UpdateAirlineManagerProfilePlannerRequest, AirlineManagerSessionPlannerResponse]:
   override val name: String = "UpdateAirlineManagerProfilePlanner"
-  override def plan(input: UpdateAirlineManagerProfilePlannerRequest, connection: Connection): IO[ManagerSessionPlannerResponse] =
+  override def plan(input: UpdateAirlineManagerProfilePlannerRequest, connection: Connection): IO[AirlineManagerSessionPlannerResponse] =
     val now = Instant.now()
     for
       _ <- validateUpdateAirlineProfile(input)

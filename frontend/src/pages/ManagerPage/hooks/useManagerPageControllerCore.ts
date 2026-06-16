@@ -5,7 +5,6 @@ import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type {
   AttractionAdminSessionResponse,
   CurrentManagerSessionResponse,
-  FlightPlannerResponse,
   HotelPlannerResponse,
   ManagerFlightOrderResponse,
   ManagerRefundTaskResponse,
@@ -13,6 +12,7 @@ import type {
   ManagerTaskResponse,
   TrainAdminSessionResponse,
 } from '@/lib/mvp-types/index'
+import type { ManagerFlightPlannerResponse } from '@/lib/mvp-types/manager'
 import { toLegacyManagerSession, toManagerTypeKey } from '@/pages/ManagerPage/models/managerPageSession'
 import { toActiveSection } from '../functions'
 import type { AdvertisementResourceOption, LoginManagerType, ManagerAuthMode, ManagerPageProps } from '../objects'
@@ -98,8 +98,8 @@ export type ManagerPageControllerCoreState = {
   setSelectedEntryAuthMode: (mode: ManagerAuthMode) => void
   currentSupplierManagerSession: ManagerSessionResponse | null
   setCurrentSupplierManagerSession: (session: ManagerSessionResponse | null) => void
-  managedFlightPlannerResponses: FlightPlannerResponse[]
-  setManagedFlightPlannerResponses: (responses: FlightPlannerResponse[]) => void
+  managedFlightPlannerResponses: ManagerFlightPlannerResponse[]
+  setManagedFlightPlannerResponses: (responses: ManagerFlightPlannerResponse[]) => void
   managedHotelPlannerResponses: HotelPlannerResponse[]
   setManagedHotelPlannerResponses: (responses: HotelPlannerResponse[]) => void
   currentTrainAdminSession: TrainAdminSessionResponse | null
@@ -160,7 +160,7 @@ export function useManagerPageControllerCore({
   const [selectedEntryType, setSelectedEntryType] = useState<LoginManagerType | null>(null)
   const [selectedEntryAuthMode, setSelectedEntryAuthMode] = useState<ManagerAuthMode>('register')
   const [currentSupplierManagerSession, setCurrentSupplierManagerSession] = useState<ManagerSessionResponse | null>(null)
-  const [managedFlightPlannerResponses, setManagedFlightPlannerResponses] = useState<FlightPlannerResponse[]>([])
+  const [managedFlightPlannerResponses, setManagedFlightPlannerResponses] = useState<ManagerFlightPlannerResponse[]>([])
   const [managedHotelPlannerResponses, setManagedHotelPlannerResponses] = useState<HotelPlannerResponse[]>([])
   const [currentTrainAdminSession, setCurrentTrainAdminSession] = useState<TrainAdminSessionResponse | null>(null)
   const [currentAttractionAdminSession, setCurrentAttractionAdminSession] = useState<AttractionAdminSessionResponse | null>(null)
@@ -212,7 +212,7 @@ export function useManagerPageControllerCore({
       sortDirection?: 'asc' | 'desc'
     } = {},
   ) {
-    const flightListResponse = await travelMvpApiClient.listManagerFlights(managerId, filters)
+    const flightListResponse = await travelMvpApiClient.listManagerFlights({ managerId, managerType: 'Airline', ...filters })
     setManagedFlightPlannerResponses(flightListResponse.flights)
   }
 
@@ -220,7 +220,7 @@ export function useManagerPageControllerCore({
     if (!currentSupplierManagerSession) {
       throw new Error(translate('error.managerNotFound'))
     }
-    const response = await travelMvpApiClient.listManagerFlightOrders(currentSupplierManagerSession.managerId, flightId)
+    const response = await travelMvpApiClient.listManagerFlightOrders({ managerId: currentSupplierManagerSession.managerId, flightId })
     return response.orders
   }
 
@@ -247,7 +247,7 @@ export function useManagerPageControllerCore({
   }
 
   async function reloadManagedAttractions(managerId: string, baseSession?: CurrentManagerSessionResponse | null) {
-    const attractionListResponse = await travelMvpApiClient.listManagedAttractions(managerId)
+    const attractionListResponse = await travelMvpApiClient.listManagedAttractions({ managerId })
     const sourceSession = baseSession ?? currentManagerSession
     if (!sourceSession) {
       return

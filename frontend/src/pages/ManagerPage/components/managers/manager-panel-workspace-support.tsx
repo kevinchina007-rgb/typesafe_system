@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { handleOrderCancellationRequest, markFeedbackThreadRead, sendFeedbackMessage, useFeedbackChatStore } from '@/app/stores/feedback-chat-store'
-import type { FlightPlannerResponse } from '@/lib/mvp-types/flights'
+import type { ManagerFlightPlannerResponse } from '@/lib/mvp-types/manager'
 import type { ManagerFlightOrderResponse } from '@/lib/mvp-types/manager'
 import type { AirlineWorkspaceSection, ManagerPanelProps } from '@/pages/ManagerPage/components/managers/manager-panel-shared'
 import { FeedbackConversationWorkspace } from '@/pages/shared/feedback/FeedbackConversationWorkspace'
@@ -62,7 +62,7 @@ export function ManagerPanelWorkspace({
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [selectedDepartureAirport, setSelectedDepartureAirport] = useState('all')
   const [selectedArrivalAirport, setSelectedArrivalAirport] = useState('all')
-  const [selectedFlight, setSelectedFlight] = useState<FlightPlannerResponse | null>(null)
+  const [selectedFlight, setSelectedFlight] = useState<ManagerFlightPlannerResponse | null>(null)
   const [selectedFlightOrders, setSelectedFlightOrders] = useState<ManagerFlightOrderResponse[]>([])
   const [isLoadingSelectedFlightOrders, setIsLoadingSelectedFlightOrders] = useState(false)
   const [profileDraft, setProfileDraft] = useState(() => buildProfileDraft(managerSession, managedFlights))

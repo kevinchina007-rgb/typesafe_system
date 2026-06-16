@@ -1,3 +1,5 @@
+﻿// 鏈枃浠跺畾涔?operations 妯″潡鐨?`UpdateHotelManagerProfilePlannerRequest`锛屼綔涓簆lanner 璇锋眰鍙傛暟骞舵彁渚?JSON 缂栬В鐮併€?
+
 export type UpdateHotelManagerProfilePlannerRequest = {
   managerId: string
   displayName: string
@@ -11,3 +13,4 @@ export const updateHotelManagerProfilePlannerRequestFromJson = (json: string): U
 
 export const updateHotelManagerProfilePlannerRequestToJson = (value: UpdateHotelManagerProfilePlannerRequest): string =>
   JSON.stringify(value)
+
