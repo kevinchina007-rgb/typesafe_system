@@ -2,7 +2,7 @@
 // This is a backend-only compatibility layer, not a frontend page counterpart and not a place for business decisions.
 // Any frontend-facing rule flow must still go through the planner request / response objects that mirror the API surface.
 
-package com.typesafe.travel.attraction.api
+package com.typesafe.travel.attraction.domain
 
 import com.typesafe.travel.attraction.domain.*
 
@@ -87,6 +87,8 @@ object AttractionRuleJson:
       val cursor = json.hcursor
       cursor.downField("minInclusive").as[Int].orElse(cursor.downField("ageValue").as[Int]).map(TicketEligibilityRuleConfig.AgeAtLeast.apply)
     }
+
+
 
 
 

@@ -1,5 +1,4 @@
-// ManagerRefundTaskPlannerPlainSql 封装operations模块的plain SQL 实现。
-
+// 本文件封装 `ListManagerRefundTasksPlanner` 对应的 plain SQL 实现。
 package com.typesafe.travel.persistence.operations
 
 import cats.effect.IO
@@ -10,7 +9,7 @@ import java.sql.{Connection, Timestamp}
 import java.time.Instant
 
 object ManagerRefundTaskPlannerPlainSql:
-  def listRefundTasks(connection: Connection, input: ManagerScopedPlannerRequest): IO[ManagerRefundTaskListPlannerResponse] =
+  def listRefundTasks(connection: Connection, input: ManagerScopedPlannerRequest): IO[ManagerRefundTaskListResponse] =
     IO.blocking {
       PlainSqlSupport.withStatement(
         connection,
@@ -23,8 +22,8 @@ object ManagerRefundTaskPlannerPlainSql:
         """
       ) { statement =>
         statement.setString(1, "Requested")
-        ManagerRefundTaskListPlannerResponse(PlainSqlSupport.queryList(statement) { resultSet =>
-          ManagerRefundTaskPlannerResponse(
+        ManagerRefundTaskListResponse(PlainSqlSupport.queryList(statement) { resultSet =>
+          ManagerRefundTaskResponse(
             orderId = resultSet.getString("order_id"),
             buyerUserId = resultSet.getString("buyer_user_id"),
             taskType = normalizeManagerType(input.managerType),

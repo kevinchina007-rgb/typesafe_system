@@ -1,4 +1,4 @@
-﻿// 鏈枃浠跺畾涔?operations 妯″潡鐨?`ManagerFlightOrderListResponse`锛屼綔涓哄垪琛ㄥ搷搴旀暟鎹苟鎻愪緵 JSON 缂栬В鐮併€?
+// 本文件定义 operations 航空管理端的 `ManagerFlightOrderListResponse`，作为订单列表响应数据并提供 JSON 编解码。
 
 import type { ManagerFlightOrderResponse } from './ManagerFlightOrderResponse'
 

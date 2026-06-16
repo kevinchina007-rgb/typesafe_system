@@ -1,4 +1,4 @@
-﻿// 鏈枃浠跺畾涔?operations 妯″潡鐨?`UpdateAirlineManagerProfilePlannerRequest`锛屼綔涓簆lanner 璇锋眰鍙傛暟骞舵彁渚?JSON 缂栬В鐮併€?
+// 本文件定义 operations 航空管理端的 `UpdateAirlineManagerProfilePlannerRequest`，作为 planner 请求参数并提供 JSON 编解码。
 
 export type UpdateAirlineManagerProfilePlannerRequest = {
   managerId: string

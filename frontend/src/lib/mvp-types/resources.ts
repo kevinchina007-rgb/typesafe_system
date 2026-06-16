@@ -3,8 +3,8 @@ export type { AttractionResponse } from '@/microservices/attraction/objects/Attr
 export type { AttractionListPlannerResponse } from '@/microservices/attraction/objects/AttractionListPlannerResponse'
 export type { ListAttractionsPlannerRequest } from '@/microservices/attraction/objects/ListAttractionsPlannerRequest'
 export type { GetAttractionDetailsPlannerRequest } from '@/microservices/attraction/objects/GetAttractionDetailsPlannerRequest'
-export type { UploadAttractionImagePlannerRequest } from '@/microservices/attraction/objects/UploadAttractionImagePlannerRequest'
-export type { UploadAttractionImagePlannerResponse } from '@/microservices/attraction/objects/UploadAttractionImagePlannerResponse'
+export type { UploadAttractionImagePlannerRequest } from '@/microservices/operations/attraction/objects/UploadAttractionImagePlannerRequest'
+export type { UploadAttractionImagePlannerResponse } from '@/microservices/operations/attraction/objects/UploadAttractionImagePlannerResponse'
 export type { AttractionTicketSessionResponse } from '@/microservices/attraction/objects/AttractionTicketSessionResponse'
 export type { AttractionTicketTypeResponse } from '@/microservices/attraction/objects/AttractionTicketTypeResponse'
 export type { AttractionTicketTypeRuleResponse } from '@/microservices/attraction/objects/AttractionTicketTypeRuleResponse'
@@ -43,3 +43,4 @@ export type { RoomTypeSummaryResponse } from '@/microservices/hotel/objects/Room
 export type { SearchSuggestionListPlannerResponse } from '@/microservices/hotel/objects/SearchSuggestionListPlannerResponse'
 export type { SearchSuggestionPlannerResponse } from '@/microservices/hotel/objects/SearchSuggestionPlannerResponse'
 export type { UploadHotelRoomTypeImagePlannerRequest } from '@/microservices/hotel/objects/UploadHotelRoomTypeImagePlannerRequest'
+

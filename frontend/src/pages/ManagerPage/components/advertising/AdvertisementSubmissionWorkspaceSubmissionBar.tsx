@@ -12,14 +12,14 @@ export function AdvertisementSubmissionWorkspaceSubmissionBar({ controller }: Ad
                   return
                 }
                 void c.saveDraft(false)
-              }}>����ݸ�</button>
+              }}>保存草稿</button>
               <button type="button" className="inline-flex min-h-11 items-center justify-center border border-pink-500 bg-pink-500 px-5 py-2 text-sm font-semibold text-white transition hover:border-pink-600 hover:bg-pink-600 disabled:opacity-50" disabled={c.isLoading || c.isSubmitting || c.creative.elements.length === 0} onClick={() => {
                 if (!c.draftName.trim()) {
                   c.setIsDraftNameDialogOpen(true)
                   return
                 }
                 void c.saveDraft(true)
-              }}>{c.isSubmitting ? c.translate('advertising.submitting') : '�ύ����վ������'}</button>
+              }}>{c.isSubmitting ? c.translate('advertising.submitting') : '提交审核'}</button>
             </div>
   )
 }

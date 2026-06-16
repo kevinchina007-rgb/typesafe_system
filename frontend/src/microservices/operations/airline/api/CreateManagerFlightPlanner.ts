@@ -1,4 +1,4 @@
-// 鏈枃浠跺畾涔?CreateManagerFlightPlanner锛岃礋璐?operations 妯″潡鐨勫垱寤虹紪鎺掑拰鎺ュ彛鍏ュ彛銆?
+// 本文件定义 CreateManagerFlightPlanner，负责 operations 航空管理端的创建编排和接口入口。
 
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import type { CreateManagerFlightPlannerRequest } from '@/microservices/operations/airline/objects/CreateManagerFlightPlannerRequest'

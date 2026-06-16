@@ -3,7 +3,7 @@ package com.typesafe.travel.persistence.order
 import cats.effect.IO
 import com.typesafe.travel.order.domain.*
 import com.typesafe.travel.persistence.PlainSqlSupport
-import com.typesafe.travel.persistence.attraction.AttractionPlannerPlainSql
+import com.typesafe.travel.persistence.operations.AttractionPlannerPlainSql
 
 import java.sql.Connection
 import java.time.Instant
@@ -46,3 +46,4 @@ object OrderPlannerPaymentSql:
           }
         OrderPlannerPlainSqlSupport.findRequired(connection, input.orderId)
       }
+

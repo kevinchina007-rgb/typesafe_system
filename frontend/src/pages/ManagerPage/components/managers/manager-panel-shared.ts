@@ -1,7 +1,7 @@
 import type { AppLanguage, HotelPlannerResponse, ManagerRefundTaskResponse, ManagerSessionResponse, ManagerTaskResponse, ManagerType } from '@/lib/mvp-types/index'
 import type { ManagerFlightPlannerResponse, ManagerCabinPricingInput, ManagerFlightOrderResponse } from '@/lib/mvp-types/manager'
 
-// 鎶婂彲鑳借緭鍏ョ殑鏃ユ湡鏃堕棿缁熶竴褰掍竴鎴?ISO 瀛楃涓诧紝淇濊瘉鍚庣鎺ユ敹鏍煎紡涓€鑷淬€?
+// 将输入的本地时间转换为 ISO 字符串，便于后端统一处理。
 export function normalizeDateTimeInput(rawValue: string): string {
   const trimmedValue = rawValue.trim()
   if (!trimmedValue) {
@@ -16,10 +16,10 @@ export function normalizeDateTimeInput(rawValue: string): string {
   return parsedDate.toISOString()
 }
 
-// 鑸┖绠＄悊鍚庡彴鍐呴儴浣跨敤鐨勫垎鍖哄悕绉般€?
+// 航空管理页当前可切换的功能区。
 export type AirlineWorkspaceSection = 'createFlight' | 'flightManagement' | 'userFeedback' | 'managerProfile'
 
-// 绠＄悊鍚庡彴涓婚潰鏉块渶瑕佺殑鍏ㄩ儴 props锛屽敖閲忛泦涓湪杩欓噷瀵归綈銆?
+// 管理后台主面板所需的全部 props，尽量集中在这里对齐。
 export type ManagerPanelProps = {
   currentLanguage: AppLanguage
   isBusy: boolean

@@ -60,8 +60,8 @@ export function AdvertisementDraftSection({ advertisements, translate, onEdit, o
   return (
     <section className="grid gap-5 border-y border-slate-200 bg-white p-6 text-slate-950 shadow-sm shadow-slate-200/40">
       <div>
-        <p className="text-sm font-bold text-slate-500">鎴戠殑骞垮憡</p>
-        <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">鏌ョ湅鑽夌</h3>
+        <p className="text-sm font-bold text-slate-500">我的广告</p>
+        <h3 className="m-0 text-2xl font-bold leading-tight text-slate-950">广告草稿</h3>
       </div>
       {advertisements.length === 0 ? <p className="text-sm leading-6 text-slate-500">{translate('advertising.empty')}</p> : (
         <div className="grid gap-4">
@@ -104,16 +104,16 @@ function AdvertisementAdminCard({ advertisement, onEdit, onOpenResource, onWithd
       ) : null}
       <div className="flex flex-wrap gap-2">
         <button type="button" className="inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950" onClick={() => onEdit(advertisement)}>
-          缂栬緫
+          编辑
         </button>
         <button type="button" className="inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950" onClick={() => onOpenResource(advertisement.targetResourceId)}>
-          鏌ョ湅璧勬簮
+          查看资源
         </button>
         <button type="button" className="inline-flex min-h-10 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-950" onClick={() => void onWithdraw(advertisement)}>
-          鎾ょ
+          撤回
         </button>
         <button type="button" className="inline-flex min-h-10 items-center justify-center border border-pink-500 bg-pink-500 px-4 py-2 text-sm font-semibold text-white" onClick={() => void onSubmitReview(advertisement.advertisementId)}>
-          鎻愪氦瀹℃牳
+          提交审核
         </button>
       </div>
     </article>

@@ -10,3 +10,5 @@ def validateRegisterAttraction(input: RegisterAttractionManagerPlannerRequest): 
     require(input.displayName.trim.nonEmpty, "displayName is required")
     require(input.password.nonEmpty, "password is required")
   }
+
+

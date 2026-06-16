@@ -33,3 +33,4 @@ object OrderPlannerRefundSql:
 
   def settleRefund(connection: Connection, input: RefundDecisionPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
     OrderPlannerPlainSqlSupport.expireTrainOrdersIfNeeded(connection, now) *> OrderPlannerPlainSqlSupport.refundStatus(connection, input, "Settled", Some("settled_at"), now)
+

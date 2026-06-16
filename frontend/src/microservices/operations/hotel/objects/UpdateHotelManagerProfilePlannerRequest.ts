@@ -1,4 +1,4 @@
-﻿// 鏈枃浠跺畾涔?operations 妯″潡鐨?`UpdateHotelManagerProfilePlannerRequest`锛屼綔涓簆lanner 璇锋眰鍙傛暟骞舵彁渚?JSON 缂栬В鐮併€?
+// 本文件定义 operations 酒店管理端的 `UpdateHotelManagerProfilePlannerRequest`，作为 planner 请求参数并提供 JSON 编解码。
 
 export type UpdateHotelManagerProfilePlannerRequest = {
   managerId: string

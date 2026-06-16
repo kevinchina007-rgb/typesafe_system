@@ -457,3 +457,4 @@ final case class OrderLineItemRow(
     bookedCurrency: String,
     snapshotJson: String
 )
+

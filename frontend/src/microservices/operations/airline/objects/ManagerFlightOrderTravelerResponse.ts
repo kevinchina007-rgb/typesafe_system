@@ -1,4 +1,4 @@
-﻿// 鏈枃浠跺畾涔?operations 妯″潡鐨?`ManagerFlightOrderTravelerResponse`锛屼綔涓哄搷搴旀暟鎹苟鎻愪緵 JSON 缂栬В鐮併€?
+// 本文件定义 operations 航空管理端的 `ManagerFlightOrderTravelerResponse`，作为行程订单旅客响应数据并提供 JSON 编解码。
 
 import type {
   TravelerBasicInfo,

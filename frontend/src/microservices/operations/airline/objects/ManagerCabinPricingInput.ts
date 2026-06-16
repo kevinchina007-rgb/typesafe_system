@@ -1,4 +1,4 @@
-﻿// 鏈枃浠跺畾涔?operations 妯″潡鐨?`ManagerCabinPricingInput`锛屼綔涓鸿緭鍏ユā鍨嬪苟鎻愪緵 JSON 缂栬В鐮併€?
+// 本文件定义 operations 航空管理端的 `ManagerCabinPricingInput`，作为舱位定价输入并提供 JSON 编解码。
 
 export type ManagerCabinPricingInput = {
   seatCount: number

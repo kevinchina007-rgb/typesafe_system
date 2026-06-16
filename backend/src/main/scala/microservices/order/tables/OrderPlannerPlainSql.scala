@@ -33,3 +33,4 @@ object OrderPlannerPlainSql:
 
   def settleRefund(connection: Connection, input: RefundDecisionPlannerRequest, now: Instant): IO[OrderPlannerResponse] =
     OrderPlannerRefundSql.settleRefund(connection, input, now)
+

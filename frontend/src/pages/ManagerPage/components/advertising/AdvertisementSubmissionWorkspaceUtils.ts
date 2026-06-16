@@ -232,7 +232,7 @@ export function makeImageDataUrl(_prompt: string, tone: ToneKey, index: number, 
 
 export function makeTextArtDataUrl(text: string, tone: ToneKey) {
   const palette = tonePalettes[tone]
-  const safeText = escapeSvgText(text.trim() || '楠炲灝鎲￠弽鍥暯')
+  const safeText = escapeSvgText(text.trim() || '广告创意图')
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="220" viewBox="0 0 720 220">
     <defs>
       <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
@@ -248,7 +248,7 @@ export function makeTextArtDataUrl(text: string, tone: ToneKey) {
 }
 
 export function buildTextCandidates(prompt: string, tone: ToneKey, resourceLabel: string): CreativeElement[] {
-  const baseText = prompt.trim() || `${resourceLabel} 閸楀啿鍩㈤崙鍝勫絺`
+  const baseText = prompt.trim() || `${resourceLabel} 文案创意`
   return [{
     id: `text-candidate-${Date.now()}`,
     type: 'image',
@@ -298,7 +298,7 @@ export function makeLocalImageFallbackLabel(input: {
   imageFactoryKind: ImageFactoryKind
 }) {
   const primary = input.imagePrompt.trim() || input.visualElementsPrompt.trim() || input.focusPrompt.trim() || input.selectedResourceLabel.trim()
-  if (!primary) return input.imageFactoryKind === 'element' ? '楠炲灝鎲￠崗鍐' : '楠炲灝鎲￠懗灞炬珯'
+  if (!primary) return input.imageFactoryKind === 'element' ? '广告元素图' : '广告背景图'
   return primary.slice(0, 24)
 }
 

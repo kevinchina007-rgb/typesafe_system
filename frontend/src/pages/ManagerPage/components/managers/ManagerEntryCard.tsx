@@ -31,7 +31,7 @@ export function ManagerEntryCard({ title, shortTitle, accentClassName, imageSrc,
               <div className="-rotate-45 grid h-full w-full grid-cols-[1fr_auto_1fr] items-center px-3">
                 <button
                   type="button"
-                  className="grid h-full w-full place-items-center border-0 bg-transparent p-0 font-['SimSun','鐎瑰缍?,serif] text-lg font-bold text-white shadow-none transition hover:text-slate-950 focus:text-slate-950"
+                  className="grid h-full w-full place-items-center border-0 bg-transparent p-0 font-['SimSun',serif] text-lg font-bold text-white shadow-none transition hover:text-slate-950 focus:text-slate-950"
                   onClick={() => onSelect('register')}
                 >
                   注册
@@ -39,7 +39,7 @@ export function ManagerEntryCard({ title, shortTitle, accentClassName, imageSrc,
                 <img src="/images/manager-entry/fly-bara-entry.png" alt="" aria-hidden="true" className="h-11 w-11 object-contain" />
                 <button
                   type="button"
-                  className="grid h-full w-full place-items-center border-0 bg-transparent p-0 font-['SimSun','鐎瑰缍?,serif] text-lg font-bold text-white shadow-none transition hover:text-slate-950 focus:text-slate-950"
+                  className="grid h-full w-full place-items-center border-0 bg-transparent p-0 font-['SimSun',serif] text-lg font-bold text-white shadow-none transition hover:text-slate-950 focus:text-slate-950"
                   onClick={() => onSelect('login')}
                 >
                   登录

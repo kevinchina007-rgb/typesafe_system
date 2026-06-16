@@ -372,3 +372,4 @@ object OrderPlannerPlainSqlSupport:
     Option(fieldValue).map(_.trim).filter(_.nonEmpty) match
       case Some(value) => jsonObject.add(fieldName, Json.fromString(value))
       case None        => jsonObject
+

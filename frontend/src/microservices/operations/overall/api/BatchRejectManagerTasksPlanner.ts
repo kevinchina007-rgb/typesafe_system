@@ -1,14 +1,8 @@
-﻿// 鏈枃浠跺畾涔?BatchRejectManagerTasksPlanner锛岃礋璐?operations 妯″潡鐨勬壒閲忛┏鍥炵紪鎺掑拰鎺ュ彛鍏ュ彛銆?
+// 本文件定义 `BatchRejectManagerTasksPlanner` 的前端入口。
 
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
-import type { ManagerBatchDecisionResponse } from '@/microservices/operations/overall/objects/ManagerBatchDecisionResponse'
+import type { ManagerBatchDecisionPlannerRequest } from '../objects/ManagerBatchDecisionPlannerRequest'
+import type { ManagerBatchDecisionResponse } from '../objects/ManagerBatchDecisionResponse'
 
-export const batchRejectManagerBookingItems = (payload: {
-  managerId: string
-  managerType: string
-  orderItemIds: string[]
-  reason: string
-}): Promise<ManagerBatchDecisionResponse> =>
-  executeJsonApiRequest('/BatchRejectManagerTasksPlanner', 'POST', payload)
-
-
+export const batchRejectManagerTasksPlanner = (input: ManagerBatchDecisionPlannerRequest): Promise<ManagerBatchDecisionResponse> =>
+  executeJsonApiRequest('/BatchRejectManagerTasksPlanner', 'POST', input)

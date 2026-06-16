@@ -1,14 +1,8 @@
-﻿// 鏈枃浠跺畾涔?ListManagerTasksPlanner锛岃礋璐?operations 妯″潡鐨勫垪琛ㄦ煡璇㈢紪鎺掑拰鎺ュ彛鍏ュ彛銆?
+// 本文件定义 `ListManagerTasksPlanner` 的前端入口，负责把任务列表查询转给后端。
 
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
-import type { ManagerTaskListResponse } from '@/microservices/operations/overall/objects/ManagerTaskListResponse'
+import type { ManagerTasksPlannerRequest } from '../objects/ManagerTasksPlannerRequest'
+import type { ManagerTaskListResponse } from '../objects/ManagerTaskListResponse'
 
-export const listManagerTasks = (query: { managerId: string; managerType: string; status?: string; resourceType?: string }): Promise<ManagerTaskListResponse> =>
-  executeJsonApiRequest('/ListManagerTasksPlanner', 'POST', {
-    managerId: query.managerId,
-    managerType: query.managerType,
-    taskStatus: query.status,
-    taskResourceType: query.resourceType,
-  })
-
-
+export const listManagerTasksPlanner = (input: ManagerTasksPlannerRequest): Promise<ManagerTaskListResponse> =>
+  executeJsonApiRequest('/ListManagerTasksPlanner', 'POST', input)

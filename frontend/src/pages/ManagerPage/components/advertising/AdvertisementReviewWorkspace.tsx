@@ -144,7 +144,7 @@ export function AdvertisementReviewWorkspace({ businessModule }: AdvertisementRe
   async function handlePauseDisplay(advertisement: AdvertisementResponse) {
     setBusyAdvertisementId(advertisement.advertisementId)
     try {
-      await pauseAdvertisementDisplay(advertisement.advertisementId, '网站管理者取消展示')
+      await pauseAdvertisementDisplay(advertisement.advertisementId, '网站管理员取消展示')
       setSortSelection(current => current.filter(id => id !== advertisement.advertisementId))
       await reloadAdvertisements()
     } finally {
@@ -270,7 +270,7 @@ export function AdvertisementReviewWorkspace({ businessModule }: AdvertisementRe
                     <div className="grid content-start gap-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <p className="m-0 text-sm font-bold text-slate-500">航空公司名称</p>
+                          <p className="m-0 text-sm font-bold text-slate-500">所属主体名称</p>
                           <strong className="text-xl text-slate-950">{advertisement.ownerDisplayName}</strong>
                         </div>
                         <span
@@ -382,16 +382,16 @@ function AdvertisementPreview({ advertisement }: { advertisement: AdvertisementR
     return (
       <BackendAssetImage
         assetUrl={advertisement.imageUrl}
-        alt="展示稿件"
+        alt="展示素材"
         className="aspect-[4/1] w-full border border-slate-200 object-cover"
-        fallbackContent="展示稿件"
+        fallbackContent="展示素材"
       />
     )
   }
 
   return (
     <div className="flex aspect-[4/1] items-center justify-center border border-slate-200 bg-slate-100 text-sm font-bold text-slate-500">
-      展示稿件
+      展示素材
     </div>
   )
 }

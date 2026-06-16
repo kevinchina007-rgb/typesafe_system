@@ -66,7 +66,7 @@ export function AccountSignedInSection({ account, controller, translate }: Accou
                 onSubmit={async event => {
                   event.preventDefault()
                   if (!profileDraft.nickname.trim()) {
-                    onValidationError('鏄电О涓嶈兘涓虹┖銆?')
+                    onValidationError('昵称不能为空。')
                     return
                   }
                   await onUpdateProfile({
@@ -132,7 +132,7 @@ export function AccountSignedInSection({ account, controller, translate }: Accou
               const newPassword = String(formData.get('newPassword') ?? '')
               const confirmPassword = String(formData.get('confirmPassword') ?? '')
               if (newPassword !== confirmPassword) {
-                onValidationError(translate('error.passwordMismatch'))
+                    onValidationError('昵称不能为空。')
                 return
               }
               await onChangePassword({ currentPassword, newPassword })

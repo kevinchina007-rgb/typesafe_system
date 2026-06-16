@@ -8,7 +8,7 @@ import com.typesafe.travel.persistence.operations.ManagerRefundTaskPlannerPlainS
 
 import java.sql.Connection
 
-object ListManagerRefundTasksPlanner extends ConnectionApiPlan[ManagerScopedPlannerRequest, ManagerRefundTaskListPlannerResponse]:
+object ListManagerRefundTasksPlanner extends ConnectionApiPlan[ManagerScopedPlannerRequest, ManagerRefundTaskListResponse]:
   override val name: String = "ListManagerRefundTasksPlanner"
-  override def plan(input: ManagerScopedPlannerRequest, connection: Connection): IO[ManagerRefundTaskListPlannerResponse] =
+  override def plan(input: ManagerScopedPlannerRequest, connection: Connection): IO[ManagerRefundTaskListResponse] =
     ManagerRefundTaskPlannerPlainSql.listRefundTasks(connection, input)

@@ -41,3 +41,4 @@ object OrderPlannerQuerySql:
 
   def submit(connection: Connection, input: OrderIdPlannerRequest): IO[OrderPlannerResponse] =
     OrderPlannerPlainSqlSupport.expireTrainOrdersIfNeeded(connection, Instant.now()) *> OrderPlannerPlainSqlSupport.validateOrderCanTransitionToPayment(connection, input.orderId) *> OrderPlannerPlainSqlSupport.updateStatus(connection, input.orderId, "PendingPayment", None, None)
+

@@ -8,7 +8,7 @@ import com.typesafe.travel.api.routes.ConnectionApiPlan
 import java.sql.Connection
 import java.time.Instant
 
-object BatchRejectManagerTasksPlanner extends ConnectionApiPlan[ManagerBatchDecisionPlannerRequest, ManagerBatchDecisionPlannerResponse]:
+object BatchRejectManagerTasksPlanner extends ConnectionApiPlan[ManagerBatchDecisionPlannerRequest, ManagerBatchDecisionResponse]:
   override val name: String = "BatchRejectManagerTasksPlanner"
-  override def plan(input: ManagerBatchDecisionPlannerRequest, connection: Connection): IO[ManagerBatchDecisionPlannerResponse] =
+  override def plan(input: ManagerBatchDecisionPlannerRequest, connection: Connection): IO[ManagerBatchDecisionResponse] =
     updateSupplierReviewDecisions(connection, input.managerId, input.orderItemIds, "reject", "SupplierRejected", "Reject", input.reason.orElse(input.note), Instant.now())

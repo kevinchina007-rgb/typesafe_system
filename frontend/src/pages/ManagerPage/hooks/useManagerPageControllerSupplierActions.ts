@@ -1,4 +1,4 @@
-﻿import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
+import { travelMvpApiClient } from '@/microservices/TravelMvpApiClient'
 import type { CurrentManagerSessionResponse } from '@/lib/mvp-types/index'
 import type { ManagerCabinPricingInput } from '@/lib/mvp-types/manager'
 import type { ManagerPageProps } from '../objects'
@@ -245,9 +245,10 @@ export function createManagerPageControllerSupplierActions({
     if (!currentSupplierManagerSession) {
       throw new Error(translate('error.managerNotFound'))
     }
-    await travelMvpApiClient.confirmManagerBookingItem(payload.orderItemId, {
+    await travelMvpApiClient.confirmManagerBookingItem({
       managerId: currentSupplierManagerSession.managerId,
       managerType: currentSupplierManagerSession.managerType.toLowerCase(),
+      orderItemId: payload.orderItemId,
       note: payload.note.trim() || null,
     })
     await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
@@ -257,9 +258,10 @@ export function createManagerPageControllerSupplierActions({
     if (!currentSupplierManagerSession) {
       throw new Error(translate('error.managerNotFound'))
     }
-    await travelMvpApiClient.rejectManagerBookingItem(payload.orderItemId, {
+    await travelMvpApiClient.rejectManagerBookingItem({
       managerId: currentSupplierManagerSession.managerId,
       managerType: currentSupplierManagerSession.managerType.toLowerCase(),
+      orderItemId: payload.orderItemId,
       reason: payload.reason,
     })
     await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
@@ -295,11 +297,11 @@ export function createManagerPageControllerSupplierActions({
     if (!currentSupplierManagerSession) {
       throw new Error(translate('error.managerNotFound'))
     }
-    await travelMvpApiClient.approveRefund(
-      payload.orderId,
-      currentSupplierManagerSession.managerId,
-      currentSupplierManagerSession.managerType.toLowerCase(),
-    )
+    await travelMvpApiClient.approveRefund({
+      managerId: currentSupplierManagerSession.managerId,
+      managerType: currentSupplierManagerSession.managerType.toLowerCase(),
+      orderId: payload.orderId,
+    })
     await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
   }
 
@@ -307,11 +309,11 @@ export function createManagerPageControllerSupplierActions({
     if (!currentSupplierManagerSession) {
       throw new Error(translate('error.managerNotFound'))
     }
-    await travelMvpApiClient.rejectRefund(
-      payload.orderId,
-      currentSupplierManagerSession.managerId,
-      currentSupplierManagerSession.managerType.toLowerCase(),
-    )
+    await travelMvpApiClient.rejectRefund({
+      managerId: currentSupplierManagerSession.managerId,
+      managerType: currentSupplierManagerSession.managerType.toLowerCase(),
+      orderId: payload.orderId,
+    })
     await Promise.all([reloadManagerTasks(), reloadManagerRefundTasks()])
   }
 

@@ -9,3 +9,4 @@ final case class RegisterAttractionManagerPlannerRequest(email: String, displayN
 object RegisterAttractionManagerPlannerRequest:
   given sourceEncoder: Encoder[RegisterAttractionManagerPlannerRequest] = deriveEncoder
   given sourceDecoder: Decoder[RegisterAttractionManagerPlannerRequest] = deriveDecoder
+

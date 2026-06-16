@@ -14,7 +14,7 @@ import type {
 import type { ManagerFlightPlannerResponse, ManagerCabinPricingInput } from '@/lib/mvp-types/manager'
 import type { PageNoticeHandler } from '@/pages/shared/usePageActions'
 
-// 绠＄悊椤甸潰鏍瑰叆鍙ｉ渶瑕佺殑 props銆?
+// 管理页面根入口所需的 props。
 export type ManagerPageProps = {
   currentLanguage: AppLanguage
   currentViewKey: AppViewKey
@@ -27,13 +27,13 @@ export type ManagerPageProps = {
   onShowNotice: PageNoticeHandler
 }
 
-// 绠＄悊鍛樼櫥褰曠被鍨嬶紝涓庡墠鍚庣鍛藉悕淇濇寔涓€鑷淬€?
+// 管理员登录类型，与前后端命名保持一致。
 export type LoginManagerType = 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin'
-// 璁よ瘉妯″紡鍙湁娉ㄥ唽鍜岀櫥褰曚袱绉嶃€?
+// 认证模式只有注册和登录两种。
 export type ManagerAuthMode = 'register' | 'login'
-// 闈炵珯鐐圭鐞嗗憳鐨勪笟鍔＄被鍨嬶紝渚夸簬澶嶇敤鍏ュ彛鍜屾潈闄愬垽鏂€?
+// 非站点管理员的业务类型，便于复用入口和权限判断。
 export type BusinessManagerType = Exclude<LoginManagerType, 'siteAdmin'>
-// 骞垮憡璧勬簮閫夐」锛屼緵绠＄悊鍚庡彴鐨勫箍鍛婃ā鍧楀鐢ㄣ€?
+// 广告资源选项，供管理后台的广告模块复用。
 export type AdvertisementResourceOption = {
   value: string
   label: string
@@ -44,7 +44,7 @@ export type AdvertisementResourceOption = {
   timeRange?: string
 }
 
-// 绠＄悊棣栭〉鍏ュ彛鍗＄墖鐨勫睍绀哄弬鏁般€?
+// 管理员认证卡片的展示参数，包含标题、状态和交互回调。
 export type ManagerEntryCardProps = {
   title: string
   shortTitle: string
@@ -54,7 +54,7 @@ export type ManagerEntryCardProps = {
   onSelect: (authMode: ManagerAuthMode) => void
 }
 
-// 绠＄悊鍛樿璇佸崱鐗囩殑灞曠ず鍙傛暟銆?
+// 管理员认证卡片的完整配置，负责注册和登录两条入口。
 export type ManagerAuthCardProps = {
   title: string
   registerTitle: string
@@ -73,7 +73,7 @@ export type ManagerAuthCardProps = {
   translate: (translationKey: string) => string
 }
 
-// 绠＄悊椤甸潰鎺у埗鍣ㄥ椤甸潰灞傛毚闇茬殑瀹屾暣鐘舵€佸拰鍔ㄤ綔銆?
+// 管理页面控制器向页面层暴露的完整状态和动作。
 export type ManagerPageController = {
   activeManagerType: 'airline' | 'hotel' | 'train' | 'attraction' | 'siteAdmin' | null
   activeSection: 'workspace' | 'feedback' | 'advertising' | 'blogAudit' | 'advertisingReview' | 'siteAdminFeedback'

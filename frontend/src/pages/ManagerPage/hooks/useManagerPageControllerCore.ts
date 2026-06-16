@@ -183,8 +183,8 @@ export function useManagerPageControllerCore({
     const taskListResponse = await travelMvpApiClient.listManagerTasks({
       managerId: effectiveSession.managerId,
       managerType: effectiveSession.managerType.toLowerCase(),
-      status: filters.status,
-      resourceType: filters.resourceType === 'all' ? undefined : filters.resourceType,
+      taskStatus: filters.status,
+      taskResourceType: filters.resourceType === 'all' ? undefined : filters.resourceType,
     })
     setManagerTaskResponses(taskListResponse.tasks)
   }

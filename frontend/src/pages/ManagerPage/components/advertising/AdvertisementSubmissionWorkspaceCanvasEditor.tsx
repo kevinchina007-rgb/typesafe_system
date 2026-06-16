@@ -19,16 +19,16 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
 
                 <section className="hidden">
                   <label className="grid gap-2">
-                    <strong>��ͻ��</strong>
-                    <input value={c.focusPrompt} onChange={event => c.setFocusPrompt(event.target.value)} placeholder="���磺ֱ�ɡ�׼�㡢Ʒ�ƸС��ȼٷ�Χ" />
+                    <strong>焦点提示</strong>
+                    <input value={c.focusPrompt} onChange={event => c.setFocusPrompt(event.target.value)} placeholder="例如：突出卖点、品牌调性、活动氛围" />
                   </label>
                   <label className="grid gap-2">
-                    <strong>����Ԫ��</strong>
-                    <input value={c.visualElementsPrompt} onChange={event => c.setVisualElementsPrompt(event.target.value)} placeholder="���磺�ɻ���Ӱ���Ʋ㡢���еƹ⡢��������" />
+                    <strong>视觉元素</strong>
+                    <input value={c.visualElementsPrompt} onChange={event => c.setVisualElementsPrompt(event.target.value)} placeholder="例如：人物、场景、灯光、道具" />
                   </label>
                   <label className="grid gap-2">
-                    <strong>��Ҫ����</strong>
-                    <input value={c.avoidPrompt} onChange={event => c.setAvoidPrompt(event.target.value)} placeholder="���磺���ˮӡ����ɫ������ͼƬ��������" />
+                    <strong>避免内容</strong>
+                    <input value={c.avoidPrompt} onChange={event => c.setAvoidPrompt(event.target.value)} placeholder="例如：不要水印、不要错误文字、不要模糊图片" />
                   </label>
                 </section>
 
@@ -55,7 +55,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                       <strong>{c.translate('advertising.factory.text')}</strong>
                       <textarea rows={3} value={c.textPrompt} onChange={event => c.setTextPrompt(event.target.value)} placeholder={c.translate('advertising.factory.textPlaceholder')} />
                       <label className="grid gap-2">
-                        <span className="text-sm font-semibold text-slate-700">����</span>
+                        <span className="text-sm font-semibold text-slate-700">风格偏好</span>
                         <div className="flex flex-wrap gap-2">
                           {(Object.keys(c.visualStyleLabels) as VisualStyleKey[]).map((styleKey: VisualStyleKey) => (
                             <button
@@ -81,7 +81,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                             void c.generateTextStyles()
                           }}
                         >
-                          �л����
+                          重新生成
                         </button>
                       </div>
                       <div className="grid gap-2">
@@ -93,7 +93,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                             ) : (
                               <strong style={{ color: candidate.color === '#ffffff' ? c.tonePalettes[c.tone].bg : candidate.color }}>{candidate.text}</strong>
                             )}
-                            <span className="text-xs text-slate-500">�����ַ���</span>
+                            <span className="text-xs text-slate-500">可拖拽到画布</span>
                           </button>
                         ))}
                       </div>
@@ -107,28 +107,28 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                           className={`inline-flex min-h-10 items-center justify-center border px-3 text-sm font-semibold ${c.imageFactoryKind === 'background' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-950'}`}
                           onClick={() => c.setImageFactoryKind('background')}
                         >
-                          ����
+                          背景
                         </button>
                         <button
                           type="button"
                           className={`inline-flex min-h-10 items-center justify-center border px-3 text-sm font-semibold ${c.imageFactoryKind === 'element' ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-950'}`}
                           onClick={() => c.setImageFactoryKind('element')}
                         >
-                          Ԫ��
+                          元素
                         </button>
                       </div>
                       <textarea rows={3} value={c.imagePrompt} onChange={event => c.setImagePrompt(event.target.value)} placeholder={c.translate('advertising.factory.imagePlaceholder')} />
                       {c.imageFactoryKind === 'element' ? (
                         <>
                           <label className="grid gap-2">
-                            <span className="text-sm font-semibold text-slate-700">�Ƿ�����ݿٳ���</span>
+                            <span className="text-sm font-semibold text-slate-700">是否裁切成元素图</span>
                             <select value={c.shouldCutoutImageElement ? 'yes' : 'no'} onChange={event => c.setShouldCutoutImageElement(event.target.value === 'yes')}>
-                              <option value="yes">��</option>
-                              <option value="no">��</option>
+                              <option value="yes">是</option>
+                              <option value="no">否</option>
                             </select>
                           </label>
                           <label className="grid gap-2">
-                            <span className="text-sm font-semibold text-slate-700">����</span>
+                            <span className="text-sm font-semibold text-slate-700">视觉风格</span>
                             <div className="flex flex-wrap gap-2">
                           {(Object.keys(c.visualStyleLabels) as VisualStyleKey[]).map((styleKey: VisualStyleKey) => (
                                 <button
@@ -146,7 +146,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                       ) : (
                         <>
                           <label className="grid gap-2">
-                            <span className="text-sm font-semibold text-slate-700">����</span>
+                            <span className="text-sm font-semibold text-slate-700">视觉风格</span>
                             <div className="flex flex-wrap gap-2">
                           {(Object.keys(c.visualStyleLabels) as VisualStyleKey[]).map((styleKey: VisualStyleKey) => (
                                 <button
@@ -161,10 +161,10 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                             </div>
                           </label>
                           <label className="grid gap-2">
-                            <span className="text-sm font-semibold text-slate-700">�Ƿ��Զ���Ӧ���֡�Ԫ��</span>
+                            <span className="text-sm font-semibold text-slate-700">是否让背景自动适配创意内容</span>
                             <select value={c.backgroundAutoFit ? 'yes' : 'no'} onChange={event => c.setBackgroundAutoFit(event.target.value === 'yes')}>
-                              <option value="yes">��</option>
-                              <option value="no">��</option>
+                              <option value="yes">是</option>
+                              <option value="no">否</option>
                             </select>
                           </label>
                         </>
@@ -181,7 +181,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                             void c.generateImageStyles()
                           }}
                         >
-                          �л����
+                          重新生成
                         </button>
                       </div>
                       <div className="grid gap-2">
@@ -212,7 +212,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                 <div className="grid gap-3 border border-slate-200 bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-sm font-bold text-slate-500">{c.canvasWidth} x {c.canvasHeight}</span>
-                    <span className="text-sm text-slate-500">{c.hyperlinkEnabled ? c.selectedResourceLabel : 'δ���ӳ�����'}</span>
+                    <span className="text-sm text-slate-500">未启用资源绑定</span>
                   </div>
                   <div
                     ref={c.canvasRef}
@@ -301,7 +301,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                             className="absolute right-1 top-1 z-20 grid h-6 w-6 place-items-center rounded-full bg-black/70 text-xs font-bold text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100"
                             onClick={() => c.removeElement(element.id)}
                           >
-                            ��
+                            删
                           </button>
                           {element.type === 'image' && element.src ? (
                             <img src={element.src} alt="" className={`h-full w-full ${element.contentMode === 'contain' ? 'object-contain' : 'object-cover'}`} />
@@ -326,14 +326,14 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                               className="block w-full px-3 py-2 text-left hover:bg-slate-100"
                               onClick={() => c.copyCanvasElement(c.canvasContextMenu.targetElementId!)}
                             >
-                              ����
+                              复制
                             </button>
                             <button
                               type="button"
                               className="block w-full px-3 py-2 text-left hover:bg-slate-100"
                               onClick={() => c.cutCanvasElement(c.canvasContextMenu.targetElementId!)}
                             >
-                              ����
+                              剪切
                             </button>
                           </>
                         ) : null}
@@ -343,7 +343,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                           disabled={!c.copiedElement}
                           onClick={c.pasteCanvasElement}
                         >
-                          ճ��
+                          粘贴
                         </button>
                       </div>
                     ) : null}

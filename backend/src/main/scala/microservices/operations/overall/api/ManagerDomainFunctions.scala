@@ -90,9 +90,9 @@ def updateRefundDecision(
     refundStatus: String,
     approved: Boolean,
     now: Instant
-): IO[ManagerBatchDecisionPlannerResponse] =
+): IO[ManagerBatchDecisionResponse] =
   ManagerRefundTaskPlannerPlainSql.updateRequestedRefundDecision(connection, orderId, refundStatus, approved, now)
-    .as(ManagerBatchDecisionPlannerResponse(1, Nil, action))
+    .as(ManagerBatchDecisionResponse(1, Nil, action))
 
 def updateSupplierReviewDecisions(
     connection: Connection,
@@ -103,7 +103,7 @@ def updateSupplierReviewDecisions(
     reviewDecision: String,
     reason: Option[String],
     now: Instant
-): IO[ManagerBatchDecisionPlannerResponse] =
+): IO[ManagerBatchDecisionResponse] =
   orderItemIds.traverse_(orderItemId =>
     ManagerBookingTaskPlannerPlainSql.updateSupplierReviewDecision(
       connection,
@@ -114,4 +114,4 @@ def updateSupplierReviewDecisions(
       reason,
       now
     )
-  ).as(ManagerBatchDecisionPlannerResponse(orderItemIds.size, orderItemIds, action))
+  ).as(ManagerBatchDecisionResponse(orderItemIds.size, orderItemIds, action))

@@ -1,5 +1,4 @@
-// ManagerBookingTaskPlannerPlainSql 封装operations模块的plain SQL 实现。
-
+// 本文件封装 `ListManagerTasksPlanner` 对应的 plain SQL 实现。
 package com.typesafe.travel.persistence.operations
 
 import cats.effect.IO
@@ -10,7 +9,7 @@ import java.sql.{Connection, ResultSet, Timestamp}
 import java.time.Instant
 
 object ManagerBookingTaskPlannerPlainSql:
-  def listTasks(connection: Connection, input: ManagerTasksPlannerRequest): IO[ManagerBookingTaskListPlannerResponse] =
+  def listTasks(connection: Connection, input: ManagerTasksPlannerRequest): IO[ManagerTaskListResponse] =
     IO.blocking {
       val kindFilter = itemKindFor(input.managerType)
       PlainSqlSupport.withStatement(
@@ -26,7 +25,7 @@ object ManagerBookingTaskPlannerPlainSql:
         """
       ) { statement =>
         statement.setString(1, kindFilter)
-        ManagerBookingTaskListPlannerResponse(PlainSqlSupport.queryList(statement)(readTask))
+        ManagerTaskListResponse(PlainSqlSupport.queryList(statement)(readTask))
       }
     }
 
@@ -51,21 +50,32 @@ object ManagerBookingTaskPlannerPlainSql:
       }
     }
 
-  private def readTask(resultSet: ResultSet): ManagerBookingTaskPlannerResponse =
-    ManagerBookingTaskPlannerResponse(
-      orderId = resultSet.getString("order_id"),
-      orderItemId = resultSet.getString("order_item_id"),
-      buyerUserId = resultSet.getString("buyer_user_id"),
+  private def readTask(resultSet: ResultSet): ManagerTaskResponse =
+    val createdAt = resultSet.getTimestamp("created_at").toInstant.toString
+    val snapshotLabel = Option(resultSet.getString("snapshot_json")).getOrElse(resultSet.getString("item_kind"))
+    ManagerTaskResponse(
+      taskId = Option(resultSet.getString("order_item_id")),
       taskType = normalizeManagerType(resultSet.getString("item_kind")),
+      orderItemId = resultSet.getString("order_item_id"),
+      orderId = resultSet.getString("order_id"),
+      orderItemKind = resultSet.getString("item_kind"),
+      detailLabel = snapshotLabel,
       supplierReviewStatus = resultSet.getString("supplier_review_status"),
-      summaryLabel = Option(resultSet.getString("snapshot_json")).getOrElse(resultSet.getString("item_kind")),
-      detailLabel = Option(resultSet.getString("snapshot_json")).getOrElse(""),
-      requestedAt = resultSet.getTimestamp("created_at").toInstant.toString,
-      reviewDecision = Option(resultSet.getString("review_decision")).map(decision =>
-        SupplierReviewDecisionPlannerResponse(decision, Option(resultSet.getString("review_reason")), Option(resultSet.getTimestamp("reviewed_at")).map(_.toInstant.toString), Option(resultSet.getString("reviewed_by_manager_id")))
+      supplierReviewDecision = Option(resultSet.getString("review_decision")).map(decision =>
+        SupplierReviewDecisionResponse(
+          decision,
+          Option(resultSet.getString("review_reason")),
+          Option(resultSet.getTimestamp("reviewed_at")).map(_.toInstant.toString),
+          Option(resultSet.getString("reviewed_by_manager_id"))
+        )
       ),
-      reviewedBy = Option(resultSet.getString("reviewed_by_manager_id")),
+      summaryLabel = snapshotLabel,
+      bookedAmount = resultSet.getBigDecimal("booked_amount").toString,
+      bookedCurrency = resultSet.getString("booked_currency"),
+      requestedAt = createdAt,
+      createdAt = createdAt,
       reviewedAt = Option(resultSet.getTimestamp("reviewed_at")).map(_.toInstant.toString),
+      reviewedBy = Option(resultSet.getString("reviewed_by_manager_id")),
       reviewNote = Option(resultSet.getString("review_reason"))
     )
 

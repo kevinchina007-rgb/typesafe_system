@@ -15,7 +15,7 @@ import { uploadAdvertisementImage } from '@/microservices/advertising/api/Upload
 
 import { listAttractions } from '@/microservices/attraction/api/ListAttractionsPlanner'
 import { getAttraction } from '@/microservices/attraction/api/GetAttractionDetailsPlanner'
-import { uploadAttractionImage } from '@/microservices/attraction/api/UploadAttractionImagePlanner'
+import { uploadAttractionImage } from '@/microservices/operations/attraction/api/UploadAttractionImagePlanner'
 
 import { getHealth } from '@/microservices/auth/api/GetHealthPlanner'
 import { signupUser } from '@/microservices/auth/api/SignupPlanner'
@@ -70,14 +70,14 @@ import { loginPlanner } from '@/microservices/identity/api/LoginPlanner'
 import { getUserPlanner } from '@/microservices/identity/api/GetUserPlanner'
 import { uploadUserAvatarPlanner } from '@/microservices/identity/api/UploadUserAvatarPlanner'
 import { updateUserProfilePlanner } from '@/microservices/identity/api/UpdateUserProfilePlanner'
-import { batchConfirmManagerBookingItems } from '@/microservices/operations/overall/api/BatchConfirmManagerTasksPlanner'
-import { batchRejectManagerBookingItems } from '@/microservices/operations/overall/api/BatchRejectManagerTasksPlanner'
-import { confirmManagerBookingItem } from '@/microservices/operations/overall/api/ConfirmManagerBookingItemPlanner'
-import { rejectManagerBookingItem } from '@/microservices/operations/overall/api/RejectManagerBookingItemPlanner'
-import { approveRefund } from '@/microservices/operations/overall/api/ApproveManagerRefundPlanner'
-import { rejectRefund } from '@/microservices/operations/overall/api/RejectManagerRefundPlanner'
-import { listManagerRefundTasks } from '@/microservices/operations/overall/api/ListManagerRefundTasksPlanner'
-import { listManagerTasks } from '@/microservices/operations/overall/api/ListManagerTasksPlanner'
+import { batchConfirmManagerTasksPlanner } from '@/microservices/operations/overall/api/BatchConfirmManagerTasksPlanner'
+import { batchRejectManagerTasksPlanner } from '@/microservices/operations/overall/api/BatchRejectManagerTasksPlanner'
+import { confirmManagerBookingItemPlanner } from '@/microservices/operations/overall/api/ConfirmManagerBookingItemPlanner'
+import { rejectManagerBookingItemPlanner } from '@/microservices/operations/overall/api/RejectManagerBookingItemPlanner'
+import { approveManagerRefundPlanner } from '@/microservices/operations/overall/api/ApproveManagerRefundPlanner'
+import { rejectManagerRefundPlanner } from '@/microservices/operations/overall/api/RejectManagerRefundPlanner'
+import { listManagerRefundTasksPlanner } from '@/microservices/operations/overall/api/ListManagerRefundTasksPlanner'
+import { listManagerTasksPlanner } from '@/microservices/operations/overall/api/ListManagerTasksPlanner'
 import { createManagerFlight } from '@/microservices/operations/airline/api/CreateManagerFlightPlanner'
 import { listManagerFlights } from '@/microservices/operations/airline/api/ListManagerFlightsPlanner'
 import { listManagerFlightOrders } from '@/microservices/operations/airline/api/ListManagerFlightOrdersPlanner'
@@ -89,11 +89,11 @@ import { listManagedHotels } from '@/microservices/operations/hotel/api/ListMana
 import { registerHotelManager } from '@/microservices/operations/hotel/api/RegisterHotelManagerPlanner'
 import { updateHotelManagerProfile } from '@/microservices/operations/hotel/api/UpdateHotelManagerProfilePlanner'
 import { registerAttractionManager } from '@/microservices/operations/attraction/api/RegisterAttractionManagerPlanner'
-import { listManagedAttractions } from '@/microservices/attraction/api/ListManagedAttractionsPlanner'
-import { createAttraction } from '@/microservices/attraction/api/CreateAttractionPlanner'
-import { createAttractionTicketType } from '@/microservices/attraction/api/CreateAttractionTicketTypePlanner'
-import { createAttractionTicketSession } from '@/microservices/attraction/api/CreateAttractionTicketSessionPlanner'
-import { createAttractionTicketRule } from '@/microservices/attraction/api/CreateAttractionTicketRulePlanner'
+import { listManagedAttractions } from '@/microservices/operations/attraction/api/ListManagedAttractionsPlanner'
+import { createAttraction } from '@/microservices/operations/attraction/api/CreateAttractionPlanner'
+import { createAttractionTicketType } from '@/microservices/operations/attraction/api/CreateAttractionTicketTypePlanner'
+import { createAttractionTicketSession } from '@/microservices/operations/attraction/api/CreateAttractionTicketSessionPlanner'
+import { createAttractionTicketRule } from '@/microservices/operations/attraction/api/CreateAttractionTicketRulePlanner'
 import { createTrainJourney } from '@/microservices/train/api/CreateTrainJourneyPlanner'
 import { listManagedTrains } from '@/microservices/train/api/ListManagedTrainsPlanner'
 import { registerRailwayManager } from '@/microservices/train/api/RegisterRailwayManagerPlanner'
@@ -276,18 +276,18 @@ export const travelMvpApiClient = {
   createTrainJourney,
   createManagerRoomType,
   listManagedHotels,
-  listManagerTasks,
-  batchConfirmManagerBookingItems,
-  batchRejectManagerBookingItems,
+  listManagerTasks: listManagerTasksPlanner,
+  batchConfirmManagerBookingItems: batchConfirmManagerTasksPlanner,
+  batchRejectManagerBookingItems: batchRejectManagerTasksPlanner,
   listManagerFlights,
   listManagerFlightOrders,
-  listManagerRefundTasks,
+  listManagerRefundTasks: listManagerRefundTasksPlanner,
   updateAirlineManagerProfile,
   updateHotelManagerProfile,
   createManagerFlight,
   toggleManagerFlightStatus,
-  confirmManagerBookingItem,
-  rejectManagerBookingItem,
+  confirmManagerBookingItem: confirmManagerBookingItemPlanner,
+  rejectManagerBookingItem: rejectManagerBookingItemPlanner,
   createPaymentLink,
   findOrderPayment,
   createOrder,
@@ -301,8 +301,8 @@ export const travelMvpApiClient = {
   requestRefund,
   submitOrder,
   settleRefund,
-  approveRefund,
-  rejectRefund,
+  approveRefund: approveManagerRefundPlanner,
+  rejectRefund: rejectManagerRefundPlanner,
   createTourGroup,
   uploadTourGroupCoverImage,
   listTourGroups,
@@ -354,6 +354,7 @@ export const travelMvpApiClient = {
   listTravelers,
   deleteTraveler,
 }
+
 
 
 

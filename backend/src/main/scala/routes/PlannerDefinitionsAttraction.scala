@@ -12,13 +12,7 @@ object PlannerDefinitionsAttraction:
         WithConnection(BookAttractionItemPlanner),
         WithConnection(AttractionSuggestionsPlanner),
         WithConnection(ListAttractionsPlanner),
-        WithConnection(GetAttractionDetailsPlanner),
-        WithConnection(ListManagedAttractionsPlanner),
-        WithConnection(CreateAttractionPlanner),
-        WithConnection(UploadAttractionImagePlanner),
-        WithConnection(CreateAttractionTicketTypePlanner),
-        WithConnection(CreateAttractionTicketSessionPlanner),
-        WithConnection(CreateAttractionTicketRulePlanner)
+        WithConnection(GetAttractionDetailsPlanner)
       ).map(planner => planner.name -> planner).toMap
     )
 

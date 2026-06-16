@@ -18,3 +18,4 @@ final case class AttractionManagerSessionPlannerResponse(
 object AttractionManagerSessionPlannerResponse:
   given sourceEncoder: Encoder[AttractionManagerSessionPlannerResponse] = deriveEncoder
   given sourceDecoder: Decoder[AttractionManagerSessionPlannerResponse] = deriveDecoder
+

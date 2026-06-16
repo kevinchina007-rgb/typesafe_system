@@ -2,7 +2,7 @@
 // These helpers are used only by planner / table orchestration, and they are not frontend mirror files or standalone API entry points.
 // Keep pure reusable domain construction, rule restoration, and status assembly logic here; do not put routing, request handling, or page semantics in this file.
 
-package com.typesafe.travel.attraction.api
+package com.typesafe.travel.attraction.domain
 
 import com.typesafe.travel.attraction.domain.*
 
@@ -257,6 +257,8 @@ private def validateTicketEligibilityRuleConfig(
 
   if configMatchesRuleType then Right(())
   else Left(AttractionError.AttractionTravelerSelectionWasInvalid(s"Eligibility rule config did not match $ruleType"))
+
+
 
 
 

@@ -45,17 +45,17 @@ export function ToastNotice({ notice, onDismiss }: ToastNoticeProps) {
         >
           <img className="mx-auto h-28 w-28 object-contain" src="/images/fly-pig-error.png" alt="" />
           <h2 id="app-error-title" className="mt-4 text-2xl font-bold">
-            鍑洪敊浜?
+            出错了
           </h2>
           <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-700">
-            {notice.description || '鏈煡閿欒銆傚皬鐚繕娌″畾浣嶅埌鎽斿湪鍝竴姝ャ€?'}
+            {notice.description || '未知错误。小猪还没定位到摔在哪一步。'}
           </p>
           <button
             type="button"
             className="mt-7 inline-flex min-h-11 items-center justify-center border border-black bg-black px-6 py-2 text-sm font-semibold text-white transition hover:bg-white hover:text-black"
             onClick={onDismiss}
           >
-            鐭ラ亾浜?
+            {notice.description || '未知错误。小猪还没定位到摔在哪一步。'}
           </button>
         </section>
       </div>
@@ -79,7 +79,7 @@ export function ToastNotice({ notice, onDismiss }: ToastNoticeProps) {
         className="inline-flex min-h-11 min-w-11 items-center justify-center border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:border-black hover:bg-black hover:text-white"
         onClick={onDismiss}
       >
-        OK
+        知道了
       </button>
     </aside>
   )

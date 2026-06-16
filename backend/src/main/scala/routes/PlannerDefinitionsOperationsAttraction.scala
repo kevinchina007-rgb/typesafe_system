@@ -10,6 +10,12 @@ object PlannerDefinitionsOperationsAttraction:
   val registry: PlannerRegistry =
     PlannerRegistry(
       List(
-        WithConnection(RegisterAttractionManagerPlanner)
+        WithConnection(RegisterAttractionManagerPlanner),
+        WithConnection(ListManagedAttractionsPlanner),
+        WithConnection(CreateAttractionPlanner),
+        WithConnection(UploadAttractionImagePlanner),
+        WithConnection(CreateAttractionTicketTypePlanner),
+        WithConnection(CreateAttractionTicketSessionPlanner),
+        WithConnection(CreateAttractionTicketRulePlanner)
       ).map(planner => planner.name -> planner).toMap
     )

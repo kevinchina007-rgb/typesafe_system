@@ -1,4 +1,4 @@
-// 鏈枃浠跺畾涔?ListManagerFlightOrdersPlanner锛岃礋璐?operations 妯″潡鐨勫垪琛ㄦ煡璇㈢紪鎺掑拰鎺ュ彛鍏ュ彛銆?
+// 本文件定义 ListManagerFlightOrdersPlanner，负责 operations 航空管理端的订单列表查询和接口入口。
 
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
 import type { ManagerFlightOrderListResponse } from '@/microservices/operations/airline/objects/ManagerFlightOrderListResponse'

@@ -58,7 +58,7 @@ export function MiniFeedbackChatDialog({
               className={message.senderDisplayName === senderDisplayName ? 'grid gap-2 border border-slate-200 bg-white p-3 justify-self-end bg-sky-50' : 'grid gap-2 border border-slate-200 bg-white p-3'}
             >
               <strong>{message.senderDisplayName}</strong>
-              <p>{message.messageType === 'orderCancellationRequest' ? '鍙栨秷璁㈠崟璇锋眰' : message.content}</p>
+              <p>{message.messageType === 'orderCancellationRequest' ? '订单取消请求' : message.content}</p>
             </article>
           ))}
         </div>

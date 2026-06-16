@@ -24,3 +24,5 @@ object RegisterAttractionManagerPlanner extends ConnectionApiPlan[RegisterAttrac
       _ <- AttractionManagerPlainSql.insertAttractionManager(connection, managerId, input.email, input.displayName, now)
       _ <- AttractionManagerPlainSql.insertAttractionManagerCredential(connection, managerId, input.email, passwordHash, now)
     yield AttractionManagerSessionPlannerResponse(managerId, "Attraction", input.email.trim, input.displayName.trim, "Active", managerId, None, now.toString)
+
+

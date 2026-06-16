@@ -1,7 +1,8 @@
-﻿// 鏈枃浠跺畾涔?RejectManagerRefundPlanner锛岃礋璐?operations 妯″潡鐨勯┏鍥炵紪鎺掑拰鎺ュ彛鍏ュ彛銆?
+// 本文件定义 `RejectManagerRefundPlanner` 的前端入口。
 
 import { executeJsonApiRequest } from '@/shared-kernel/api/ApiTransport'
+import type { ManagerRefundDecisionPlannerRequest } from '../objects/ManagerRefundDecisionPlannerRequest'
+import type { ManagerBatchDecisionResponse } from '../objects/ManagerBatchDecisionResponse'
 
-export const rejectRefund = (_orderId: string, managerId: string, managerType: string): Promise<unknown> =>
-  executeJsonApiRequest('/RejectManagerRefundPlanner', 'POST', { managerId, managerType })
-
+export const rejectManagerRefundPlanner = (input: ManagerRefundDecisionPlannerRequest): Promise<ManagerBatchDecisionResponse> =>
+  executeJsonApiRequest('/RejectManagerRefundPlanner', 'POST', input)

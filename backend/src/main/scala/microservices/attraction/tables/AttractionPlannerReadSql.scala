@@ -106,17 +106,6 @@ object AttractionPlannerReadSql:
   def reloadDetails(connection: Connection, attractionId: String): Attraction =
     readDetails(connection, attractionId)
 
-  def listManaged(connection: Connection, input: ListManagedAttractionsPlannerRequest): IO[AttractionListPlannerResponse] =
-    IO.blocking {
-      PlainSqlSupport.withStatement(
-        connection,
-        "select attraction_id, manager_id, name, city, location, description, image_url, status, created_at from attractions where manager_id = ? order by created_at, attraction_id"
-      ) { statement =>
-        statement.setString(1, input.managerId)
-        AttractionListPlannerResponse(PlainSqlSupport.queryList(statement)(readAttraction(connection)))
-      }
-    }
-
   private def readDetails(connection: Connection, attractionId: String): Attraction =
     PlainSqlSupport.withStatement(
       connection,
@@ -130,7 +119,7 @@ object AttractionPlannerReadSql:
       finally resultSet.close()
     }
 
-  private def readAttraction(connection: Connection)(resultSet: ResultSet): Attraction =
+  def readAttraction(connection: Connection)(resultSet: ResultSet): Attraction =
     val attractionId = AttractionId(resultSet.getString("attraction_id"))
     Attraction(
       attractionId = attractionId,
