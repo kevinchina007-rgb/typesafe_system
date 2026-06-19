@@ -11,6 +11,7 @@ export type HomeHeroSlide = {
 // 首页功能入口卡片数据结构。
 export type HomeFeature = {
   label: string
+  image: string
   targetViewKey: Extract<AppViewKey, 'flights' | 'hotels' | 'trains' | 'attractions'>
 }
 
@@ -55,8 +56,8 @@ export const HOME_HERO_SLIDES: HomeHeroSlide[] = [
 
 // 首页功能入口卡片数据。
 export const HOME_FEATURE_PLACEHOLDERS: HomeFeature[] = [
-  { label: '航班', targetViewKey: 'flights' },
-  { label: '酒店', targetViewKey: 'hotels' },
-  { label: '火车票', targetViewKey: 'trains' },
-  { label: '景点', targetViewKey: 'attractions' },
+  { label: '航班', image: '/images/manager-entry/airline.jpg', targetViewKey: 'flights' },
+  { label: '酒店', image: '/images/home-hero-candidates/12_夜晚都市_中国上海_灯火把黄浦江写成诗.jpg', targetViewKey: 'hotels' },
+  { label: '火车票', image: '/images/manager-entry/train.jpg', targetViewKey: 'trains' },
+  { label: '景点', image: '/images/home-hero-candidates/03_大山_瑞士Matterhorn_群山把黄昏留给旅人.jpg', targetViewKey: 'attractions' },
 ]

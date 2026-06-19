@@ -123,7 +123,9 @@ object GenerateAdvertisementImageCandidatesPlanner extends ConnectionApiPlan[Gen
       if response.statusCode() / 100 != 2 then
         throw new IllegalStateException(s"paratera_request_failed_${response.statusCode()}")
 
-      parseParateraImageResponse(response.body())
+      val generated = parseParateraImageResponse(response.body())
+      System.err.println("[GenerateAdvertisementImageCandidatesPlanner] external image generation succeeded via Paratera")
+      generated
     }
 
   private def parseParateraImageResponse(responseBody: String): GeneratedImage =
@@ -172,9 +174,9 @@ object GenerateAdvertisementImageCandidatesPlanner extends ConnectionApiPlan[Gen
   private def localFallbackImage(width: Int, height: Int, seed: Int, tone: String, transparentBackground: Boolean): GeneratedImage =
     val (startColor, endColor) =
       tone.toLowerCase match
-        case value if value.contains("楂樼骇") || value.contains("premium") => ("#111827", "#d4af37")
-        case value if value.contains("娲诲姏") || value.contains("energetic") => ("#be185d", "#fb923c")
-        case value if value.contains("娓╂殩") || value.contains("warm") => ("#166534", "#facc15")
+        case value if value.contains("高级") || value.contains("premium") => ("#111827", "#d4af37")
+        case value if value.contains("活力") || value.contains("energetic") => ("#be185d", "#fb923c")
+        case value if value.contains("温暖") || value.contains("warm") => ("#166534", "#facc15")
         case _ => ("#075985", "#38bdf8")
 
     val circleX = width - 180 + (seed % 30)

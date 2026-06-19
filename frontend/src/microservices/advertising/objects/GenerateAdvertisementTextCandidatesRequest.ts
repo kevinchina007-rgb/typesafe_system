@@ -4,6 +4,7 @@ export type GenerateAdvertisementTextCandidatesRequest = {
   prompt: string
   sourceText?: string | null
   styleRequirement?: string | null
+  regenerationNonce?: number | null
   focus?: string | null
   tone?: string | null
   resourceLabel?: string | null

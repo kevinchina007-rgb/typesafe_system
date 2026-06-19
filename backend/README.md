@@ -63,6 +63,28 @@ For a minimal public exposure, you still need host-level networking outside the 
 
 This is still a plain HTTP setup. It is suitable for testing, but not a hardened internet deployment.
 
+## Advertising AI Configuration
+
+The advertising draft generator uses two external AI services:
+
+- text candidates: `POLLINATIONS_API_KEY`
+- image candidates: `PARATERA_API_KEY`
+
+The backend startup script automatically loads additional key/value pairs from:
+
+- `backend/advertising-ai.env`
+
+This file is intentionally ignored by git so each machine can keep its own private keys.
+If the file does not exist, the backend still starts, but advertising AI requests will fall back to the local generators.
+
+To create a local config file, copy the example template:
+
+```powershell
+Copy-Item .\backend\advertising-ai.example.env .\backend\advertising-ai.env
+```
+
+Then fill in your real values.
+
 ## Repository Modes
 
 - Default mode: `database`

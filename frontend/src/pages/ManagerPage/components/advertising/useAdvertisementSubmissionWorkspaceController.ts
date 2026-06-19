@@ -39,6 +39,7 @@ export function useAdvertisementSubmissionWorkspaceController({
   const createAdvertisement = useAdvertisingStore(state => state.createAdvertisement)
   const updateAdvertisement = useAdvertisingStore(state => state.updateAdvertisement)
   const uploadAdvertisementImage = useAdvertisingStore(state => state.uploadAdvertisementImage)
+  const generateAdvertisementTextCandidates = useAdvertisingStore(state => state.generateAdvertisementTextCandidates)
   const generateAdvertisementImageCandidates = useAdvertisingStore(state => state.generateAdvertisementImageCandidates)
   const submitAdvertisementForReview = useAdvertisingStore(state => state.submitAdvertisementForReview)
   const isLoading = useAdvertisingStore(state => state.isLoading)
@@ -58,11 +59,14 @@ export function useAdvertisementSubmissionWorkspaceController({
   const [avoidPrompt, setAvoidPrompt] = useState('')
   const [textPrompt, setTextPrompt] = useState('')
   const [textVisualStyles, setTextVisualStyles] = useState<VisualStyleKey[]>(['realistic'])
+  const [textStylePreference, setTextStylePreference] = useState('')
   const [imagePrompt, setImagePrompt] = useState('')
   const [imageFactoryKind, setImageFactoryKind] = useState<ImageFactoryKind>('background')
   const [shouldCutoutImageElement, setShouldCutoutImageElement] = useState(true)
   const [imageVisualStyles, setImageVisualStyles] = useState<VisualStyleKey[]>(['realistic'])
+  const [imageStylePreference, setImageStylePreference] = useState('')
   const [backgroundAutoFit, setBackgroundAutoFit] = useState(true)
+  const [textGenerationNonce, setTextGenerationNonce] = useState(0)
   const [textCandidates, setTextCandidates] = useState<CreativeElement[]>([])
   const [imageCandidates, setImageCandidates] = useState<CreativeElement[]>([])
   const [isGeneratingText, setIsGeneratingText] = useState(false)
@@ -127,7 +131,9 @@ export function useAdvertisementSubmissionWorkspaceController({
     setTextPrompt('')
     setImagePrompt('')
     setTextVisualStyles(['realistic'])
+    setTextStylePreference('')
     setImageVisualStyles(['realistic'])
+    setImageStylePreference('')
     setImageFactoryKind('background')
     setShouldCutoutImageElement(true)
     setBackgroundAutoFit(true)
@@ -194,17 +200,22 @@ export function useAdvertisementSubmissionWorkspaceController({
     textPrompt,
     textVisualStyles,
     setTextVisualStyles,
+    textStylePreference,
     imageVisualStyles,
     setImageVisualStyles,
+    imageStylePreference,
     imageFactoryKind,
     shouldCutoutImageElement,
     backgroundAutoFit,
+    textGenerationNonce,
+    setTextGenerationNonce,
     setTextCandidates,
     setImageCandidates,
     setIsGeneratingText,
     setIsGeneratingImages,
     translate,
     onShowNotice,
+    generateAdvertisementTextCandidates,
     generateAdvertisementImageCandidates,
     describeCanvasContent: canvasActions.describeCanvasContent,
   })
@@ -293,6 +304,8 @@ export function useAdvertisementSubmissionWorkspaceController({
     setAvoidPrompt,
     textVisualStyles,
     setTextVisualStyles,
+    textStylePreference,
+    setTextStylePreference,
     imagePrompt,
     setImagePrompt,
     imageFactoryKind,
@@ -301,7 +314,11 @@ export function useAdvertisementSubmissionWorkspaceController({
     setShouldCutoutImageElement,
     imageVisualStyles,
     setImageVisualStyles,
+    imageStylePreference,
+    setImageStylePreference,
     backgroundAutoFit,
+    textGenerationNonce,
+    setTextGenerationNonce,
     setBackgroundAutoFit,
     textCandidates,
     imageCandidates,

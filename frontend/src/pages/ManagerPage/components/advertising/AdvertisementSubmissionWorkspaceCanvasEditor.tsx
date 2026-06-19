@@ -69,8 +69,21 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                           ))}
                         </div>
                       </label>
+                      <label className="grid gap-2">
+                        <span className="text-sm font-semibold text-slate-700">自定义风格偏好</span>
+                        <input
+                          value={c.textStylePreference}
+                          onChange={event => c.setTextStylePreference(event.target.value)}
+                          placeholder="例如：海报感、杂志封面风、克制高级感"
+                        />
+                      </label>
                       <div className="grid grid-cols-2 gap-2">
-                        <button type="button" className="inline-flex min-h-10 items-center justify-center border border-black bg-black px-3 text-sm font-semibold text-white disabled:opacity-60" disabled={c.isGeneratingText} onClick={() => void c.generateTextStyles()}>
+                        <button
+                          type="button"
+                          className="inline-flex min-h-10 items-center justify-center border border-black bg-black px-3 text-sm font-semibold text-white disabled:opacity-60"
+                          disabled={c.isGeneratingText}
+                          onClick={() => void c.generateTextStyles()}
+                        >
                           {c.isGeneratingText ? c.translate('search.loading') : c.translate('advertising.factory.generateText')}
                         </button>
                         <button
@@ -86,13 +99,28 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                       </div>
                       <div className="grid gap-2">
                         {c.textCandidates.map((candidate: any) => (
-                          <button key={candidate.id} type="button" draggable className="grid gap-1 border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-950" onDragStart={() => c.setDragTemplate(candidate)} onClick={() => c.addTemplateToCanvas(candidate)}>
+                          <button
+                            key={candidate.id}
+                            type="button"
+                            draggable
+                            className="grid gap-1 border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-slate-950"
+                            onDragStart={() => c.setDragTemplate(candidate)}
+                            onClick={() => c.addTemplateToCanvas(candidate)}
+                          >
                             <span className="text-xs font-bold text-slate-500">{c.translate('advertising.factory.preview')}</span>
-                            {candidate.type === 'image' && candidate.src ? (
-                              <img src={candidate.src} alt={candidate.text} className="max-h-40 w-full object-contain" />
-                            ) : (
-                              <strong style={{ color: candidate.color === '#ffffff' ? c.tonePalettes[c.tone].bg : candidate.color }}>{candidate.text}</strong>
-                            )}
+                            {candidate.src ? (
+                              <img
+                                src={candidate.src}
+                                alt={candidate.text}
+                                className="max-h-44 w-full rounded border border-slate-100 bg-white object-contain"
+                              />
+                            ) : null}
+                            <strong
+                              className="max-w-full whitespace-pre-wrap break-words text-left leading-snug"
+                              style={{ color: candidate.color === '#ffffff' ? c.tonePalettes[c.tone].bg : candidate.color, fontSize: candidate.fontSize ? `${Math.max(24, Math.min(candidate.fontSize, 44))}px` : '34px' }}
+                            >
+                              {candidate.text}
+                            </strong>
                             <span className="text-xs text-slate-500">可拖拽到画布</span>
                           </button>
                         ))}
@@ -303,7 +331,7 @@ export function AdvertisementSubmissionWorkspaceCanvasEditor({ controller }: Adv
                           >
                             删
                           </button>
-                          {element.type === 'image' && element.src ? (
+                          {element.src ? (
                             <img src={element.src} alt="" className={`h-full w-full ${element.contentMode === 'contain' ? 'object-contain' : 'object-cover'}`} />
                           ) : (
                             <div className="grid h-full w-full place-items-center px-3 text-center">{element.text}</div>

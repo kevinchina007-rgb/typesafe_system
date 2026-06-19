@@ -1,6 +1,7 @@
 ﻿import { toBackendAssetUrl } from '@/lib/presenters/view-models'
 import type { MouseEvent } from 'react'
 import type { AdvertisementResponse } from '@/microservices/advertising/objects/AdvertisementResponse'
+import type { AdvertisementTextCandidateResponse } from '@/microservices/advertising/objects/AdvertisementTextCandidateResponse'
 
 export type CanvasElementType = 'text' | 'image' | 'shape' | 'field'
 export type PlacementValue = 'FlightBookingPage' | 'HotelBookingPage' | 'TrainBookingPage' | 'AttractionBookingPage'
@@ -179,6 +180,36 @@ export function escapeSvgAttribute(value: string) {
   return escapeSvgText(value).replace(/"/g, '&quot;')
 }
 
+function normalizeStylePreference(preference: string) {
+  return preference.trim().toLowerCase()
+}
+
+function resolveTextStyleColor(preference: string) {
+  const normalized = normalizeStylePreference(preference)
+  if (!normalized) {
+    return null
+  }
+
+  const colorHints: Array<{
+    keywords: string[]
+    accent: string
+    stroke: string
+  }> = [
+    { keywords: ['红', 'red', 'scarlet', 'crimson', 'ruby', 'rose'], accent: '#ef4444', stroke: '#991b1b' },
+    { keywords: ['蓝', 'blue', 'azure', 'sky', 'navy', 'cobalt'], accent: '#3b82f6', stroke: '#1d4ed8' },
+    { keywords: ['绿', 'green', 'emerald', 'jade', 'mint'], accent: '#10b981', stroke: '#047857' },
+    { keywords: ['黄', 'gold', 'yellow', 'amber', 'sunny'], accent: '#f59e0b', stroke: '#b45309' },
+    { keywords: ['橙', 'orange', 'tangerine'], accent: '#f97316', stroke: '#c2410c' },
+    { keywords: ['紫', 'purple', 'violet', 'lavender', 'plum'], accent: '#8b5cf6', stroke: '#6d28d9' },
+    { keywords: ['粉', 'pink', 'magenta', 'fuchsia', 'rose'], accent: '#ec4899', stroke: '#be185d' },
+    { keywords: ['黑', 'black', 'charcoal', 'ink'], accent: '#111827', stroke: '#000000' },
+    { keywords: ['白', 'white', 'ivory', 'snow'], accent: '#f8fafc', stroke: '#e2e8f0' },
+    { keywords: ['金', 'golden', 'metallic', 'bronze'], accent: '#d4af37', stroke: '#8a6a12' },
+  ]
+
+  return colorHints.find(({ keywords }) => keywords.some(keyword => normalized.includes(keyword))) ?? null
+}
+
 export function blobToDataUrl(blob: Blob) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()
@@ -230,38 +261,45 @@ export function makeImageDataUrl(_prompt: string, tone: ToneKey, index: number, 
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
-export function makeTextArtDataUrl(text: string, tone: ToneKey) {
+export function makeTextArtDataUrl(text: string, tone: ToneKey, variantSeed = 0, stylePreference = '') {
   const palette = tonePalettes[tone]
   const safeText = escapeSvgText(text.trim() || '广告创意图')
+  const preferenceColor = resolveTextStyleColor(stylePreference)
+  const paletteSwap = variantSeed % 3
+  const accent = preferenceColor?.accent ?? (paletteSwap === 0 ? palette.accent : paletteSwap === 1 ? '#ffffff' : '#38bdf8')
+  const stroke = preferenceColor?.stroke ?? (paletteSwap === 2 ? palette.bg : palette.accent)
+  const shadowColor = preferenceColor?.accent ?? palette.bg
+  const xOffset = 336 + (variantSeed % 4) * 10
+  const yOffset = 116 + (variantSeed % 5) * 6
+  const scale = 66 + (variantSeed % 3) * 4
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="720" height="220" viewBox="0 0 720 220">
     <defs>
       <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-        <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="${palette.bg}" flood-opacity="0.28"/>
+        <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="${shadowColor}" flood-opacity="0.28"/>
       </filter>
     </defs>
     <g filter="url(#shadow)">
-      <text x="360" y="120" text-anchor="middle" font-size="72" font-weight="900" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" fill="${palette.fg}" stroke="${palette.accent}" stroke-width="6" paint-order="stroke fill">${safeText}</text>
-      <text x="360" y="120" text-anchor="middle" font-size="72" font-weight="900" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" fill="${palette.fg}">${safeText}</text>
+      <text x="${xOffset}" y="${yOffset}" text-anchor="middle" font-size="${scale}" font-weight="900" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" fill="${palette.fg}" stroke="${stroke}" stroke-width="6" paint-order="stroke fill">${safeText}</text>
+      <text x="${xOffset}" y="${yOffset}" text-anchor="middle" font-size="${scale}" font-weight="900" font-family="Arial, PingFang SC, Microsoft YaHei, sans-serif" fill="${accent}">${safeText}</text>
     </g>
   </svg>`
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
 }
 
-export function buildTextCandidates(prompt: string, tone: ToneKey, resourceLabel: string): CreativeElement[] {
+export function buildTextCandidates(prompt: string, tone: ToneKey, resourceLabel: string, variantSeed = 0, stylePreference = ''): CreativeElement[] {
   const baseText = prompt.trim() || `${resourceLabel} 文案创意`
   return [{
-    id: `text-candidate-${Date.now()}`,
-    type: 'image',
+    id: `text-candidate-${Date.now()}-${variantSeed}`,
+    type: 'text',
     text: baseText,
-    src: makeTextArtDataUrl(baseText, tone),
-    contentMode: 'contain',
+    src: makeTextArtDataUrl(baseText, tone, variantSeed, stylePreference),
     x: 96,
     y: 44,
-    width: 520,
-    height: 160,
+    width: 560,
+    height: 180,
     fontSize: 34,
     fontWeight: 900,
-    color: '#ffffff',
+    color: tonePalettes[tone].fg,
     backgroundColor: 'transparent',
     opacity: 1,
     borderRadius: 0,
@@ -328,22 +366,23 @@ export function buildRemoteImageCandidates(
 }
 
 export function buildRemoteTextCandidates(
-  candidates: Array<{ assetId: string; publicUrl: string; prompt: string; seed: number }>,
+  candidates: AdvertisementTextCandidateResponse[],
   sourceText: string,
+  tone: ToneKey,
+  stylePreference = '',
 ): CreativeElement[] {
-  return candidates.slice(0, 1).map(candidate => ({
-    id: `text-candidate-${candidate.assetId}`,
-    type: 'image',
-    text: sourceText,
-    src: toBackendAssetUrl(candidate.publicUrl),
-    contentMode: 'contain',
+  return candidates.slice(0, 1).map((candidate, index) => ({
+    id: `text-candidate-${candidate.seed}-${index}`,
+    type: 'text',
+    text: candidate.text?.trim() || sourceText,
+    src: makeTextArtDataUrl(candidate.text?.trim() || sourceText, tone, candidate.seed, stylePreference),
     x: 96,
     y: 44,
-    width: 520,
-    height: 160,
+    width: 560,
+    height: 180,
     fontSize: 34,
     fontWeight: 900,
-    color: '#ffffff',
+    color: '#0f172a',
     backgroundColor: 'transparent',
     opacity: 1,
     borderRadius: 0,
@@ -354,7 +393,7 @@ export function buildRemoteTextCandidates(
 export async function renderCreativeSvg(creative: CreativeState) {
   const elements = await Promise.all(creative.elements.map(async element => {
     const opacity = Math.max(0, Math.min(1, element.opacity))
-    if (element.type === 'image' && element.src) {
+    if (element.src) {
       const embeddedSource = await makeEmbeddableImageSource(element.src)
       if (!embeddedSource) {
         return ''

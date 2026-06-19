@@ -33,3 +33,4 @@ backend/*.log
 .env
 .env.*
 !deploy/.env.production.example
+backend/advertising-ai.env

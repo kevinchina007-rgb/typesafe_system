@@ -11,6 +11,7 @@ New-Item -ItemType Directory -Path $logDir -Force | Out-Null
 $backendScriptLog = Join-Path $logDir 'backend-script.log'
 $backendRunLog = Join-Path $logDir 'backend-run.log'
 $backendErrorLog = Join-Path $logDir 'backend-error.log'
+$advertisingAiEnvFile = Join-Path $backendRoot 'advertising-ai.env'
 
 $bundledJavaHome = Join-Path $backendRoot '.jdks\temurin-21-unpacked\jdk-21.0.10+7'
 $javaHomeCandidates = @(
@@ -49,9 +50,54 @@ if (-not $javaHome) {
   throw 'JAVA_HOME is required. Set JAVA_HOME or place a bundled JDK under backend/.jdks.'
 }
 
+function Set-EnvVarIfMissing {
+  param(
+    [Parameter(Mandatory = $true)][string]$Name,
+    [Parameter(Mandatory = $true)][string]$Value
+  )
+
+  $existingValue = [Environment]::GetEnvironmentVariable($Name, 'Process')
+  if ([string]::IsNullOrWhiteSpace($existingValue)) {
+    [Environment]::SetEnvironmentVariable($Name, $Value, 'Process')
+    Set-Item -Path "Env:$Name" -Value $Value
+  }
+}
+
+function Import-KeyValueEnvFile {
+  param([Parameter(Mandatory = $true)][string]$Path)
+
+  if (-not (Test-Path $Path)) {
+    return
+  }
+
+  Get-Content -LiteralPath $Path -Encoding UTF8 | ForEach-Object {
+    $line = $_.Trim()
+    if (-not $line -or $line.StartsWith('#')) {
+      return
+    }
+
+    if ($line -notmatch '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$') {
+      return
+    }
+
+    $name = $matches[1]
+    $value = $matches[2]
+
+    if ($value.StartsWith('"') -and $value.EndsWith('"') -and $value.Length -ge 2) {
+      $value = $value.Substring(1, $value.Length - 2)
+    } elseif ($value.StartsWith("'") -and $value.EndsWith("'") -and $value.Length -ge 2) {
+      $value = $value.Substring(1, $value.Length - 2)
+    }
+
+    Set-EnvVarIfMissing -Name $name -Value $value
+  }
+}
+
 $env:JAVA_HOME = $javaHome
 $env:TRAVEL_REPOSITORY_MODE = $RepositoryMode
 $env:TRAVEL_BACKEND_PORT = "$BackendPort"
+$env:TRAVEL_ADVERTISING_AI_ENV_FILE = $advertisingAiEnvFile
+Import-KeyValueEnvFile -Path $advertisingAiEnvFile
 $launcherDatabasePath = (Join-Path $backendRoot 'data\travel-platform-runtime').Replace('\', '/')
 $env:TRAVEL_DB_URL = "jdbc:postgresql://127.0.0.1:5432/travel_platform?sslmode=disable"
 $env:TRAVEL_DB_DRIVER = "org.postgresql.Driver"

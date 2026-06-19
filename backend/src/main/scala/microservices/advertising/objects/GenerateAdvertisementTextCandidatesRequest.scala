@@ -8,6 +8,7 @@ final case class GenerateAdvertisementTextCandidatesRequest(
     prompt: String,
     sourceText: Option[String],
     styleRequirement: Option[String],
+    regenerationNonce: Option[Int],
     focus: Option[String],
     tone: Option[String],
     resourceLabel: Option[String],

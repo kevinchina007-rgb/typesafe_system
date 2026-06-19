@@ -15,6 +15,7 @@ $backendStderr = Join-Path $logDir 'backend.stderr.log'
 $backendArgFile = Join-Path $logDir 'backend-java.args'
 $frontendStdout = Join-Path $logDir 'frontend.stdout.log'
 $frontendStderr = Join-Path $logDir 'frontend.stderr.log'
+$advertisingAiEnvFile = Join-Path $backendRoot 'advertising-ai.env'
 
 function Get-CommandPath {
   param(
@@ -43,6 +44,59 @@ function Get-CommandPath {
 function Write-LauncherLog {
   param([string]$Message)
   Add-Content -Path $launcherLog -Value "[travel-platform] $(Get-Date -Format o) $Message"
+}
+
+function Set-EnvVarIfMissing {
+  param(
+    [string]$Name,
+    [string]$Value
+  )
+
+  if ([string]::IsNullOrWhiteSpace($Name)) {
+    return
+  }
+
+  if ($null -eq [System.Environment]::GetEnvironmentVariable($Name, 'Process')) {
+    [System.Environment]::SetEnvironmentVariable($Name, $Value, 'Process')
+  }
+}
+
+function Import-KeyValueEnvFile {
+  param([string]$Path)
+
+  if (-not (Test-Path $Path)) {
+    return $false
+  }
+
+  $importedAny = $false
+  foreach ($rawLine in Get-Content -LiteralPath $Path) {
+    $line = $rawLine.Trim()
+    if (-not $line -or $line.StartsWith('#')) {
+      continue
+    }
+
+    $separatorIndex = $line.IndexOf('=')
+    if ($separatorIndex -lt 1) {
+      continue
+    }
+
+    $name = $line.Substring(0, $separatorIndex).Trim()
+    if (-not $name) {
+      continue
+    }
+
+    $value = $line.Substring($separatorIndex + 1)
+    Set-EnvVarIfMissing -Name $name -Value $value
+    $importedAny = $true
+  }
+
+  return $importedAny
+}
+
+if (Import-KeyValueEnvFile -Path $advertisingAiEnvFile) {
+  Write-LauncherLog "loaded advertising AI env file $advertisingAiEnvFile"
+} else {
+  Write-LauncherLog "advertising AI env file not found at $advertisingAiEnvFile"
 }
 
 function Test-HttpReady {
